@@ -199,6 +199,156 @@ class WPCD_APP extends WPCD_Base {
 	}
 
 	/**
+	 * Resolve which script version this plugin should use.
+	 *
+	 * Two different option keys were in play: the settings screen writes
+	 * `wordpress_app_script_version` while the script readers asked for
+	 * `{app_name}_script_version`, i.e. `wordpress-app_script_version`. Nothing ever wrote
+	 * the hyphenated key, so the settings value was inert and every server silently fell
+	 * back to `v1`.
+	 *
+	 * The underscored key is read first because that is the one the settings UI and the
+	 * REST controller persist. The hyphenated key is still honoured so an install that set
+	 * it out of band keeps working. `v2` is the shipped default.
+	 *
+	 * The option is read directly (`wpcd_get_early_option`) before `wpcd_get_option` is
+	 * tried. Meta Box only resolves fields it registered for the current request, and the
+	 * WordPress App settings metabox is registered in admin; commands are built during REST
+	 * requests and cron, where the read would otherwise return false and the operator's
+	 * choice would be silently discarded.
+	 *
+	 * @return string Script version folder name, eg `v2`.
+	 */
+	public function get_configured_scripts_version() {
+		$version = wpcd_get_early_option( 'wordpress_app_script_version' );
+
+		if ( empty( $version ) ) {
+			$version = wpcd_get_option( 'wordpress_app_script_version' );
+		}
+
+		if ( empty( $version ) ) {
+			$version = wpcd_get_early_option( "{$this->get_app_name()}_script_version" );
+		}
+
+		if ( empty( $version ) ) {
+			$version = wpcd_get_option( "{$this->get_app_name()}_script_version" );
+		}
+
+		if ( empty( $version ) ) {
+			$version = 'v2';
+		}
+
+		/*
+		 * A name that does not match a folder would publish 404 script URLs, and the failure
+		 * would only surface half way through provisioning. Fall back to the shipped default.
+		 */
+		if ( ! is_dir( $this->get_scripts_folder() . $version ) ) {
+			$version = 'v2';
+		}
+
+		return $version;
+	}
+
+	/**
+	 * Return the admin IP allowed to reach the OpenLiteSpeed WebAdmin console, or ''.
+	 *
+	 * The value is interpolated into a Bash command line by the command wrappers, so it
+	 * is validated here and reduced to an empty string wherever it does not look exactly
+	 * like an IPv4/IPv6 address or a CIDR block. Returning '' is the fail-closed answer:
+	 * every script interprets it as "do not open port 7080 and bind the console to
+	 * 127.0.0.1". Nothing else about the setting is trusted, so a typo or a pasted blob
+	 * can never widen the firewall rule or inject a shell command.
+	 *
+	 * @return string A validated address/CIDR, or '' when unset or invalid.
+	 */
+	public function get_simplestack_admin_ip() {
+		/*
+		 * Read the option directly rather than only through wpcd_get_option(): Meta Box
+		 * resolves fields registered for the current request, and the WordPress App settings
+		 * metabox is registered in admin. Commands are built during REST requests and cron,
+		 * where the rwmb_meta() read returns false - so relying on it alone left a configured
+		 * address permanently ignored and the console permanently closed.
+		 */
+		$value = wpcd_get_early_option( 'simplestack_admin_ip' );
+
+		if ( empty( $value ) ) {
+			$value = wpcd_get_option( 'simplestack_admin_ip' );
+		}
+
+		$value = trim( (string) $value );
+
+		if ( '' === $value ) {
+			return '';
+		}
+
+		$octet      = '(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])';
+		$ipv4       = "{$octet}(\.{$octet}){3}";
+		$ipv6       = '[0-9A-Fa-f]{0,4}(:[0-9A-Fa-f]{0,4}){2,7}';
+		/*
+		 * Prefix lengths start at 1, not 0. `0.0.0.0/0` and `::/0` describe "the whole
+		 * internet", and port 7080 must never be opened that wide, so they are rejected
+		 * here rather than trusted to a typo check further down the line.
+		 */
+		$ipv4_cidr  = $ipv4 . '/(3[0-2]|[12][0-9]|[1-9])';
+		$ipv6_cidr  = $ipv6 . '/(12[0-8]|1[01][0-9]|[1-9][0-9]?)';
+
+		// `~` is the delimiter because the CIDR alternatives contain literal slashes.
+		// \A and \z anchor absolutely: `$` would also match before a trailing newline.
+		if ( preg_match( "~\\A(?:{$ipv4}|{$ipv4_cidr}|{$ipv6}|{$ipv6_cidr})\\z~", $value ) ) {
+			return $value;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Return the WordPress.org plugin slugs the SimpleStack post-install hook activates.
+	 *
+	 * The hook runs inside the provisioning script, so this value ends up on a Bash command
+	 * line. Every entry is therefore reduced to the WordPress.org slug character set and
+	 * anything else is dropped rather than escaped: a filtered value must never be able to
+	 * add a command or change an argument.
+	 *
+	 * Slug list is empty until the One Dog plugin slugs are supplied through the filter.
+	 *
+	 * Filter Hook: simplestack_post_site_install_plugins
+	 *
+	 * @return string Space separated, validated plugin slugs, or '' when none are configured.
+	 */
+	public function get_post_site_install_plugins() {
+		$plugins = apply_filters( 'simplestack_post_site_install_plugins', array() );
+
+		if ( is_string( $plugins ) ) {
+			$plugins = preg_split( '/[\s,]+/', $plugins );
+		}
+
+		if ( ! is_array( $plugins ) ) {
+			return '';
+		}
+
+		$valid = array();
+
+		foreach ( $plugins as $plugin ) {
+			if ( ! is_scalar( $plugin ) ) {
+				continue;
+			}
+
+			$plugin = trim( (string) $plugin );
+
+			/*
+			 * Lowercase slugs with hyphens are the norm; the optional `author/plugin` form
+			 * covers plugins installed from a GitHub zip. Anything else - spaces, quotes,
+			 * semicolons, `$`, globs - is dropped by omission.
+			 */
+			if ( preg_match( '~\A[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)?\z~', $plugin ) ) {
+				$valid[] = $plugin;
+			}
+		}
+
+		return implode( ' ', array_unique( $valid ) );
+	}
+
+	/**
 	 * Setting function for app description
 	 *
 	 * @param string $desc description.
@@ -762,6 +912,12 @@ class WPCD_APP extends WPCD_Base {
 	 * - 123142341: timestamp of when the callback was created
 	 */
 	public function register_rest_endpoint() {
+		/*
+		 * This endpoint has to be public. It is called by the provisioning scripts running on the
+		 * server, which have no WordPress credentials - the request is a bare `wget` at the end of
+		 * a shell script. `perform_command()` is the barrier: it rejects anything that is not a
+		 * command this site is actually waiting on.
+		 */
 		register_rest_route(
 			$this->get_app_name() . '/v' . WPCD_REST_VERSION,
 			'/command/(?P<id>\d+)/(?P<name>.+)/(?P<status>.+)/(?P<cmdid>\d+)/',
@@ -951,6 +1107,17 @@ class WPCD_APP extends WPCD_Base {
 		}
 		if ( ! $command_id ) {
 			return new WP_REST_Response( array( 'error' => new WP_Error( __( 'Invalid command ID', 'wpcd' ) ) ) );
+		}
+
+		/*
+		 * Only report on a command this site is actually waiting for. The route has to be public,
+		 * so this transient - set when the command was prepped and carrying its own expiry - is the
+		 * only thing separating a genuine report from a crafted one. Without this check an
+		 * anonymous caller could fire the completion hooks below for any post id and command name
+		 * it could guess.
+		 */
+		if ( false === $this->get_command_attributes( $id, $name ) ) {
+			return new WP_REST_Response( array( 'error' => new WP_Error( 'wpcd_unknown_command', __( 'Unknown command.', 'wpcd' ) ) ) );
 		}
 
 		$data = apply_filters( "wpcd_{$this->get_app_name()}_command_status", $data, $id, $name, $status, $command_id, $params );
@@ -1305,10 +1472,7 @@ class WPCD_APP extends WPCD_Base {
 		if ( isset( $attributes['scripts_version'] ) && ( ! empty( $attributes['scripts_version'] ) ) ) {
 			$script_version = $attributes['scripts_version'];
 		} else {
-			$script_version = wpcd_get_option( "{$this->get_app_name()}_script_version" );
-		}
-		if ( empty( $script_version ) ) {
-			$script_version = 'v1';
+			$script_version = $this->get_configured_scripts_version();
 		}
 		/* End what version of the scripts are we getting */
 

@@ -1,0 +1,4 @@
+- Each JS file is wrapped in an IIFE `(function ($, params|attributes) { ... })(jQuery, <data-object>);` so dependencies are explicitly passed rather than assumed global.
+- AJAX requests carry a `nonce` field taken from the injected `params.nonce` or `attributes.nonce` and target either `ajaxurl` (admin) or `wp.ajax.settings.url` (frontend).
+- Long-running AJAX operations wrap their container in `$container.lock()` before the request and call `$container.unlock()` in the `complete` callback to show/hide the spinner overlay.
+- CSS classes follow the `wpcd_*` prefix convention and derive colors from WPCD CSS custom properties (`--wpcd-positive-color`, `--wpcd-negative-color`, `--wpcd-white-color`, `--wpcd-primary-brand-color`) instead of hard-coded hex values.

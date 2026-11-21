@@ -1,0 +1,1 @@
+WordPress plugin using the MetaBox CustomTable extension (`MetaBox\CustomTable\Model\Factory`, `MB_Custom_Table_API`) for schema-driven custom tables; form fields and validation go through RWMB (MetaBox) metabox registry; AJAX uses WordPress `wp_ajax_*` hooks.

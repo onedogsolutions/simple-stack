@@ -1,0 +1,1 @@
+WordPress Custom Post Types + Taxonomies, Meta Boxes via the RWMB (Meta Box) library (`rwmb_meta_boxes` filter), jQuery Select2 for owner/team selectors, and a small Chart.js bundle for server health charts.

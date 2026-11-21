@@ -1,0 +1,1 @@
+Static frontend assets for the WPCD WordPress plugin, including per-screen CSS and jQuery-based JavaScript that communicates with PHP via wp_ajax actions.

@@ -1,0 +1,6 @@
+- Every file guards entry with `if ( ! defined( 'ABSPATH' ) ) { exit; }` before any class definition.
+- Command state is persisted in WordPress transients using the naming pattern `wpcd_command_{app_name}_{id}_{name}`, with array values for running and the string `'done'` for completed.
+- Public REST endpoints are registered via `register_rest_route` with `permission_callback => '__return_true'` and rely on internal transient validation rather than auth checks to prevent arbitrary command completion.
+- Hook names are dynamically composed from the app name using `{$this->get_app_name()}` (e.g. `wpcd_command_{$app}_completed`, `wpcd_server_{$app}_command_done`, `wpcd_{$app}_metaboxes`) so each concrete app gets its own namespace without hard-coding strings.
+- User-facing strings are wrapped in `__( ..., 'wpcd' )` for translation, while all external input reaching shell commands is validated via strict regex or integer filters before interpolation.
+- Errors are returned as `WP_Error` objects produced through `construct_error()` which wraps messages in a consistent HTML structure for display in the magnific popup.

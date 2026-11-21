@@ -1,0 +1,6 @@
+- Every file guards against direct access with `if ( ! defined( 'ABSPATH' ) ) { exit; }` at the top of the file.
+- Global helper functions are namespaced with a `wpcd_` prefix rather than wrapped in a class or namespace.
+- Option values are read through `wpcd_get_option` (Meta Box settings) or `wpcd_get_early_option` (raw `wp_options` fallback when Meta Box isn't loaded yet), never accessed directly.
+- User-supplied data is validated and escaped via `sanitize_key`, `wp_unslash`, `absint`, `esc_html`, `esc_url`, and `wp_verify_nonce` before use.
+- Extensibility points are exposed as `apply_filters` / `do_action` hooks (e.g. `wpcd_get_cloud_providers`, `wpcd_os_list`, `wpcd_webserver_list`, `wpcd_log_error`, `wpcd_log_notification`) rather than hard-coded lists.
+- Lazy-loading of sub-components uses a `classes` array keyed by identifier and guarded by `empty( WPCD()->classes[ $key ] )` before instantiation.

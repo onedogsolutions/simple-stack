@@ -1,9 +1,16 @@
 <?xml version="1.0"?>
-<ruleset name="WP Cloud Deploy">
-    <description>WP Cloud Deploy Wordpress Coding Standards</description>
+<ruleset name="SimpleStack">
+    <description>SimpleStack WordPress Coding Standards</description>
 
     <!-- Scan all files in directory -->
     <file>./includes/core/apps/wordpress-app/rest-api</file>
+    <file>./includes/core/api</file>
+
+    <!-- Never scan dependencies or generated output -->
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/assets/dist/*</exclude-pattern>
+    <exclude-pattern>*/src/*</exclude-pattern>
 
     <!-- Scan only PHP files -->
     <arg name="extensions" value="php"/>
@@ -14,10 +21,12 @@
     <!-- Show sniff codes in all reports -->
     <arg value="ns"/>
 
-    <!-- Include the WordPress-Extra standard. -->
+    <!-- Include the WordPress-Extra standard. WPCS 3 no longer ships
+         WordPress.PHP.DisallowShortTernary, so there is nothing to exclude for it.
+         SeparateFunctionsFromOO is excluded because WordPress plugins conventionally pair a
+         class with a function-style accessor (WPCD(), WPCD_SERVER(), simplestack_rest_api()). -->
     <rule ref="WordPress-Extra">
-        <!-- Exclude any rules here -->
-        <exclude name="WordPress.PHP.DisallowShortTernary"/>
+        <exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
     </rule>
 
     <!-- Let's also check that everything is properly documented. -->
@@ -27,5 +36,5 @@
     <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/>
     <rule ref="Generic.Commenting.Todo"/>
 
-    <config name="minimum_supported_wp_version" value="4.9"/>
+    <config name="minimum_supported_wp_version" value="6.5"/>
 </ruleset>

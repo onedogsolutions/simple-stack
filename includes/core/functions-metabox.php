@@ -5,9 +5,10 @@
  *
  * It primarily helps with creating CARD wrappers in tabs.
  *
- * Looking for other metabox related functions?
- * check out core/apps/wordpres-app/traits/traits-for-class-wordpress-app/metaboxes-app.php
- * and core/apps/wordpres-app/traits/traits-for-class-wordpress-app/metaboxes-server.php
+ * The Meta Box field-array builders remain because the tab plugins still describe their
+ * fields through the get_tabs filters, which SimpleStack_REST_Tabs serialises to JSON for
+ * the React client. The trait layer that turned those arrays into meta boxes
+ * (metaboxes-app.php / metaboxes-server.php) was retired in Phase 4.
  *
  * @package wpcd
  */

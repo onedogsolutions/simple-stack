@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: bundled_plugins
+title: Bundled Meta Box Add-ons & Plugin Dependencies
+scope:
+    - required_plugins/
+source_files: []
+depends_on: []
+related_to: []

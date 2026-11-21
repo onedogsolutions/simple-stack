@@ -1,0 +1,129 @@
+#!/bin/bash
+if [[ "$EUID" -ne 0 ]]
+then
+	echo "Sorry, you need to run this as root"
+	exit
+fi
+
+## Get our common functions
+if [[ ! -f 9999-common-functions.sh ]]
+then
+	echo "The file 9999-common-functions.sh is missing"
+	exit 1
+fi
+source 9999-common-functions.sh
+
+########################### Script Start here ############
+while [[ -z $domain ]]
+do
+	clear
+	echo "Please, select which site you want to work with"
+	gf_select_domain
+	domain=$(ls /var/www | grep -v html | sed -n "$site_number"p)
+done
+
+user_name=$(echo $domain | cut -c1-32)
+
+while [[ -z $action ]]
+do
+	echo
+	echo "What do you want to do?"
+	echo
+	echo "   1) Enable HTTPS"
+	echo "   2) Disable HTTPS"
+	echo "   3) Enable HTTP2"
+	echo "   4) Disable HTTP2"
+	read -p "Action: " action
+	until [[ -z "$action" || "$action" =~ ^[1-4]$ ]]
+	do
+		echo "$action: invalid selection."
+		read -p "Action: " action
+	done
+done
+
+if [[ $action == "enable" || $action == "1" ]]
+then
+	if [[ -z $email ]]
+	then
+		echo
+		echo "Specify an email for administrative notifications about your certificate
+		Example: admin@example.com"
+		read -p "Email address: " email
+	fi
+	# OpenLiteSpeed is the only supported stack. Certbot runs with --non-interactive and
+	# --agree-tos through gf_enable_certbot_ols_site, so this never blocks a provisioning
+	# run waiting for a renewal-terms prompt.
+	gf_disable_https_redirect_ols_htaccess "$domain" # Disable any existing redirects.
+	if gf_enable_certbot_ols_site "$domain"; then   # This function call echoes any success/failure messages so no need to handle here.
+		gf_enable_https_redirect_ols_htaccess "$domain"  # This function call echoes any success/failure messages so no need to handle here.
+	fi
+
+	if [ -f /etc/letsencrypt/live/$domain/fullchain.pem  ]
+	then
+		cd /var/www/$domain/html/
+		su - $user_name -c "wp --skip-plugins option update home https://$domain"
+		su - $user_name -c "wp --skip-plugins option update siteurl https://$domain"
+		# reset cache
+		su - $user_name -c "wp cache flush"
+		su - $user_name -c "wp cache-enabler clear 2>/dev/null"
+		gf_restart_webserver
+
+		echo
+		echo "SSL has been enabled for $domain"
+		exit
+	else
+		echo
+		echo "Unable to activate SSL for $domain"
+		exit	
+	fi
+fi
+
+
+if [[ $action == "disable" || $action == "2" ]]
+then
+	gf_disable_http2_ols_site "$domain" # disable http2 if enabled
+	gf_disable_certbot_ols_site "$domain"
+	gf_disable_https_redirect_ols_htaccess "$domain"
+	
+	# Forcibly delete any existing certbot folders.
+	# But, do prophylactic check to make sure we still have a $domain var before we attempt to use it to delete some folders.
+	if [[ -z $domain ]]
+	then
+		echo "Unable to proceed because the new domain name is blank. Operation has only partially succeeded and sites are probably in an unstable state."
+		exit 1
+	else
+		rm -rf /etc/letsencrypt/live/$domain
+		rm -rf /etc/letsencrypt/live/$domain-0*
+		rm -rf /etc/letsencrypt/archive/$domain
+		rm -rf /etc/letsencrypt/archive/$domain-0*
+		rm -rf /etc/letsencrypt/renewal/$domain
+		rm -rf /etc/letsencrypt/renewal/$domain-0*
+	fi
+
+	cd /var/www/$domain/html/
+	su - "$user_name" -c "wp --skip-plugins option update home http://$domain"
+	su - "$user_name" -c "wp --skip-plugins option update siteurl http://$domain"
+	# reset cache
+	su - "$user_name" -c "wp cache flush"
+	su - "$user_name" -c "wp cache-enabler clear 2>/dev/null"
+	
+	echo
+	echo "SSL has been disabled for $domain"
+	exit
+fi
+
+
+if [[ $action == "enable_http2" || $action == "3" ]]
+then
+	gf_enable_http2_ols_site "$domain"
+	exit
+fi
+
+
+if [[ $action == "disable_http2" || $action == "4" ]]
+then
+	gf_disable_http2_ols_site "$domain"
+	exit
+fi
+
+echo -e "${RED}ERROR: Invalid action '${action}'"

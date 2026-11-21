@@ -1,0 +1,1 @@
+Plain jQuery + vanilla JavaScript; third-party libs vendored inline: Bootstrap CSS, Select2, Magnific Popup, Chart.js. No build toolchain present in this scope (dist/ is empty).

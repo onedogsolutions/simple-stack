@@ -1,0 +1,21 @@
+# Node / frontend build
+node_modules/
+# Root-level Vite cache only. NOT a bare `.vite/`: that would also match
+# assets/dist/.vite/manifest.json, which the PHP enqueue layer reads at runtime
+# and which therefore has to be committed with the rest of assets/dist/.
+/.vite/
+npm-debug.log*
+yarn-error.log*
+
+# Local scratch
+*.log
+.DS_Store
+.phpunit.result.cache
+.phpcs.cache
+
+# Build output is committed on purpose (assets/dist/) so the plugin runs
+# without a Node toolchain in production. Do not add it here.
+
+# Composer test scaffolding
+vendor/wordpress/
+vendor/bin/

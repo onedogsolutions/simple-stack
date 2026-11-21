@@ -29,7 +29,12 @@ class WP_CLOUD_DEPLOY {
 	 *
 	 * @var $providers
 	 */
-	private static $providers = array( 'digital-ocean' => 'Digital Ocean' );
+	private static $providers = array(
+		'vultr-v2'      => 'Vultr',
+		'upcloud'       => 'UpCloud',
+		'digital-ocean' => 'Digital Ocean',
+		'custom-server' => 'Custom Server',
+	);
 
 	/**
 	 * Array of applications in the format array( 'appid' => 'App Desc1', 'appid2' => 'App Desc2' );
@@ -45,6 +50,16 @@ class WP_CLOUD_DEPLOY {
 	 * @var $classes
 	 */
 	public $classes = array();
+
+	/**
+	 * Parsed Vite build manifest, or false once a lookup has failed.
+	 *
+	 * Initialized to null so a genuinely empty manifest stays distinguishable from
+	 * "not read yet".
+	 *
+	 * @var array|false|null $simplestack_manifest
+	 */
+	private $simplestack_manifest = null;
 
 
 	/**
@@ -91,15 +106,16 @@ class WP_CLOUD_DEPLOY {
 	 */
 	private function hooks() {
 
-		/* Add main menu page */
-		add_action( 'admin_menu', array( &$this, 'add_main_menu_page' ) );
-
 		// Handle proper admin menu subpages highlighting (current menu).
 		add_filter( 'parent_file', array( &$this, 'handle_admin_current_main_menu' ) );
 		add_filter( 'submenu_file', array( &$this, 'handle_admin_current_submenu_item' ), 10, 2 );
 
-		// Handle main menu submenus ordering.
-		add_action( 'admin_init', array( &$this, 'ensure_submenu_items_order' ), 100 );
+		// Send legacy CPT bookmarks to the matching React route.
+		add_action( 'load-edit.php', array( &$this, 'redirect_legacy_cpt_screens' ) );
+		add_action( 'load-post.php', array( &$this, 'redirect_legacy_cpt_screens' ) );
+
+		// Order the SimpleStack submenus once every other component has registered its own.
+		add_action( 'admin_menu', array( &$this, 'ensure_submenu_items_order' ), 999 );
 
 		/* Add a global error log handler */
 		add_action( 'wpcd_log_error', array( &$this, 'log_error' ), 10, 6 );
@@ -110,218 +126,402 @@ class WP_CLOUD_DEPLOY {
 		/* Load admin scripts */
 		add_action( 'admin_enqueue_scripts', array( &$this, 'wpcd_admin_scripts' ), 10, 1 );
 
-		/* Add backup digital ocean provider if enabled on wp-config */
-		add_filter( 'wpcd_get_cloud_providers', array( &$this, 'add_backup_digital_ocean_provider' ), 10, 1 );
+		/* SimpleStack admin app: container page + Vite bundle. */
+		add_action( 'admin_menu', array( &$this, 'add_simplestack_menu_page' ), 100 );
+		add_action( 'admin_enqueue_scripts', array( &$this, 'enqueue_simplestack_app' ), 20, 1 );
 
-		/* Remove digital ocean provider if so configured in settings */
-		add_filter( 'wpcd_get_cloud_providers', array( &$this, 'remove_digital_ocean_provider' ), 10, 1 );
+		/* Hide the Digital Ocean provider unless it has been explicitly re-enabled. */
+		add_filter( 'wpcd_get_cloud_providers', array( &$this, 'disable_digital_ocean_provider_by_default' ), 10, 1 );
 
 		/* Replace the provider descriptions with white label descriptions */
 		add_filter( 'wpcd_get_cloud_providers', array( &$this, 'wpcd_get_cloud_providers_white_label_desc' ), 10, 1 );
-
-		/* Add some license nag notices */
-		add_action( 'admin_notices', array( $this, 'license_notices_server_limit' ) );
-		add_action( 'admin_notices', array( $this, 'license_notices_wpsite_limit' ) );
-
-		// Set some options that the Wisdom plugin will pick up.
-		add_action( 'wpcd_wisdom_custom_options', array( $this, 'set_wisdom_custom_options' ) );
-
-		// Capture wisdom data weekly instead of monthly.
-		add_filter( 'wisdom_filter_schedule_wpcd', array( $this, 'set_wisdom_schedule' ), 10, 1 );
-
-		// Action hook to fire on new site created on WP Multisite.
-		add_action( 'wp_initialize_site', array( $this, 'wpcd_wisdom_custom_options_events' ), 10, 2 );
 	}
 
 	/**
-	 * Set some Wisdom options.
+	 * Order the SimpleStack submenus.
 	 *
-	 * The option names are set at the bottom of the wpcd.php file.
-	 * When Wisdom fires its data collection functions it scans for those option names.
-	 * We'll set the value of those options here.
-	 */
-	public function set_wisdom_custom_options() {
-		if ( ! get_option( 'wisdom_opt_out' ) ) {
-			// User has not opted out so set options.
-			$count_servers = wp_count_posts( 'wpcd_app_server' )->private;
-			$count_apps    = wp_count_posts( 'wpcd_app' )->private;
-			update_option(
-				'wisdom_wpcd_server_count',
-				array(
-					'wisdom_registered_setting' => 1,
-					'wisdom_wpcd_server_count'  => $count_servers,
-				)
-			);
-			update_option(
-				'wisdom_wpcd_app_count',
-				array(
-					'wisdom_registered_setting' => 1,
-					'wisdom_wpcd_app_count'     => $count_apps,
-				)
-			);
-		}
-
-		// Setting a 24 hour transient but not sure that it's really necessary since it's not being used anywhere.  Might be useful later though.
-		set_transient( 'wpcd_wisdom_custom_options', 1, 1440 * MINUTE_IN_SECONDS );
-	}
-
-	/**
-	 * Set the wisdom collection schedule to weekly.
+	 * The React screens are registered by this class, but third party components (and the
+	 * bundled Meta Box settings page) append their own submenus in between. WordPress has
+	 * no ordering argument for submenus, so the list is written back explicitly.
 	 *
-	 * Filter Hook: wisdom_filter_schedule_wpcd
+	 * Hooked to `admin_menu` at a late priority so it runs after every registration and
+	 * before WordPress renders the menu.
 	 *
-	 * @param string $schedule Current schedule.
-	 *
-	 * @return string new schedule i.e.: 'weekly.
-	 */
-	public function set_wisdom_schedule( $schedule ) {
-		return 'weekly';
-	}
-
-	/**
-	 * Show license notice if number of servers exceed the amount allowed by the current license.
-	 */
-	public function license_notices_server_limit() {
-		if ( WPCD_License::show_license_tab() ) {
-			if ( ! WPCD_License::check_server_limit() ) {
-				$class   = 'notice notice-error';
-				$message = __( 'WPCloudDeploy: You have reached or exceeded the number of servers allowed with your license.', 'wpcd' );
-				printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $message ) );
-			}
-		}
-	}
-
-	/**
-	 * Show license notice if number of wpsites exceed the amount allowed by the current license.
-	 */
-	public function license_notices_wpsite_limit() {
-		if ( WPCD_License::show_license_tab() ) {
-			if ( ! WPCD_License::check_wpsite_limit() ) {
-				$class   = 'notice notice-error';
-				$message = __( 'WPCloudDeploy: You have reached or exceeded the number of WordPress sites allowed with your license.', 'wpcd' );
-				printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $message ) );
-			}
-		}
-	}
-
-	/**
-	 * Since WordPress doesn't properly handle position ordering of post type admin menu entries located in submenus,
-	 * we need to manually order them.
-	 *
-	 * We will hook in after all the core logic has been applied to the submenu items.
-	 *
-	 * Note: This function use the $submenu global variable directly and therefore might break in a future version of WP.
+	 * Note: This function uses the $submenu global variable directly and therefore might
+	 * break in a future version of WP.
 	 *
 	 * @return void
 	 */
 	public function ensure_submenu_items_order() {
 		global $submenu;
 
-		// We are only interested in this top-level menu item.
-		if ( empty( $submenu['edit.php?post_type=wpcd_app_server'] ) || ! is_array( $submenu['edit.php?post_type=wpcd_app_server'] ) ) {
+		if ( empty( $submenu['simplestack'] ) || ! is_array( $submenu['simplestack'] ) ) {
 			return;
 		}
 
-		// This is the order we are after for these submenu items.
-		// Any other items that are present will be left at the end, in their existing relative order.
+		/*
+		 * The order these submenu slugs should appear in. Anything registered by another
+		 * component is kept and appended after these, in its existing relative order.
+		 */
 		$submenus_order = apply_filters(
 			'wpcd_main_menu_submenus_order',
 			array(
-				'edit.php?post_type=wpcd_app_server'     => 10,
-				'edit-tags.php?taxonomy=wpcd_app_server_group&amp;post_type=wpcd_app_server' => 20,
-				'edit.php?post_type=wpcd_app'            => 30,
-				'edit-tags.php?taxonomy=wpcd_app_group&post_type=wpcd_app' => 40,
-				'edit.php?s&post_status=all&post_type=wpcd_app&app_type=wordpress-app&filter_action=' . 'Filter' => 50,
-				'edit.php?post_type=wpcd_cloud_provider' => 60,
-				'edit.php?post_type=wpcd_team'           => 70,
-				'edit.php?post_type=wpcd_ssh_log'        => 80,
-				'edit.php?post_type=wpcd_command_log'    => 90,
-				'edit.php?post_type=wpcd_pending_log'    => 100,
-				'edit.php?post_type=wpcd_error_log'      => 110,
+				'simplestack'                                              => 10,
+				'simplestack-sites'                                        => 20,
+				'simplestack-providers'                                    => 30,
+				'simplestack-activity'                                     => 40,
+				'edit-tags.php?taxonomy=wpcd_app_group&post_type=wpcd_app'  => 45,
+				'edit.php?post_type=wpcd_notify_user'                      => 47,
+				'wpcd_settings'                                            => 50,
+				'wpcd_faq_and_help'                                        => 60,
 			)
 		);
 
-		// Sort the submenus by their order value, ascending.
 		asort( $submenus_order, SORT_NUMERIC );
 
-		$temp_submenu       = $submenu['edit.php?post_type=wpcd_app_server'];
-		$temp_submenu_pages = array_column( $temp_submenu, 2 );
-		$new_submenu        = array();
-		foreach ( $submenus_order as $item_page => $item_order ) {
-			$found_key = array_search( $item_page, $temp_submenu_pages );
-			if ( false !== $found_key && (int) $found_key >= 0 ) {
-				if ( ! empty( $temp_submenu[ $found_key ] ) ) {
-					$new_submenu[] = $temp_submenu[ $found_key ];
-					unset( $temp_submenu[ $found_key ] );
+		$existing  = $submenu['simplestack'];
+		$by_slug   = array();
+		$ordered   = array();
+
+		foreach ( $existing as $entry ) {
+			if ( isset( $entry[2] ) ) {
+				$by_slug[ $entry[2] ] = $entry;
+			}
+		}
+
+		foreach ( array_keys( $submenus_order ) as $slug ) {
+			if ( isset( $by_slug[ $slug ] ) ) {
+				$ordered[] = $by_slug[ $slug ];
+				unset( $by_slug[ $slug ] );
+			}
+		}
+
+		/* Append anything the filter did not mention. */
+		foreach ( $by_slug as $entry ) {
+			$ordered[] = $entry;
+		}
+
+		$submenu['simplestack'] = $ordered; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	}
+
+	/**
+	 * Register the SimpleStack admin menu and its screens.
+	 *
+	 * Phase 4 replaced the CPT-driven menu: the server and site post types are no longer
+	 * `show_in_menu`, so the whole UI lives under one top-level entry whose screens all
+	 * mount the React client. Each submenu maps onto a hash route (see
+	 * `simplestack_screen_routes()`), which is how a top-level click lands on the right
+	 * section without a second routing layer in PHP.
+	 *
+	 * The bundled Meta Box settings page (`wpcd_settings`) is re-parented here so it stays
+	 * reachable once the server CPT menu is hidden.
+	 *
+	 * Action hook: admin_menu
+	 */
+	public function add_simplestack_menu_page() {
+
+		add_menu_page(
+			'SimpleStack',
+			'SimpleStack',
+			'wpcd_manage_servers',
+			'simplestack',
+			array( &$this, 'render_simplestack_app' ),
+			'dashicons-cloud',
+			3
+		);
+
+		$sites_label = defined( 'WPCD_WPAPP_MENU_NAME' ) ? WPCD_WPAPP_MENU_NAME : __( 'Sites', 'wpcd' );
+
+		$pages = array(
+			array( 'simplestack', __( 'Servers', 'wpcd' ), 'wpcd_manage_servers' ),
+			array( 'simplestack-sites', $sites_label, 'wpcd_manage_apps' ),
+			array( 'simplestack-providers', __( 'Providers', 'wpcd' ), 'manage_options' ),
+			array( 'simplestack-activity', __( 'Activity', 'wpcd' ), 'wpcd_manage_logs' ),
+		);
+
+		foreach ( $pages as $page ) {
+			add_submenu_page(
+				'simplestack',
+				$page[1],
+				$page[1],
+				$page[2],
+				$page[0],
+				array( &$this, 'render_simplestack_app' )
+			);
+		}
+
+		/*
+		 * Two native admin screens used to hang off the server post type and the log post
+		 * type. Both parents are hidden now, so without an explicit entry site grouping and
+		 * alert-recipient configuration would become unreachable. Slugs containing `.php`
+		 * are used verbatim by wp-admin, which is how core links taxonomy screens.
+		 */
+		add_submenu_page(
+			'simplestack',
+			__( 'App Groups', 'wpcd' ),
+			__( 'App Groups', 'wpcd' ),
+			'wpcd_manage_groups',
+			'edit-tags.php?taxonomy=wpcd_app_group&post_type=wpcd_app'
+		);
+
+		add_submenu_page(
+			'simplestack',
+			__( 'Notifications', 'wpcd' ),
+			__( 'Notifications', 'wpcd' ),
+			'wpcd_manage_servers',
+			'edit.php?post_type=wpcd_notify_user'
+		);
+
+		if ( ! defined( 'WPCD_HIDE_HELP_TAB' ) || ! WPCD_HIDE_HELP_TAB ) {
+			add_submenu_page(
+				'simplestack',
+				__( 'Help', 'wpcd' ),
+				__( 'Help', 'wpcd' ),
+				'manage_options',
+				'wpcd_faq_and_help',
+				array( &$this, 'wpcd_get_faq_and_help_text_page_callback' )
+			);
+		}
+	}
+
+	/**
+	 * Map each React screen slug onto its initial hash route.
+	 *
+	 * @return array Page slug => hash route.
+	 */
+	public function simplestack_screen_routes() {
+		return array(
+			'simplestack'           => '/servers',
+			'simplestack-sites'     => '/sites',
+			'simplestack-providers' => '/settings/providers',
+			'simplestack-activity'  => '/activity',
+		);
+	}
+
+	/**
+	 * Resolve the hash route for the screen currently being rendered.
+	 *
+	 * Both the container's `data-route` and the inline bootstrap object carry this so the
+	 * client can seed an empty hash on first load without re-reading the query string.
+	 *
+	 * @return string Hash route, always starting with a slash.
+	 */
+	public function current_simplestack_route() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen lookup.
+		$slug   = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : 'simplestack';
+		$routes = $this->simplestack_screen_routes();
+
+		return isset( $routes[ $slug ] ) ? $routes[ $slug ] : '/servers';
+	}
+
+	/**
+	 * Print the mount point the React client attaches to.
+	 *
+	 * The bundle is only enqueued when the Vite manifest is present, so when the
+	 * build output is missing we would otherwise render a permanently blank page.
+	 * Emit an operator-facing message instead of failing silently.
+	 */
+	public function render_simplestack_app() {
+		if ( ! current_user_can( 'wpcd_manage_servers' ) && ! current_user_can( 'wpcd_manage_apps' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'wpcd' ) );
+		}
+
+		echo '<div id="simplestack-admin" class="simplestack-root" data-route="' . esc_attr( $this->current_simplestack_route() ) . '"></div>';
+
+		if ( false === $this->get_simplestack_manifest() ) {
+			echo '<div class="notice notice-error"><p>';
+			echo esc_html__( 'The SimpleStack admin bundle is missing. Run `npm ci && npm run build` in the plugin directory, then reload this page.', 'wpcd' );
+			echo '</p></div>';
+		}
+	}
+
+	/**
+	 * Decide whether a given admin page hook belongs to the SimpleStack app.
+	 *
+	 * Only the screens that print the React container count. The bundled settings and help
+	 * pages live under the same parent menu but render their own markup, so the bundle must
+	 * not be enqueued for them.
+	 *
+	 * @param string $hook The admin page hook suffix.
+	 *
+	 * @return bool True when the current screen is rendered by the React client.
+	 */
+	public function is_simplestack_screen( $hook ) {
+		if ( ! is_string( $hook ) || '' === $hook ) {
+			return false;
+		}
+
+		static $react_screens = null;
+
+		if ( null === $react_screens ) {
+			$react_screens = array( 'toplevel_page_simplestack' );
+
+			foreach ( array_keys( $this->simplestack_screen_routes() ) as $slug ) {
+				$react_screens[] = 'simplestack_page_' . $slug;
+			}
+		}
+
+		return in_array( $hook, $react_screens, true );
+	}
+
+	/**
+	 * Read and cache the Vite build manifest for this request.
+	 *
+	 * Returns false when the build output is absent or unreadable. Callers must
+	 * treat that as "no bundle" rather than an error: a dev checkout without Node
+	 * must never fatal the admin.
+	 *
+	 * @return array|false Manifest array keyed by source path, or false.
+	 */
+	protected function get_simplestack_manifest() {
+		if ( null !== $this->simplestack_manifest ) {
+			return $this->simplestack_manifest;
+		}
+
+		$this->simplestack_manifest = false;
+
+		$manifest_path = wpcd_path . 'assets/dist/.vite/manifest.json';
+
+		if ( ! file_exists( $manifest_path ) || ! is_readable( $manifest_path ) ) {
+			return false;
+		}
+
+		$raw      = file_get_contents( $manifest_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin asset.
+		$manifest = ( false === $raw ) ? null : json_decode( $raw, true );
+
+		if ( ! is_array( $manifest ) || empty( $manifest ) ) {
+			return false;
+		}
+
+		$this->simplestack_manifest = $manifest;
+
+		return $this->simplestack_manifest;
+	}
+
+	/**
+	 * Extract the cache-busting token Vite embedded in an emitted file name.
+	 *
+	 * @param string $file Manifest `file` value, e.g. assets/admin-BzxjS_p_.js.
+	 *
+	 * @return string Hash token, or the plugin version when none is found.
+	 */
+	protected function get_simplestack_asset_version( $file ) {
+		if ( preg_match( '/-([A-Za-z0-9_-]{8,})\.[a-z]+$/', (string) $file, $matches ) ) {
+			return $matches[1];
+		}
+
+		return wpcd_version;
+	}
+
+	/**
+	 * Resolve the entry chunk plus every stylesheet the manifest references.
+	 *
+	 * With `cssCodeSplit: false` Vite publishes the stylesheet as its own manifest
+	 * chunk instead of listing it on the entry, so both shapes have to be handled.
+	 *
+	 * @param array $manifest Parsed manifest.
+	 *
+	 * @return array{script: string, styles: string[]}|false Entry asset paths, or false.
+	 */
+	protected function get_simplestack_entry_assets( array $manifest ) {
+		$entry_key = '';
+
+		foreach ( array_keys( $manifest ) as $key ) {
+			if ( false !== strpos( (string) $key, 'src/admin/index.jsx' ) ) {
+				$entry_key = $key;
+				break;
+			}
+		}
+
+		if ( '' === $entry_key || empty( $manifest[ $entry_key ]['file'] ) ) {
+			return false;
+		}
+
+		$styles = array();
+
+		if ( ! empty( $manifest[ $entry_key ]['css'] ) && is_array( $manifest[ $entry_key ]['css'] ) ) {
+			$styles = $manifest[ $entry_key ]['css'];
+		}
+
+		if ( empty( $styles ) ) {
+			foreach ( $manifest as $chunk ) {
+				if ( ! empty( $chunk['file'] ) && '.css' === substr( (string) $chunk['file'], -4 ) ) {
+					$styles[] = $chunk['file'];
 				}
 			}
 		}
 
-		// Append any leftovers.
-		if ( ! empty( $temp_submenu ) ) {
-			$new_submenu = array_merge( $new_submenu, $temp_submenu );
-		}
-
-		// Overwrite the global variable.
-		$submenu['edit.php?post_type=wpcd_app_server'] = $new_submenu;
+		return array(
+			'script' => $manifest[ $entry_key ]['file'],
+			'styles' => array_values( array_unique( $styles ) ),
+		);
 	}
 
 	/**
-	 * Main Menu Item: Make the wpcd_app_server post type the main menu item
-	 * by adding another option below it
+	 * Enqueue the compiled SimpleStack admin client on SimpleStack screens only.
+	 *
+	 * Action hook: admin_enqueue_scripts
+	 *
+	 * @param string $hook The admin page hook suffix.
 	 */
-	public function add_main_menu_page() {
-
-		// If a user can manage apps but cannot manage servers, we need to make the parent menu something other than the server CPT.
-		if ( current_user_can( 'wpcd_manage_apps' ) && ( ! current_user_can( 'wpcd_manage_servers' ) ) ) {
-			$parent_page = 'edit.php?post_type=wpcd_app';
-		} else {
-			$parent_page = 'edit.php?post_type=wpcd_app_server';
+	public function enqueue_simplestack_app( $hook ) {
+		if ( ! $this->is_simplestack_screen( $hook ) ) {
+			return;
 		}
 
-		if ( ( ! defined( 'WPCD_HIDE_WPAPP_MENU' ) ) || ( defined( 'WPCD_HIDE_WPAPP_MENU' ) && ! WPCD_HIDE_WPAPP_MENU ) ) {
-			add_submenu_page(
-				$parent_page,
-				( defined( 'WPCD_WPAPP_MENU_NAME' ) ? WPCD_WPAPP_MENU_NAME : __( 'WordPress Sites', 'wpcd' ) ),
-				( defined( 'WPCD_WPAPP_MENU_NAME' ) ? WPCD_WPAPP_MENU_NAME : __( 'WordPress Sites', 'wpcd' ) ),
-				'wpcd_manage_apps',
-				'edit.php?s&post_status=all&post_type=wpcd_app&app_type=wordpress-app&filter_action=' . 'Filter',
-				'',
-				3
+		$manifest = $this->get_simplestack_manifest();
+
+		if ( false === $manifest ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'SimpleStack: assets/dist/.vite/manifest.json is missing; the admin app was not enqueued.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+
+			return;
+		}
+
+		$assets = $this->get_simplestack_entry_assets( $manifest );
+
+		if ( false === $assets ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'SimpleStack: the build manifest has no src/admin/index.jsx entry.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+
+			return;
+		}
+
+		$base_url = wpcd_url . 'assets/dist/';
+
+		foreach ( $assets['styles'] as $index => $style ) {
+			wp_enqueue_style(
+				( 0 === $index ) ? 'simplestack-admin' : 'simplestack-admin-' . $index,
+				$base_url . $style,
+				array(),
+				$this->get_simplestack_asset_version( $style )
 			);
 		}
 
-		add_submenu_page(
-			'edit.php?post_type=wpcd_app_server',
-			__( 'App Groups', 'wpcd' ),
-			__( 'App Groups', 'wpcd' ),
-			'wpcd_manage_groups',
-			'edit-tags.php?taxonomy=wpcd_app_group&post_type=wpcd_app',
-			'',
-			4
+		wp_enqueue_script(
+			'simplestack-admin',
+			$base_url . $assets['script'],
+			array( 'wp-i18n' ),
+			$this->get_simplestack_asset_version( $assets['script'] ),
+			true
 		);
 
-		if ( ! defined( 'WPCD_HIDE_HELP_TAB' ) || ( defined( 'WPCD_HIDE_HELP_TAB' ) && ! WPCD_HIDE_HELP_TAB ) ) {
-			add_submenu_page(
-				'edit.php?post_type=wpcd_app_server',
-				__( 'FAQ & Help', 'wpcd' ),
-				__( 'FAQ & Help', 'wpcd' ),
-				'manage_options',
-				'wpcd_faq_and_help',
-				array( $this, 'wpcd_get_faq_and_help_text_page_callback' ),
-				20
-			);
-		}
+		$bootstrap = array(
+			'root'      => '#simplestack-admin',
+			'restUrl'   => esc_url_raw( rest_url( 'simple-stack/v1/' ) ),
+			'nonce'     => wp_create_nonce( 'wp_rest' ),
+			'namespace' => 'simple-stack/v1',
+			'version'   => wpcd_version,
+			'userId'    => get_current_user_id(),
+			'route'     => $this->current_simplestack_route(),
+		);
 
-		// Sub-menu entries will be populated by each log CPT via their 'show_in_menu' config entry.
-		add_menu_page(
-			__( 'Server Alerts', 'wpcd' ),
-			__( 'Server Alerts', 'wpcd' ),
-			'wpcd_manage_logs',
-			'edit.php?post_type=wpcd_notify_log',
-			'',
-			'dashicons-bell',
-			51
+		wp_add_inline_script(
+			'simplestack-admin',
+			'window.simplestackAdmin = ' . wp_json_encode( $bootstrap ) . ';',
+			'before'
 		);
 	}
 
@@ -339,10 +539,17 @@ class WP_CLOUD_DEPLOY {
 	public function handle_admin_current_main_menu( $parent_file ) {
 		global $current_screen;
 
-		// If we are looking at something related to the wpcd_app CPT,
-		// the parent should be the wpcd_app_server menu item since we've added submenu item under it.
-		if ( 'wpcd_app' === $current_screen->post_type ) {
-			$parent_file = 'edit.php?post_type=wpcd_app_server';
+		if ( ! is_object( $current_screen ) ) {
+			return $parent_file;
+		}
+
+		/*
+		 * The server, site and alert-recipient post types are no longer top level menus, but
+		 * their screens still exist for direct links. Keep the SimpleStack menu highlighted
+		 * while they are being viewed so the operator never loses their place.
+		 */
+		if ( in_array( $current_screen->post_type, array( 'wpcd_app', 'wpcd_app_server', 'wpcd_notify_user' ), true ) ) {
+			$parent_file = 'simplestack';
 		}
 
 		return $parent_file;
@@ -361,133 +568,107 @@ class WP_CLOUD_DEPLOY {
 	 * @see https://developer.wordpress.org/reference/hooks/submenu_file/.
 	 */
 	public function handle_admin_current_submenu_item( $submenu_file, $parent_file ) {
-		global $submenu_file, $current_screen;
+		global $current_screen;
 
-		// If we are looking at something in under the wpcd_app_server CPT top-level menu item,
-		// we have work to do.
-		if ( 'edit.php?post_type=wpcd_app_server' === $parent_file ) {
-			if ( 'wpcd_app_group' == $current_screen->taxonomy ) {
-				// If we are dealing with the wpcd_app_group taxonomy,
-				// set as the current submenu item the 'App Groups' page.
-				$submenu_file = 'edit-tags.php?taxonomy=wpcd_app_group&post_type=wpcd_app';
-			} elseif ( 'wpcd_app' === $current_screen->post_type
-				&& 'edit' === $current_screen->base
-				&& ! empty( $_GET['app_type'] ) && ! empty( $_GET['filter_action'] )
-				&& 'wordpress-app' === $_GET['app_type'] ) {
+		if ( 'simplestack' !== $parent_file || ! is_object( $current_screen ) ) {
+			return $submenu_file;
+		}
 
-				// Set as the current submenu item the WordPress Sites filter menu item.
-				$submenu_file = 'edit.php?s&post_status=all&post_type=wpcd_app&app_type=wordpress-app&filter_action=' . 'Filter';
-			}
+		if ( 'wpcd_app_server' === $current_screen->post_type ) {
+			$submenu_file = 'simplestack';
+		} elseif ( 'wpcd_app' === $current_screen->post_type ) {
+			$submenu_file = 'simplestack-sites';
+		} elseif ( 'edit-tags' === $current_screen->base ) {
+			/* The app-group taxonomy is its own submenu; keep it highlighted, not "Sites". */
+			$submenu_file = 'edit-tags.php?taxonomy=wpcd_app_group&post_type=wpcd_app';
+		} elseif ( 'wpcd_notify_user' === $current_screen->post_type ) {
+			$submenu_file = 'edit.php?post_type=wpcd_notify_user';
 		}
 
 		return $submenu_file;
 	}
 
 	/**
-	 * Construct the faq and help text to show on the FAQ & Help menu page.
+	 * Send legacy CPT list and edit bookmarks to the matching React route.
+	 *
+	 * The server and site post types are no longer menu entries, but their screens are
+	 * still routable by URL. Rather than leave an operator on a bare wp-admin list table
+	 * with no way back, redirect them to the hash route that replaces it.
+	 *
+	 * Action hook: load-edit.php, load-post.php
+	 */
+	public function redirect_legacy_cpt_screens() {
+
+		if ( ! is_admin() || wp_doing_ajax() ) {
+			return;
+		}
+
+		/* phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only routing decision. */
+		$post_type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : '';
+		$post_id   = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0;
+		/* phpcs:enable WordPress.Security.NonceVerification.Recommended */
+
+		if ( '' === $post_type && $post_id > 0 ) {
+			$post_type = (string) get_post_type( $post_id );
+		}
+
+		$map = array(
+			'wpcd_app_server' => array( 'simplestack', '/servers' ),
+			'wpcd_app'        => array( 'simplestack-sites', '/sites' ),
+		);
+
+		if ( ! isset( $map[ $post_type ] ) ) {
+			return;
+		}
+
+		$page  = $map[ $post_type ][0];
+		$route = $map[ $post_type ][1];
+
+		if ( $post_id > 0 ) {
+			$route .= '/' . $post_id;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=' . $page . '#' . $route ) );
+		exit;
+	}
+
+	/**
+	 * Render the Help screen.
+	 *
+	 * The upstream page was a directory of wpclouddeploy.com marketing links. SimpleStack
+	 * is internal-only, so this is a short operator reference instead: where the screens
+	 * live, what the REST layer guarantees, and how to run the build.
 	 */
 	public function wpcd_get_faq_and_help_text_page_callback() {
-		$help = '<div class="wpcd_faq_help_sec"><h1 class="wp-heading-inline">FAQ & Help</h1>';
+		$help = '<div class="wpcd_faq_help_sec"><h1 class="wp-heading-inline">SimpleStack Help</h1>';
 
-		$help .= __( 'Links to commonly requested documentation.', 'wpcd' );
-		$help .= '<br />';
+		$help .= '<p>' . esc_html__( 'SimpleStack is the One Dog Solutions hosting control plane. Every screen is rendered by the bundled React client inside wp-admin; nothing is hosted externally.', 'wpcd' ) . '</p>';
 
-		$help     .= '<div class="wpcd_settings_help_text_wrapper">';
-			$help .= '<div class="wpcd_settings_help_text_left_column">';
+		$help .= '<h2>' . esc_html__( 'Sections', 'wpcd' ) . '</h2>';
+		$help .= '<ul>';
+		$help .= '<li>' . esc_html__( 'Servers - provision, inspect and operate cloud instances.', 'wpcd' ) . '</li>';
+		$help .= '<li>' . esc_html__( 'Sites - deploy and manage WordPress installations on those servers.', 'wpcd' ) . '</li>';
+		$help .= '<li>' . esc_html__( 'Providers - store Vultr, UpCloud or custom server credentials.', 'wpcd' ) . '</li>';
+		$help .= '<li>' . esc_html__( 'Activity - merged command, SSH and error log across every server.', 'wpcd' ) . '</li>';
+		$help .= '</ul>';
 
-				$help .= '<h2>' . __( 'Getting Started', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://wpclouddeploy.com/doc-landing/">' . __( 'Popular articles', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy/introduction-to-wpcloud-deploy/">' . __( 'Quick start', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy/reasons-servers-fail-to-deploy/">' . __( 'Common server deployment issues', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy/server-faqs/">' . __( 'Server FAQs', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/category/release-notes/">' . __( 'Release notes', 'wpcd' ) . '</a>';
+		$help .= '<h2>' . esc_html__( 'Credentials', 'wpcd' ) . '</h2>';
+		$help .= '<p>' . esc_html__( 'API keys and SSH keys are encrypted before they are stored and are never returned by the REST API. The provider screen reports whether a credential is present, not what it is. Rotating a key means entering the new value; leaving the field blank keeps the stored one.', 'wpcd' ) . '</p>';
 
-				$help .= '<h2>' . __( 'Tasks', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-user-guide/enable-or-disable-ssl/">' . __( 'SSL Certificates', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/backups-with-aws-s3/">' . __( 'Backups with AWS S3', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/cloning-sites/">' . __( 'Cloning sites', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/sftp/">' . __( 'sFTP', 'wpcd' ) . '</a>';
-				$help .= '<br />';
+		$help .= '<h2>' . esc_html__( 'Stack', 'wpcd' ) . '</h2>';
+		$help .= '<p>' . esc_html__( 'OpenLiteSpeed only, on Ubuntu 24.04 or 26.04. Default PHP is lsphp84 with lsphp83 and lsphp85 selectable per server. The OpenLiteSpeed web console on port 7080 is restricted to the admin IP configured in Settings and is never opened to the internet.', 'wpcd' ) . '</p>';
 
-				$help .= '<h2>' . __( 'Reading', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://wpclouddeploy.com/how-to-build-a-wordpress-saas-video-course-free/">' . __( 'How To Build A WordPress SaaS - Video Course', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/a-wordpress-server-sizing-guide/">' . __( 'WordPress Server Sizing Guide', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/the-five-levels-of-caching-in-wordpress/">' . __( 'Understanding WordPress Caching', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/page-cache/">' . __( 'Our NGINX Page Cache', 'wpcd' ) . '</a>';
+		$help .= '<h2>' . esc_html__( 'Rebuilding the admin bundle', 'wpcd' ) . '</h2>';
+		$help .= '<p><code>npm ci &amp;&amp; npm run build &amp;&amp; npm run verify:css</code></p>';
+		$help .= '<p>' . esc_html__( 'The build is committed to assets/dist so the plugin runs without Node. If this message is visible on the Servers screen, the bundle is missing or stale.', 'wpcd' ) . '</p>';
 
-			$help .= '</div>';
-
-			$help     .= '<div class="wpcd_settings_help_text_middle_column">';
-				$help .= '<h2>' . __( 'Teams', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-teams/introduction-to-teams/">' . __( 'Introduction', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-teams/preparing-users-for-a-team/">' . __( 'Preparing users for a team', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-teams/creating-teams/">' . __( 'Creating teams', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-teams/assigning-teams/">' . __( 'Assigning teams', 'wpcd' ) . '</a>';
-
-				$help .= '<h2>' . __( 'Components', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-addons-and-upgrades/multisite-introduction/">' . __( 'Multisite', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/server-sync-introduction/">' . __( 'Server Sync', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/custom-servers-bring-your-own-server/">' . __( 'Custom Servers (Bring Your Own Server)', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/virtual-cloud-providers/">' . __( 'Virtual Providers', 'wpcd' ) . '</a>';
-
-				$help .= '<h2>' . __( 'Developers', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://wpclouddeploy.com/how-to-add-custom-functionality-to-wpcd-part-1/">' . __( 'Adding custom functionality part 1', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/tutorial-add-custom-functionality-to-wpcd-part-2/">' . __( 'Adding custom functionality part 2', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/tutorial-add-custom-functionality-to-wpcd-part-3/">' . __( 'Adding custom functionality part 3', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/tutorial-add-custom-functionality-to-wpcd-part-4/">' . __( 'Adding custom functionality part 4', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-			$help     .= '</div>';
-
-			$help     .= '<div class="wpcd_settings_help_text_right_column">';
-				$help .= '<h2>' . __( 'Videos', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://www.youtube.com/channel/UC-OM3lYLHMWYqkGLLy4eYFA" class="wpcd_help_button wpcd_help_button_videos">' . __( 'Videos', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-
-				$help .= '<br />';
-				$help .= '<h2>' . __( 'More documentation', 'wpcd' ) . '</h2>';
-
-				$help .= '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy/introduction-to-wpcloud-deploy/" class="wpcd_help_button wpcd_help_button_all_docs">' . __( 'View All Documentation', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<br />';
-
-				$help .= '<h2>' . __( 'Additional Resources', 'wpcd' ) . '</h2>';
-				$help .= '<a href="https://www.facebook.com/groups/wp.linux.support">' . __( 'Join the private facebook group', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://twitter.com/wpclouddeploy">' . __( 'Subscribe to our Twitter feed', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-				$help .= '<a href="https://wpclouddeploy.com/mailpoet-group/basic-subscription-form/">' . __( 'Get Email Updates', 'wpcd' ) . '</a>';
-
-				$help .= '<br />';
-				$help .= '<h2>' . __( 'Support', 'wpcd' ) . '</h2>';
-
-				$help .= '<a href="https://wpclouddeploy.com/support/" class="wpcd_help_button wpcd_help_button_all_support">' . __( 'All Support Options', 'wpcd' ) . '</a>';
-				$help .= '<br />';
-
-			$help .= '</div>';
+		$help .= '<h2>' . esc_html__( 'REST namespace', 'wpcd' ) . '</h2>';
+		$help .= '<p><code>simple-stack/v1/</code></p>';
+		$help .= '<p>' . esc_html__( 'Every route requires an authenticated user with the manage_options capability. There are no public endpoints.', 'wpcd' ) . '</p>';
 
 		$help .= '</div>';
-		$help .= '</div>';
 
-		echo apply_filters( 'wpcd_settings_help_tab_text', $help );
+	echo apply_filters( 'wpcd_settings_help_tab_text', $help );
 	}
 
 
@@ -581,9 +762,9 @@ class WP_CLOUD_DEPLOY {
 			wp_enqueue_style( 'wpcd-common-admin', wpcd_url . 'assets/css/wpcd-common-admin.css', array(), wpcd_scripts_version );
 		}
 
-		/* Style sheet for the settings screen. */
-		if ( 'wpcd_app_server_page_wpcd_settings' === $hook ||
-			'wpcd_app_server_page_wpcd_faq_and_help' === $hook ) {
+		/* Style sheet for the settings and help screens, now nested under SimpleStack. */
+		if ( 'simplestack_page_wpcd_settings' === $hook ||
+			'simplestack_page_wpcd_faq_and_help' === $hook ) {
 			wp_enqueue_style( 'wpcd-admin-settings', wpcd_url . 'assets/css/wpcd-admin-settings.css', array(), wpcd_scripts_version );
 			if ( defined( 'WPCD_SKIP_SERVER_SIZES_SETTING' ) && WPCD_SKIP_SERVER_SIZES_SETTING ) {
 				wp_enqueue_style( 'wpcd-admin-settings-server-sizes', wpcd_url . 'assets/css/wpcd-admin-settings-server-sizes.css', array(), wpcd_scripts_version );
@@ -643,43 +824,6 @@ class WP_CLOUD_DEPLOY {
 		$terminal_fg_color = wpcd_get_option( 'wordpress_app_terminal_foreground_color' );
 		$terminal_fg_color = empty( $terminal_fg_color ) ? WPCD_TERMINAL_FG_COLOR : $terminal_fg_color;
 
-		// Get brand color settings for the front-end.
-		$primary_brand_color_fe = wpcd_get_option( 'wordpress_app_fe_primary_brand_color' );
-		$primary_brand_color_fe = empty( $primary_brand_color_fe ) ? WPCD_FE_PRIMARY_BRAND_COLOR : $primary_brand_color_fe;
-
-		$secondary_brand_color_fe = wpcd_get_option( 'wordpress_app_fe_secondary_brand_color' );
-		$secondary_brand_color_fe = empty( $secondary_brand_color_fe ) ? WPCD_FE_SECONDARY_BRAND_COLOR : $secondary_brand_color_fe;
-
-		$tertiary_brand_color_fe = wpcd_get_option( 'wordpress_app_fe_tertiary_brand_color' );
-		$tertiary_brand_color_fe = empty( $tertiary_brand_color_fe ) ? WPCD_FE_TERTIARY_BRAND_COLOR : $tertiary_brand_color_fe;
-
-		$accent_bg_color_fe = wpcd_get_option( 'wordpress_app_fe_accent_background_color' );
-		$accent_bg_color_fe = empty( $accent_bg_color_fe ) ? WPCD_FE_ACCENT_BG_COLOR : $accent_bg_color_fe;
-
-		$medium_accent_bg_color_fe = wpcd_get_option( 'wordpress_app_fe_medium_accent_background_color' );
-		$medium_accent_bg_color_fe = empty( $medium_accent_bg_color_fe ) ? WPCD_FE_MEDIUM_ACCENT_BG_COLOR : $medium_accent_bg_color_fe;
-
-		$medium_bg_color_fe = wpcd_get_option( 'wordpress_app_fe_medium_background_color' );
-		$medium_bg_color_fe = empty( $medium_bg_color_fe ) ? WPCD_FE_MEDIUM_BG_COLOR : $medium_bg_color_fe;
-
-		$light_bg_color_fe = wpcd_get_option( 'wordpress_app_fe_light_background_color' );
-		$light_bg_color_fe = empty( $light_bg_color_fe ) ? WPCD_FE_LIGHT_BG_COLOR : $light_bg_color_fe;
-
-		$alternate_accent_bg_color_fe = wpcd_get_option( 'wordpress_app_fe_alternate_accent_background_color' );
-		$alternate_accent_bg_color_fe = empty( $alternate_accent_bg_color_fe ) ? WPCD_FE_ALTERNATE_ACCENT_BG_COLOR : $alternate_accent_bg_color_fe;
-
-		$positive_color_fe = wpcd_get_option( 'wordpress_app_fe_positive_color' );
-		$positive_color_fe = empty( $positive_color_fe ) ? WPCD_FE_POSITIVE_COLOR : $positive_color_fe;
-
-		$negative_color_fe = wpcd_get_option( 'wordpress_app_fe_negative_color' );
-		$negative_color_fe = empty( $negative_color_fe ) ? WPCD_FE_NEGATIVE_COLOR : $negative_color_fe;
-
-		$alt_negative_color_fe = wpcd_get_option( 'wordpress_app_fe_alt_negative_color' );
-		$alt_negative_color_fe = empty( $alt_negative_color_fe ) ? WPCD_FE_ALT_NEGATIVE_COLOR : $alt_negative_color_fe;
-
-		$white_color_fe = wpcd_get_option( 'wordpress_app_fe_white_color' );
-		$white_color_fe = empty( $white_color_fe ) ? WPCD_FE_WHITE_COLOR : $white_color_fe;
-
 		/* Global style sheet. */
 		wp_enqueue_style( 'wpcd-global-css', wpcd_url . 'assets/css/wpcd-global.css', array(), wpcd_scripts_version );
 
@@ -698,20 +842,7 @@ class WP_CLOUD_DEPLOY {
 			--wpcd-alt-negative-color: {$alt_negative_color};
 			--wpcd-white-color: {$white_color};
 			--wpcd-terminal-background-color: {$terminal_bg_color};			
-			--wpcd-terminal-foreground-color: {$terminal_fg_color};						
-
-			--wpcd-front-end-primary-brand-color: {$primary_brand_color_fe};
-			--wpcd-front-end-secondary-brand-color: {$secondary_brand_color_fe};
-			--wpcd-front-end-tertiary-brand-color: {$tertiary_brand_color_fe};
-			--wpcd-front-end-medium-accent-background-color: {$medium_accent_bg_color_fe};
-			--wpcd-front-end-accent-background-color: {$accent_bg_color_fe};
-			--wpcd-front-end-medium-background-color: {$medium_bg_color_fe};
-			--wpcd-front-end-light-background-color: {$light_bg_color_fe};
-			--wpcd-front-end-alternate-accent-background-color: {$alternate_accent_bg_color_fe};
-			--wpcd-front-end-positive-color: {$positive_color_fe};
-			--wpcd-front-end-negative-color: {$negative_color_fe};
-			--wpcd-front-end-alt-negative-color: {$alt_negative_color_fe};
-			--wpcd-front-end-white-color: {$white_color_fe};
+			--wpcd-terminal-foreground-color: {$terminal_fg_color};
 		}";
 
 		/* Add some global css. */
@@ -782,10 +913,9 @@ class WP_CLOUD_DEPLOY {
 	 * @return array
 	 */
 	public static function get_webserver_list() {
+		// SimpleStack is an OpenLiteSpeed-only stack. nginx is no longer supported.
 		$webserver_list = array(
-			'nginx' => __( 'NGINX', 'wpcd' ),
-			'ols'   => __( 'OpenLiteSpeed (Beta)', 'wpcd' ),
-			// 'ols-enterprise' => __( 'LiteSpeed Enterprise (Beta)', 'wpcd' ),
+			'ols' => __( 'OpenLiteSpeed', 'wpcd' ),
 		);
 		return apply_filters( 'wpcd_webserver_list', $webserver_list );
 	}
@@ -1201,34 +1331,21 @@ class WP_CLOUD_DEPLOY {
 	}
 
 	/**
-	 * Remove digital ocean from array of providers.
+	 * Hide the Digital Ocean provider unless it has been explicitly re-enabled in settings.
+	 *
+	 * SimpleStack ships Vultr and UpCloud as its supported providers. The Digital Ocean
+	 * class is kept in the tree for legacy servers but is not offered to new ones.
 	 *
 	 * Filter hook: wpcd_get_cloud_providers
 	 *
 	 * @param array $providers_list providers_list.
+	 *
+	 * @return array
 	 */
-	public function remove_digital_ocean_provider( $providers_list ) {
+	public function disable_digital_ocean_provider_by_default( $providers_list ) {
 
-		if ( wpcd_get_early_option( 'hide-do-provider' ) ) {
+		if ( ! wpcd_get_early_option( 'enable-do-provider' ) ) {
 			unset( $providers_list['digital-ocean'] );
-		}
-
-		return $providers_list;
-
-	}
-
-
-	/**
-	 * Add backup digital ocean provider
-	 *
-	 * Filter hook: wpcd_get_cloud_providers
-	 *
-	 * @param array $providers_list providers_list.
-	 */
-	public function add_backup_digital_ocean_provider( $providers_list ) {
-
-		if ( defined( 'WPCD_LOAD_BACKUP_DO_PROVIDER' ) && ( true === WPCD_LOAD_BACKUP_DO_PROVIDER ) ) {
-			$providers_list['digital-ocean-alternate'] = __( 'Digital Ocean Backup', 'wpcd' );
 		}
 
 		return $providers_list;
@@ -1404,30 +1521,4 @@ class WP_CLOUD_DEPLOY {
 
 	}
 
-	/**
-	 * To schedule events for newly created site on WP Multisite.
-	 *
-	 * Action hook: wp_initialize_site
-	 *
-	 * @param  object $new_site new site.
-	 * @param  array  $args args.
-	 * @return void
-	 */
-	public function wpcd_wisdom_custom_options_events( $new_site, $args ) {
-
-		$plugin_name = wpcd_plugin;
-
-		// To check the plugin is active network-wide.
-		if ( is_plugin_active_for_network( $plugin_name ) ) {
-
-			$blog_id = $new_site->blog_id;
-
-			switch_to_blog( $blog_id );
-			if ( ! wp_next_scheduled( 'wpcd_wisdom_custom_options' ) ) {
-				wp_schedule_event( time(), 'twicedaily', 'wpcd_wisdom_custom_options' );
-			}
-			restore_current_blog();
-		}
-
-	}
 }

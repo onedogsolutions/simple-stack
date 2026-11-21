@@ -1,0 +1,1 @@
+PHP classes registered into the WPCD plugin's global class registry; Bash shell templates (v1/v2) executed remotely via SSH; WordPress REST API for AJAX-driven admin screens; jQuery-based JS assets for admin and frontend interactions.

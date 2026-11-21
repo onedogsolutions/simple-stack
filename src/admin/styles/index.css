@@ -1,0 +1,79 @@
+@config "../../../tailwind.config.js";
+
+/*
+ * Tailwind v4 CSS entry point for the SimpleStack admin client.
+ *
+ * Deliberately imported WITHOUT `@import "tailwindcss"`: that shorthand pulls in
+ * Preflight, which resets html, body and * at the document root and would restyle
+ * the whole wp-admin area.
+ *
+ * Preflight is omitted. Theme tokens and utilities are imported explicitly.
+ */
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/*
+ * Hand-written reset, scoped to the mount point.
+ *
+ * `#simplestack-admin` raises specificity above wp-admin's unlayered author rules
+ * (`a`, `h1`, `p`), which is why the base reset lives outside @layer: anything
+ * inside a @layer loses to an unlayered wp-admin declaration regardless of
+ * specificity. Rules that must beat wp-admin go outside @layer, exactly like this.
+ */
+#simplestack-admin,
+#simplestack-admin *,
+#simplestack-admin *::before,
+#simplestack-admin *::after {
+	box-sizing: border-box;
+}
+
+#simplestack-admin h1,
+#simplestack-admin h2,
+#simplestack-admin h3,
+#simplestack-admin h4,
+#simplestack-admin p,
+#simplestack-admin ul,
+#simplestack-admin ol,
+#simplestack-admin dl {
+	margin: 0;
+	padding: 0;
+}
+
+#simplestack-admin ul,
+#simplestack-admin ol {
+	list-style: none;
+}
+
+#simplestack-admin img,
+#simplestack-admin svg {
+	display: block;
+	max-width: 100%;
+}
+
+#simplestack-admin a {
+	text-decoration: none;
+}
+
+#simplestack-admin button {
+	font: inherit;
+	cursor: pointer;
+}
+
+#simplestack-admin table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+/* Utility-shaped helpers that must survive wp-admin's unlayered table/input rules. */
+#simplestack-admin .ss-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}

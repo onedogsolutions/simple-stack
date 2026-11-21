@@ -17,15 +17,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/* Include traits */
 	use wpcd_wpapp_after_prepare_server;
 	use wpcd_wpapp_tabs_security;
-	use wpcd_wpapp_metaboxes_app;
-	use wpcd_wpapp_metaboxes_server;
 	use wpcd_wpapp_commands_and_logs;
 	use wpcd_wpapp_script_handlers;
 	use wpcd_wpapp_push_commands;
 	use wpcd_wpapp_admin_column_data;
 	use wpcd_wpapp_backup_functions;
 	use wpcd_wpapp_upgrade_functions;
-	use wpcd_wpapp_woocommerce_support;
 	use wpcd_wpapp_unused_functions;
 	use wpcd_wpapp_multi_tenant_app;
 
@@ -168,9 +165,6 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// Ajax Hooks.
 		add_action( "wp_ajax_wpcd_{$this->get_app_name()}", array( &$this, 'ajax_server' ) );       // For ajax calls dealing with servers in wp-admin.
 		add_action( "wp_ajax_wpcd_app_{$this->get_app_name()}", array( &$this, 'ajax_app' ) );      // for ajax calls dealing with apps in wp-admin.
-		if ( wpcd_is_woocommerce_activated() ) {
-			add_action( 'wp_ajax_wpcd_wpapp_frontend', array( &$this, 'ajax_wpapp_frontend' ) );    // for ajax calls from the front-end - code in trait files.
-		}
 
 		// Add welcome message to the settings screen.
 		add_filter( 'wpcd_general_settings_after_welcome_message', array( $this, 'welcome_message_settings' ), 10, 1 );
@@ -189,9 +183,6 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// Delete temp log files.
 		add_action( 'wpcd_wordpress_file_watcher', array( $this, 'file_watcher_delete_temp_files' ) );
-
-		/* Do not allow WooCommerce to redirect to their account page  */
-		add_filter( 'woocommerce_prevent_admin_access', array( $this, 'wc_subscriber_admin_access' ), 20, 1 );
 
 		/*********************************************
 		* Hooks and filters for screens in wp-admin
@@ -224,22 +215,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// Filter hook to add a REMOVE SITE link to the hover action on an app.
 		add_filter( 'post_row_actions', array( $this, 'post_row_actions' ), 10, 2 );
 
-		// Meta box display callback.
-		add_action( 'add_meta_boxes_wpcd_app', array( $this, 'app_admin_add_meta_boxes' ) );
-
-		// Save Meta Values.
-		add_action( 'save_post', array( $this, 'app_admin_save_meta_values' ), 10, 2 );
-
-		// Add primary Metabox.IO metaboxes for the WordPress app into the APP details CPT screen.
-		add_filter( "wpcd_app_{$this->get_app_name()}_metaboxes", array( $this, 'add_meta_boxes' ), 10, 1 );
-
-		// Add misc Metabox.IO metaboxes for the WordPress app into the APP details CPT screen. These will be placed in the sidebar or under the primary boxes.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'add_meta_boxes_misc' ), 10, 1 );
-
-		// Add Metabox.IO metaboxes for the SERVER CPT into the server details CPT screen.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'register_server_metaboxes' ), 10, 1 ); // Register application metabox stub with filter. Note that this is a METABOX.IO filter, not a core WP filter.
-		add_filter( "wpcd_server_{$this->get_app_name()}_metaboxes", array( $this, 'add_meta_boxes_server' ), 10, 1 );
-		add_filter( 'rwmb_meta_boxes', array( $this, 'register_server_metaboxes_misc' ), 10, 1 ); // These will be placed in the sidebar or under the primary boxes.
+		/*
+		 * Meta Box registration is retired as of Phase 4. The server and site screens are
+		 * rendered by the React client, which reads the same schema through the
+		 * `get_tabnames` / `get_tabs` filters (see SimpleStack_REST_Tabs) and dispatches
+		 * through the `*_tab_action` filters below. Nothing here needs Meta Box any more.
+		 */
 
 		// Action hook to fire on new site created on WP Multisite.
 		add_action( 'wp_initialize_site', array( $this, 'wpapp_schedule_events_for_new_site' ), 10, 2 );
@@ -798,7 +779,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public static function get_default_webserver() {
 		$default_web_server = wpcd_get_option( 'wordpress_app_default_webserver' );
 		if ( empty( $default_web_server ) ) {
-			$default_web_server = 'nginx';
+			$default_web_server = 'ols';
 		}
 		return apply_filters( 'wpcd_default_web_server_type', $default_web_server );
 	}
@@ -824,7 +805,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		if ( ! empty( $server_id ) && ( ! is_wp_error( $server_id ) ) ) {
 			$web_server_type = get_post_meta( $server_id, 'wpcd_server_webserver_type', true );
 			if ( empty( $web_server_type ) ) {
-				$web_server_type = 'nginx';
+				$web_server_type = 'ols';
 			}
 		}
 
@@ -2643,10 +2624,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$msg    = null;
 
 		switch ( $action ) {
-			case 'show-log-console':
-				include wpcd_path . 'includes/core/apps/wordpress-app/templates/show-log-console-bare.php';
-				wp_die();
-				break;
+			/* The log console template was retired with the React cutover (Phase 4). */
 			case 'fetch-logs-from-db':
 				// fetch logs only from the db.
 				if ( ! isset( $_POST['params'] ) ) {
@@ -2759,10 +2737,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		/* Get list of directories within specified directory */
 		$dir_path        = wpcd_path . 'includes/core/apps/wordpress-app/scripts';
 		$dir_list        = wpcd_get_dir_list( $dir_path );
-		$scripts_version = wpcd_get_option( "{$this->get_app_name()}_script_version" );
-		if ( empty( $scripts_version ) ) {
-			$scripts_version = 'v1';
-		}
+		$scripts_version = $this->get_configured_scripts_version();
 
 		/* Get list of regions */
 		$provider_regions = $this->add_provider_support();
@@ -2797,64 +2772,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$msg    = null;
 
 		switch ( $action ) {
-			/* Show the popup that asks the admin for app details when installing the wpapp */
-			case 'install-app-popup':
-				/* Which server are we installing on?*/
-				$server_id = filter_input( INPUT_GET, 'server_id', FILTER_VALIDATE_INT );
-				$id        = filter_input( INPUT_GET, 'server_id', FILTER_VALIDATE_INT );
-
-				/* Verify that the user is allowed to add a site. */
-				$user_id     = get_current_user_id();
-				$post_author = get_post( $server_id )->post_author;
-				if ( ! wpcd_user_can( $user_id, 'add_app_wpapp', $server_id ) && $post_author != $user_id ) {
-					$msg = __( 'You don\'t have permission to install WordPress on this server.', 'wpcd' );
-					break;
-				}
-
-				/* Get some data about the server so that the popup template can use it*/
-				$ipv4            = WPCD_SERVER()->get_ipv4_address( $server_id );
-				$server_name     = WPCD_SERVER()->get_server_name( $server_id );
-				$server_provider = WPCD_SERVER()->get_server_provider( $server_id );
-				$temp_sub_domain = WPCD_DNS()->get_full_temp_domain();
-
-				/* Get some defaults froms settings so the popup can use - but only if it's used by wpcd admins. */
-				if ( wpcd_is_admin() ) {
-					$default_wp_user_id   = WPCD()->decrypt( wpcd_get_option( 'wordpress_app_default_wp_user_id' ) );
-					$default_wp_password  = WPCD()->decrypt( wpcd_get_option( 'wordpress_app_default_wp_password' ) );
-					$default_wp_email     = wpcd_get_option( 'wordpress_app_default_wp_email' );
-					$default_site_package = wpcd_get_option( 'wordpress_app_sites_default_site_package' );
-					if ( true === boolval( wpcd_get_option( 'wordpress_app_auto_gen_password' ) ) ) {
-						$default_wp_password = wpcd_generate_default_password();
-					}
-				} else {
-					$default_wp_user_id   = '';
-					$default_wp_password  = '';
-					$default_wp_email     = '';
-					$default_wp_password  = '';
-					$default_site_package = '';
-				}
-
-				/* Show the popup template*/
-				include apply_filters( "wpcd_{$this->get_app_name()}_install_app_popup", wpcd_path . 'includes/core/apps/wordpress-app/templates/install-app-popup.php' );
-
-				/* And get out of here */
-				wp_die();
-				break;
-
-			/* Show the popup that asks the admin for server details when installing/deploying a new server */
-			case 'create-popup':
-				$this->ajax_server_handle_create_popup();
-
-				/* And exit */
-				wp_die();
-				break;
-
-			/* Just show the log console template */
-			case 'log-console':
-				include wpcd_path . 'includes/core/apps/wordpress-app/templates/show-log-console.php';
-				wp_die();
-				break;
-
+			/*
+			 * The admin popups (install-app, create server, log console) were rendered by
+			 * templates/ and driven by admin-ajax from the legacy jQuery bundle. Phase 4
+			 * replaced them with the React routes, so those actions no longer exist here.
+			 * The public (unauthenticated) deploy form in WPCD_WORDPRESS_APP_PUBLIC still
+			 * uses ajax_server_handle_create_popup() directly and is unaffected.
+			 */
 			/* Called when the admin pushes the install button on the server popup to create/deploy a new server */
 			case 'create':
 				/* Check permissions */
@@ -2873,7 +2797,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 					$webserver = sanitize_text_field( $args['webserver-type'] );
 				}
 				if ( empty( $webserver ) ) {
-					$webserver = 'nginx';
+					$webserver = 'ols';
 				}
 				$os       = sanitize_text_field( $args['os'] );
 				$name     = sanitize_text_field( $args['name'] );
@@ -4182,7 +4106,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			$webserver = sanitize_text_field( $args['webserver-type'] );
 		}
 		if ( empty( $webserver ) ) {
-			$webserver = 'nginx';
+			$webserver = 'ols';
 		}
 		$os       = sanitize_text_field( $args['os'] );
 		$provider = sanitize_text_field( $args['provider'] );
@@ -4676,51 +4600,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @param string $hook The page name hook.
 	 */
 	public function wpapp_enqueue_scripts( $hook ) {
-		if ( in_array( $hook, array( 'post.php' ) ) ) {
-			$screen = get_current_screen();
-			if ( ( is_object( $screen ) && 'wpcd_app' == $screen->post_type ) || WPCD_WORDPRESS_APP_PUBLIC::is_app_edit_page() ) {
-				wp_enqueue_script( 'wpcd-wpapp-admin-common', wpcd_url . 'includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-admin-common.js', array( 'jquery', 'wpcd-magnific' ), wpcd_scripts_version, true );
-				wp_localize_script(
-					'wpcd-wpapp-admin-common',
-					'params',
-					apply_filters(
-						'wpcd_app_script_args',
-						array(
-							'nonce' => wp_create_nonce( 'wpcd-app' ),
-							'i10n'  => array(
-								'loading' => __(
-									'Loading',
-									'wpcd'
-								) . '...',
-							),
-						),
-						'wpcd-wpapp-admin-common'
-					)
-				);
-			}
-
-			if ( ( is_object( $screen ) && ( 'wpcd_app' === $screen->post_type || 'wpcd_app_server' === $screen->post_type ) ) || WPCD_WORDPRESS_APP_PUBLIC::is_app_edit_page() || WPCD_WORDPRESS_APP_PUBLIC::is_server_edit_page() ) {
-				wp_enqueue_script( 'wpcd-wpapp-admin', wpcd_url . 'includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-admin-app.js', array( 'jquery', 'wpcd-magnific' ), wpcd_scripts_version, true );
-				wp_localize_script(
-					'wpcd-wpapp-admin',
-					'params',
-					apply_filters(
-						'wpcd_app_script_args',
-						array(
-							'nonce' => wp_create_nonce( 'wpcd-app' ),
-							'i10n'  => array(
-								'loading' => __(
-									'Loading',
-									'wpcd'
-								) . '...',
-							),
-						),
-						'wpcd-wpapp-admin'
-					)
-				);
-			}
-		}
-
+		/*
+		 * The tabbed edit screens are retired (Phase 4), so the jQuery bundle that drove
+		 * them (wpcd-wpapp-admin-common.js and wpcd-wpapp-admin-app.js, both dependent on
+		 * select2 and magnific-popup) is no longer enqueued. The React client owns those
+		 * screens now and talks to the REST layer instead of admin-ajax.php.
+		 */
 		if ( in_array( $hook, array( 'edit.php' ) ) || in_array( $hook, array( 'post.php' ) ) ) {
 			$screen = get_current_screen();
 			if ( ( is_object( $screen ) && in_array( $screen->post_type, array( 'wpcd_app' ) ) ) || WPCD_WORDPRESS_APP_PUBLIC::is_apps_list_page() || WPCD_WORDPRESS_APP_PUBLIC::is_app_edit_page() ) {
@@ -4892,8 +4777,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function wpapp_admin_init_is_readable() {
 		if ( ! get_transient( 'wpcd_readable_check' ) ) {
-			$dir = wpcd_path . 'includes/core/apps/wordpress-app/scripts/v1/raw/';
-			$url = wpcd_url . 'includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt';
+			/*
+			 * Resolve the directory from the configured script version instead of the
+			 * hard-coded `scripts/v1/` this method used to test. With v2 as the shipped
+			 * default, probing v1 would report "readable" for a folder nobody uses and
+			 * could report "unreadable" for the one that is actually in play.
+			 */
+			$scripts_relative = $this->get_scripts_folder_relative() . $this->get_configured_scripts_version() . '/raw/';
+			$dir              = wpcd_path . $scripts_relative;
+			$url              = wpcd_url . $scripts_relative . '01-prepare_server.txt';
 
 			// Use CURL to check to see if the server is responding for a request for the file defined in the $url var above..
 			$curl_error = false;

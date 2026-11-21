@@ -1,0 +1,1 @@
+Defines the DNS provider, zone, and zone-record custom-table models with their MetaBox registrations, admin/public UI, and per-model REST-like APIs.

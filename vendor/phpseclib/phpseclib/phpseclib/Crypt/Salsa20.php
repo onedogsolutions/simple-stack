@@ -47,12 +47,12 @@ class Salsa20 extends StreamCipher
     protected $key_length = 32; // = 256 bits
 
     /**
-     * @see \phpseclib3\Crypt\Salsa20::crypt()
+     * @see Salsa20::crypt()
      */
     const ENCRYPT = 0;
 
     /**
-     * @see \phpseclib3\Crypt\Salsa20::crypt()
+     * @see Salsa20::crypt()
      */
     const DECRYPT = 1;
 
@@ -156,8 +156,9 @@ class Salsa20 extends StreamCipher
         }
 
         $c = clone $this;
-        $c->setCounter(0);
         $c->usePoly1305 = false;
+        $c->changed = true;
+        $c->setCounter(0);
         $block = $c->encrypt(str_repeat("\0", 256));
         $this->setPoly1305Key(substr($block, 0, 32));
 
@@ -236,7 +237,7 @@ class Salsa20 extends StreamCipher
     /**
      * Encrypts a message.
      *
-     * @see \phpseclib3\Crypt\Common\SymmetricKey::decrypt()
+     * @see SymmetricKey::decrypt()
      * @see self::crypt()
      * @param string $plaintext
      * @return string $ciphertext
@@ -256,7 +257,7 @@ class Salsa20 extends StreamCipher
      * $this->decrypt($this->encrypt($plaintext)) == $this->encrypt($this->encrypt($plaintext)).
      * At least if the continuous buffer is disabled.
      *
-     * @see \phpseclib3\Crypt\Common\SymmetricKey::encrypt()
+     * @see SymmetricKey::encrypt()
      * @see self::crypt()
      * @param string $ciphertext
      * @return string $plaintext
@@ -326,7 +327,7 @@ class Salsa20 extends StreamCipher
             foreach ($blocks as &$block) {
                 $block ^= static::salsa20($this->p1 . pack('V', $i++) . $this->p2);
             }
-
+            unset($block);
             return implode('', $blocks);
         }
 
@@ -366,6 +367,7 @@ class Salsa20 extends StreamCipher
                     foreach ($blocks as &$block) {
                         $block ^= static::salsa20($this->p1 . pack('V', $buffer['counter']++) . $this->p2);
                     }
+                    unset($block);
                 }
                 $encrypted = implode('', $blocks);
                 $temp = static::salsa20($this->p1 . pack('V', $buffer['counter']++) . $this->p2);
@@ -388,6 +390,7 @@ class Salsa20 extends StreamCipher
                 foreach ($blocks as &$block) {
                     $block ^= static::salsa20($this->p1 . pack('V', $buffer['counter']++) . $this->p2);
                 }
+                unset($block);
                 $ciphertext .= implode('', $blocks);
             }
         }
@@ -409,7 +412,7 @@ class Salsa20 extends StreamCipher
             $r1 &= 0xFFFFFFFF;
             $r2 = ($x & 0xFFFFFFFF) >> (32 - $n);
         } else {
-            $x = (int) $x;
+            $x = self::safe_intval($x);
             $r1 = $x << $n;
             $r2 = $x >> (32 - $n);
             $r2 &= (1 << $n) - 1;
@@ -480,7 +483,7 @@ class Salsa20 extends StreamCipher
         }
 
         for ($i = 1; $i <= 16; $i++) {
-            $x[$i] += $z[$i];
+            $x[$i] = self::safe_intval($x[$i] + $z[$i]);
         }
 
         return pack('V*', ...$x);

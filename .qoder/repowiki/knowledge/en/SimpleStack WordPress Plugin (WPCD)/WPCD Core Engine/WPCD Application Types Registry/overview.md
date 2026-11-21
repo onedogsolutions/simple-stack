@@ -1,0 +1,1 @@
+Defines the WPCD application type abstraction and ships concrete app implementations (WordPress, VPN, Stable Diffusion, basic server) plus shared base classes and SSH transport.

@@ -1,0 +1,6 @@
+- Shared logic lives in `raw/9999-common-functions.txt` and is sourced by operational scripts rather than duplicated.
+- Global function names use the `gf_` prefix and global variables use the `gv_` prefix, while locally declared variables inside functions are marked `local` to avoid polluting the global namespace.
+- Operational scripts are plain text templates using `##TOKEN##` placeholders (e.g. `##DOMAIN##`, `##CALLBACK_URL##`) that the PHP engine substitutes before execution.
+- Each script ends by curling a `CALLBACK_URL` so the parent process receives a completion/status signal.
+- Versioned copies under `v1/` and `v2/` keep identical file layouts so the PHP layer can swap script sets without changing paths.
+- Upgrade-related entry points are prefixed with `run_upgrade_` or `run_upgrades_` and delegate to numbered fragments in `raw/`.

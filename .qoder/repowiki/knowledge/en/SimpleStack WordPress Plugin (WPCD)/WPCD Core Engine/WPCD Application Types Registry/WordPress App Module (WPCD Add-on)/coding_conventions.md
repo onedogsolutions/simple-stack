@@ -1,0 +1,4 @@
+- Cross-module singletons are exposed via a `wpcd_init_*()` function hooked to `init` at priority -10 that stores the instance in `WPCD()->classes[...]`, paired with a global accessor function returning it.
+- Behavioral reuse across site and server contexts is implemented as traits under `traits/traits-for-class-wordpress-app/` rather than inheritance, keeping the base `WPCD_WordPress_App` class thin.
+- Provisioning and management logic is kept out of PHP as numbered `.txt` shell templates under `scripts/v1` and `scripts/v2`, with v2 mirroring v1 to support two API versions.
+- Admin and public list-table views follow a consistent pattern: a class file plus optional `views/` subdirectory with `list-table.php` and `edit.php` templates, loaded through a small loader.

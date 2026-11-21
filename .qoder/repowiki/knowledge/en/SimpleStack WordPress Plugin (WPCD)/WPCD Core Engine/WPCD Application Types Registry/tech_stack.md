@@ -1,0 +1,1 @@
+PHP classes implementing a common abstract base; provisioning logic is externalized as numbered `.txt` shell snippets under each app's `scripts/v1` / `scripts/v2/raw/` directories, selected by the engine rather than PHP code.

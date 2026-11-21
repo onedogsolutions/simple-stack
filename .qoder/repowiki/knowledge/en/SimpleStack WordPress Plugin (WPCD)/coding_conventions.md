@@ -1,0 +1,4 @@
+- Plugin-wide constants are defined once at boot in `wpcd.php` and referenced everywhere via uppercase names like `WPCD_PATH`, `WPCD_URL`, `WPCD_VERSION`.
+- Feature modules register themselves through activation/deactivation hooks on their own classes rather than being autoloaded globally.
+- Cloud providers and apps are loaded conditionally via `file_exists` guards so partial checkouts still boot without every provider file present.
+- Admin-facing UIs are split between a React SPA built by Vite (dashboard) and legacy jQuery + PHP `wp_ajax` handlers for older screens.

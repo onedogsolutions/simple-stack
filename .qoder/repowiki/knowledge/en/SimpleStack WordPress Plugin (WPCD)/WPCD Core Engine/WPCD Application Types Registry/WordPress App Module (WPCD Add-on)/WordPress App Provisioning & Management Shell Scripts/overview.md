@@ -1,0 +1,1 @@
+Bash script templates that WPCloud Deploy ships to provision, configure, and manage WordPress sites on Ubuntu servers, organized by v1/v2 API versions.

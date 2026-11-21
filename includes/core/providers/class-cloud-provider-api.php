@@ -184,6 +184,29 @@ class CLOUD_PROVIDER_API {
 	}
 
 	/**
+	 * Return the credential material that identifies the account currently in use.
+	 *
+	 * get_secret_key() is a template most descendants leave empty and get_api_key() is
+	 * empty for providers that do not use an api key at all, so asking only one of them
+	 * returns an empty string and makes two different accounts on the same install look
+	 * identical - which is exactly how a connection test for account A ends up reported
+	 * as a success for account B.  Resolve whichever one the descendant actually filled in.
+	 *
+	 * @return string
+	 */
+	public function get_credential_fingerprint() {
+
+		$secret = (string) $this->get_secret_key();
+
+		if ( '' !== $secret ) {
+			return $secret;
+		}
+
+		return (string) $this->get_api_key();
+
+	}
+
+	/**
 	 * Generate the cache key prefix
 	 */
 	public function set_cache_key_prefix() {
@@ -616,6 +639,35 @@ class CLOUD_PROVIDER_API {
 		}
 
 		return $formatted_text;
+	}
+
+	/**
+	 * Whether this provider authenticates with an api key.
+	 *
+	 * UpCloud is the one shipped provider that answers no: it authenticates with a user
+	 * name and password pair.  Descendant classes that override this must also override
+	 * has_credentials(), because the settings screen uses the two together to decide
+	 * whether the credential fields have been filled in without needing to know which
+	 * fields a given provider uses.
+	 *
+	 * @return bool
+	 */
+	public function uses_api_key() {
+		return true;
+	}
+
+	/**
+	 * Whether the credentials needed to talk to this provider have been entered.
+	 *
+	 * This is deliberately narrower than credentials_available(): it answers only the
+	 * "have the secrets been configured?" question and ignores ssh key material, which
+	 * is stored separately and can legitimately be missing while the credentials are
+	 * already saved.
+	 *
+	 * @return bool
+	 */
+	public function has_credentials() {
+		return ! empty( $this->get_api_key() );
 	}
 
 	/**

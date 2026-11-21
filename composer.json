@@ -1,28 +1,41 @@
 {
-    "name": "structuredmarketsinc/wp-cloud-deploy",
-    "description": "Deploy cloud servers and apps from inside the WordPress Admin dashboard.",
+    "name": "onedogsolutions/simple-stack",
+    "description": "SimpleStack - internal hosting control plane for One Dog Solutions.",
+    "license": "proprietary",
     "authors": [
         {
-            "name": "WPCloudDeploy",
-            "email": "support@wpclouddeploy.com"
+            "name": "One Dog Solutions",
+            "email": "dev@onedogsolutions.com"
         }
     ],
     "type": "wordpress-plugin",
     "require": {
-        "php": "^7.4",
+        "php": ">=8.1",
         "phpseclib/phpseclib": "^3.0"
     },
     "require-dev": {
-        "johnpbloch/wordpress": "^5.8",
-        "cyruscollier/wp-test": "dev-master",
+        "johnpbloch/wordpress": "^6.7",
+        "phpunit/phpunit": "^9.6",
+        "wp-phpunit/wp-phpunit": "^6.7",
+        "yoast/phpunit-polyfills": "^2.0",
         "spatie/phpunit-watcher": "^1.23",
-        "wp-coding-standards/wpcs": "^2.3",
-        "dealerdirect/phpcodesniffer-composer-installer": "^0.7.1"
+        "wp-coding-standards/wpcs": "^3.0",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0"
+    },
+    "scripts": {
+        "lint": "bash bin/lint-php.sh",
+        "lint:sh": "bash bin/lint-sh.sh",
+        "guard": "bash bin/guard-wpcd-prefix.sh",
+        "test": "phpunit"
     },
     "extra": {
         "wordpress-install-dir": "vendor/wordpress/wordpress"
     },
     "config": {
-        "process-timeout": 0
+        "process-timeout": 0,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "johnpbloch/wordpress-core-installer": true
+        }
     }
 }

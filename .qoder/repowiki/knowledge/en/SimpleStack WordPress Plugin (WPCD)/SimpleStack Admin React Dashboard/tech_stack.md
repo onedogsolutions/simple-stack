@@ -1,0 +1,1 @@
+React 18 (`react-dom/client` `createRoot` + `StrictMode`), Tailwind CSS utility classes, vanilla `fetch` for HTTP, no external router or state library — all routing is hash-based via `window.location.hash` to coexist with wp-admin's history.

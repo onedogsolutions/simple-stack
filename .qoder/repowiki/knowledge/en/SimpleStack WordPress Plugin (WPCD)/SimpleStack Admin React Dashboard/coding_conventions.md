@@ -1,0 +1,6 @@
+- Route patterns use colon-prefixed segments (`:id`) and are matched by the local `matchRoute` helper rather than a third-party router.
+- Navigation goes through `navigate(path)` from `lib/router.js`, which writes `window.location.hash` instead of using `pushState`.
+- All REST calls go through the typed `api.*` namespace in `lib/api.js`, which normalizes responses by unwrapping the `{ ok, data }` envelope and throws `ApiError` instances carrying `code` and `status`.
+- Page components wrap their content in `AppShell`, passing `path`, `title`, optional `subtitle`/`breadcrumbs`/`action` props to keep header, nav, and breadcrumbs consistent.
+- Server/site tab fields are rendered generically: `lib/schema.js` converts Meta Box field arrays into `{ kind, type, id, value, ... }` descriptors consumed by `TabRenderer`.
+- Action buttons on tabs encode their target via `data-wpcd-action` and collect values via `data-wpcd-fields` selectors, mirroring the legacy jQuery client's parameter shape.

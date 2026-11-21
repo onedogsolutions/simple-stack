@@ -1,0 +1,1 @@
+Abstracts multiple cloud server providers (DigitalOcean, Vultr, UpCloud, custom servers) behind a common PHP API for provisioning, snapshots, resizing, and lifecycle management.

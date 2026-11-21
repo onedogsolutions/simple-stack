@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: core_engine/app_types/wordpress_app/public_ui
+title: WordPress App Front-End Public UI
+scope:
+    - includes/core/apps/wordpress-app/public/
+source_files: []
+depends_on: []
+related_to:
+    - path: core_engine/custom_table_dns
+    - path: core_engine/post_type_models
+    - path: static_assets

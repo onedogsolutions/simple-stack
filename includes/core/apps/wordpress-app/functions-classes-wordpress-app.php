@@ -117,14 +117,36 @@ function WPCD_POSTS_QUOTA_LIMITS() {
 
 
 /**
+ * No-op stand-in for the retired Logtivity integration.
+ *
+ * The Logtivity integration files were removed with the SimpleStack rebrand. A few
+ * legacy call sites in the tab layer and the push-commands trait still reference
+ * WPCD_WORDPRESS_APP_LOGTIVITY(), so an inert object is returned instead of fataling.
+ */
+class WPCD_WORDPRESS_APP_LOGTIVITY_STUB {
+
+	/**
+	 * Swallow any method call.
+	 *
+	 * @param string $method Method name.
+	 * @param array  $args   Arguments.
+	 *
+	 * @return null
+	 */
+	public function __call( $method, $args ) {
+		return null;
+	}
+}
+
+/**
  * Create a class var for WPCD_WORDPRESS_APP_LOGTIVITY and
- * add it to the WPCD array of classes for management
+ * add it to the WPCD array of classes for management.
  */
 add_action( 'init', 'wpcd_init_wordpress_app_logtivity', -10, 1 );
 function wpcd_init_wordpress_app_logtivity() {
 	if ( function_exists( 'WPCD' ) ) {
 		if ( empty( WPCD()->classes['WPCD_WORDPRESS_APP_LOGTIVITY'] ) ) {
-			WPCD()->classes['WPCD_WORDPRESS_APP_LOGTIVITY'] = new WPCD_WORDPRESS_APP_LOGTIVITY();
+			WPCD()->classes['WPCD_WORDPRESS_APP_LOGTIVITY'] = new WPCD_WORDPRESS_APP_LOGTIVITY_STUB();
 		}
 	}
 }

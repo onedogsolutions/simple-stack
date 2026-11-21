@@ -1,0 +1,1 @@
+Defines and manages the plugin's custom post types (apps, app servers, teams, permissions) and their associated log/post-type-backed audit trails.

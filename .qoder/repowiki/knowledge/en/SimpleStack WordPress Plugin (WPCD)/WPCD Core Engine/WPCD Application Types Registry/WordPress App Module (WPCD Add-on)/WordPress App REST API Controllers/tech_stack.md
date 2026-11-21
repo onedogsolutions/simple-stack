@@ -1,0 +1,1 @@
+WordPress REST API (`register_rest_route`, `WP_REST_Request`, `rest_ensure_response`) with the `wpcd/v1` namespace; long-running work is coordinated through the plugin's `WPCD_POSTS_PENDING_TASKS_LOG` pending-tasks subsystem rather than async queues.

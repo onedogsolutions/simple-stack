@@ -1,0 +1,1 @@
+PHP 7+ (type hints, `random_int`), WordPress plugin API, AES-128-CBC encryption via OpenSSL for credential storage, and a bundled React/Vite admin SPA loaded from `assets/dist/.vite/manifest.json`.

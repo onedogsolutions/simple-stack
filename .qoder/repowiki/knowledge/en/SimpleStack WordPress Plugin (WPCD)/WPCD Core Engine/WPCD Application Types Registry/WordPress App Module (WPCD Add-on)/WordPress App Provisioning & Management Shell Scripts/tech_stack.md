@@ -1,0 +1,1 @@
+Plain Bash scripts targeting Ubuntu; rely on wp-cli, certbot, fail2ban, monit, netdata, goaccess, LMD/clamav, CrowdSec, Redis/Memcached, and either Nginx or LiteSpeed/OpenLiteServer web stacks.

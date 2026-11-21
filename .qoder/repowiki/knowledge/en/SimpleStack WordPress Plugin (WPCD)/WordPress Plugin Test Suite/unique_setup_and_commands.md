@@ -1,0 +1,1 @@
+Requires Composer dependencies installed first (`composer install`) so that `vendor/wp-phpunit/wp-phpunit/includes/functions.php` exists; the bootstrap checks for this file and exits with an error if missing. The WordPress test directory can be overridden via the `WP_TESTS_DIR` environment variable, otherwise it defaults to `vendor/wp-phpunit/wp-phpunit`.

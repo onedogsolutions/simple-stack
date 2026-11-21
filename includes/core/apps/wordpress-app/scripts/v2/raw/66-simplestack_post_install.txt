@@ -1,0 +1,85 @@
+#!/bin/bash
+#####################################################################
+### SimpleStack post site install
+#####################################################################
+# Runs at the end of 02-install_wordpress_site.txt, once WordPress is installed and any
+# blueprint plugins/themes have been applied, so that whatever happens here is the final
+# state of the site.
+#
+# Kept in its own file so the site install flow stays readable and so the hook can be
+# swapped without touching 02-install_wordpress_site.txt.  9999-common-functions.txt
+# defines a no-op fallback and then sources this file when it is present.
+#
+# @param $1 Domain
+# @param $2 Site linux user name (the first 32 characters of the domain)
+# @param $3 Webserver type - accepted for clarity at the call site
+function simplestack_post_site_install() {
+	local domain="${1:-}"
+	local user_name="${2:-}"
+	local webserver_type="${3:-ols}"
+	local wphome
+	local plugin
+	local plugin_list
+
+	if [ -z "$domain" ] || [ -z "$user_name" ]
+	then
+		echo "SimpleStack: domain and user name are required, skipping post-install."
+		return 0
+	fi
+
+	wphome="/var/www/${domain}/html"
+
+	if [ ! -f "${wphome}/wp-config.php" ]
+	then
+		echo "SimpleStack: ${wphome}/wp-config.php not found, skipping post-install."
+		return 0
+	fi
+
+	echo "SimpleStack: running post-install hardening for ${domain} (${webserver_type})"
+
+	# Set unconditionally rather than assuming 02-install_wordpress_site.txt already did it:
+	# this also brings sites created by an older script version up to date.
+	su - "$user_name" -c "wp --skip-plugins --no-color config set DISALLOW_FILE_EDIT true --raw" > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "SimpleStack: could not set DISALLOW_FILE_EDIT for ${domain}"
+	fi
+
+	# Plugin slugs arrive through the SIMPLE_STACK_SECURITY_PLUGINS environment variable,
+	# which the PHP side fills from the `simplestack_post_site_install_plugins` filter.  It
+	# is empty until the One Dog plugin slugs are supplied, so the loop is a no-op by
+	# default rather than a silent install of something unexpected.
+	plugin_list="${SIMPLE_STACK_SECURITY_PLUGINS:-}"
+
+	for plugin in $plugin_list
+	do
+		# Only accept something shaped like a WordPress.org plugin slug, and never allow a
+		# path component to climb (`../`). A placeholder substitution mistake must never
+		# turn into an arbitrary wp-cli argument.
+		case "$plugin" in
+			''|*..*|*\**|*[!A-Za-z0-9._/-]*)
+				echo "SimpleStack: ignoring invalid plugin slug '${plugin}'"
+				continue
+				;;
+		esac
+
+		echo "SimpleStack: installing ${plugin}"
+		su - "$user_name" -c "wp --skip-plugins --no-color plugin install '${plugin}'" > /dev/null 2>&1
+		if [ $? -ne 0 ]
+		then
+			echo "SimpleStack: could not install ${plugin} on ${domain}"
+			continue
+		fi
+
+		echo "SimpleStack: activating ${plugin}"
+		su - "$user_name" -c "wp --skip-plugins --no-color plugin activate '${plugin}'" > /dev/null 2>&1
+		if [ $? -ne 0 ]
+		then
+			echo "SimpleStack: could not activate ${plugin} on ${domain}"
+		fi
+	done
+
+	echo "SimpleStack: post-install hardening complete for ${domain}"
+
+	return 0
+}

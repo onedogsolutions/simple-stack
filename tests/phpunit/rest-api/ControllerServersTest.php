@@ -1,8 +1,6 @@
 <?php
 
-use WPTest\Test\TestCase;
-
-class ControllerServersTest extends TestCase
+class ControllerServersTest extends WP_UnitTestCase
 {
     protected WP_REST_Server $rest;
     protected WPCD_REST_API_Controller_Base $controller;

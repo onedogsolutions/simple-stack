@@ -306,6 +306,13 @@ trait wpcd_wpapp_script_handlers {
 				||
 				( strpos( $result, 'Enabled OLS/LSWS admin port on firewall!' ) !== false )
 				||
+				/*
+				 * "Enable" with no SIMPLE_STACK_ADMIN_IP configured succeeds by leaving the
+				 * console bound to 127.0.0.1 and adding no firewall rule. Treat that as
+				 * success so the UI does not report a failure for the safe configuration.
+				 */
+				( strpos( $result, 'OLS WebAdmin stays bound to 127.0.0.1' ) !== false )
+				||
 				( strpos( $result, 'Disabled OLS/LSWS admin port on firewall!' ) !== false );
 				break;
 			case 'php_workers.txt':
@@ -815,6 +822,15 @@ trait wpcd_wpapp_script_handlers {
 		$common_array = array(
 			'SCRIPT_COMMON_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/9999-common-functions.txt',
 			'SCRIPT_COMMON_NAME' => '9999-common-functions.sh',
+			/*
+			 * Optional single address allowed to reach the OLS WebAdmin console on port 7080.
+			 * get_simplestack_admin_ip() returns '' for anything that is not a clean
+			 * IPv4/IPv6 address or CIDR block, because the value is interpolated into a
+			 * Bash command line. Empty means "not configured", which every script treats
+			 * as "keep 7080 closed and bind the console to 127.0.0.1". The scripts also
+			 * re-validate through gf_normalise_admin_ip() as defence in depth.
+			 */
+			'SIMPLE_STACK_ADMIN_IP' => $this->get_simplestack_admin_ip(),
 		);
 		switch ( $script_name ) {
 			case 'after-server-create-run-commands.txt':
@@ -832,16 +848,28 @@ trait wpcd_wpapp_script_handlers {
 				break;
 			case 'install_wordpress_site.txt':
 				$command_name = $additional['command'];
-				$new_array    = array_merge(
+				/*
+				 * SCRIPT_POST_INSTALL_* download the post-install hook as its own file so the site
+				 * install script stays readable and the hook can be replaced without editing it. The
+				 * hook is fetched outside the chain of files the install cannot proceed without -
+				 * the common functions define a no-op fallback when it is missing.
+				 *
+				 * SIMPLE_STACK_SECURITY_PLUGINS is a space separated list of WordPress.org plugin
+				 * slugs that the hook installs and activates.
+				 */
+				$new_array = array_merge(
 					array(
-						'SIX_G_COMMANDS_URL'           => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/6G-Firewall-OLS.txt',
-						'SCRIPT_SIX_G_COMMANDS_NAME'   => '6G-Firewall-OLS.txt',
-						'SEVEN_G_COMMANDS_URL'         => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/7G-Firewall-OLS.txt',
-						'SCRIPT_SEVEN_G_COMMANDS_NAME' => '7G-Firewall-OLS.txt',
-						'SCRIPT_URL'                   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/02-install_wordpress_site.txt',
-						'SCRIPT_NAME'                  => '02-install_wordpress_site.sh',
-						'SCRIPT_LOGS'                  => "{$this->get_app_name()}_{$command_name}",
-						'CALLBACK_URL'                 => $this->get_command_url( $instance['post_id'], $command_name, 'completed' ),
+						'SIX_G_COMMANDS_URL'            => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/6G-Firewall-OLS.txt',
+						'SCRIPT_SIX_G_COMMANDS_NAME'    => '6G-Firewall-OLS.txt',
+						'SEVEN_G_COMMANDS_URL'          => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/7G-Firewall-OLS.txt',
+						'SCRIPT_SEVEN_G_COMMANDS_NAME'  => '7G-Firewall-OLS.txt',
+						'SCRIPT_POST_INSTALL_URL'       => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/66-simplestack_post_install.txt',
+						'SCRIPT_POST_INSTALL_NAME'      => '66-simplestack_post_install.sh',
+						'SIMPLE_STACK_SECURITY_PLUGINS' => $this->get_post_site_install_plugins(),
+						'SCRIPT_URL'                    => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/02-install_wordpress_site.txt',
+						'SCRIPT_NAME'                   => '02-install_wordpress_site.sh',
+						'SCRIPT_LOGS'                   => "{$this->get_app_name()}_{$command_name}",
+						'CALLBACK_URL'                  => $this->get_command_url( $instance['post_id'], $command_name, 'completed' ),
 					),
 					$common_array,
 					$additional
@@ -1270,7 +1298,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'change_wp_credentials.txt':
 			case 'add_wp_user.txt':
 			case 'update_wp_config_option.txt':
-			case 'passwordless_login.txt';
+			case 'passwordless_login.txt':
 				$new_array = array_merge(
 					array(
 						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/30-wp_site_things.txt',

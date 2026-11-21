@@ -1,0 +1,1 @@
+Renders the front-end-facing list tables, single-entry views, shortcodes, and AJAX endpoints for WordPress apps and servers managed by the WordPress App.

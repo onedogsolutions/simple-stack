@@ -1,0 +1,1 @@
+WordPress plugin (PHP ≥8.1) with Composer-managed `phpseclib`; React 19 + Vite 7 + Tailwind 4 for the admin dashboard; PHPUnit 9 + wp-phpunit for tests; PHPCS with WordPress Coding Standards for linting.

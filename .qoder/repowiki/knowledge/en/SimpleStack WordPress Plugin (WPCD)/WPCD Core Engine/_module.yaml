@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: core_engine
+title: WPCD Core Engine
+scope:
+    - includes/core/
+source_files: []
+depends_on: []
+related_to: []

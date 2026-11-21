@@ -1,0 +1,707 @@
+#!/bin/bash
+if [[ "$EUID" -ne 0 ]]
+then
+	echo "Sorry, you need to run this as root"
+	exit 1
+fi
+
+# Never let a package maintainer prompt block an unattended provisioning run.
+# Exporting once here covers every apt/apt-get call below, including calls made
+# inside subshells and inside the gf_* helpers.
+export DEBIAN_FRONTEND=noninteractive
+
+
+## Get our common functions
+if [[ ! -f 9999-common-functions.sh ]]
+then
+	echo "The file 9999-common-functions.sh is missing"
+	exit 1
+fi
+source 9999-common-functions.sh
+
+# The admin IP arrives as an exported environment variable from the command wrapper.
+# Normalise it once here so every use below (firewall rule, WebAdmin bind address) sees
+# either a clean address or an empty string. This fails closed: junk values and
+# unreplaced placeholders collapse to "", which keeps port 7080 shut.
+SIMPLE_STACK_ADMIN_IP=$(gf_normalise_admin_ip "${SIMPLE_STACK_ADMIN_IP:-}")
+export SIMPLE_STACK_ADMIN_IP
+
+# SimpleStack is OpenLiteSpeed only. The webserver_type variable is supplied by the
+# environment before this script runs, but it is validated here so a bad value fails
+# immediately instead of silently provisioning the wrong stack.
+if [ -z "$webserver_type" ]
+then
+	webserver_type="ols"
+fi
+
+webserver_type="$(echo "$webserver_type" | awk '{ print tolower($1) }')"
+if [[ "$webserver_type" == "ols" ]] || [[ "$webserver_type" == "ols-enterprise" ]]
+then
+	# Do nothing - it is valid, that's all we care about.
+	echo
+else
+	echo "Sorry, you provided an unsupported webserver: $webserver_type"
+	echo "SimpleStack only supports: ols, ols-enterprise"
+	exit 1
+fi
+
+# Resolve the Ubuntu release onto the OpenLiteSpeed support matrix.
+# 24.04 is noble, 26.04 is resolute (see repo.litespeed.sh, which covers both).
+# Anything else fails here with a readable message instead of failing somewhere
+# deep inside the package install.
+echo "Ubuntu version is $GV_UBUNTU_VERSION / $GV_UBUNTU_VERSION_STRING"
+case "$GV_UBUNTU_VERSION" in
+	"$GV_SUPPORTED_UBUNTU_VERSION_1")
+		GV_UBUNTU_CODENAME="$GV_SUPPORTED_UBUNTU_CODENAME_1"
+		;;
+	"$GV_SUPPORTED_UBUNTU_VERSION_2")
+		GV_UBUNTU_CODENAME="$GV_SUPPORTED_UBUNTU_CODENAME_2"
+		;;
+	*)
+		echo "SimpleStack supports Ubuntu $GV_SUPPORTED_UBUNTU_VERSION_1 ($GV_SUPPORTED_UBUNTU_CODENAME_1) and $GV_SUPPORTED_UBUNTU_VERSION_2 ($GV_SUPPORTED_UBUNTU_CODENAME_2) only."
+		echo "This server is running $GV_UBUNTU_VERSION_STRING ($GV_UBUNTU_VERSION)."
+		echo "Installation of this server has failed. Exiting process!"
+		exit 1
+		;;
+esac
+echo "Ubuntu codename resolved to $GV_UBUNTU_CODENAME"
+
+
+# Write the server name out to a file - we might need it later.
+gf_set_server_metadata 'servername' $name
+gf_set_server_metadata 'post_id' $post_id
+
+# set a variable to hold the location of the checkpoint folder.
+CHKPOINT_FOLDER='.wpcd-server-provision-checkpoints'
+
+# create the checkpoint folder
+if [ ! -d $CHKPOINT_FOLDER ]
+then
+	mkdir $CHKPOINT_FOLDER
+fi
+
+# clear the screen
+clear
+
+#check to see if this script has been run before. if it has, show message on the screen but continue.
+if [ -f "$CHKPOINT_FOLDER/script-ran-once.txt" ]
+then
+	echo "This script has been run at least once before - we'll attempt to pick up from where we last left off.."
+else
+	#create checkpoint file to indicate that script is running; if for some reason it already exists no harm no foul.
+	touch "$CHKPOINT_FOLDER/script-ran-once.txt"
+fi
+
+# Force preference of IPV4 over IPV6
+# This shouldn't be necessary but some services seem to an issue with IPV6 communication.
+# For example, when adding new repos later in this script, it times out with a gpg error 
+# when run on ec2.  This section forces IPv4 communication on everything :(
+if [ -f "$CHKPOINT_FOLDER/checkpoint05-end.txt" ]
+then
+	echo "Skip setting IPV4 vs IPV6 preferences since it has already been completed."
+else
+	echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
+	#checkpoint to indicate we have done this block...
+	touch "$CHKPOINT_FOLDER/checkpoint05-end.txt"	
+fi #checkpoint05.txt
+
+
+# Refresh existing repositories
+if [ -f "$CHKPOINT_FOLDER/checkpoint10-end.txt" ]
+then
+	echo "Skip refreshing of repositories since it has already been done."
+else
+	echo $(date): "Refreshing repositories..."
+	apt-get update > /dev/null 2>&1
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+
+	#checkpoint to indicate we have done this block...
+	touch "$CHKPOINT_FOLDER/checkpoint10-end.txt"	
+fi #checkpoint10.txt
+
+# Add other repositories
+if [ -f "$CHKPOINT_FOLDER/checkpoint20-end.txt" ]
+then
+	echo "Skip adding common repositories since it has already been done."
+else 
+	# Create directory if it doesn't exist. Else, add-apt-repository will be unable to configure the PPAs
+	mkdir -p /etc/apt/sources.list.d/
+
+	# Adding common software properties stack
+	echo $(date): "Adding common software properties to make repository management easier..."
+	apt-get install software-properties-common -y > /dev/null 2>&1
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+
+	# Adding additional repositories
+	echo $(date): "Adding additional repositories..."
+	LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y > /dev/null 2>&1
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	# The ondrej/nginx PPA is deliberately not added: SimpleStack never installs nginx,
+	# and an nginx PPA on an OpenLiteSpeed box is a source of conflicting package upgrades.
+
+	
+	# Make sure CURL is installed.
+	echo $(date): "Adding Curl..."
+	apt-get install curl -y > /dev/null 2>&1
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi	
+
+	# Make sure NETSTAT is installed.
+	echo $(date): "Installing Net-tools..."
+	apt-get install net-tools -y > /dev/null 2>&1
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi	
+
+	#checkpoint to indicate we have done this block...
+	touch "$CHKPOINT_FOLDER/checkpoint20-end.txt"
+fi #checkpoint20.txt
+
+	# The nginx/LEMP install path has been removed: SimpleStack provisions
+	# OpenLiteSpeed only. See the OLS branch below.
+
+if [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
+then
+	# Adding and installing MARIADB.
+	echo "$(date): Installing OpenLiteSpeed/OLS Enterprise stack - this will take a while!"
+
+	# Add the LiteSpeed package repository.
+	# repo.litespeed.sh covers Ubuntu 20.04 through 26.04, which is what makes
+	# lsphp83/84/85 resolvable on noble and resolute. ols1clk.sh below adds a repo of
+	# its own, but only for the lsphp versions it knows about, so it is set up first.
+	echo "$(date): Adding the LiteSpeed package repository"
+	curl --show-error --silent --fail --location --output /tmp/litespeed-repo.sh https://repo.litespeed.sh
+	if [ $? -ne 0 ] || [ ! -s /tmp/litespeed-repo.sh ]
+	then
+		echo "Failed to download the LiteSpeed repository setup script"
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	sh /tmp/litespeed-repo.sh < /dev/null > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	apt-get update > /dev/null 2>&1
+
+	# OpenLiteSpeed one-click install.
+	# https://openlitespeed.org/kb/1-click-install/#Where_is_OLS_installed_to
+	#
+	# The installer is pinned to a tagged release instead of `master`, fetched over TLS
+	# with certificate verification on, syntax-checked, and checksum-verified whenever
+	# SIMPLE_STACK_OLS1CLK_SHA256 is supplied. `curl -k ... | bash` off `master` was an
+	# unpinned, unverified code-execution path.
+	#
+	# Note: ols1clk.sh validates --lsphp against its own LSPHPVERLIST, which does not
+	# include 84 yet, so this call only lays down the OLS baseline on lsphp81. The
+	# SimpleStack versions (83, 84, 85) are installed explicitly further down and 84 is
+	# then made both the shell default and the version OpenLiteSpeed serves.
+	ols1clk_tag="v3.1"
+	ols1clk_url="https://raw.githubusercontent.com/litespeedtech/ols1clk/${ols1clk_tag}/ols1clk.sh"
+	echo "$(date): Fetching ols1clk ${ols1clk_tag}"
+	curl --show-error --silent --fail --location --output /tmp/ols1clk.sh "$ols1clk_url"
+	if [ $? -ne 0 ] || [ ! -s /tmp/ols1clk.sh ]
+	then
+		echo "Failed to download $ols1clk_url"
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+
+	# Refuse to execute a script that does not even parse.
+	if ! bash -n /tmp/ols1clk.sh
+	then
+		echo "The downloaded ols1clk.sh failed its syntax check - refusing to execute it."
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+
+	olesha_actual="$(sha256sum /tmp/ols1clk.sh | awk '{ print $1 }')"
+	if [ -n "$SIMPLE_STACK_OLS1CLK_SHA256" ]
+	then
+		if [ "$olesha_actual" != "$SIMPLE_STACK_OLS1CLK_SHA256" ]
+		then
+			echo "Checksum mismatch for ols1clk.sh (expected $SIMPLE_STACK_OLS1CLK_SHA256, got $olesha_actual)."
+			echo "Failed!  Quitting process"
+			exit 1
+		fi
+		echo "$(date): ols1clk.sh checksum verified"
+	else
+		echo "$(date): SIMPLE_STACK_OLS1CLK_SHA256 is unset - pinning is limited to tag ${ols1clk_tag} plus a syntax check"
+		echo "$(date): ols1clk.sh sha256 is ${olesha_actual}"
+	fi
+
+	bash /tmp/ols1clk.sh --quiet --lsphp 81 > /dev/null 2>&1
+	if [ $? -ne 0 ] 
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+
+	gf_add_ols_main_conf
+	gf_ols_default_page
+	gf_check_webserver
+	gf_restart_webserver
+	service lsws status > /dev/null 2>&1
+	if [ $? -ne 0 ] 
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+
+	echo "$(date): Installing MariaDB repository and packages"
+	apt-get install -y mariadb-server -o Dpkg::Options::="--force-confnew" > /dev/null 2>&1 # dpkg option to force new config files added on 05-04-2024 to fix VULTR issue with an incorrect /etc/cloud/cloud.cfg file.
+	if [ $? -ne 0 ]
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi	
+	apt-get install -y mariadb-client apache2-utils unzip rename bubblewrap > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+
+	# install build essentials for pecl/pear and dev requirements
+	# We need to do these in pieces otherwise our front-end UI will not like it if it takes too long to report updates.
+	echo "$(date): Building pecl/pear essentials - part 1 of 2"
+	apt-get install -y libmagickwand-dev pkg-config build-essential snmp pkg-config > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	echo "$(date): Building pecl/pear essentials - part 2 of 2"
+	apt-get install -y openssl libssl-dev autoconf automake libtool libxml2-dev libssl-dev  > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi	
+
+	# Install the SimpleStack PHP versions explicitly.
+	# The inherited `apt-get install lsphp?? ... lsphp*` globs silently change the
+	# installed set whenever the repository gains a version, and abort the whole run when
+	# a glob matches nothing. An explicit loop is deterministic.
+	# We need to do these in pieces otherwise our front-end UI will not like it if it
+	# takes too long to report updates.
+	echo "$(date): Installing lsphp and pear packages - part 1 of 2"
+	for v in "${g_php_versions[@]}"
+	do
+		apt-get install -y "lsphp${v}" "lsphp${v}-common" "lsphp${v}-dev" "lsphp${v}-pear" "lsphp${v}-mysql" > /dev/null 2>&1
+		if [ $? -ne 0 ]
+		then
+			echo "Failed to install the core lsphp${v} packages!"
+			echo "Failed!  Quitting process"
+			exit 1
+		fi
+	done
+
+	echo "$(date): Installing lsphp extension packages - part 2 of 2"
+	for v in "${g_php_versions[@]}"
+	do
+		for ext in imap curl gd imagick intl opcache redis
+		do
+			# Extension packages can lag the core packages in the LiteSpeed repo.
+			# A missing optional extension must not abort a half-built server, so it is
+			# reported instead of being fatal.
+			if ! apt-get install -y "lsphp${v}-${ext}" > /dev/null 2>&1
+			then
+				echo "$(date): WARNING - lsphp${v}-${ext} could not be installed; continuing without it."
+			fi
+		done
+	done
+
+	# Make lsphp84 the default `php` binary and the version OpenLiteSpeed serves.
+	echo "$(date): Making PHP 8.4 (lsphp${g_default_php_short}) the default PHP version"
+	rm -f /usr/bin/php /usr/bin/phar /usr/bin/phar.phar /usr/bin/pecl /usr/lib/pear > /dev/null 2>&1
+	gf_set_default_php "$g_default_php_short"
+	if [ -f "$WEBCF" ]
+	then
+		sed -i -E "s#/lsphp[0-9]+/bin/lsphp#/lsphp${g_default_php_short}/bin/lsphp#g" "$WEBCF"
+	fi
+	if [ -d "$LSDIR/fcgi-bin" ]
+	then
+		ln -sf "${LSDIR}/lsphp${g_default_php_short}/bin/lsphp" "${LSDIR}/fcgi-bin/lsphpnew" > /dev/null 2>&1
+	fi
+fi
+
+
+# Install Certbot...
+if [ -f "$CHKPOINT_FOLDER/checkpoint100-end.txt" ]
+then
+	echo "Skip installing certbot since it has already been done."
+else	
+	echo $(date): "Installing Certbot. This can take more than 5 minutes..."
+	if ! hash snap 2>/dev/null
+	then
+		apt-get install snapd -y
+		if [ $? -ne 0 ]
+		then
+			echo "Failed!  Quitting process"
+			exit 1
+		fi
+	fi
+	echo $(date): ".....Installing Snap Core for Certbot..."
+	snap install core > /dev/null 2>&1 #run once without error checking - some providers require this to set up some things (eg: promox containers).
+	snap install core > /dev/null 2>&1 #run again and then do error checking.
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	echo $(date): ".....Refreshing Snap Core..."
+	snap refresh core > /dev/null 2>&1
+	#No checks after the "snap refresh core" command because sometimes the snap servers return a false error.  And refresh isn't critical here.
+
+	echo $(date): ".....Installing Classic Certbot..."
+	snap install --classic certbot > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "Failed to install the certbot snap. Certbot is how SimpleStack issues and renews"
+		echo "site certificates, so provisioning cannot continue without it."
+		echo "Check that snapd is healthy (systemctl status snapd) and retry."
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	snap set certbot trust-plugin-with-root=ok > /dev/null 2>&1
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	echo $(date): ".....Installing Certbot Cloudflare support..."
+	snap install certbot-dns-cloudflare > /dev/null 2>&1
+	if [ $? -ne 0 ]  
+	then
+		echo "Failed!  Quitting process"
+		exit 1
+	fi
+	echo $(date): ".....Installing remaining Certbot components..."
+	snap set certbot trust-plugin-with-root=ok > /dev/null 2>&1
+	snap install certbot-dns-dnsmadeeasy > /dev/null 2>&1
+	snap set certbot trust-plugin-with-root=ok > /dev/null 2>&1
+	snap install certbot-dns-google > /dev/null 2>&1
+	snap set certbot trust-plugin-with-root=ok > /dev/null 2>&1
+	snap install certbot-dns-ovh > /dev/null 2>&1
+	snap set certbot trust-plugin-with-root=ok > /dev/null 2>&1
+	snap install certbot-dns-route53 > /dev/null 2>&1
+
+	#checkpoint to indicate we have done this block...
+	touch "$CHKPOINT_FOLDER/checkpoint100-end.txt"
+fi #checkpoint100.txt
+
+# if the unattended-upgrades package isn't installed, install it
+if ! dpkg -s unattended-upgrades &>/dev/null
+then
+	echo $(date): "Installing Unattended Upgrade process since it was not enabled on this server..."
+	apt-get install -y unattended-upgrades
+fi
+
+################################################################################################################
+# For all of these configuration file updates, we want the entire block to run once and only once.
+# If it fails halfway, then restarting the script should show an error message.
+# Therefore our checkpoint150 logic is a bit different.  
+# Also, this is a LARGE block with some commands are NOT indented. so you'll need to search for the end using CTRL-F or 
+# similar.
+################################################################################################################
+
+if [ -f "$CHKPOINT_FOLDER/checkpoint150.txt" ]
+then
+	echo "Skip updating configuration files since it has already been done."
+	if [ ! -f "$CHKPOINT_FOLDER/checkpoint150-end.txt" ]	
+	then
+		echo "Block 150, updating configuration files, was started but never completed. We cannot recover - please start over with a new server."
+		exit 1
+	fi	
+else
+	#create checkpoint file to indicate that we are running this block.
+	touch "$CHKPOINT_FOLDER/checkpoint150.txt"
+
+	# enable unattended-upgrades
+	echo 'APT::Periodic::Update-Package-Lists "1";
+	APT::Periodic::Unattended-Upgrade "1";' > /etc/apt/apt.conf.d/20auto-upgrades
+
+	# Set up unattended upgrades for the PPAs
+	echo $(date): "Adding additional repositories to unattended upgrade process..."
+	sed -i '/Unattended-Upgrade::Allowed-Origins /a "LP-PPA-ondrej-php:${distro_codename}";' /etc/apt/apt.conf.d/50unattended-upgrades	
+
+	# The inherited nginx configuration branch has been removed: SimpleStack never
+	# installs or configures nginx, so there is nothing to tune here.
+
+	if [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
+	then
+		echo "$(date): Setup php sessions for lsphp versions"
+		# Create the session path directories and chmod it for security to 1733 like the existing one is.
+		for version in $(ls /usr/local/lsws|grep lsphp); 
+		do
+			mkdir -p "/var/lib/lsphp/session/$version"
+			chmod -R 1733 "/var/lib/lsphp/session/$version"
+		done
+
+		for phpver in $(ls -1 /usr/local/lsws/ |grep lsphp | sed 's/lsphp//g') 
+		do
+			# echo "LSPHP $phpver" ; # Disable useless echo but leave for debugging
+			lsphpver=$(echo $phpver | sed 's/^\(.\{1\}\)/\1./');   # Split php version number and add a period so that 74 becomes 7.3, 80 becomes 8.0, 81 becomes 8.1 etc.
+			sed -i -e "s|^;session.save_path.*|session.save_path = '/var/lib/lsphp/session/lsphp${phpver}'|g" -e "s|^session.save_path.*|session.save_path = '/var/lib/lsphp/session/lsphp${phpver}'|g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini ;
+			# /usr/local/lsws/lsphp${phpver}/bin/php -i |grep -Ei 'session.save_path' && echo "" # Disable useless echo but leave for debugging
+	
+			sed -i 's/^memory_limit.*/memory_limit = 1024M/g' /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+		    sed -i 's/^post_max_size.*/post_max_size = 25M/g' /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+		    sed -i 's/^upload_max_filesize.*/upload_max_filesize = 25M/g' /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i 's/^max_execution_time.*/max_execution_time = 7200/g' /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			# Update php.ini to enable and configure opcache
+			sed -i "s/;opcache.enable=1/opcache.enable=1/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.enable_cli=0/opcache.enable_cli=1/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.interned_strings_buffer=8/opcache.interned_strings_buffer=8/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.max_accelerated_files=10000/opcache.max_accelerated_files=100000/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.memory_consumption=128/opcache.memory_consumption=128/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.save_comments=1/opcache.save_comments=1/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.revalidate_freq=2/opcache.revalidate_freq=1/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.use_cwd=1/opcache.use_cwd=1/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.validate_root=0/opcache.validate_root=1/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.validate_permission=0/opcache.validate_permission=1/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			sed -i "s/;opcache.file_update_protection=2/opcache.file_update_protection=60/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+
+			# PHP 8.1, 8.2 & 8.3 needs a set of default functions added to its global php.ini file because its set to blank for some reason.
+			# We're going to use the same list as 7.4.
+if [ $lsphpver = "8.1" ] || [ $lsphpver = "8.2" ] || [ $lsphpver = "8.3" ] || [ $lsphpver = "8.4" ] || [ $lsphpver = "8.5" ]; then
+				echo "$(date): Setting global list of restricted php functions for PHP $lsphpver"
+				sed -i "s/^disable_functions.*/disable_functions = pcntl_alarm,pcntl_fork,pcntl_waitpid,pcntl_wait,pcntl_wifexited,pcntl_wifstopped,pcntl_wifsignaled,pcntl_wifcontinued,pcntl_wexitstatus,pcntl_wtermsig,pcntl_wstopsig,pcntl_signal,pcntl_signal_get_handler,pcntl_signal_dispatch,pcntl_get_last_error,pcntl_strerror,pcntl_sigprocmask,pcntl_sigwaitinfo,pcntl_sigtimedwait,pcntl_exec,pcntl_getpriority,pcntl_setpriority,pcntl_async_signals,pcntl_unshare,/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			fi
+
+			# Added 11-13-2022 due to vhost phpIniOverride stopped working in latest OLS version.
+			# Unlike NGINX, we have to allow proc_open and proc_close for OLS to run properly when installing a new site later.
+			# So those are not included in the global restricted functions list.
+			# sed -i "s/^disable_functions.*/disable_functions = dl, exec, fpassthru, getmypid, getmyuid, highlight_file, link, opcache_get_configuration, passthru, pcntl_exec, pcntl_get_last_error, pcntl_setpriority, pcntl_strerror, pcntl_wifcontinued, phpinfo, popen, posix_ctermid, posix_getcwd, posix_getegid, posix_geteuid, posix_getgid, posix_getgrgid, posix_getgrnam, posix_getgroups, posix_getlogin, posix_getpgid, posix_getpgrp, posix_getpid, posix_getppid, posix_getpwnam, posix_getpwuid, posix_getrlimit, posix_getsid, posix_getuid, posix_isatty, posix_kill, posix_mkfifo, posix_setegid, posix_seteuid, posix_setgid, posix_setpgid, posix_setsid, posix_setuid, posix_times, posix_ttyname, posix_uname, proc_get_status, proc_nice, proc_terminate, shell_exec, show_source, source, system, virtual/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
+			
+		done
+
+		echo "$(date): Installing Cron to scan every 3 minutes for .htaccess file changes and restart openlitespeed"
+		cat >> /etc/cron.d/openlitespeed_htaccess_scan <<-EOL
+# Cron to scan every 3 minutes for .htaccess file changes and restart openlitespeed
+*/3 * * * * root if ! find /var/www/*/html/ -maxdepth 2 -type f -newer /usr/local/lsws/cgid -name '.htaccess' -exec false {} +; then systemctl restart lsws; fi
+EOL
+		chmod +x /etc/cron.d/openlitespeed_htaccess_scan > /dev/null 2>&1
+		
+		# Setup symlink of the ols/lsws logs folder "/usr/local/lsws/logs" into the conventional /var/log/ folder into /var/log/lsws
+		# This breaks the least amount of things for existing users without needing global config changes and ensures pros familiar with OLS aren't confused when looking and people unfamiliar with OLS still see the logs where conventionally they expect too.
+		ln -s /usr/local/lsws/logs /var/log/lsws > /dev/null 2>&1
+		
+		echo "$(date): Update pecl for lsphp versions"
+		for version in $(ls /usr/local/lsws|grep lsphp)
+		do
+			/usr/local/lsws/"${version}"/bin/pecl channel-update pecl.php.net > /dev/null 2>&1
+		done
+
+		echo "$(date): Update timezone to UTC by default"
+		for phpver in $(ls -1 /usr/local/lsws/ |grep lsphp | sed 's/lsphp//g')
+		do
+			php_ini="/usr/local/lsws/lsphp${phpver}/etc/php/$(echo $phpver | sed 's/^\(.\{1\}\)/\1./')/litespeed/php.ini"
+			# Extension='timezonedb';
+			# Subshell should do what we want by capturing it all and also combining both streams into dev null
+			# (printf '\n' |/usr/local/lsws/lsphp${phpver}/bin/pecl install ${Extension} >/dev/null 2>&1) >/dev/null 2>&1
+			
+			# We really don't need to check error conditions on timezonedb. I think I've seen cases where it throws weird exit codes.
+			# Or where it might not exist yet when php81/82 came out, the timezonedb extension wasn't out for a few weeks which isn't a big deal but shouldn't cause fatal error.
+			# Only add timezonedb extension if binary is actually installed.
+			# if find /usr/local/lsws/lsphp${phpver}/lib/php/ -type f -iname "timezonedb.so" >/dev/null 2>&1 ; then
+			# 	echo ".....Installing timezondb into php.ini for PHP $phpver..."
+			# 	echo "extension=${Extension}.so" >> ${php_ini}
+			# else
+			# 	echo ".....TimezoneDB extension not found for PHP $phpver - the module will not be installed."
+			# fi
+			
+			sed -i -e 's|^;date.timezone.*|date.timezone = "UTC"|g' /usr/local/lsws/lsphp${phpver}/etc/php/$(echo $phpver | sed 's/^\(.\{1\}\)/\1./')/litespeed/php.ini;
+			php_utc_result=$(/usr/local/lsws/lsphp${phpver}/bin/php -i 2>&1 | grep -Ei 'date.timezone')
+			if ! echo "$php_utc_result"| grep UTC >/dev/null 2>&1
+			then
+				echo "Configuring Timezone for UTC for LSPHP $phpver failed"
+				echo "Found: $php_utc_result"
+			fi
+       		done
+	fi
+	#checkpoint to indicate we have done this block...
+	touch "$CHKPOINT_FOLDER/checkpoint150-end.txt"	
+fi #checkpoint150.txt
+##################### End very large block, checkpoint150 ###############
+
+# Install Redis
+if [ -f "$CHKPOINT_FOLDER/checkpoint160-end.txt" ]
+then
+	echo "Skip installing REDIS since it has already been done."
+else
+	echo $(date): "Installing Redis..."
+	apt-get install redis-server -y > /dev/null 2>&1
+
+	# Was redis installed?  If the redis.conf file does not exist there's a good chance it wasn't installed properly or not at all.
+	if [ ! -f /etc/redis/redis.conf ]
+	then
+		echo "Redis has not been properly installed. Exiting...";
+		exit 1
+	fi
+	
+	# Restart REDIS process.
+	sed -i "s/supervised no/supervised systemd/g" /etc/redis/redis.conf
+	systemctl restart redis
+
+	# Do Redis things related to OLS
+	if [ "$webserver_type" = "ols" ] || [ "$webserver_type" = "ols-enterprise" ]
+	then
+		for v in "${g_php_versions[@]}"
+		do
+			apt-get install -y "lsphp${v}-redis" > /dev/null 2>&1
+		done
+	fi
+
+	#checkpoint to indicate we have done this block...
+	touch "$CHKPOINT_FOLDER/checkpoint160-end.txt"	
+fi #checkpoint160.txt
+
+# Running a specific update (This fixes an issue with WP-CLI that popped up around Nov 20th 2021 - some weird compilation message.)
+# @see: https://bugs.php.net/bug.php?id=81640
+echo $(date): "Updating libpcre-2-8-0..."
+apt-get install -y libpcre2-8-0 > /dev/null 2>&1
+
+# Getting WPCLI Packages
+echo $(date): "Getting and installing WPCLI packages..."
+wget --quiet -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+sudo chmod +x /usr/local/bin/wp
+wp cli update --yes --allow-root  > /dev/null 2>&1
+
+
+# if aws cli is not present, install it
+if ! hash aws2 2>/dev/null; then
+	echo $(date): "Getting and installing AWS CLI..."
+	# detect if we are on an ARM or x86_64 system
+	if [ "$(uname -m)" = "aarch64" ]; then
+		# ARM
+		curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"  > /dev/null 2>&1
+	else
+		# x86_64
+		curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"  > /dev/null 2>&1
+	fi
+	unzip awscliv2.zip  > /dev/null 2>&1
+	./aws/install  > /dev/null 2>&1
+	rm -rf aws awscliv2.zip  > /dev/null 2>&1
+fi
+
+# Make sure update-notifier is installed - weirdly some vms/containers don't have this installed.
+echo $(date): "Installing update-notifier..."
+apt-get install -y update-notifier-common > /dev/null 2>&1
+
+# Running a specific update to resolve an issue that showed up on Feb 14th 2023.
+# @see: https://bugs.launchpad.net/ubuntu/+source/update-notifier/+bug/2007311
+echo $(date): "Updating libxmlb2..."
+apt-get install -y libxmlb2 > /dev/null 2>&1
+
+# ufw
+echo $(date): "Configuring firewall..."
+apt-get install ufw -y > /dev/null 2>&1
+ssh_port=$(grep 'Port ' /etc/ssh/sshd_config | head -n 1 | cut -d " " -f 2)
+ufw default deny incoming > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then
+	echo "Unable to setup default incoming firewall rules! This is not a fatal error but you should double-check your rules after this process is completed."
+fi
+ufw default allow outgoing > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then
+	echo "Unable to setup default outgoing firewall rules! This is not a fatal error but you should double-check your rules after this process is completed."
+fi
+ufw allow $ssh_port > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then
+	echo "Unable to setup ssh port on firewall! This is not a fatal error but you should double-check your rules after this process is completed."
+fi
+ufw allow 80 > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then
+	echo "Unable to setup http port on firewall! This is not a fatal error but you should double-check your rules after this process is completed."
+fi
+ufw allow 443 > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then
+	echo "Unable to setup https port on firewall! This is not a fatal error but you should double-check your rules after this process is completed."
+fi
+if [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
+then
+	# Port 7080 is the OLS WebAdmin console. It must never be reachable from the public
+	# internet: the stock console pages expose phpinfo() and other sensitive details,
+	# and the console has no TLS by default. Deny it outright, then re-open it for
+	# exactly one administration address when one was supplied.
+	ufw deny 7080 > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "Unable to deny OLS/LSWS admin port 7080 on the firewall! This is not a fatal error but you should double-check your rules after this process is completed."
+	fi
+
+	if [ -n "$SIMPLE_STACK_ADMIN_IP" ]
+	then
+		echo "$(date): Allowing OLS WebAdmin (7080) from $SIMPLE_STACK_ADMIN_IP only"
+		ufw allow from "$SIMPLE_STACK_ADMIN_IP" to any port 7080 proto tcp > /dev/null 2>&1
+		if [ $? -ne 0 ]
+		then
+			echo "Unable to open port 7080 for $SIMPLE_STACK_ADMIN_IP! This is not a fatal error but the WebAdmin console will stay unreachable."
+		fi
+	else
+		echo "$(date): SIMPLE_STACK_ADMIN_IP is not set - the OLS WebAdmin console on port 7080 stays closed."
+	fi
+fi
+
+ufw --force enable > /dev/null 2>&1
+if [ $? -ne 0 ] 
+then
+	echo "Unable to activate firewall! This is not a fatal error but you should investigate this after this server process is complete."
+fi
+
+# pointer needed for the wp-sync script
+echo "### do not edit from here ###" >> /etc/ssh/sshd_config
+
+# OpenLiteSpeed is the only supported stack, so there is no php-fpm or nginx to
+# restart here. The semaphore folder is still created because later scripts read it.
+mkdir -p /etc/wpcd
+mkdir -p /etc/wpcd/php-versions-disabled
+
+# Refresh the semaphores so the UI reports exactly the versions this build installed.
+for ver in "${g_php_versions[@]}"
+do
+	rm -f "/etc/wpcd/php-versions-disabled/$ver" > /dev/null 2>&1
+done
+
+gf_check_webserver
+gf_restart_webserver
+
+# Custom post-processing scripts.
+if [[ ! -z $post_processing_script_server ]]
+then
+	echo ""
+	echo "Post-processing script option detected - attempting to pull script from $post_processing_script_server"
+	wget --no-check-certificate -O post_processing_script_server.sh $post_processing_script_server > /dev/null 2>&1
+	dos2unix post_processing_script_server.sh > /dev/null 2>&1
+	echo ""
+	echo "Executing post-processing script..."
+	source ./post_processing_script_server.sh	
+fi
+
+echo
+echo "$(date): Installation completed!"
+echo

@@ -125,29 +125,6 @@ function WPCD_CUSTOM_FIELDS() {
 }
 
 /**
- * Create a class var for WPCD_WooCommerce and
- * add it to the WPCD array of classes for management
- */
-add_action( 'init', 'wpcd_init_wpcd_woocommerce', -10, 1 );
-function wpcd_init_wpcd_woocommerce() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['WPCD_WOOCOMMERCE'] ) ) {
-			WPCD()->classes['WPCD_WOOCOMMERCE'] = new WPCD_WOOCOMMERCE();
-		}
-	}
-}
-
-/**
- * Function for calling WPCD_WooCommerce methods and variables
- *
- * @return WPCD_WOOCOMMERCE;
- */
-function WPCD_WOOCOMMERCE() {
-	return WPCD()->classes['WPCD_WOOCOMMERCE'];
-}
-
-
-/**
  * Create a class var for WPCD_DNS and
  * add it to the WPCD array of classes for management
  */
@@ -167,99 +144,6 @@ function wpcd_init_wpcd_dns() {
  */
 function WPCD_DNS() {
 	return WPCD()->classes['WPCD_DNS'];
-}
-
-/**
- * Create a class var for WPCD_VPN_APP and
- * add it to the WPCD array of classes for management
- *
- * This class handles all items related to the management
- * of the VPN app.
- *
- * @TODO: This really shouldn't happen here.  Instead
- * we need a process to have apps register their main
- * classes with WPCD and go from there.
- */
-add_action( 'init', 'wpcd_init_vpn_app', -10, 1 );
-function wpcd_init_vpn_app() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( class_exists( 'WPCD_VPN_APP' ) ) {
-			if ( empty( WPCD()->classes['WPCD_VPN_APP'] ) ) {
-				WPCD()->classes['WPCD_VPN_APP'] = new WPCD_VPN_APP();
-			}
-		}
-	}
-}
-
-/**
- * Function for calling WPCD_VPN_APP methods and variables
- *
- * @return WPCD_VPN_APP;
- */
-function WPCD_VPN_APP() {
-	return WPCD()->classes['WPCD_VPN_APP'];
-}
-
-/**
- * Create a class var for WPCD_BASIC_SERVER_APP and
- * add it to the WPCD array of classes for management
- *
- * This class handles all items related to the management
- * of the BASIC SERVER app.
- *
- * @TODO: This really shouldn't happen here.  Instead
- * we need a process to have apps register their main
- * classes with WPCD and go from there.
- */
-add_action( 'init', 'wpcd_init_basic_server_app', -10, 1 );
-function wpcd_init_basic_server_app() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( class_exists( 'WPCD_BASIC_SERVER_APP' ) ) {
-			if ( empty( WPCD()->classes['WPCD_BASIC_SERVER_APP'] ) ) {
-				WPCD()->classes['WPCD_BASIC_SERVER_APP'] = new WPCD_BASIC_SERVER_APP();
-			}
-		}
-	}
-}
-
-/**
- * Function for calling WPCD_BASIC_SERVER_APP methods and variables
- *
- * @return WPCD_BASIC_SERVER_APP;
- */
-function WPCD_BASIC_SERVER_APP() {
-	return WPCD()->classes['WPCD_BASIC_SERVER_APP'];
-}
-
-/**
- * Create a class var for WPCD_STABLEDIFF_APP and
- * add it to the WPCD array of classes for management
- *
- * This class handles all items related to the management
- * of the STABLEDIFF app.
- *
- * @TODO: This really shouldn't happen here.  Instead
- * we need a process to have apps register their main
- * classes with WPCD and go from there.
- */
-add_action( 'init', 'wpcd_init_stablediff_app', -10, 1 );
-function wpcd_init_stablediff_app() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( class_exists( 'WPCD_STABLEDIFF_APP' ) ) {
-			if ( empty( WPCD()->classes['WPCD_STABLEDIFF_APP'] ) ) {
-				WPCD()->classes['WPCD_STABLEDIFF_APP'] = new WPCD_STABLEDIFF_APP();
-			}
-		}
-	}
-}
-
-/**
- * Function for calling WPCD_STABLEDIFF_APP methods and variables
- *
- * @return WPCD_STABLEDIFF_APP;
- */
-function WPCD_STABLEDIFF_APP() {
-	return WPCD()->classes['WPCD_STABLEDIFF_APP'];
 }
 
 /**
@@ -491,30 +375,6 @@ function WPCD_SERVER_STATISTICS() {
 }
 
 /**
- * Create a class var for WPCD_DATA_SYNC_REST and
- * add it to the WPCD array of classes for management
- */
-add_action( 'init', 'wpcd_init_wpcd_data_sync_rest', -10, 1 );
-function wpcd_init_wpcd_data_sync_rest() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['wpcd_data_sync_rest'] ) ) {
-			WPCD()->classes['wpcd_data_sync_rest'] = new WPCD_DATA_SYNC_REST();
-		}
-	}
-}
-
-/**
- * Function for calling wpcd_data_sync_rest methods and variables.
- * wpcd_data_sync_rest is the class that manages the custom REST endpoints.
- *
- * @return WPCD_DATA_SYNC_REST;
- */
-function WPCD_DATA_SYNC_REST() {
-	return WPCD()->classes['wpcd_data_sync_rest'];
-}
-
-
-/**
  * Create a class var for WPCD_SYNC and
  * add it to the WPCD array of classes for management
  */
@@ -589,31 +449,5 @@ function wpcd_init_wordpress_app_public() {
  */
 function WPCD_WORDPRESS_APP_PUBLIC() {
 	return WPCD()->classes['WPCD_WORDPRESS_APP_PUBLIC'];
-}
-
-
-
-/**
- * Create a class var for WPCD_LOGTIVITY and
- * add it to the WPCD array of classes for management
- */
-add_action( 'init', 'wpcd_init_logtivity', -10, 1 );
-function wpcd_init_logtivity() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( class_exists( 'WPCD_LOGTIVITY' ) ) {
-			if ( empty( WPCD()->classes['WPCD_LOGTIVITY'] ) ) {
-				WPCD()->classes['WPCD_LOGTIVITY'] = new WPCD_LOGTIVITY();
-			}
-		}
-	}
-}
-
-/**
- * Function for calling WPCD_LOGTIVITY methods and variables
- *
- * @return WPCD_LOGTIVITY;
- */
-function WPCD_LOGTIVITY() {
-	return WPCD()->classes['WPCD_LOGTIVITY'];
 }
 

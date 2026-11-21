@@ -1,0 +1,1 @@
+The SimpleStack admin bundle must be built before the plugin runs in production: `npm ci && npm run build` (or `npm ci && npm run build && npm run verify:css` per the Help screen). If `assets/dist/.vite/manifest.json` is missing, the Servers screen emits an operator-facing notice instead of failing silently.

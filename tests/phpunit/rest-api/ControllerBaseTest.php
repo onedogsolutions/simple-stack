@@ -1,13 +1,11 @@
 <?php
 
-use WPTest\Test\TestCase;
-
 /**
  * Class ControllerBaseTest
  *
  * Test common behavior of all rest api controllers
  */
-class ControllerBaseTest extends TestCase
+class ControllerBaseTest extends WP_UnitTestCase
 {
     protected WP_REST_Server $rest;
     protected WPCD_REST_API_Controller_Base $controller;

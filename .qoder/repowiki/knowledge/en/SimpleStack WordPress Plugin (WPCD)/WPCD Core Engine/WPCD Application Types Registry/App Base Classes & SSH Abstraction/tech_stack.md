@@ -1,0 +1,1 @@
+phpseclib3 for SSH/SFTP and Ed25519 key generation; WordPress REST API for provisioning callbacks; Metabox.io filter (`rwmb_meta_boxes`) for admin UI; Composer autoloader (`vendor/autoload.php`) loaded before use.

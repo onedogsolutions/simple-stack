@@ -2881,6 +2881,9 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 	/**
 	 * Register an endpoint to handle the webhook from GitHub.
+	 *
+	 * The route has to be public: GitHub has no WordPress account. What secures it is the
+	 * per-site `wpcd_app_git_push_to_deploy_secret_key`, checked below with `hash_equals()`.
 	 */
 	public function register_github_webhook_endpoint() {
 		register_rest_route(
@@ -2903,10 +2906,19 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		// @TODO: Ignore the event if it's not a 'push'.
 
-		// Get the secret from the X-Hub-Signature header.
-		$signature = sanitize_text_field( $_SERVER['HTTP_X_HUB_SIGNATURE'] );
+		// Get the signature from the X-Hub-Signature header. GitHub always sends one, so a
+		// request without it did not come from GitHub.
+		if ( empty( $_SERVER['HTTP_X_HUB_SIGNATURE'] ) ) {
+			return 'missing signature';  // Note: no translation here in case the sender needs a fixed error message code/string.
+		}
+
+		$signature = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_HUB_SIGNATURE'] ) );
 
 		// Extract the signature from the header value.
+		if ( ! str_contains( $signature, '=' ) ) {
+			return 'malformed signature';  // Note: no translation here in case the sender needs a fixed error message code/string.
+		}
+
 		list($algorithm, $signature) = explode( '=', $signature, 2 );
 
 		// Check that the algorithm is SHA1 (GitHub uses this by default).

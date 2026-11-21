@@ -1,0 +1,1 @@
+Composer scripts: `composer lint` (PHP lint), `composer lint:sh` (shell lint), `composer guard` (enforce WPCD_ prefix usage), `composer test` (PHPUnit). npm scripts: `npm run dev` (Vite dev server), `npm run build` (production build), `npm run verify` (build + CSS isolation check via `tools/verify-css-isolation.mjs`).

@@ -1,8 +1,20 @@
 <?php
 /**
- * Uninstall WPCD
+ * Uninstall SimpleStack.
  *
- * @package WPCD
+ * Two gates, both opt-in:
+ *
+ * - Settings → Uninstall → "remove data on delete" (`wpcd_options['uninstall_on_delete']`)
+ *   controls the settings themselves.
+ * - The `wpcd_delete_data_on_plugin_removal` constant additionally drops roles, capabilities
+ *   and the plugin's custom tables.
+ *
+ * Server, site and log posts are never deleted here. They describe machines that keep running
+ * in the cloud after the plugin is gone, so removing the rows would destroy the only record of
+ * what exists and how to reach it. Deactivating and reactivating restores management of the
+ * same servers.
+ *
+ * @package wpcd
  */
 
 // Exit if accessed directly.
@@ -25,55 +37,49 @@ if ( ! defined( 'wpcd_plugin' ) ) {
 $options = get_option( 'wpcd_options', array() );
 
 if ( ! empty( $options['uninstall_on_delete'] ) ) {
-	if ( ! class_exists( 'WPCD_Setup' ) ) {
-		require_once wpcd_path . 'includes/core/class-wpcd-setup.php';
+
+	/*
+	 * The two option arrays are deleted whole rather than filtered key by key. `wpcd_settings`
+	 * holds the provider API keys and encrypted SSH keys, `wpcd_options` holds the early
+	 * options; a filtered delete would silently leave behind every key this file does not
+	 * happen to know about, and a stale credential in the database is still a credential.
+	 */
+	delete_option( 'wpcd_options' );
+	delete_option( 'wpcd_settings' );
+
+	/*
+	 * Everything else the plugin writes outside those two arrays: the global SSH console
+	 * toggle, the upgrade bookkeeping markers, the setup wizard answers, the cron cooldown
+	 * timestamp, and the IDs of the front-end pages the plugin created.
+	 */
+	$standalone_options = array(
+		'wpcd_wpapp_ssh_console_hide',
+		'wpcd_last_upgrade_done',
+		'wpcd_last_silent_auto_upgrade_done',
+		'wpcd_last_version_upgrade',
+		'wpcd_version',
+		'wpcd_setup_wizard_selected_provider',
+		'wpcd_plugin_setup',
+		'wpcd_skip_wizard_setup',
+		'wpcd_plugin_first_time_activated',
+		'wpcd_crons_not_running_email_next_send_date',
+		'wpcd_public_servers_list_page_id',
+		'wpcd_public_apps_list_page_id',
+		'wpcd_public_deploy_server_page_id',
+	);
+
+	foreach ( $standalone_options as $option ) {
+		delete_option( $option );
 	}
 
-	$wpcd_setup = new WPCD_Setup();
-
-	/* Remove settings */
-	foreach ( $wpcd_setup->settings_defaults as $k => $v ) {
-		unset( $options[ $k ] );
-	}
-
-	unset( $options['wpcd_license_key'] );
-	update_option( 'wpcd_options', $options );
-	/* End remove settings */
-
-	/* This option was used to control whether our SSH console was hidden globally */
-	delete_option( 'wpcd_wpapp_ssh_console_hide' );
-
-	/* The option wpcd_last_upgrade_done holds the numeric version of the last update that was done via the upgrade scripts. */
-	delete_option( 'wpcd_last_upgrade_done' );
-	delete_option( 'wpcd_last_silent_auto_upgrade_done' );
-	
-	/* Incompatible addon version checks */
-	delete_option( 'wpcd_addons_compatible_last_version_checked' );
-
-	/* Options used in setup wizard */
-	delete_option( 'wpcd_setup_wizard_selected_provider' );
-
-	/* Wisdom Options */
-	delete_option( 'wisdom_opt_out' );
-	delete_option( 'wisdom_wpcd_server_count' );
-	delete_option( 'wisdom_wpcd_app_count' );
-
-	/* Setup Wizard Options */
-	delete_option( 'wpcd_plugin_setup' );
-	delete_option( 'wpcd_skip_wizard_setup' );
-
-	/* Clear long-lived transients. */
-	delete_transient( 'wpcd_wisdom_custom_options_first_run_done' );
-
-	/* @TODO: Need to delete all data from all our custom post types. */
-
-	/* These two options are not used right now - need to update an activation function to make them do stuff */
-	delete_option( 'wpcd_last_version_upgrade' );
-	delete_option( 'wpcd_version' );
-
+	/*
+	 * The front-end pages those IDs pointed at are left in place: they are ordinary
+	 * WordPress pages that an operator may have edited or linked to, so deleting them is a
+	 * content decision rather than part of uninstalling a plugin.
+	 */
 }
 
-// if defined in wp-config.php then remove the roles and capabilities as well as custom table.
+// If defined in wp-config.php then remove the roles, capabilities and custom tables as well.
 if ( defined( 'wpcd_delete_data_on_plugin_removal' ) && wpcd_delete_data_on_plugin_removal ) {
 	require_once wpcd_path . 'includes/core/class-wpcd-roles-capabilities.php';
 	require_once wpcd_path . 'includes/core/class-wpcd-posts-permission-type.php';

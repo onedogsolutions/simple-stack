@@ -1,0 +1,1 @@
+Base classes that concrete app implementations (WordPress, VPN, etc.) extend to share provisioning scripts, command lifecycle, REST callbacks, and SSH/SFTP transport.

@@ -1,0 +1,5 @@
+- Each bundled plugin's entry file starts with a WordPress plugin header block declaring Name/Version/Author/Text Domain, followed by `defined( 'ABSPATH' ) || die` to prevent direct access.
+- Add-ons gate their bootstrap behind a `function_exists` wrapper around a unique loader function (e.g. `mb_admin_columns_load`, `mb_custom_table_load`, `mb_settings_page_load`) and bail early when `RWMB_VER` is not defined, ensuring they only run when the host Meta Box plugin is present.
+- Composer dependencies inside each add-on are loaded conditionally via `file_exists( __DIR__ . '/vendor' )` before requiring `vendor/autoload.php`, allowing the vendor directory to be absent in development or stripped builds.
+- Larger add-ons expose a PSR-4 namespace under `src/` (e.g. `MetaBox\CustomTable`, `MBSP`, `MBAC`) and instantiate a `Loader` plus feature classes from the entry file rather than using global functions.
+- Assets are resolved through the host framework by calling `RWMB_Loader::get_path( __DIR__ )` to derive the plugin URL, instead of hard-coding paths.

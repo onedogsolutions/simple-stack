@@ -1,0 +1,1 @@
+PHP classes registered as WordPress plugins; data persisted as WordPress Custom Post Types plus a small set of custom tables for DNS records; admin UI built from PHP templates + React assets loaded through the SimpleStack REST namespace.

@@ -1,0 +1,1 @@
+TGMPA (TGM Plugin Activation) vendored as `class-tgm-plugin-activation.php`; Meta Box add-ons use Composer autoloading under each plugin's `vendor/` directory; tooltip add-on bundles Tippy.js and Popper.js assets.

@@ -979,7 +979,15 @@ class WORDPRESS_APP_SETTINGS extends WPCD_APP_SETTINGS {
 				'id'   => 'wordpress_app_script_version',
 				'type' => 'text',
 				'name' => __( 'Version of scripts', 'wpcd' ),
-				'desc' => __( '<b>For future use - not yet active</b> <em>You can set the version when you deploy a new site</em> The default is V1.  Updates to plugins that contain new scripts will NOT usually change this value so if you want to use new scripts on plugin updates, you should change this version number.', 'wpcd' ),
+				'std'  => 'v2',
+				'desc' => __( 'Folder under <code>includes/core/apps/wordpress-app/scripts/</code> to run. <b>v2</b> is the SimpleStack default: OpenLiteSpeed only, Ubuntu 24.04 (noble) and 26.04 (resolute), lsphp83/84/85. Existing servers keep whatever version was recorded in their own <code>wpcd_server_scripts_version</code> meta, so switching this value never changes a server that is already provisioned.', 'wpcd' ),
+				'tab'  => 'wordpress-app-scripts',
+			),
+			array(
+				'id'   => 'simplestack_admin_ip',
+				'type' => 'text',
+				'name' => __( 'Admin IP for the OLS WebAdmin console', 'wpcd' ),
+				'desc' => __( 'Optional. A single IPv4 or IPv6 address (or CIDR block) allowed to reach the OpenLiteSpeed WebAdmin console on port 7080. <b>Leave blank to bind the console to 127.0.0.1</b>, which is the safe default: you then reach it through an SSH tunnel (<code>ssh -L 7080:127.0.0.1:7080 root@server</code>). Port 7080 is never opened to 0.0.0.0/0.', 'wpcd' ),
 				'tab'  => 'wordpress-app-scripts',
 			),
 			array(
@@ -1168,9 +1176,9 @@ class WORDPRESS_APP_SETTINGS extends WPCD_APP_SETTINGS {
 				'id'      => 'wordpress_app_default_webserver',
 				'type'    => 'select',
 				'name'    => __( 'Default Web Server', 'wpcd' ),
-				'tooltip' => __( 'Select the default Webserver to be used when deploying a new WordPress server!', 'wpcd' ),
+				'tooltip' => __( 'SimpleStack only supports OpenLiteSpeed, so this is fixed.', 'wpcd' ),
 				'tab'     => 'wordpress-app-general-wpadmin',
-				'std'     => 'nginx',
+				'std'     => 'ols',
 				'options' => WPCD()->get_webserver_list(),
 			),
 			array(

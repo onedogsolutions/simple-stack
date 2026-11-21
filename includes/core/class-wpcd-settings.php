@@ -58,24 +58,8 @@ class WPCD_Settings {
 		// Action hook to test provider connection.
 		add_action( 'wp_ajax_wpcd_provider_test_provider_connection', array( $this, 'wpcd_provider_test_provider_connection' ) );
 
-		// Action hook to check for plugin updates. This is initiated via a button on the license tab on the settings screen.
-		add_action( 'wp_ajax_wpcd_check_for_updates', array( $this, 'wpcd_check_for_updates' ) );
-
-		// Action hook to validate licenses. This is initiated via a button on the license tab on the settings screen.
-		add_action( 'wp_ajax_wpcd_validate_licenses', array( $this, 'wpcd_validate_licenses' ) );
-
 		// Action hook to reset defaults brand colors.
 		add_action( 'wp_ajax_wpcd_reset_defaults_brand_colors', array( $this, 'wpcd_reset_defaults_brand_colors' ) );
-
-		// Action hook to check licenses after fields are saved.  This is initiated via a checkbox on the license tab on the settings screen.
-		add_action( 'rwmb_after_save_field', array( $this, 'check_license' ), 10, 5 );
-
-		// Action hook to handle wisdom opt-out settings after fields are saved.  This is initiated via a checkbox on the license tab on the settings screen.
-		add_action( 'rwmb_after_save_field', array( $this, 'handle_wisdom_opt_out' ), 10, 5 );
-
-		// Action hook to check for updates when the WP admin screen is initialized.
-		// This hook used to be admin_init but changed to init to support auto updates feaure released in WP 5.5.0.
-		add_action( 'init', array( $this, 'check_for_updates' ) );
 
 		$this->display_settings();
 
@@ -387,22 +371,22 @@ class WPCD_Settings {
 				);
 
 				$meta_boxes[] = array(
-					'id'             => 'hide-do-provider-mb',
-					'title'          => __( 'Hide Digital Ocean Provider', 'wpcd' ),
+					'id'             => 'enable-do-provider-mb',
+					'title'          => __( 'Digital Ocean Provider', 'wpcd' ),
 					'settings_pages' => 'wpcd_settings',
 					'tab'            => 'misc',
 					'fields'         => array(
 						array(
 							'type' => 'heading',
-							'name' => 'Hide Digital Ocean Provider',
-							'desc' => __( 'If you have installed at least one additional provider, you can disable the Digital Ocean provider here.', 'wpcd' ),
+							'name' => 'Digital Ocean Provider',
+							'desc' => __( 'Vultr and UpCloud are the supported providers. The Digital Ocean provider is hidden by default and is only needed for servers provisioned before the SimpleStack rebrand.', 'wpcd' ),
 						),
 
 						array(
-							'name' => __( 'Hide Digital Ocean Provider', 'wpcd' ),
-							'id'   => 'hide-do-provider',
+							'name' => __( 'Enable Digital Ocean Provider', 'wpcd' ),
+							'id'   => 'enable-do-provider',
 							'type' => 'checkbox',
-							'desc' => __( 'Check this to disable the default Digital Ocean provider.', 'wpcd' ),
+							'desc' => __( 'Check this to show the legacy Digital Ocean provider in the provider list.', 'wpcd' ),
 						),
 					),
 				);
@@ -522,26 +506,6 @@ class WPCD_Settings {
 							'id'      => 'wpcd_do_not_send_pending_log_warning_emails',
 							'type'    => 'checkbox',
 							'tooltip' => __( 'Emails are sent when we detect that there are pending tasks that have started but not completed in a reasonable time. This option disables those emails.', 'wpcd' ),
-						),
-					),
-				);
-
-				$meta_boxes[] = array(
-					'id'             => 'wpcd-wisdom-opt-out-fields',
-					'title'          => __( 'Share Statistics', 'wpcd' ),
-					'settings_pages' => 'wpcd_settings',
-					'tab'            => 'misc',
-					'fields'         => array(
-						array(
-							'type' => 'heading',
-							'name' => __( 'Share Statistics', 'wpcd' ),
-							'desc' => __( 'Opt out of sharing site statistics.', 'wpcd' ),
-						),
-						array(
-							'name'    => __( 'Do Not Share Site Statistics', 'wpcd' ),
-							'id'      => 'wpcd_wisdom_opt_out',
-							'type'    => 'checkbox',
-							'tooltip' => __( 'Data Shared: Current theme & Version, Current WPCD Version, Site Name, WordPress Version, Site Language, Active and Inactive Plugins, System Email, Basic Server data such as PHP version, NGINX version, Memory Limit etc. See privacy policy for more information.', 'wpcd' ),
 						),
 					),
 				);
@@ -1073,125 +1037,6 @@ class WPCD_Settings {
 					);
 				}
 
-				// Show license fields.
-				if ( ! defined( 'WPCD_HIDE_LICENSE_TAB' ) || ( defined( 'WPCD_HIDE_LICENSE_TAB' ) && ( ! WPCD_HIDE_LICENSE_TAB ) && ( 1 === get_current_blog_id() ) ) ) {
-
-					$core_item_id = WPCD_ITEM_ID;
-
-					$meta_boxes[] = array(
-						'id'             => 'license',
-						'title'          => __( 'License And Automatic Updates', 'wpcd' ),
-						'settings_pages' => 'wpcd_settings',
-						'tab'            => 'license',
-						'fields'         => array_merge(
-							array(
-								array(
-									'type' => 'heading',
-									'name' => 'Core License',
-									'desc' => __( 'The license for the core WPCD plugin', 'wpcd' ),
-								),
-								array(
-									'name'       => __( 'License', 'wpcd' ),
-									'id'         => "wpcd_item_license_$core_item_id",
-									'type'       => 'text',
-									'size'       => 40,
-									'desc'       => empty( wpcd_get_early_option( "wpcd_item_license_$core_item_id" ) ) ? __( 'Please enter your license key for the core plugin. Note: If you have an ALL ACCESS or BUSINESS bundle license please do not use those bundle keys; instead use the CORE plugin license key.', 'wpcd' ) : get_transient( "wpcd_license_notes_for_$core_item_id" ) . '<br />' . get_transient( "wpcd_license_updates_for_$core_item_id" ),
-									'attributes' => array(
-										'spellcheck' => 'false',
-									),
-								),
-
-								array(
-									'type' => 'heading',
-									'name' => 'Add-on Licenses',
-									'desc' => __( 'The licenses for installed add-ons', 'wpcd' ),
-								),
-							),
-							$this->get_license_fields_for_add_ons(),
-							array(
-
-								array(
-									'type' => 'divider',
-								),
-
-								array(
-									'type' => 'heading',
-									'name' => 'License And Update Check Options',
-									'desc' => __( 'Options that control the license and update checks', 'wpcd' ),
-								),
-								array(
-									'name'        => __( 'WPCD Store URL', 'wpcd' ),
-									'id'          => 'wpcd_store_url',
-									'type'        => 'text',
-									'size'        => 91,
-									'std'         => 'https://wpclouddeploy.com',
-									'placeholder' => 'https://wpclouddeploy.com',
-									'desc'        => __( 'Enter the url to the WPCD store.  If left blank it will be set to https://wpclouddeploy.com.', 'wpcd' ),
-								),
-								array(
-									'name'        => __( 'Period For Checking Licenses', 'wpcd' ),
-									'id'          => 'wpcd_license_check_period',
-									'type'        => 'number',
-									'min'         => 1,
-									'std'         => 24,
-									'placeholder' => 24,
-									'desc'        => __( 'How often should we check for license expiration and validity?  This value is specified in hours.', 'wpcd' ),
-								),
-								array(
-									'name'        => __( 'Timeout', 'wpcd' ),
-									'id'          => 'wpcd_license_check_timeout',
-									'type'        => 'number',
-									'min'         => 15,
-									'std'         => 30,
-									'placeholder' => 30,
-									'desc'        => __( 'Set a timeout in seconds for each call we make to the licensing server.', 'wpcd' ),
-								),
-								array(
-									'type'       => 'button',
-									'name'       => __( 'Check for updates', 'wpcd' ),
-									'std'        => __( 'Check for updates', 'wpcd' ),
-									'attributes' => array(
-										'id'               => 'wpcd-check-for-updates',
-										'data-action'      => 'wpcd_check_for_updates',
-										'data-nonce'       => wp_create_nonce( 'wpcd-update-check' ),
-										'data-loading_msg' => __( 'Please wait...', 'wpcd' ),
-									),
-									'tooltip'    => __( 'After the screen refreshes, navigate to the WordPress Updates screen to see notices of any new WPCD updates that might be available.', 'wpcd' ),
-								),
-								array(
-									'type'       => 'button',
-									'name'       => __( 'Validate licenses', 'wpcd' ),
-									'std'        => __( 'Validate licenses', 'wpcd' ),
-									'attributes' => array(
-										'id'               => 'wpcd-validate-licenses',
-										'data-action'      => 'wpcd_validate_licenses',
-										'data-nonce'       => wp_create_nonce( 'wpcd-license-validate' ),
-										'data-loading_msg' => __( 'Please wait...', 'wpcd' ),
-									),
-									'tooltip'    => __( 'After the screen refreshes, scroll up to see license detail messages under each license key field.', 'wpcd' ),
-								),
-								array(
-									'name'    => __( 'Force Update Check', 'wpcd' ),
-									'id'      => 'wpcd_license_force_update_check',
-									'type'    => 'checkbox',
-									'std'     => 0,
-									'desc'    => __( 'Check this box and save settings to force an update check immediately. Use this option if the buttons above do not seem to be working.', 'wpcd' ),
-									'tooltip' => __( 'You should uncheck this box and save again to turn this off - otherwise you will be taking an unncessary performance penalty every time you save this screen.', 'wpcd' ),
-								),
-								array(
-									'name'    => __( 'Force License Check', 'wpcd' ),
-									'id'      => 'wpcd_license_force_license_check',
-									'type'    => 'checkbox',
-									'std'     => 0,
-									'desc'    => __( 'Check this box and save settings to force an immediate license check on all licenses. Use this option if the buttons above do not seem to be working.', 'wpcd' ),
-									'tooltip' => __( 'You should uncheck this box and save again to turn this off - otherwise you will be taking an unncessary performance penalty every time you save this screen.', 'wpcd' ),
-								),
-							),
-						),
-					);
-
-				}
-
 				// Enable saving filter on the a random field so we can clear the provider cache when settings are saved.
 				add_filter( 'rwmb_wpcd_show_server_list_short_desc_value', array( &$this, 'wpcd_clear_all_providers_cache' ), 10, 3 );
 
@@ -1240,9 +1085,6 @@ class WPCD_Settings {
 		$tabs['misc']    = __( 'Misc', 'wpcd' );
 		$tabs['logging'] = __( 'Logging and Tracing', 'wpcd' );
 		$tabs['tools']   = __( 'Tools', 'wpcd' );
-		if ( ! defined( 'WPCD_HIDE_LICENSE_TAB' ) || ( defined( 'WPCD_HIDE_LICENSE_TAB' ) && ! WPCD_HIDE_LICENSE_TAB ) ) {
-			$tabs['license'] = __( 'License & Updates', 'wpcd' );
-		}
 
 		if ( wpcd_data_sync_allowed() ) {
 			$tabs['data-sync'] = __( 'Data Sync', 'wpcd' );
@@ -1255,7 +1097,9 @@ class WPCD_Settings {
 			'menu_title'  => __( 'Settings', 'wpcd' ),
 			'icon_url'    => 'dashicons-layout',
 			'style'       => 'no-boxes',
-			'parent'      => 'edit.php?post_type=wpcd_app_server',
+			// Parented to the SimpleStack menu: the server post type is no longer a top level
+			// menu, so this page would otherwise be unreachable.
+			'parent'      => 'simplestack',
 			'position'    => 80,
 			'columns'     => 2,
 			'tabs'        => $tabs,
@@ -1854,6 +1698,29 @@ class WPCD_Settings {
 	}
 
 	/**
+	 * Return the size keys that provider plans are mapped onto.
+	 *
+	 * SimpleStack has no WooCommerce layer to read product size options from, so the list
+	 * lives here.  The keys end up inside option names such as `vpn_vultr-v2_small`, so
+	 * they are kept stable and extendable through a filter rather than being rebuilt from
+	 * whatever products happen to exist.
+	 *
+	 * @return array
+	 */
+	public function get_size_options() {
+
+		$sizes = array(
+			'small'  => __( 'Small', 'wpcd' ),
+			'medium' => __( 'Medium', 'wpcd' ),
+			'large'  => __( 'Large', 'wpcd' ),
+			'xlarge' => __( 'Extra Large', 'wpcd' ),
+		);
+
+		return apply_filters( 'wpcd_provider_size_options', $sizes );
+
+	}
+
+	/**
 	 * Get fields for sizes (small, medium large etc.)
 	 *
 	 * @param int    $tab_id             The ID of the tab being rendered.
@@ -1862,7 +1729,7 @@ class WPCD_Settings {
 	 */
 	public function get_generic_size_fields( $tab_id, $provider, $provider_sizes ) {
 
-		$sizes  = WPCD_WOOCOMMERCE()->get_wc_size_options();
+		$sizes  = $this->get_size_options();
 		$return = array();
 		foreach ( $sizes as $size => $size_desc ) {
 			$return[] = array(
@@ -1966,6 +1833,18 @@ class WPCD_Settings {
 	 */
 	public function is_api_key_empty( $provider ) {
 
+		/*
+		 * Not every provider authenticates with an api key.  UpCloud uses a user name and
+		 * password pair, so looking for `vpn_upcloud_apikey` would answer "empty" forever
+		 * and leave the ssh key, size and cache sections of the settings screen
+		 * permanently hidden no matter what the operator typed into the credential fields.
+		 * Ask the provider whether its own credentials are configured instead.
+		 */
+		$provider_api = WPCD()->get_provider_api( $provider );
+		if ( ! empty( $provider_api ) && ! $provider_api->uses_api_key() ) {
+			return ! $provider_api->has_credentials();
+		}
+
 		if ( ( empty( wpcd_get_early_option( "vpn_{$provider}_apikey" ) ) ) || ( empty( WPCD()->decrypt( ( wpcd_get_early_option( "vpn_{$provider}_apikey" ) ) ) ) ) ) {
 			return true;
 		} else {
@@ -1996,32 +1875,6 @@ class WPCD_Settings {
 		// Enqueue some of our scripts.
 		wp_register_script( 'wpcd-admin-settings', wpcd_url . 'assets/js/wpcd-admin-settings.js', array( 'jquery', 'wpcd-magnific', 'wp-util' ), wpcd_scripts_version, true );
 		wp_enqueue_script( 'wpcd-admin-settings' );
-
-		wp_register_script( 'wpcd-admin-settings-data-sync', wpcd_url . 'assets/js/wpcd-admin-settings-data-sync.js', array( 'jquery', 'wp-util' ), wpcd_scripts_version, true );
-		wp_enqueue_script( 'wpcd-admin-settings-data-sync' );
-
-		wp_localize_script(
-			'wpcd-admin-settings-data-sync',
-			'wpcd_admin_settings_data_sync_params',
-			array(
-				'nonce' => wp_create_nonce( 'wpcd-settings' ),
-				'i10n'  => array(
-					'empty_target_site'       => __( 'Please enter Target Site url.', 'wpcd' ),
-					'empty_enc_key'           => __( 'Please enter Encryption Key.', 'wpcd' ),
-					'empty_user_id'           => __( 'Please enter User ID.', 'wpcd' ),
-					'empty_password'          => __( 'Please enter Password.', 'wpcd' ),
-					'wait_msg'                => __( 'Please wait for a while...', 'wpcd' ),
-					'delete_wait_msg'         => __( 'Deleting...', 'wpcd' ),
-					'restore_wait_msg'        => __( 'Restoring...', 'wpcd' ),
-					'save_wait_msg'           => __( 'Saving...', 'wpcd' ),
-					'restore_confirmation'    => __( 'Are you sure you would like to import this data?', 'wpcd' ),
-					'empty_encryption_key_v2' => __(
-						'Please enter Encryption Key.',
-						'wpcd'
-					),
-				),
-			)
-		);
 
 		$wpcd_screen          = get_current_screen();
 		$wpcd_check_post_type = array(
@@ -2162,8 +2015,8 @@ class WPCD_Settings {
 		$provider = sanitize_text_field( FILTER_INPUT( INPUT_POST, 'provider', FILTER_DEFAULT ) );
 
 		// Setup variables to be used by transient and then delete the existing one.
-		$apikey        = WPCD()->get_provider_api( $provider )->get_api_key();
-		$transient_key = 'wpcd_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $apikey );
+		$credential_fingerprint = WPCD()->get_provider_api( $provider )->get_credential_fingerprint();
+		$transient_key          = 'wpcd_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $credential_fingerprint );
 		delete_transient( $transient_key );
 
 		// Call the test_connection function.
@@ -2210,9 +2063,9 @@ class WPCD_Settings {
 		if ( WPCD()->get_provider_api( $provider )->get_feature_flag( 'test_connection' ) ) {
 
 			// See if transient is already set.
-			$apikey           = WPCD()->get_provider_api( $provider )->get_api_key();
-			$transient_key    = 'wpcd_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $apikey );
-			$transient_status = get_transient( $transient_key );
+			$credential_fingerprint = WPCD()->get_provider_api( $provider )->get_credential_fingerprint();
+			$transient_key          = 'wpcd_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $credential_fingerprint );
+			$transient_status       = get_transient( $transient_key );
 
 			if ( 'connection_successful' === $transient_status ) {
 				$return = true;
@@ -2263,9 +2116,9 @@ class WPCD_Settings {
 		if ( WPCD()->get_provider_api( $provider )->get_feature_flag( 'test_connection' ) ) {
 
 			// See if transient is already set.
-			$apikey           = WPCD()->get_provider_api( $provider )->get_api_key();
-			$transient_key    = 'wpcd_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $apikey );
-			$transient_status = get_transient( $transient_key );
+			$credential_fingerprint = WPCD()->get_provider_api( $provider )->get_credential_fingerprint();
+			$transient_key          = 'wpcd_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $credential_fingerprint );
+			$transient_status       = get_transient( $transient_key );
 
 			if ( 'connection_successful' === $transient_status ) {
 				$return = true;
@@ -2307,176 +2160,6 @@ class WPCD_Settings {
 		}
 
 		return $new;
-	}
-
-	/**
-	 * Metabox.io Callback function after saving settings fields.
-	 *
-	 * This one will be used to check the license fields.
-	 * Note that this function is called once for each settings field.
-	 * So we need to check to make sure that the field is one we're
-	 * interested in handling here.
-	 *
-	 * Filter Hook: rwmb_after_save_field
-	 *
-	 * @param string $not_used set to null because it's not used.
-	 * @param array  $field field settings.
-	 * @param string $new new value of field.
-	 * @param string $old old value of field.
-	 * @param int    $object_id the metabox object id.
-	 */
-	public function check_license( $not_used, $field, $new, $old, $object_id ) {
-		if ( true === is_admin() ) {
-
-			/* Is the field a license field for the core plugin? If so, check licenses for the core plugin. */
-			$core_item_id = WPCD_ITEM_ID;
-			if ( "wpcd_item_license_$core_item_id" === $field['id'] && $new !== $old ) {
-				WPCD_License::check_license( $new, WPCD_ITEM_ID );
-			}
-
-			/* Is the field a license field for one of the add-ons? If so, check licenses for the addon. */
-			$add_ons = apply_filters( 'wpcd_register_add_ons_for_licensing', array() );  // The array of existing add-ons.
-			foreach ( $add_ons as $item ) {
-				if ( ! empty( $item ) ) {
-					foreach ( $item as $item_id => $item_name ) {
-						if ( "wpcd_item_license_$item_id" === $field['id'] && $new !== $old ) {
-							WPCD_License::check_license( $new, $item_id );
-						}
-					}
-				}
-			}
-
-			/* Do we need to force a software update check right away? */
-			if ( 'wpcd_license_force_update_check' === $field['id'] && ( 1 === ( (int) $new ) ) ) {
-				do_action( 'wpcd_log_error', 'Admin requested immediate software update check.', 'trace', __FILE__, __LINE__, array(), false );
-				WPCD_License::check_for_updates();  // Use wp_remote_post to check the status of each individual plugin/add-on and sets a transient that is displayed on the license tab.
-				WPCD_License::update_plugins(); // This one calls the actual EDD updater class.
-			}
-
-			/* Do we need to force a license check on all licenses immediately? */
-			if ( 'wpcd_license_force_license_check' === $field['id'] && ( 1 === ( (int) $new ) ) ) {
-				do_action( 'wpcd_log_error', 'Admin requested immediate license validation check on all licenses.', 'trace', __FILE__, __LINE__, array(), false );
-				WPCD_License::validate_all_licenses();
-			}
-		}
-	}
-
-	/**
-	 * Metabox.io Callback function after saving settings fields.
-	 *
-	 * This one will be used to set a standard WordPress option called 'wisdom_opt_out'
-	 * to let the Wisdom plugin know that the user has opted out of sharing statistics.
-	 *
-	 * @see: https://wisdomplugin.com/support/#options
-	 *
-	 * Filter Hook: rwmb_after_save_field
-	 *
-	 * @param string $not_used set to null because it's not used.
-	 * @param array  $field field settings.
-	 * @param string $new new value of field.
-	 * @param string $old old value of field.
-	 * @param int    $object_id the metabox object id.
-	 */
-	public function handle_wisdom_opt_out( $not_used, $field, $new, $old, $object_id ) {
-		if ( true === is_admin() ) {
-			/* Did the user enable the opt-out flag? */
-			if ( 'wpcd_wisdom_opt_out' === $field['id'] ) {
-				if ( ( 1 === ( (int) $new ) ) ) {
-					if ( ! get_option( 'wisdom_opt_out' ) ) {
-						// Option does not already exist so log the change.  We check for the option existence first because we don't want to log every time we save - we just want to log the first time.
-						do_action( 'wpcd_log_error', 'Admin has chosen NOT to share statistics.', 'other', __FILE__, __LINE__, array(), false );
-					}
-					update_option(
-						'wisdom_opt_out',
-						array(
-							'wisdom_registered_setting' => 1,
-							'wisdom_opt_out'            => 1,
-						)
-					);
-				} else {
-					// Flag is unset so delete option if it exists.
-					if ( get_option( 'wisdom_opt_out' ) ) {
-						// But first we log the change.
-						do_action( 'wpcd_log_error', 'Admin has chosen to share statistics.', 'other', __FILE__, __LINE__, array(), false );
-					}
-					delete_option( 'wisdom_opt_out' );
-				}
-			}
-		}
-	}
-
-	/**
-	 * Return an array of license fields for each add-on.
-	 *
-	 * @return array
-	 */
-	public function get_license_fields_for_add_ons() {
-
-		/* The array of fields to return. */
-		$fields = array();
-
-		/* The array of existing add_ons.  */
-		$add_ons = apply_filters( 'wpcd_register_add_ons_for_licensing', array() );
-
-		foreach ( $add_ons as $item ) {
-			if ( ! empty( $item ) ) {
-				foreach ( $item as $item_id => $item_name ) {
-					$fields[] = array(
-						'name'       => "{$item_name['name']}",
-						'id'         => "wpcd_item_license_$item_id",
-						'type'       => 'text',
-						'size'       => 40,
-						'desc'       => empty( wpcd_get_early_option( "wpcd_item_license_$item_id" ) ) ? __( 'Please enter your license key for this item.', 'wpcd' ) : get_transient( "wpcd_license_notes_for_$item_id" ) . '<br />' . get_transient( "wpcd_license_updates_for_$item_id" ),
-						'attributes' => array(
-							'spellcheck' => 'false',
-						),
-					);
-				}
-			}
-		}
-
-		return $fields;
-
-	}
-
-	/**
-	 * Check for plugin & license updates
-	 *
-	 * Action Hook: init
-	 */
-	public static function check_for_updates() {
-
-		// To support auto-updates feature released in WP 5.5 , this needs to run during the wp_version_check cron job for privileged users.
-		$doing_cron = defined( 'DOING_CRON' ) && DOING_CRON;
-		if ( ! current_user_can( 'manage_options' ) && ! $doing_cron ) {
-			return;
-		}
-
-		// License check class file needs to be loaded here.
-		if ( ! class_exists( 'WPCD_License' ) ) {
-			require_once wpcd_path . 'includes/core/class-wpcd-license.php';
-		}
-
-		if ( true === WPCD_License::show_license_tab() ) {
-
-			// Check for software updates - the EDD class checker caches update checks once per week so no need for us to handle it.
-			WPCD_License::update_plugins();
-
-			// Check for license changes or expiration.
-			if ( ! get_transient( 'wpcd_license_check_delay' ) ) {
-
-				do_action( 'wpcd_log_error', "Validating all licenses on init. If this message shows up too many times, it means that transients aren't working as they should.", 'error', __FILE__, __LINE__, array(), false );
-				WPCD_License::validate_all_licenses();
-
-				// Write the transient so we can avoid checking for a period of time.
-				$delay_check_period = wpcd_get_early_option( 'wpcd_license_check_period' );
-				if ( empty( $delay_check_period ) ) {
-					$delay_check_period = 24;  // 24 hours before next check ;
-				}
-				$delay_check_period = ( ( (int) $delay_check_period ) * 3600 );  // convert hours to seconds.
-				set_transient( 'wpcd_license_check_delay', '1', $delay_check_period );
-			}
-		}
 	}
 
 	/**
@@ -2581,60 +2264,6 @@ class WPCD_Settings {
 				<div class="rwmb-field rwmb-button-wrapper"><div class="rwmb-input"><button type="button" id="wpcd-encryption-key-save" class="rwmb-button button hide-if-no-js" data-action="wpcd_encryption_key_save" data-nonce="' . wp_create_nonce( 'wpcd-encryption-key-save' ) . '">Save</button></div></div>';
 
 		return $html;
-	}
-
-	/**
-	 * Check for updates via an AJAX call.
-	 *
-	 * Action Hook: wp_ajax_wpcd_check_for_updates
-	 */
-	public function wpcd_check_for_updates() {
-
-		// nonce check.
-		check_ajax_referer( 'wpcd-update-check', 'nonce' );
-
-		// Permissions check.
-		if ( ! wpcd_is_admin() ) {
-
-			$error_msg = array( 'msg' => __( 'You are not allowed to perform this action - only admins are permitted here.', 'wpcd' ) );
-			wp_send_json_error( $error_msg );
-			wp_die();
-
-		}
-
-		do_action( 'wpcd_log_error', 'Admin requested immediate software update check.', 'trace', __FILE__, __LINE__, array(), false );
-
-		WPCD_License::check_for_updates();  // Use wp_remote_post to check the status of each individual plugin/add-on and sets a transient that is displayed on the license tab.
-
-		WPCD_License::update_plugins(); // This one calls the actual EDD updater class.
-
-		wp_die();
-	}
-
-	/**
-	 * Validate licenses via an AJAX call.
-	 *
-	 * Action Hook: wp_ajax_wpcd_check_for_licenses
-	 */
-	public function wpcd_validate_licenses() {
-
-		// nonce check.
-		check_ajax_referer( 'wpcd-license-validate', 'nonce' );
-
-		// Permissions check.
-		if ( ! wpcd_is_admin() ) {
-
-			$error_msg = array( 'msg' => __( 'You are not allowed to perform this action - only admins are permitted here.', 'wpcd' ) );
-			wp_send_json_error( $error_msg );
-			wp_die();
-
-		}
-
-		do_action( 'wpcd_log_error', 'Admin requested immediate license validation check on all licenses.', 'trace', __FILE__, __LINE__, array(), false );
-
-		WPCD_License::validate_all_licenses();
-
-		wp_die();
 	}
 
 	/**

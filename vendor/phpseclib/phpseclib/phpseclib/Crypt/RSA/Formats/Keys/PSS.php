@@ -81,6 +81,10 @@ abstract class PSS extends Progenitor
                 'id-sha224' => '2.16.840.1.101.3.4.2.4',
                 'id-sha512/224' => '2.16.840.1.101.3.4.2.5',
                 'id-sha512/256' => '2.16.840.1.101.3.4.2.6',
+                'id-sha3/224' => '2.16.840.1.101.3.4.2.7',
+                'id-sha3/256' => '2.16.840.1.101.3.4.2.8',
+                'id-sha3/384' => '2.16.840.1.101.3.4.2.9',
+                'id-sha3/512' => '2.16.840.1.101.3.4.2.10',
 
                 'id-mgf1' => '1.2.840.113549.1.1.8'
             ]);
@@ -141,7 +145,7 @@ abstract class PSS extends Progenitor
         $result['hash'] = str_replace('id-', '', $params['hashAlgorithm']['algorithm']);
         $result['MGFHash'] = str_replace('id-', '', $params['maskGenAlgorithm']['parameters']['algorithm']);
         if (isset($params['saltLength'])) {
-            $result['saltLength'] = (int) $params['saltLength']->toString();
+            $result['saltLength'] = (int) "$params[saltLength]";
         }
 
         if (isset($key['meta'])) {
@@ -154,9 +158,9 @@ abstract class PSS extends Progenitor
     /**
      * Convert a private key to the appropriate format.
      *
-     * @param \phpseclib3\Math\BigInteger $n
-     * @param \phpseclib3\Math\BigInteger $e
-     * @param \phpseclib3\Math\BigInteger $d
+     * @param BigInteger $n
+     * @param BigInteger $e
+     * @param BigInteger $d
      * @param array $primes
      * @param array $exponents
      * @param array $coefficients
@@ -177,8 +181,8 @@ abstract class PSS extends Progenitor
     /**
      * Convert a public key to the appropriate format
      *
-     * @param \phpseclib3\Math\BigInteger $n
-     * @param \phpseclib3\Math\BigInteger $e
+     * @param BigInteger $n
+     * @param BigInteger $e
      * @param array $options optional
      * @return string
      */
@@ -219,10 +223,10 @@ abstract class PSS extends Progenitor
             'trailerField' => new BigInteger(1)
         ];
         if (isset($options['hash'])) {
-            $params['hashAlgorithm']['algorithm'] = 'id-' . $options['hash'];
+            $params['hashAlgorithm']['algorithm'] = 'id-' . str_replace('-', '/', $options['hash']);
         }
         if (isset($options['MGFHash'])) {
-            $temp = ['algorithm' => 'id-' . $options['MGFHash']];
+            $temp = ['algorithm' => 'id-' . str_replace('-', '/', $options['MGFHash'])];
             $temp = ASN1::encodeDER($temp, Maps\HashAlgorithm::MAP);
             $params['maskGenAlgorithm'] = [
                 'algorithm' => 'id-mgf1',

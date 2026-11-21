@@ -370,29 +370,26 @@ class WPCD_Admin_Setup_Wizard {
 	 */
 	public function wpcd_select_provider() {
 
-		// Generate list of providers.
-		$providers['digital-ocean'] = __( 'Digital Ocean', 'wpcd' );
-		if ( class_exists( 'CLOUD_PROVIDER_API_Linode' ) ) {
-			$providers['linode'] = __( 'Linode', 'wpcd' );
-		}
-		if ( class_exists( 'CLOUD_PROVIDER_API_VultrV2' ) ) {
-			$providers['vultr-v2'] = __( 'Vultr', 'wpcd' );
-		}
-		if ( class_exists( 'CLOUD_PROVIDER_API_VultrV2Baremetal' ) ) {
-			$providers['vultr-v2-baremetal'] = __( 'Vultr Baremetal', 'wpcd' );
-		}
-		if ( class_exists( 'CLOUD_PROVIDER_API_Hetzner' ) ) {
-			$providers['hetzner'] = __( 'Hetzner', 'wpcd' );
-		}
-		if ( class_exists( 'CLOUD_PROVIDER_API_Upcloud' ) ) {
-			$providers['upcloud'] = __( 'UpCloud', 'wpcd' );
+		/*
+		 * Offer exactly the providers the registry knows about, minus any the wizard has no
+		 * steps for.  The registry carries the Digital Ocean default-disabled decision, so
+		 * this list cannot drift from what get_provider_api() is able to instantiate.
+		 */
+		$providers = array();
+		foreach ( WPCD()->get_cloud_providers() as $slug => $label ) {
+			/* Custom servers do not have provider credentials to collect. */
+			if ( 'custom-server' === $slug ) {
+				continue;
+			}
+			if ( ! empty( WPCD()->get_provider_api( $slug ) ) ) {
+				$providers[ $slug ] = $label;
+			}
 		}
 
 		?>
 		<form method="post">
 			<p><b><?php esc_html_e( 'Please Select Your Cloud Server Provider', 'wpcd' ); ?> </b></p>
 			<p><?php esc_html_e( 'If you do not see your Cloud Server provider in the list below, please make sure you have uploaded and/or activated the provider plugin.', 'wpcd' ); ?> </p>
-			<p><?php esc_html_e( 'Providers other than Digital Ocean may require a premium purchase.', 'wpcd' ); ?> </p>
 			<label for="selected-provider"><?php esc_html_e( 'Choose a provider:', 'wpcd' ); ?></label>
 			<select style="min-width: 200px;" type="text" name="selected-provider">
 			<?php
@@ -557,7 +554,7 @@ class WPCD_Admin_Setup_Wizard {
 				<p><b><?php esc_html_e( 'Connect To Your Vultr Account', 'wpcd' ); ?> </b></p>
 				<p><?php esc_html_e( 'Get your API token from your VULTR console and enter it below.', 'wpcd' ); ?> </p>
 				<p><?php esc_html_e( 'You can get the api token by navigating to: https://my.vultr.com/settings/#settingsapi.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'Be sure to modify the ACCESS CONTROL section to allow your WPCD Server IP.  Otherwise, creating Vultr servers will fail.', 'wpcd' ); ?></p>
+				<p><?php esc_html_e( 'Be sure to modify the ACCESS CONTROL section to allow this WordPress site\'s IP address.  Otherwise, creating Vultr servers will fail.', 'wpcd' ); ?></p>
 				<p><?php esc_html_e( 'The easiest thing to do is to allow ANY IPv4 and ANY IPv6. You can tighten them down later.', 'wpcd' ); ?></p>			
 				<?php
 				break;

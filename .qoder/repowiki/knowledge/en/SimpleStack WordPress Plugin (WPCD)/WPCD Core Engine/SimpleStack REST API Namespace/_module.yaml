@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: core_engine/rest_api
+title: SimpleStack REST API Namespace
+scope:
+    - includes/core/api/
+source_files: []
+depends_on: []
+related_to:
+    - path: admin_react_app
+    - path: core_engine/app_types/wordpress_app/rest_api
+    - path: tests

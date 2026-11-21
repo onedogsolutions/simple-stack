@@ -1,0 +1,1 @@
+PHPUnit with the WordPress test library (`johnpbloch/wordpress` + `wp-phpunit/wp-phpunit` installed via Composer); tests extend `WP_UnitTestCase` and use `WP_REST_Request` / `rest_get_server()` to exercise the plugin's REST endpoints.

@@ -1,0 +1,1 @@
+React-based admin dashboard embedded in WordPress that manages SimpleStack servers, sites, providers, and activity logs through the `simple-stack/v1` REST API.
