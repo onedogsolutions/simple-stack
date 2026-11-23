@@ -1,0 +1,1 @@
+Shell-script library that provisions Ubuntu servers, installs and manages WordPress sites on LiteSpeed/OpenLiteSpeed, and performs backups, caching, security, monitoring, and sync operations.

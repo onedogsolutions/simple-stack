@@ -1,0 +1,7 @@
+The module is layered around `class-wordpress-app.php` (`WPCD_WORDPRESS_APP`) which composes behavior via the trait files under `traits/traits-for-class-wordpress-app/` (admin columns, backup, commands-and-logs, multi-tenant, push-commands, script-handlers, tabs-security, upgrade). Child layers plug in through this class:
+- `rest-api/` registers `/wpcd/v1/*` endpoints whose controllers delegate to the tab/action engine.
+- `tabs/` and `tabs-server/` define per-site/per-server admin panels; each tab file dispatches AJAX actions that invoke SSH command execution.
+- `public/` provides WP_List_Table subclasses and shortcodes for the front-end listing/edit views.
+- `assets_and_templates/` supplies CSS/JS and PHP templates rendered by the above layers.
+- `scripts/v1/` and `scripts/v2/` are parallel provisioning/management shell-script libraries consumed by the `script-handlers` trait — v1 is the legacy WPCD set, v2 is the SimpleStack fork targeting Ubuntu 24.04/26.04 with OLS-only hardening.
+The REST layer and the admin-tab/AJAX layer both ultimately call into the same script-handling pipeline, so adding a new operation means updating the corresponding `.txt` script(s) in both `v1/` and `v2/` and wiring the tab or REST controller accordingly.

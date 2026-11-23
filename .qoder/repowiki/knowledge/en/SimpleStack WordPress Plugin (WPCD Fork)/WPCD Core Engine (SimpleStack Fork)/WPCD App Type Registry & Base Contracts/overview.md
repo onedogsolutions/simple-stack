@@ -1,0 +1,1 @@
+Defines the WPCD application provider contract (base classes, SSH abstraction) and hosts concrete app engines (WordPress, basic-server, stable-diffusion, vpn) that implement it.

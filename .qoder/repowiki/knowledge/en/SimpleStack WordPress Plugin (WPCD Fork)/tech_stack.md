@@ -1,0 +1,1 @@
+WordPress plugin (PHP ≥8.1) with Composer-managed runtime deps (phpseclib ^3.0); React 19 + Tailwind CSS v4 + Vite 7 for the admin dashboard; PHPUnit 9.6 + wp-phpunit 6.7 + WPCS 3.0 for tests; phpcs.xml configures coding standards at the repo root.

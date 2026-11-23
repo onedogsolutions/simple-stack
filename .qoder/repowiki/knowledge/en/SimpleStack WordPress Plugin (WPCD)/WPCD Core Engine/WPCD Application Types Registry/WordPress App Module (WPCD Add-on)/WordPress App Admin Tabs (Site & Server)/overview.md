@@ -1,1 +1,0 @@
-Admin UI tab definitions and AJAX action handlers for the WordPress App, split into per-site tabs under `tabs/` and per-server tabs under `tabs-server/`, both extending a shared base class.

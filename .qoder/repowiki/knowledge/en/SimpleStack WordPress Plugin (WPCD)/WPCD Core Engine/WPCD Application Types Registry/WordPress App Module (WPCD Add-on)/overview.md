@@ -1,1 +1,0 @@
-WPCloud Deploy add-on that extends the WPCD core with WordPress site and server management, wiring admin UI, REST API, provisioning scripts, and public-facing tables around a shared class registry.

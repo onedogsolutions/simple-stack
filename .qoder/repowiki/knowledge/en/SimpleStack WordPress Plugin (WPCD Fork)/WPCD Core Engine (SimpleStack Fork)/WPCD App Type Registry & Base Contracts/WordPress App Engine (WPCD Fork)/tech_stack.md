@@ -1,0 +1,1 @@
+PHP classes + traits, WordPress CPT/tabs/admin-ajax, WP_List_Table, jQuery-based admin JS, and Bash shell scripts (organized as numbered `.txt` fragments under `scripts/v1/` and `scripts/v2/`).

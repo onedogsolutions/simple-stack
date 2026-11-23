@@ -1,1 +1,0 @@
-PHP classes built on WordPress core `WP_List_Table` and the RW Meta Box plugin (`RW_Meta_Box`); custom table integration uses MetaBox's Custom Table component (`MetaBox\CustomTable\Loader`).

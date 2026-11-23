@@ -1,0 +1,5 @@
+- Public-facing values interpolated into shell commands are validated by strict regexes and reduced to empty strings on mismatch rather than escaped, so a malformed setting cannot widen firewall rules or inject arguments.
+- Option reads go through `wpcd_get_early_option()` first and fall back to `wpcd_get_option()` so values survive REST/cron requests where Meta Box fields are not registered for the current request.
+- Extensibility is exposed via dynamic `apply_filters`/`do_action` hooks named after the app slug (e.g. `wpcd_app_{app}_metaboxes`, `wpcd_server_{app}_command_done`, `wpcd_create_ssh_key_pair`) instead of inheritance points.
+- Long-running server commands communicate completion through a transient keyed by `wpcd_command_{app}_{id}_{name}` and a public REST callback endpoint whose permission callback is `__return_true`, with validation deferred to `perform_command()`.
+- SSH operations log every attempt and result through `do_action('wpcd_log_error', ...)` and persist outcomes via `WPCD_POSTS_SSH_LOG()->add_ssh_log_entry()` before returning results.

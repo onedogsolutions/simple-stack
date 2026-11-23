@@ -1,4 +1,0 @@
-- Each domain area ships as a `class-wpcd-*` or `class-simplestack-*` file grouped under a subdirectory named after the concern (api/, apps/, providers/, custom-table/, traits/).
-- Cross-cutting behavior is factored into reusable traits under `traits/` (e.g. metabox registration, team/taxonomy handling) and included by multiple classes rather than duplicated.
-- Admin-facing UIs are split into per-tab PHP files under `tabs/` and `tabs-server/`, each rendering a section of the server/app detail screen.
-- Operational logic is externalized as numbered `.txt` script templates under `scripts/v1/` and `scripts/v2/`, keeping PHP code thin and configuration-driven.

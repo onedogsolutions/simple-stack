@@ -15,10 +15,17 @@
 - [includes/core/api/class-simplestack-rest-servers.php](file://includes/core/api/class-simplestack-rest-servers.php)
 - [includes/core/api/class-simplestack-rest-sites.php](file://includes/core/api/class-simplestack-rest-sites.php)
 - [includes/core/providers/class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
-- [includes/core/providers/class-vultr-v2.php](file://includes/core/providers/class-vultr-v2.php)
-- [includes/core/providers/class-upcloud.php](file://includes/core/providers/class-upcloud.php)
 - [includes/core/apps/class-wpcd-ssh.php](file://includes/core/apps/class-wpcd-ssh.php)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated architecture to reflect complete transformation from WPCloudDeploy to SimpleStack
+- Added documentation for modern React 19 frontend with Tailwind CSS v4
+- Documented new REST API layer (`simple-stack/v1`) with enhanced security
+- Expanded cloud provider support documentation (Vultr v2, UpCloud 1.3, Custom Server)
+- Updated component interactions to show hybrid WordPress + React architecture
+- Enhanced security boundaries and authentication mechanisms documentation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -28,13 +35,14 @@
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Dependency Analysis](#dependency-analysis)
 7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+8. [Security Architecture](#security-architecture)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
 
 ## Introduction
 SimpleStack is a hybrid WordPress plugin that combines a React 19 admin frontend with a PHP 8.1+ backend to provision and manage remote servers and WordPress sites. The WordPress admin interface acts as the control plane, while a dedicated `simple-stack/v1` REST API exposes server and site operations. Provisioning is performed through cloud provider APIs (Vultr v2, UpCloud 1.3, or custom servers), and remote server configuration is driven by shell scripts executed over SSH.
 
-The system intentionally keeps all operator interactions inside `wp-admin`, avoids external SaaS in the control path, and separates local WordPress operations from remote server management.
+The system intentionally keeps all operator interactions inside `wp-admin`, avoids external SaaS in the control path, and separates local WordPress operations from remote server management. This represents a complete architectural transformation from the original WPCloudDeploy, featuring a modern React frontend, enhanced REST API layer, and expanded cloud provider support.
 
 **Section sources**
 - [README.md:1-25](file://README.md#L1-L25)
@@ -479,11 +487,42 @@ SitesCtrl --> SSH
 
 ## Performance Considerations
 - **Provider API caching**: Read-only provider methods such as regions, sizes, and keys are cached through transients keyed by provider slug and credentials. This reduces repeated API calls during list and form rendering.
-- **Power operation backstops**: Both Vultr and UpCloud providers stamp transient timestamps for asynchronous power operations. If completion signals are missing, elapsed time prevents servers from remaining stuck in “performing” states.
-- **PHP execution limits**: The SSH layer adapts its timeout to PHP’s execution limit and proxy constraints, logging guidance for web server timeouts.
+- **Power operation backstops**: Both Vultr and UpCloud providers stamp transient timestamps for asynchronous power operations. If completion signals are missing, elapsed time prevents servers from remaining stuck in "performing" states.
+- **PHP execution limits**: The SSH layer adapts its timeout to PHP's execution limit and proxy constraints, logging guidance for web server timeouts.
 - **Build output immutability**: The React build output is committed, so production installs do not require Node toolchains. Missing manifests produce an operator-facing notice instead of a blank screen.
 
 [No sources needed since this section provides general guidance]
+
+## Security Architecture
+SimpleStack implements multiple layers of security to protect sensitive operations and credentials:
+
+### Authentication and Authorization
+- All REST endpoints require `manage_options` capability through the base controller's `permissions_check()` method.
+- WordPress session nonce verification is enforced for all API requests.
+- User authentication is handled by WordPress core, ensuring consistent access control.
+
+### Credential Protection
+- API keys and SSH keys are encrypted before storage using WordPress encryption functions.
+- The `SimpleStack_Secret_Redactor` automatically redacts sensitive fields from all API responses.
+- Credentials are never exposed in browser payloads or logs.
+- Provider connection tests report success/failure without exposing actual credentials.
+
+### Data Validation and Sanitization
+- All REST parameters go through strict type validation using the base controller's argument helpers.
+- Input is sanitized using appropriate WordPress sanitization functions.
+- File uploads are validated and processed securely.
+- SQL queries use prepared statements through WordPress database APIs.
+
+### Network Security
+- All communication with cloud providers uses HTTPS.
+- SSH connections use encrypted key pairs with optional passphrase protection.
+- Remote server commands are executed with minimal privileges where possible.
+- Firewall rules restrict access to sensitive services like OpenLiteSpeed WebAdmin.
+
+**Section sources**
+- [includes/core/api/class-simplestack-rest-controller-base.php:53-60](file://includes/core/api/class-simplestack-rest-controller-base.php#L53-L60)
+- [includes/core/api/class-simplestack-rest-controller-base.php:125-162](file://includes/core/api/class-simplestack-rest-controller-base.php#L125-L162)
+- [src/admin/lib/api.js:67-120](file://src/admin/lib/api.js#L67-L120)
 
 ## Troubleshooting Guide
 Common operational issues and where they appear in the codebase:
@@ -497,6 +536,8 @@ Common operational issues and where they appear in the codebase:
 | Provider connection test fails | Missing or invalid API key, username/password, or SSH key material | `class-cloud-provider-api.php`, provider classes |
 | Remote command returns no output | SSH connection failed, script produced empty output, or action expects specific feedback | `class-wpcd-ssh.php` |
 | Power operation never completes | Provider did not return expected state signal; transient timeout should expire it | `class-vultr-v2.php`, `class-upcloud.php` |
+| Build fails during development | Missing Node dependencies or incorrect Vite configuration | `package.json`, `vite.config.js` |
+| CSS isolation violations | Tailwind styles escaping `#simplestack-admin` scope | `tools/verify-css-isolation.mjs` |
 
 **Section sources**
 - [includes/core/wp-cloud-deploy.php:324-336](file://includes/core/wp-cloud-deploy.php#L324-L336)
@@ -509,12 +550,12 @@ Common operational issues and where they appear in the codebase:
 - [includes/core/providers/class-upcloud.php:642-687](file://includes/core/providers/class-upcloud.php#L642-L687)
 
 ## Conclusion
-SimpleStack’s hybrid architecture cleanly separates concerns:
+SimpleStack's hybrid architecture cleanly separates concerns:
 
-- The **WordPress admin** remains the operator’s control plane.
-- The **React frontend** provides a modern, routed interface without replacing WordPress’s routing model.
+- The **WordPress admin** remains the operator's control plane.
+- The **React frontend** provides a modern, routed interface without replacing WordPress's routing model.
 - The **REST API** is the single controlled surface for server and site operations, with strict permissions and consistent response envelopes.
 - The **provider abstraction layer** isolates cloud provider differences behind a stable contract.
 - The **SSH execution layer** safely executes remote commands and file operations.
 
-This design supports multiple cloud providers, preserves legacy tab behavior through action bridges, and keeps sensitive credentials out of browser payloads and logs. Future extensions should follow the established patterns: new providers extend the base provider class, new REST endpoints go through the base controller, and remote operations continue to be expressed as scripts executed over SSH.
+This design supports multiple cloud providers, preserves legacy tab behavior through action bridges, and keeps sensitive credentials out of browser payloads and logs. The transformation from WPCloudDeploy to SimpleStack brings modern development practices, enhanced security, and improved maintainability while preserving the core functionality that makes it effective for hosting management. Future extensions should follow the established patterns: new providers extend the base provider class, new REST endpoints go through the base controller, and remote operations continue to be expressed as scripts executed over SSH.

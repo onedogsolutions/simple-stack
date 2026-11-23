@@ -1,0 +1,3 @@
+- Each app directory exposes a single PHP class that extends the shared base app class and registers itself through the base's discovery mechanism.
+- Shell automation is versioned per app under `scripts/vN/` (v1 vs v2), with raw snippets in a `raw/` subdirectory and higher-level action files at the scripts root.
+- Per-app static assets live in an `assets/css` + `assets/js` pair, and UI fragments in a `templates/` directory, kept separate from PHP logic.

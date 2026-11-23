@@ -1,0 +1,1 @@
+WordPress REST API (`register_rest_route`, `WP_REST_Response`, `WP_Error`); PHP 8-style type hints; relies on project globals `WPCD_WORDPRESS_APP()` / `WPCD_SERVER()` for SSH execution and provider resolution.

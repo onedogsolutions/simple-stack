@@ -1,3 +1,0 @@
-- Each app lives in its own subdirectory under `includes/core/apps/<app-name>/` and exposes a class extending `WPCD_App`.
-- Provisioning steps are stored as numbered `.txt` shell snippets under `scripts/v[012]/raw/` and referenced by name from PHP handlers.
-- Versioned script sets are kept in parallel `v1/` and `v2/` trees to support backward-compatible upgrades without breaking existing installations.

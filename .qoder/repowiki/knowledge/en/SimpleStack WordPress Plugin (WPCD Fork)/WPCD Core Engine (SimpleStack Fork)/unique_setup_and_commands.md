@@ -1,0 +1,1 @@
+Phased migration from WPCD 5.8.0 fork to SimpleStack branding, with each phase ending in an update to `state.md` tracking parity against the upstream fork.

@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: feat/simplestack-v1-init
 nodes_managed: true
-exported_at: "2026-11-21T00:01:18Z"
+exported_at: "2026-11-23T14:35:35Z"
 modules:
     "":
-        dir_name: SimpleStack WordPress Plugin (WPCD)
-        title: SimpleStack WordPress Plugin (WPCD)
+        dir_name: SimpleStack WordPress Plugin (WPCD Fork)
+        title: SimpleStack WordPress Plugin (WPCD Fork)
         scope:
             - README.md
             - license.txt
@@ -59,8 +59,8 @@ modules:
         depends_on: []
         related_to: []
     core_engine:
-        dir_name: WPCD Core Engine
-        title: WPCD Core Engine
+        dir_name: WPCD Core Engine (SimpleStack Fork)
+        title: WPCD Core Engine (SimpleStack Fork)
         scope:
             - includes/core/
         source_files: []
@@ -74,8 +74,8 @@ modules:
         depends_on: []
         related_to: []
     core_engine/app_types:
-        dir_name: WPCD Application Types Registry
-        title: WPCD Application Types Registry
+        dir_name: WPCD App Type Registry & Base Contracts
+        title: WPCD App Type Registry & Base Contracts
         scope:
             - includes/core/apps/
         source_files: []
@@ -96,17 +96,18 @@ modules:
         depends_on: []
         related_to: []
     core_engine/app_types/wordpress_app:
-        dir_name: WordPress App Module (WPCD Add-on)
-        title: WordPress App Module (WPCD Add-on)
+        dir_name: WordPress App Engine (WPCD Fork)
+        title: WordPress App Engine (WPCD Fork)
         scope:
             - includes/core/apps/wordpress-app/
         source_files: []
         children:
             - core_engine/app_types/wordpress_app/admin_tabs
-            - core_engine/app_types/wordpress_app/assets
+            - core_engine/app_types/wordpress_app/assets_and_templates
             - core_engine/app_types/wordpress_app/public_ui
             - core_engine/app_types/wordpress_app/rest_api
-            - core_engine/app_types/wordpress_app/script_templates
+            - core_engine/app_types/wordpress_app/scripts
+            - core_engine/app_types/wordpress_app/traits
         depends_on: []
         related_to: []
     core_engine/app_types/wordpress_app/admin_tabs:
@@ -118,30 +119,26 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: core_engine/post_type_models
-            - path: static_assets
-    core_engine/app_types/wordpress_app/assets:
-        dir_name: WordPress App Frontend & Admin Assets
-        title: WordPress App Frontend & Admin Assets
+        related_to: []
+    core_engine/app_types/wordpress_app/assets_and_templates:
+        dir_name: WordPress App Admin UI Assets & Templates
+        title: WordPress App Admin UI Assets & Templates
         scope:
             - includes/core/apps/wordpress-app/assets/
+            - includes/core/apps/wordpress-app/templates/
         source_files: []
         children: []
         depends_on: []
         related_to: []
     core_engine/app_types/wordpress_app/public_ui:
-        dir_name: WordPress App Front-End Public UI
-        title: WordPress App Front-End Public UI
+        dir_name: WordPress App Public-Frontend UI Layer
+        title: WordPress App Public-Frontend UI Layer
         scope:
             - includes/core/apps/wordpress-app/public/
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: core_engine/custom_table_dns
-            - path: core_engine/post_type_models
-            - path: static_assets
+        related_to: []
     core_engine/app_types/wordpress_app/rest_api:
         dir_name: WordPress App REST API Controllers
         title: WordPress App REST API Controllers
@@ -150,14 +147,21 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: core_engine/post_type_models
-            - path: core_engine/rest_api
-    core_engine/app_types/wordpress_app/script_templates:
+        related_to: []
+    core_engine/app_types/wordpress_app/scripts:
         dir_name: WordPress App Provisioning & Management Shell Scripts
         title: WordPress App Provisioning & Management Shell Scripts
         scope:
             - includes/core/apps/wordpress-app/scripts/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    core_engine/app_types/wordpress_app/traits:
+        dir_name: WordPress App Trait Modules
+        title: WordPress App Trait Modules
+        scope:
+            - includes/core/apps/wordpress-app/traits/
         source_files: []
         children: []
         depends_on: []
@@ -170,7 +174,8 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: tests
     core_engine/custom_table_dns:
         dir_name: DNS Custom Table Model Layer
         title: DNS Custom Table Model Layer
@@ -179,8 +184,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: core_engine/app_types/wordpress_app/public_ui
+        related_to: []
     core_engine/post_type_models:
         dir_name: Custom Post Type Models for Apps, Servers & Logs
         title: Custom Post Type Models for Apps, Servers & Logs
@@ -189,13 +193,10 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: core_engine/app_types/wordpress_app/admin_tabs
-            - path: core_engine/app_types/wordpress_app/public_ui
-            - path: core_engine/app_types/wordpress_app/rest_api
+        related_to: []
     core_engine/rest_api:
-        dir_name: SimpleStack REST API Namespace
-        title: SimpleStack REST API Namespace
+        dir_name: SimpleStack REST API Layer
+        title: SimpleStack REST API Layer
         scope:
             - includes/core/api/
         source_files: []
@@ -203,7 +204,6 @@ modules:
         depends_on: []
         related_to:
             - path: admin_react_app
-            - path: core_engine/app_types/wordpress_app/rest_api
             - path: tests
     core_engine/shared_core:
         dir_name: Shared Core Base Class, Global Helpers & Application Bootstrap
@@ -215,7 +215,8 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: static_assets
     static_assets:
         dir_name: WPCD Static Assets (CSS_JS_Images)
         title: WPCD Static Assets (CSS/JS/Images)
@@ -225,8 +226,7 @@ modules:
         children: []
         depends_on: []
         related_to:
-            - path: core_engine/app_types/wordpress_app/admin_tabs
-            - path: core_engine/app_types/wordpress_app/public_ui
+            - path: core_engine/shared_core
     tests:
         dir_name: WordPress Plugin Test Suite
         title: WordPress Plugin Test Suite
@@ -236,4 +236,5 @@ modules:
         children: []
         depends_on: []
         related_to:
+            - path: core_engine/cloud_providers
             - path: core_engine/rest_api

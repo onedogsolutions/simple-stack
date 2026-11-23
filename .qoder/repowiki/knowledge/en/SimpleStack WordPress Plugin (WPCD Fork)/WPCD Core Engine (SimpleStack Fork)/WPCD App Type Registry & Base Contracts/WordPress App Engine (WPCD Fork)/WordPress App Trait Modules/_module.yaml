@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: core_engine/app_types/wordpress_app/traits
+title: WordPress App Trait Modules
+scope:
+    - includes/core/apps/wordpress-app/traits/
+source_files: []
+depends_on: []
+related_to: []

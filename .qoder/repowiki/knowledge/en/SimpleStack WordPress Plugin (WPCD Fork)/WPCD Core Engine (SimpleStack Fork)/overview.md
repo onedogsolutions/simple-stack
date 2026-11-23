@@ -1,0 +1,1 @@
+Orchestrates WPCD's shared bootstrap, post-type models, cloud-provider abstraction, app-type registry, DNS custom tables, and REST API into a single WordPress plugin that provisions servers and sites.

@@ -1,0 +1,1 @@
+PHP classes organized as a WordPress plugin; React + Tailwind v4 frontend mounted via `#simplestack-admin`; REST API under the `simple-stack/v1` namespace; scripts/v2/ provisioning targets Ubuntu 24.04/26.04 with OpenLiteSpeed only.

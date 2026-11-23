@@ -1,0 +1,1 @@
+WordPress App engine that wires admin tabs, REST controllers, public UI, traits, assets/templates, and shell scripts into a single site/server management plugin.

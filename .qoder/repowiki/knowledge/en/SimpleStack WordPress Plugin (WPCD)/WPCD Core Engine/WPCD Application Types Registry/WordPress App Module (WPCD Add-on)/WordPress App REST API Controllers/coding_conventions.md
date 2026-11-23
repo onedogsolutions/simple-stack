@@ -1,6 +1,0 @@
-- Each controller sets a protected `$name` property and implements `register_routes()` using the base's `register_get/post/put/delete_route()` helpers instead of calling `register_rest_route` directly.
-- Route parameters are validated via `validate_required_parameters($parameters, [...])`, which throws an `Exception` with code 400 when a required field is missing.
-- Controller actions throw plain `Exception`s (never return error arrays); the base's `build_callback` wrapper converts them into `WP_Error` responses with appropriate HTTP status codes.
-- Resource existence checks go through a dedicated `get_<resource>_post(int)` helper that validates post type and throws a 400 exception if not found, keeping endpoint methods free of raw `get_post` checks.
-- Long-running operations enqueue work by inserting a row via `WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry()` and returning only the `task_id`, with completion handled by listening to named action hooks.
-- Every file guards against direct access with `if ( ! defined( 'ABSPATH' ) ) { exit; }` at the top.

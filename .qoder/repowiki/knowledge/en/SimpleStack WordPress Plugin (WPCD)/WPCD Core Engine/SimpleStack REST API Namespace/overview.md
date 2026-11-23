@@ -1,1 +1,0 @@
-WordPress REST API layer exposing the simple-stack/v1 namespace that powers the SimpleStack React admin client, with controllers for servers, sites, logs, tabs, providers, and security posture.

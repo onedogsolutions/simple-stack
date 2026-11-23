@@ -1,1 +1,0 @@
-Orchestrates WPCD's shared runtime: base classes, post-type models, cloud-provider abstraction, app-type registry, REST API surface, and DNS custom-table models under a single bootstrap.

@@ -1,0 +1,3 @@
+- Domain entities are split across sibling sub-trees (post types, cloud providers, app types, DNS) and communicate through shared abstract base classes rather than direct cross-file includes.
+- REST endpoints under `api/` act as thin bridges that delegate to existing tab/action engines instead of re-implementing business logic.
+- Provisioning and management actions are expressed as numbered `.txt` script templates under `apps/*/scripts/{v1,v2}/raw/`, keeping shell logic separate from PHP orchestration.

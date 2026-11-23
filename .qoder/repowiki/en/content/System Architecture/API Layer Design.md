@@ -13,6 +13,15 @@
 - [class-simplestack-rest-tabs.php](file://includes/core/api/class-simplestack-rest-tabs.php)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Updated to reflect the complete new REST API architecture with `simple-stack/v1` namespace
+- Enhanced documentation for the base controller class and its comprehensive functionality
+- Added detailed coverage of all six specialized controllers (servers, sites, logs, providers, security, tabs)
+- Updated architectural diagrams to show the complete controller hierarchy
+- Enhanced security and authentication sections based on actual implementation
+- Added comprehensive examples of endpoint patterns and response formats
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -25,7 +34,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes the architectural design of SimpleStack’s REST API layer. The API exposes a single internal control plane for the React admin client under the `simple-stack/v1` namespace. It follows a controller-based pattern: each resource—servers, sites, providers, logs, tabs, and security—has its own controller class extending a shared base controller.
+This document describes the architectural design of SimpleStack's REST API layer. The API exposes a single internal control plane for the React admin client under the `simple-stack/v1` namespace. It follows a controller-based pattern: each resource—servers, sites, providers, logs, tabs, and security—has its own controller class extending a shared base controller.
 
 The base controller centralizes route registration, permission checks, argument validation, paging helpers, response formatting, and error construction. Controllers translate HTTP requests into domain operations such as server provisioning, site deployment, provider credential management, log retrieval, tab schema exposure, and read-only security probing.
 
@@ -76,7 +85,7 @@ Every request follows this path:
 1. WordPress receives a request to `simple-stack/v1/<resource>...`.
 2. `SimpleStack_REST_API::register_routes()` instantiates each controller that extends the base controller.
 3. The base controller applies the shared permission callback.
-4. WordPress validates parameters using the controller’s argument definitions.
+4. WordPress validates parameters using the controller's argument definitions.
 5. The controller method performs domain work.
 6. Success responses are wrapped by `respond()`, which redacts secrets and adds metadata.
 7. Errors are returned as `WP_Error` objects with machine-readable codes and status codes.
@@ -172,9 +181,9 @@ SimpleStack_REST_Controller_Base --> SimpleStack_Secret_Redactor : "uses"
 ### Base Controller
 The base controller is the foundation of the API layer. It defines:
 
-- A shared namespace constant.
+- A shared namespace constant (`simple-stack/v1`).
 - A reusable numeric ID path fragment.
-- A maximum page size constant.
+- A maximum page size constant (200).
 - A shared permission callback requiring `manage_options`.
 - Route registration helpers for GET, POST, and DELETE.
 - A standardized success response envelope.
@@ -203,7 +212,7 @@ Redact --> Return["Return standardized response"]
 - [class-simplestack-secret-redactor.php:64-95](file://includes/core/api/class-simplestack-secret-redactor.php#L64-L95)
 
 **Section sources**
-- [class-simplestack-rest-controller-base.php:22-446](file://includes/core/api/class-simplestack-rest-controller-base.php#L22-L446)
+- [class-simplestack-rest-controller-base.php:22-465](file://includes/core/api/class-simplestack-rest-controller-base.php#L22-L465)
 
 ### Server Controller
 The server controller exposes:
@@ -211,7 +220,7 @@ The server controller exposes:
 - A paginated list endpoint with provider, region, status, and search filters.
 - A create endpoint that builds attributes, creates the provider instance, attaches the WordPress app record, and records a pending task.
 - A get endpoint returning a summarized server object plus meta and availability information.
-- A delete endpoint that triggers the app’s delete action chain and verifies the server is trashed.
+- A delete endpoint that triggers the app's delete action chain and verifies the server is trashed.
 - An action bridge endpoint that forwards tab actions or lifecycle verbs to the existing engine.
 
 ```mermaid
@@ -233,7 +242,7 @@ Servers-->>Client : "server_id, task_id, summary"
 - [class-simplestack-rest-servers.php:172-249](file://includes/core/api/class-simplestack-rest-servers.php#L172-L249)
 
 **Section sources**
-- [class-simplestack-rest-servers.php:22-457](file://includes/core/api/class-simplestack-rest-servers.php#L22-L457)
+- [class-simplestack-rest-servers.php:22-458](file://includes/core/api/class-simplestack-rest-servers.php#L22-L458)
 
 ### Site Controller
 The site controller exposes:
@@ -241,7 +250,7 @@ The site controller exposes:
 - A paginated list endpoint filtered by server and search term.
 - A deploy endpoint that validates inputs through the same installer validator used by the legacy UI.
 - A get endpoint returning a summarized site object plus meta and action status.
-- A delete endpoint that respects the app post type’s own permission gate before trashing.
+- A delete endpoint that respects the app post type's own permission gate before trashing.
 - An action bridge endpoint that maps REST parameters onto the legacy tab action pipeline.
 
 ```mermaid
@@ -262,14 +271,14 @@ Sites-->>Client : "app_id, server_id, command, domain"
 - [class-simplestack-rest-sites.php:158-205](file://includes/core/api/class-simplestack-rest-sites.php#L158-L205)
 
 **Section sources**
-- [class-simplestack-rest-sites.php:21-391](file://includes/core/api/class-simplestack-rest-sites.php#L21-L391)
+- [class-simplestack-rest-sites.php:21-392](file://includes/core/api/class-simplestack-rest-sites.php#L21-L392)
 
 ### Provider Controller
 The provider controller manages cloud provider settings without exposing raw credentials. It provides:
 
 - A list endpoint returning provider descriptions, feature flags, credential presence booleans, and cached region/size counts.
 - A save endpoint that encrypts sensitive fields before storing them.
-- A test endpoint that calls the provider’s connection test when credentials are available.
+- A test endpoint that calls the provider's connection test when credentials are available.
 - A short-lived transient cache for region and size discovery, with graceful failure handling.
 
 ```mermaid
@@ -288,7 +297,7 @@ Describe --> Response["Return sanitized provider state"]
 - [class-simplestack-rest-providers.php:290-336](file://includes/core/api/class-simplestack-rest-providers.php#L290-L336)
 
 **Section sources**
-- [class-simplestack-rest-providers.php:20-358](file://includes/core/api/class-simplestack-rest-providers.php#L20-L358)
+- [class-simplestack-rest-providers.php:20-359](file://includes/core/api/class-simplestack-rest-providers.php#L20-L359)
 
 ### Security Controller
 The security controller performs a strictly read-only probe against a site over SSH. It returns:
@@ -323,7 +332,7 @@ Security-->>Client : "Read-only posture report"
 - [class-simplestack-rest-security.php:162-191](file://includes/core/api/class-simplestack-rest-security.php#L162-L191)
 
 **Section sources**
-- [class-simplestack-rest-security.php:19-252](file://includes/core/api/class-simplestack-rest-security.php#L19-L252)
+- [class-simplestack-rest-security.php:19-253](file://includes/core/api/class-simplestack-rest-security.php#L19-L253)
 
 ### Logs Controller
 The logs controller serves:
@@ -335,7 +344,7 @@ The logs controller serves:
 All log bodies pass through the secret redactor because command output may contain accidental credentials.
 
 **Section sources**
-- [class-simplestack-rest-logs.php:19-239](file://includes/core/api/class-simplestack-rest-logs.php#L19-L239)
+- [class-simplestack-rest-logs.php:19-240](file://includes/core/api/class-simplestack-rest-logs.php#L19-L240)
 
 ### Tabs Controller
 The tabs controller exposes the dynamic tab schema for servers and sites. It:
@@ -346,7 +355,7 @@ The tabs controller exposes the dynamic tab schema for servers and sites. It:
 - Returns a generic schema the React client can render without hard-coded screens.
 
 **Section sources**
-- [class-simplestack-rest-tabs.php:27-222](file://includes/core/api/class-simplestack-rest-tabs.php#L27-L222)
+- [class-simplestack-rest-tabs.php:27-223](file://includes/core/api/class-simplestack-rest-tabs.php#L27-L223)
 
 ## Dependency Analysis
 The API layer depends on several external subsystems but keeps those dependencies behind controller methods:
@@ -383,18 +392,18 @@ Tabs["SimpleStack_REST_Tabs"] --> Filters["Tab Filters"]
 
 **Section sources**
 - [class-simplestack-rest-api.php:21-118](file://includes/core/api/class-simplestack-rest-api.php#L21-L118)
-- [class-simplestack-rest-servers.php:22-457](file://includes/core/api/class-simplestack-rest-servers.php#L22-L457)
-- [class-simplestack-rest-sites.php:21-391](file://includes/core/api/class-simplestack-rest-sites.php#L21-L391)
-- [class-simplestack-rest-providers.php:20-358](file://includes/core/api/class-simplestack-rest-providers.php#L20-L358)
-- [class-simplestack-rest-security.php:19-252](file://includes/core/api/class-simplestack-rest-security.php#L19-L252)
-- [class-simplestack-rest-logs.php:19-239](file://includes/core/api/class-simplestack-rest-logs.php#L19-L239)
-- [class-simplestack-rest-tabs.php:27-222](file://includes/core/api/class-simplestack-rest-tabs.php#L27-L222)
+- [class-simplestack-rest-servers.php:22-458](file://includes/core/api/class-simplestack-rest-servers.php#L22-L458)
+- [class-simplestack-rest-sites.php:21-392](file://includes/core/api/class-simplestack-rest-sites.php#L21-L392)
+- [class-simplestack-rest-providers.php:20-359](file://includes/core/api/class-simplestack-rest-providers.php#L20-L359)
+- [class-simplestack-rest-security.php:19-253](file://includes/core/api/class-simplestack-rest-security.php#L19-L253)
+- [class-simplestack-rest-logs.php:19-240](file://includes/core/api/class-simplestack-rest-logs.php#L19-L240)
+- [class-simplestack-rest-tabs.php:27-223](file://includes/core/api/class-simplestack-rest-tabs.php#L27-L223)
 
 ## Performance Considerations
 The current implementation emphasizes correctness, safety, and reuse rather than aggressive optimization.
 
-- **Paging:** List endpoints use `per_page` and `page`, capped at a maximum defined in the base controller. This prevents large payloads while keeping the React UI responsive.
-- **Provider counts caching:** Region and size counts are stored in transients with a fixed TTL. A refresh flag allows bypassing the cache when needed.
+- **Paging:** List endpoints use `per_page` and `page`, capped at a maximum defined in the base controller (200). This prevents large payloads while keeping the React UI responsive.
+- **Provider counts caching:** Region and size counts are stored in transients with a fixed TTL (300 seconds). A refresh flag allows bypassing the cache when needed.
 - **Log queries:** Log endpoints disable row counting where possible and sort by date to support efficient polling.
 - **Action bridge:** The server and site action bridges avoid reimplementing legacy tab logic by delegating to existing filter/action chains.
 
@@ -411,7 +420,7 @@ Recommendations for future extensibility:
 ## Troubleshooting Guide
 
 ### Authentication and Authorization
-- Every SimpleStack route uses the base controller’s shared permission callback, which requires `manage_options`.
+- Every SimpleStack route uses the base controller's shared permission callback, which requires `manage_options`.
 - If a request fails due to authorization, verify that the calling user has the required WordPress capability.
 - The API does not implement nonce verification at the REST layer; it relies on WordPress capability gating.
 
@@ -419,7 +428,7 @@ Recommendations for future extensibility:
 - [class-simplestack-rest-controller-base.php:58-60](file://includes/core/api/class-simplestack-rest-controller-base.php#L58-L60)
 
 ### Input Validation Failures
-- Use the base controller’s argument helpers to define required, typed, and bounded parameters.
+- Use the base controller's argument helpers to define required, typed, and bounded parameters.
 - Integer parameters support minimum and maximum bounds.
 - String parameters can be constrained to an enum.
 - Free-form text parameters preserve characters but still reject non-string inputs.
@@ -444,7 +453,7 @@ Recommendations for future extensibility:
 - Password-type tab fields have their current values blanked.
 
 **Section sources**
-- [class-simplestack-secret-redactor.php:24-140](file://includes/core/api/class-simplestack-secret-redactor.php#L24-L140)
+- [class-simplestack-secret-redactor.php:24-142](file://includes/core/api/class-simplestack-secret-redactor.php#L24-L142)
 - [class-simplestack-rest-providers.php:15-18](file://includes/core/api/class-simplestack-rest-providers.php#L15-L18)
 - [class-simplestack-rest-tabs.php:29-35](file://includes/core/api/class-simplestack-rest-tabs.php#L29-L35)
 
@@ -472,6 +481,6 @@ Example reference paths:
 - [class-simplestack-rest-providers.php:58-85](file://includes/core/api/class-simplestack-rest-providers.php#L58-L85)
 
 ## Conclusion
-SimpleStack’s REST API layer provides a clean, secure, and extensible control plane for managing servers, sites, providers, logs, tabs, and security posture. Its controller-based architecture centralizes cross-cutting concerns while allowing each resource to focus on domain-specific operations. The base controller enforces consistent permissions, validation, and response formatting, and the secret redactor protects sensitive data across all responses.
+SimpleStack's REST API layer provides a clean, secure, and extensible control plane for managing servers, sites, providers, logs, tabs, and security posture. Its controller-based architecture centralizes cross-cutting concerns while allowing each resource to focus on domain-specific operations. The base controller enforces consistent permissions, validation, and response formatting, and the secret redactor protects sensitive data across all responses.
 
 For future growth, the layer is well positioned to adopt rate limiting, explicit API versioning, response caching, and structured auditing without breaking existing endpoints. New endpoints should follow the established controller pattern, reuse existing domain services, and treat every response as potentially sensitive.

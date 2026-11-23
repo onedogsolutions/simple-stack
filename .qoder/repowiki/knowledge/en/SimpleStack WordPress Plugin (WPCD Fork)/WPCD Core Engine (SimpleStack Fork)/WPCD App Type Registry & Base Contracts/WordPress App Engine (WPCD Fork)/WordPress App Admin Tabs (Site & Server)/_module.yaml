@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: core_engine/app_types/wordpress_app/admin_tabs
+title: WordPress App Admin Tabs (Site & Server)
+scope:
+    - includes/core/apps/wordpress-app/tabs/
+    - includes/core/apps/wordpress-app/tabs-server/
+source_files: []
+depends_on: []
+related_to: []

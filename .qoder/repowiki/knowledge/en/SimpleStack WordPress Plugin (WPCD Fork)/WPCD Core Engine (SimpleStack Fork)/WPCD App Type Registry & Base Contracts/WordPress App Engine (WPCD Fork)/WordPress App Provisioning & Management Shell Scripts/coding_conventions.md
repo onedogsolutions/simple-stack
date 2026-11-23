@@ -1,0 +1,6 @@
+- Shared utilities live in `raw/9999-common-functions.txt` and are sourced by action scripts; helper functions use the `gf_` prefix (global function) while module-scoped helpers use `g_`.
+- Global variables declared outside functions are prefixed `gv_` (e.g. `GV_UBUNTU_VERSION_STRING`, `GV_UBUNTU_VERSION`) and local variables inside functions are declared with `local` to avoid polluting the global namespace.
+- Each action script exposes its API through a single `$action` variable whose accepted values and required `$domain`/other parameters are documented in `raw/environment variables.txt` under a matching section header.
+- Server-side operations are executed as the site owner via `su - $user_name -c "wp ..."` rather than running wp-cli as root, preserving file ownership and permissions.
+- Webserver-specific logic branches on `$g_webserver_type` being `ols` or `ols-enterprise` (and legacy `nginx`) so the same script can drive both LiteSpeed and Nginx stacks.
+- Long-running background tasks write intermediate logs to `##SCRIPT_LOGS##.log.intermed` and rename them to `##SCRIPT_LOGS##.log.done` upon completion, then trigger a callback URL.

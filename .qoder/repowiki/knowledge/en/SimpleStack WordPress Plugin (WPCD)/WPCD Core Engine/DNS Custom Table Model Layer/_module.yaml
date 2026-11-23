@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: core_engine/custom_table_dns
-title: DNS Custom Table Model Layer
-scope:
-    - includes/core/custom-table/
-source_files: []
-depends_on: []
-related_to:
-    - path: core_engine/app_types/wordpress_app/public_ui

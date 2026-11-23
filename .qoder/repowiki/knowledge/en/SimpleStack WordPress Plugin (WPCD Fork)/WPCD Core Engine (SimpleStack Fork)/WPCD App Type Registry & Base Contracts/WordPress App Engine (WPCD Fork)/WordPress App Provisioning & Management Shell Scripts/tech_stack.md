@@ -1,0 +1,1 @@
+Bash shell scripts targeting Ubuntu 22.04+ (v1) and 24.04/26.04 (v2); LiteSpeed Web Server / OpenLiteSpeed vhost config under `/usr/local/lsws/conf/vhosts`; wp-cli for WordPress management; certbot for TLS; optional integrations with Redis, Memcached, Fail2ban, Monit, Monitorix, Netdata, GoAccess, CrowdSec, SolidWP, FileGator, LMD/ClamAV, AWStats, WPScan.

@@ -1,0 +1,1 @@
+Extends WordPress core `WP_List_Table` and integrates with the RW Meta Box library (MetaBox\CustomTable\Loader) for the provider tables; front-end assets are loaded via `wp_enqueue_script/style` and jQuery-based JS (`wpcd-wpapp-public-common.js`, `custom_table.js`).

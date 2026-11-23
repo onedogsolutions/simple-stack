@@ -1,1 +1,0 @@
-PHP classes registered as WordPress filter/action hooks; UI fields conform to the metabox.io field schema; remote execution goes through SSH to bash scripts on the target server.

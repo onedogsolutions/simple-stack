@@ -1,0 +1,1 @@
+Defines the per-site and per-server admin tabs for the WordPress App, rendering metabox fields and dispatching AJAX actions that execute remote server commands via SSH.

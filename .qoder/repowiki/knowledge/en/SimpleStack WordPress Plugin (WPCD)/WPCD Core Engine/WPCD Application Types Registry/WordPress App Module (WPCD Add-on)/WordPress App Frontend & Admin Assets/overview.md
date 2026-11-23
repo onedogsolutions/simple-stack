@@ -1,1 +1,0 @@
-Static CSS and JavaScript assets that style and power the WordPress App admin screens, frontend actions, server charts, and update plans UI.

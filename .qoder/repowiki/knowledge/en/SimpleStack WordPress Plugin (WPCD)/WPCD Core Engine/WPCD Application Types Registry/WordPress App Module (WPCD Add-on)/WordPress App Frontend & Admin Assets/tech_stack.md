@@ -1,1 +1,0 @@
-jQuery-based vanilla JS with no build step; relies on WordPress globals `ajaxurl`, `wp.ajax`, and Dashicons; styling uses CSS custom properties consumed from the WPCD theme palette.

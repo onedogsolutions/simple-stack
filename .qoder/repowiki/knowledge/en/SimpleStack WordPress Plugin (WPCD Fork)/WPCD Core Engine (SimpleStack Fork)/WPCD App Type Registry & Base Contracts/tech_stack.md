@@ -1,0 +1,1 @@
+PHP classes implementing a common abstract app interface; shell scripts under `scripts/v1/` and `scripts/v2/` (with wordpress-app carrying both versions) are the execution payload consumed uniformly by the base SSH layer.

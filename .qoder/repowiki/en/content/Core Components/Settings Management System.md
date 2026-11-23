@@ -7,8 +7,14 @@
 - [class-wpcd-custom-fields.php](file://includes/core/class-wpcd-custom-fields.php)
 - [wp-cloud-deploy.php](file://includes/core/wp-cloud-deploy.php)
 - [functions.php](file://includes/core/functions.php)
-- [class-wpcd-setup.php](file://includes/core/class-wpcd-setup.php)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated to reflect simplified settings system focused on provider configuration and basic application settings
+- Removed references to license management infrastructure and Wisdom analytics integration
+- Streamlined setup wizard documentation to focus on core functionality
+- Updated architecture diagrams to reflect current provider-focused configuration approach
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -23,10 +29,10 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack’s settings management system. It covers how configuration is stored, validated, and retrieved; the setup wizard flow for initial configuration; the custom fields system used to store additional metadata; examples for adding new settings, validating user input, and migrating configuration data between versions; the relationship between global settings, provider-specific configurations, and per-server/site options; and security considerations including encryption mechanisms for sensitive credentials.
+This document explains SimpleStack's simplified settings management system. The system is now focused on provider configuration and basic application settings, with removal of extensive license management infrastructure and Wisdom analytics integration. It covers how configuration is stored, validated, and retrieved; the streamlined setup wizard flow for initial configuration; the custom fields system used for storing additional metadata; examples for adding new settings, validating user input, and migrating configuration data between versions; the relationship between global settings, provider-specific configurations, and per-server/site options; and security considerations including encryption mechanisms for sensitive credentials.
 
 ## Project Structure
-The settings subsystem is centered around a core settings class that registers a WordPress admin settings page using Metabox.io. Provider-specific configuration is dynamically generated per cloud provider. A setup wizard guides users through initial configuration, including encryption key setup, provider selection, credential validation, and SSH key creation. Custom fields provide an extensible registry for additional metadata that can be merged into scripts or rendered in specific UI locations.
+The settings subsystem is centered around a core settings class that registers a WordPress admin settings page using Metabox.io. Provider-specific configuration is dynamically generated per cloud provider. A streamlined setup wizard guides users through essential initial configuration, including encryption key setup, provider selection, credential validation, and SSH key creation. Custom fields provide an extensible registry for additional metadata that can be merged into scripts or rendered in specific UI locations.
 
 ```mermaid
 graph TB
@@ -54,7 +60,7 @@ FunctionsAPI["wpcd_get_option / wpcd_set_option"] --> MetaboxIO
 
 ## Core Components
 - WPCD_Settings: Registers the main settings page, defines global and provider-specific fields, handles encryption/decryption hooks, and provides utilities for testing connections and clearing caches.
-- WPCD_Admin_Setup_Wizard: Orchestrates the first-time setup flow, validates encryption key presence, collects provider credentials, tests connectivity, and creates SSH keys.
+- WPCD_Admin_Setup_Wizard: Orchestrates the streamlined first-time setup flow, validates encryption key presence, collects provider credentials, tests connectivity, and creates SSH keys.
 - WPCD_Custom_Fields: Provides a registry for custom fields with location-based and script-merge capabilities.
 - Encryption Utilities (WPCD): Implements AES-128-CBC encryption with HMAC verification and supports v1/v2 formats.
 - Options API Helpers: wpcd_get_option and wpcd_set_option abstract reading/writing to the Metabox.io-managed option array.
@@ -67,7 +73,7 @@ FunctionsAPI["wpcd_get_option / wpcd_set_option"] --> MetaboxIO
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
 
 ## Architecture Overview
-SimpleStack uses a layered architecture for settings:
+SimpleStack uses a streamlined layered architecture for settings focused on provider configuration:
 - Global settings are defined as metabox fields under the main settings page and stored in the wpcd_settings option via Metabox.io.
 - Provider-specific settings are dynamically generated per cloud provider and stored under the same option array with provider-scoped keys.
 - Sensitive values (API keys, private SSH keys, passwords) are encrypted on save and decrypted on retrieval using filters attached to Metabox.io field meta.
@@ -267,7 +273,7 @@ Behavior:
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
 
 ## Architecture Overview
-The settings architecture separates concerns across global configuration, provider-specific configuration, and extensible metadata:
+The simplified settings architecture focuses on provider configuration and basic application settings:
 
 - Global settings: Defined in WPCD_Settings metaboxes and stored under wpcd_settings. Examples include logging preferences, cache limits, UI toggles, and brand colors.
 - Provider-specific configuration: Dynamically generated per provider with fields for API keys, SSH keys, server sizes, tags, and cache controls. Stored under the same option array with provider-scoped keys.
@@ -328,7 +334,6 @@ Migration strategy:
 - Provide export/import workflows for complex configuration sets.
 
 **Section sources**
-- [class-wpcd-setup.php:36-58](file://includes/core/class-wpcd-setup.php#L36-L58)
 - [wp-cloud-deploy.php:1021-1029](file://includes/core/wp-cloud-deploy.php#L1021-L1029)
 - [wp-cloud-deploy.php:1041-1141](file://includes/core/wp-cloud-deploy.php#L1041-L1141)
 - [class-wpcd-settings.php:856-1038](file://includes/core/class-wpcd-settings.php#L856-L1038)
@@ -366,7 +371,7 @@ Recommendations:
 - [wp-cloud-deploy.php:971-1141](file://includes/core/wp-cloud-deploy.php#L971-L1141)
 
 ## Dependency Analysis
-The settings system depends on:
+The simplified settings system depends on:
 - Metabox.io for form rendering and option storage.
 - WordPress options API for persistent storage.
 - Cloud provider APIs for dynamic field generation and credential validation.
@@ -438,7 +443,7 @@ Debugging steps:
 - [class-wpcd-settings.php:2000-2048](file://includes/core/class-wpcd-settings.php#L2000-L2048)
 
 ## Conclusion
-SimpleStack’s settings management system provides a robust, extensible framework for managing global and provider-specific configurations. It emphasizes security through mandatory encryption keys and automatic encryption of sensitive fields. The setup wizard streamlines initial configuration, while custom fields enable flexible metadata handling. By following the recommended patterns for adding settings, validating input, and migrating data, developers can extend the system safely and efficiently.
+SimpleStack's simplified settings management system provides a focused, robust framework for managing provider-specific configurations and basic application settings. It emphasizes security through mandatory encryption keys and automatic encryption of sensitive fields. The streamlined setup wizard simplifies initial configuration, while custom fields enable flexible metadata handling. By following the recommended patterns for adding settings, validating input, and migrating data, developers can extend the system safely and efficiently.
 
 ## Appendices
 
@@ -460,11 +465,10 @@ Reference paths:
 - [class-wpcd-settings.php:1905-1932](file://includes/core/class-wpcd-settings.php#L1905-L1932)
 
 ### Example: Migrating Configuration Data
-- Update default settings in WPCD_Setup for new versions.
+- Update default settings for new versions.
 - Use versioned encryption to maintain compatibility with existing data.
 - Leverage data sync features for cross-site migrations.
 
 Reference paths:
-- [class-wpcd-setup.php:36-58](file://includes/core/class-wpcd-setup.php#L36-L58)
 - [wp-cloud-deploy.php:1021-1029](file://includes/core/wp-cloud-deploy.php#L1021-L1029)
 - [class-wpcd-settings.php:856-1038](file://includes/core/class-wpcd-settings.php#L856-L1038)

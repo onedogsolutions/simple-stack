@@ -1,1 +1,0 @@
-REST API controllers exposing server, site, and task endpoints for the WordPress App within the WPCD plugin, built on a shared base class.

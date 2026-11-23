@@ -1,14 +1,23 @@
 # Cloud Provider Integration
 
 <cite>
-**Referenced Files in This Document **
+**Referenced Files in This Document**
 - [wp-cloud-deploy.php](file://includes/core/wp-cloud-deploy.php)
 - [class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
 - [class-vultr-v2.php](file://includes/core/providers/class-vultr-v2.php)
 - [class-upcloud.php](file://includes/core/providers/class-upcloud.php)
 - [class-custom-server-parent.php](file://includes/core/providers/class-custom-server-parent.php)
 - [class-custom-server.php](file://includes/core/providers/class-custom-server.php)
+- [class-digital-ocean.php](file://includes/core/providers/class-digital-ocean.php)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated Vultr provider section to reflect complete v2 API implementation with bearer token authentication
+- Added comprehensive UpCloud provider documentation with 1.3 REST API support and HTTP Basic authentication
+- Clarified DigitalOcean provider status as disabled by default but still available via configuration
+- Enhanced authentication mechanisms documentation to cover both Bearer token and HTTP Basic auth
+- Updated provider registration system documentation to reflect current active providers
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -23,7 +32,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack’s cloud provider abstraction layer that supports Vultr API v2, UpCloud API 1.3, and custom server configurations. It covers the provider interface design, authentication mechanisms, common operations such as instance creation, modification, and deletion, provider-specific features, rate limiting, error handling, region and size mappings, the provider registration system, configuration examples, credential management, troubleshooting, limitations, best practices, and migration strategies between providers.
+This document explains SimpleStack's cloud provider abstraction layer that supports Vultr API v2, UpCloud API 1.3, and custom server configurations. DigitalOcean remains available but is disabled by default for security reasons. It covers the provider interface design, authentication mechanisms including both Bearer token and HTTP Basic authentication, common operations such as instance creation, modification, and deletion, provider-specific features, rate limiting, error handling, region and size mappings, the provider registration system, configuration examples, credential management, troubleshooting, limitations, best practices, and migration strategies between providers.
 
 The abstraction is implemented as a base class with concrete provider implementations. Providers are registered centrally and can be extended through both built-in classes and virtual provider records stored in WordPress.
 
@@ -31,30 +40,35 @@ The abstraction is implemented as a base class with concrete provider implementa
 The provider subsystem lives under `includes/core/providers`. The main components are:
 
 - Base provider interface and shared behavior: `class-cloud-provider-api.php`
-- Vultr implementation: `class-vultr-v2.php`
-- UpCloud implementation: `class-upcloud.php`
+- Vultr v2 implementation: `class-vultr-v2.php`
+- UpCloud 1.3 implementation: `class-upcloud.php`
+- DigitalOcean implementation (disabled by default): `class-digital-ocean.php`
 - Custom server parent and concrete wrapper: `class-custom-server-parent.php`, `class-custom-server.php`
 - Provider registry and loader: `wp-cloud-deploy.php`
 
 ```mermaid
 graph TB
 Registry["WP_CLOUD_DEPLOY<br/>Provider Registry"] --> Base["CLOUD_PROVIDER_API<br/>Base Interface"]
-Base --> Vultr["CLOUD_PROVIDER_API_VultrV2"]
-Base --> Upcloud["CLOUD_PROVIDER_API_Upcloud"]
+Base --> Vultr["CLOUD_PROVIDER_API_VultrV2<br/>(Active)"]
+Base --> Upcloud["CLOUD_PROVIDER_API_Upcloud<br/>(Active)"]
+Base --> DO["CLOUD_PROVIDER_API_DigitalOcean<br/>(Disabled by Default)"]
 Base --> CustomParent["CLOUD_PROVIDER_API_CustomServer_Parent"]
 CustomParent --> CustomConcrete["CLOUD_PROVIDER_API_CustomServer"]
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [wp-cloud-deploy.php:32-37](file://includes/core/wp-cloud-deploy.php#L32-L37)
+- [wp-cloud-deploy.php:1345-1353](file://includes/core/wp-cloud-deploy.php#L1345-L1353)
 - [class-cloud-provider-api.php:15-167](file://includes/core/providers/class-cloud-provider-api.php#L15-L167)
 - [class-vultr-v2.php:30-127](file://includes/core/providers/class-vultr-v2.php#L30-L127)
 - [class-upcloud.php:33-128](file://includes/core/providers/class-upcloud.php#L33-L128)
+- [class-digital-ocean.php:15-61](file://includes/core/providers/class-digital-ocean.php#L15-L61)
 - [class-custom-server-parent.php:15-98](file://includes/core/providers/class-custom-server-parent.php#L15-L98)
 - [class-custom-server.php:15-76](file://includes/core/providers/class-custom-server.php#L15-L76)
 
 **Section sources**
 - [wp-cloud-deploy.php:32-37](file://includes/core/wp-cloud-deploy.php#L32-L37)
+- [wp-cloud-deploy.php:1345-1353](file://includes/core/wp-cloud-deploy.php#L1345-L1353)
 - [class-cloud-provider-api.php:15-167](file://includes/core/providers/class-cloud-provider-api.php#L15-L167)
 
 ## Core Components
@@ -160,6 +174,12 @@ class CLOUD_PROVIDER_API_Upcloud {
 -execute(endpoint, action, body)
 -request(endpoint, action, body)
 }
+class CLOUD_PROVIDER_API_DigitalOcean {
++__construct(args)
++set_api_key(key)
++get_api_key()
++call(method, attributes)
+}
 class CLOUD_PROVIDER_API_CustomServer_Parent {
 +__construct()
 +set_api_key(key)
@@ -183,14 +203,16 @@ class CLOUD_PROVIDER_API_CustomServer {
 }
 CLOUD_PROVIDER_API_VultrV2 --|> CLOUD_PROVIDER_API
 CLOUD_PROVIDER_API_Upcloud --|> CLOUD_PROVIDER_API
+CLOUD_PROVIDER_API_DigitalOcean --|> CLOUD_PROVIDER_API
 CLOUD_PROVIDER_API_CustomServer_Parent --|> CLOUD_PROVIDER_API
 CLOUD_PROVIDER_API_CustomServer --|> CLOUD_PROVIDER_API_CustomServer_Parent
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
 - [class-vultr-v2.php:30-1308](file://includes/core/providers/class-vultr-v2.php#L30-L1308)
 - [class-upcloud.php:33-1275](file://includes/core/providers/class-upcloud.php#L33-L1275)
+- [class-digital-ocean.php:15-61](file://includes/core/providers/class-digital-ocean.php#L15-L61)
 - [class-custom-server-parent.php:15-649](file://includes/core/providers/class-custom-server-parent.php#L15-L649)
 - [class-custom-server.php:15-79](file://includes/core/providers/class-custom-server.php#L15-L79)
 
@@ -267,7 +289,7 @@ Vultr->>Vultr : map_state(instance)
 Vultr-->>Caller : status, ip
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [class-vultr-v2.php:183-250](file://includes/core/providers/class-vultr-v2.php#L183-L250)
 - [class-vultr-v2.php:369-453](file://includes/core/providers/class-vultr-v2.php#L369-L453)
 - [class-vultr-v2.php:455-553](file://includes/core/providers/class-vultr-v2.php#L455-L553)
@@ -328,7 +350,7 @@ Response --> |Yes| ReturnID["Return provider_instance_id, name, created, actions
 Response --> |No| FailError["Return WP_Error"]
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [class-upcloud.php:491-602](file://includes/core/providers/class-upcloud.php#L491-L602)
 - [class-upcloud.php:891-989](file://includes/core/providers/class-upcloud.php#L891-L989)
 
@@ -344,6 +366,27 @@ Response --> |No| FailError["Return WP_Error"]
 - [class-upcloud.php:778-841](file://includes/core/providers/class-upcloud.php#L778-L841)
 - [class-upcloud.php:843-1087](file://includes/core/providers/class-upcloud.php#L843-L1087)
 - [class-upcloud.php:1089-1275](file://includes/core/providers/class-upcloud.php#L1089-L1275)
+
+### DigitalOcean Provider (Disabled by Default)
+DigitalOcean remains available in the codebase but is disabled by default for security reasons. The provider can be re-enabled by setting the `enable-do-provider` option to true.
+
+Key characteristics:
+
+- Authentication: Uses standard DigitalOcean API tokens via bearer token authentication.
+- Base URL: `https://api.digitalocean.com/v2/`.
+- Features: Supports SSH key creation, connection testing, snapshots, resize operations, and provider-level backups.
+- Security: Disabled by default to prevent accidental exposure of DigitalOcean credentials.
+- Re-enablement: Can be enabled via the `enable-do-provider` WordPress option.
+
+Limitations:
+
+- Not recommended for production use unless explicitly enabled by administrators.
+- May lack some advanced features compared to Vultr and UpCloud implementations.
+- Requires explicit administrative action to activate.
+
+**Section sources**
+- [class-digital-ocean.php:15-61](file://includes/core/providers/class-digital-ocean.php#L15-L61)
+- [wp-cloud-deploy.php:1345-1353](file://includes/core/wp-cloud-deploy.php#L1345-L1353)
 
 ### Custom Server Configuration
 Custom servers allow integration with existing infrastructure that is not managed directly by a cloud provider API. The implementation includes:
@@ -375,9 +418,10 @@ Limitations:
 ### Provider Registration System
 Providers are registered in the central registry and loaded dynamically:
 
-- Built-in providers: Vultr, UpCloud, Digital Ocean, and Custom Server are listed in the registry array.
+- Built-in providers: Vultr, UpCloud, Digital Ocean (disabled by default), and Custom Server are listed in the registry array.
 - Class loading: When a provider is requested, the system loads the corresponding class file. If the class is not found, it attempts to load a virtual provider defined in the `wpcd_cloud_provider` custom post type.
 - Virtual providers: Allow renaming, aliasing, and configuring provider display names, slugs, region prefixes, and dashboard links without changing the underlying implementation.
+- DigitalOcean disablement: The `disable_digital_ocean_provider_by_default()` function removes DigitalOcean from the active provider list unless the `enable-do-provider` option is set to true.
 
 To add a new provider:
 
@@ -397,22 +441,31 @@ Virtual --> VirtualFound{"Virtual Provider Found?"}
 VirtualFound --> |Yes| LoadFile["Load Provider File"]
 LoadFile --> Instantiate
 VirtualFound --> |No| Null["Return Null"]
-Instantiate --> Return["Return Provider Instance"]
+Instantiate --> CheckDO{"Is DigitalOcean?"}
+CheckDO --> |Yes| CheckEnable{"enable-do-provider set?"}
+CheckEnable --> |Yes| Return["Return Provider Instance"]
+CheckEnable --> |No| Remove["Remove from Active List"]
+CheckDO --> |No| Return
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [wp-cloud-deploy.php:32-37](file://includes/core/wp-cloud-deploy.php#L32-L37)
+- [wp-cloud-deploy.php:1345-1353](file://includes/core/wp-cloud-deploy.php#L1345-L1353)
 - [wp-cloud-deploy.php:1256-1267](file://includes/core/wp-cloud-deploy.php#L1256-L1267)
 - [wp-cloud-deploy.php:1282-1317](file://includes/core/wp-cloud-deploy.php#L1282-L1317)
 
 **Section sources**
 - [wp-cloud-deploy.php:32-37](file://includes/core/wp-cloud-deploy.php#L32-L37)
+- [wp-cloud-deploy.php:1345-1353](file://includes/core/wp-cloud-deploy.php#L1345-L1353)
 - [wp-cloud-deploy.php:1256-1267](file://includes/core/wp-cloud-deploy.php#L1256-L1267)
 - [wp-cloud-deploy.php:1282-1317](file://includes/core/wp-cloud-deploy.php#L1282-L1317)
 
 ### Authentication Mechanisms
+The system supports multiple authentication mechanisms across different providers:
+
 - Vultr: Bearer token authentication using an encrypted API key stored in `vpn_vultr-v2_apikey`.
 - UpCloud: HTTP Basic authentication using encrypted username and password stored in `vpn_upcloud_user_name` and `vpn_upcloud_user_password`.
+- DigitalOcean: Bearer token authentication using encrypted API key (when enabled).
 - Custom Server: Uses a placeholder API key field but relies on configured IPv4/IPv6 addresses and optional root user name.
 
 Credential validation:
@@ -420,17 +473,20 @@ Credential validation:
 - Base class provides `has_credentials()` and `credentials_available()` to check whether required secrets and SSH keys are present.
 - UpCloud overrides these to check username/password plus public/private SSH key pairs.
 - Vultr overrides secret key retrieval to use its API key for cache isolation.
+- DigitalOcean uses standard API key validation when enabled.
 
 Best practices:
 
 - Never log raw API keys, passwords, or request bodies.
 - Use encrypted options for secrets.
 - Prefer least-privilege accounts where possible.
+- Disable DigitalOcean by default for enhanced security.
 
 **Section sources**
 - [class-vultr-v2.php:120-161](file://includes/core/providers/class-vultr-v2.php#L120-L161)
 - [class-upcloud.php:117-188](file://includes/core/providers/class-upcloud.php#L117-L188)
 - [class-upcloud.php:203-231](file://includes/core/providers/class-upcloud.php#L203-L231)
+- [class-digital-ocean.php:54-60](file://includes/core/providers/class-digital-ocean.php#L54-L60)
 - [class-cloud-provider-api.php:655-704](file://includes/core/providers/class-cloud-provider-api.php#L655-L704)
 
 ### Common Operations
@@ -468,6 +524,10 @@ Attributes commonly used:
   - Regions: Fetched from `/zone`; labels come from zone descriptions, optionally prefixed.
   - Sizes: Fetched from `/plan`; labels describe cores, RAM, storage tier, and traffic.
   - OS mapping: WPCD OS keys map to Ubuntu versions; a suitable storage template is resolved and cached.
+- DigitalOcean:
+  - Regions: Standard DigitalOcean region identifiers.
+  - Sizes: DigitalOcean droplet plans with standardized naming.
+  - OS mapping: DigitalOcean image IDs with Ubuntu 22.04 as default.
 
 **Section sources**
 - [class-vultr-v2.php:257-333](file://includes/core/providers/class-vultr-v2.php#L257-L333)
@@ -495,7 +555,7 @@ RetryResponse --> |Other| Error["Log Endpoint Only<br/>Return WP_Error"]
 Response --> |Other| Error
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [class-vultr-v2.php:1158-1227](file://includes/core/providers/class-vultr-v2.php#L1158-L1227)
 - [class-upcloud.php:1124-1193](file://includes/core/providers/class-upcloud.php#L1124-L1193)
 
@@ -512,12 +572,17 @@ Response --> |Other| Error
   - Supports resize, SSH key creation, and connection testing.
   - Snapshots and backups are disabled because UpCloud identifies backups by storage device and date, which does not fit the snapshot-ID contract.
   - Custom images, dynamic tags, and backup enablement flags are disabled.
+- DigitalOcean:
+  - Supports SSH key creation, connection testing, snapshots, resize operations, and provider-level backups.
+  - Disabled by default for security reasons.
+  - Requires explicit administrative action to enable.
 - Custom Server:
   - Simulated provider; useful for configuration and workflow testing but not for real provisioning.
 
 **Section sources**
 - [class-vultr-v2.php:100-118](file://includes/core/providers/class-vultr-v2.php#L100-L118)
 - [class-upcloud.php:96-115](file://includes/core/providers/class-upcloud.php#L96-L115)
+- [class-digital-ocean.php:54-60](file://includes/core/providers/class-digital-ocean.php#L54-L60)
 
 ### Migration Strategies Between Providers
 When migrating between providers:
@@ -527,10 +592,12 @@ When migrating between providers:
 3. Update SSH key strategy:
    - Vultr: Use provider SSH key registry.
    - UpCloud: Send public key inline during server creation.
+   - DigitalOcean: Use provider SSH key registry (when enabled).
 4. Review region/zone labels and adjust UI expectations.
 5. Validate backup and snapshot policies:
    - Vultr supports snapshot operations.
    - UpCloud requires managing backups through the provider dashboard.
+   - DigitalOcean supports snapshot operations (when enabled).
 6. Test connectivity and provisioning flows before decommissioning the old provider.
 
 **Section sources**
@@ -543,6 +610,7 @@ The provider subsystem has clear dependencies:
 - Base class depends on WordPress functions for options, transients, and filters.
 - Vultr depends on `wp_remote_request` and parses JSON responses.
 - UpCloud depends on `wp_remote_request` and constructs Basic auth headers.
+- DigitalOcean depends on `wp_remote_request` and uses bearer token authentication.
 - Custom server depends on WordPress options for static configuration.
 - Registry depends on WordPress post types for virtual providers.
 
@@ -551,11 +619,12 @@ graph TB
 Base["CLOUD_PROVIDER_API"] --> WP["WordPress Options/Transients/Filters"]
 Vultr["CLOUD_PROVIDER_API_VultrV2"] --> HTTP["wp_remote_request"]
 Upcloud["CLOUD_PROVIDER_API_Upcloud"] --> HTTP
+DO["CLOUD_PROVIDER_API_DigitalOcean"] --> HTTP
 Custom["CLOUD_PROVIDER_API_CustomServer*"] --> WP
 Registry["WP_CLOUD_DEPLOY"] --> WP
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [class-cloud-provider-api.php:481-642](file://includes/core/providers/class-cloud-provider-api.php#L481-L642)
 - [class-vultr-v2.php:1238-1255](file://includes/core/providers/class-vultr-v2.php#L1238-L1255)
 - [class-upcloud.php:1204-1222](file://includes/core/providers/class-upcloud.php#L1204-L1222)
@@ -603,6 +672,7 @@ Common issues and resolutions:
 - SSH key problems:
   - Vultr: Register public key and attach key ID during creation.
   - UpCloud: Ensure public key is configured and private key is available for connection.
+  - DigitalOcean: Enable provider and configure SSH key properly.
 - Connection failures:
   - Use `test_connection` to validate credentials.
   - Check network connectivity and firewall rules.
@@ -611,6 +681,9 @@ Common issues and resolutions:
 - Snapshot differences:
   - Vultr supports snapshot operations.
   - UpCloud requires managing backups through the provider dashboard.
+  - DigitalOcean supports snapshot operations (when enabled).
+- DigitalOcean not appearing:
+  - Set `enable-do-provider` option to true to re-enable the provider.
 
 Logging guidance:
 
@@ -622,9 +695,10 @@ Logging guidance:
 - [class-upcloud.php:310-372](file://includes/core/providers/class-upcloud.php#L310-L372)
 - [class-vultr-v2.php:1158-1227](file://includes/core/providers/class-vultr-v2.php#L1158-L1227)
 - [class-upcloud.php:1124-1193](file://includes/core/providers/class-upcloud.php#L1124-L1193)
+- [wp-cloud-deploy.php:1345-1353](file://includes/core/wp-cloud-deploy.php#L1345-L1353)
 
 ## Conclusion
-SimpleStack’s cloud provider abstraction provides a consistent interface for managing servers across Vultr, UpCloud, and custom server configurations. The base class standardizes identity, features, state reporting, credentials, and caching, while each provider implements authentication, API calls, error handling, and provider-specific behaviors. The registry supports both built-in providers and virtual providers, making it straightforward to extend the system. By following the configuration, credential, and migration guidance in this document, teams can operate reliably across providers and adapt to provider differences without rewriting application logic.
+SimpleStack's cloud provider abstraction provides a consistent interface for managing servers across Vultr, UpCloud, and custom server configurations. The base class standardizes identity, features, state reporting, credentials, and caching, while each provider implements authentication, API calls, error handling, and provider-specific behaviors. The registry supports both built-in providers and virtual providers, making it straightforward to extend the system. DigitalOcean remains available but is disabled by default for enhanced security. By following the configuration, credential, and migration guidance in this document, teams can operate reliably across providers and adapt to provider differences without rewriting application logic.
 
 ## Appendices
 
@@ -639,6 +713,11 @@ SimpleStack’s cloud provider abstraction provides a consistent interface for m
   - Map WPCD size keys to UpCloud plan names.
   - Ensure public SSH key is configured for inline installation.
   - Manage backups through the UpCloud dashboard.
+- DigitalOcean (when enabled):
+  - Set `enable-do-provider` option to true.
+  - Configure encrypted API key in `vpn_digital-ocean_apikey`.
+  - Map WPCD size keys to DigitalOcean droplet plans.
+  - Attach SSH key ID during server creation.
 - Custom Server:
   - Configure IPv4 and optional IPv6 addresses.
   - Set descriptive region name, server size, and public SSH key name.
@@ -647,7 +726,9 @@ SimpleStack’s cloud provider abstraction provides a consistent interface for m
 **Section sources**
 - [class-vultr-v2.php:120-127](file://includes/core/providers/class-vultr-v2.php#L120-L127)
 - [class-upcloud.php:117-128](file://includes/core/providers/class-upcloud.php#L117-L128)
+- [class-digital-ocean.php:54-60](file://includes/core/providers/class-digital-ocean.php#L54-L60)
 - [class-custom-server-parent.php:319-452](file://includes/core/providers/class-custom-server-parent.php#L319-L452)
+- [wp-cloud-deploy.php:1345-1353](file://includes/core/wp-cloud-deploy.php#L1345-L1353)
 
 ### Adding a New Cloud Provider
 Steps:

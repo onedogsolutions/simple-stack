@@ -1,0 +1,6 @@
+- Each controller extends `WPCD_REST_API_Controller_Base`, sets a protected `$name` string, and wires routes in `register_routes()` via the base's `register_*_route` helpers rather than calling `register_rest_route` directly.
+- Action methods accept a typed `WP_REST_Request` parameter and return plain arrays; validation failures are signaled by throwing an `Exception` with an HTTP status code instead of returning `WP_Error`.
+- Resource lookup helpers (`get_server_post`, `get_site_post`, `get_task_post`) fetch the post by ID and throw a 400 `Exception` when the post type does not match the expected resource, centralizing existence checks.
+- Long-running operations (site install, server create) enqueue work by inserting a pending-task log entry via `WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry` and later update it to `complete` from a command-completed hook listener.
+- Asynchronous jobs created through the REST API are tagged with a `wp_restapi_flag` / `restapi_flag` meta value so downstream hooks can skip non-REST-triggered instances.
+- Response data is assembled by dedicated `get_*_data` helper methods that map a `WP_Post` into a flat array of scalar fields, keeping route handlers thin.

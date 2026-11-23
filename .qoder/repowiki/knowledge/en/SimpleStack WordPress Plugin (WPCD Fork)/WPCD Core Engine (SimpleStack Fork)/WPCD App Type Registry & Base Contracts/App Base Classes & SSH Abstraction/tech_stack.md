@@ -1,0 +1,1 @@
+phpseclib3 for SSH/SFTP and Ed25519 key generation; Meta Box.io (`rwmb_meta_boxes` filter) for app metabox registration; WordPress REST API for provisioning callbacks; Magnific Popup CSS/JS for admin UI.

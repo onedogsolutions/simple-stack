@@ -1,0 +1,3 @@
+- Shell operations are split into small numbered `.txt` fragments under `scripts/v1/raw/` and `scripts/v2/raw/`, with higher-level orchestrator scripts in `scripts/v1/` and `scripts/v2/` composing them.
+- Each feature surface (tab, REST endpoint, public table) delegates business logic to the `WPCD_WORDPRESS_APP` class rather than implementing it inline.
+- Admin tabs and REST controllers both trigger remote work by pushing SSH commands through the `push-commands` / `commands-and-logs` traits instead of executing locally.

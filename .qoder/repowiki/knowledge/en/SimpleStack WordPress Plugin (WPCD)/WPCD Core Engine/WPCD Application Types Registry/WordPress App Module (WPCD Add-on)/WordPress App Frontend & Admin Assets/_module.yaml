@@ -1,8 +1,0 @@
-schema_version: 1
-module_path: core_engine/app_types/wordpress_app/assets
-title: WordPress App Frontend & Admin Assets
-scope:
-    - includes/core/apps/wordpress-app/assets/
-source_files: []
-depends_on: []
-related_to: []

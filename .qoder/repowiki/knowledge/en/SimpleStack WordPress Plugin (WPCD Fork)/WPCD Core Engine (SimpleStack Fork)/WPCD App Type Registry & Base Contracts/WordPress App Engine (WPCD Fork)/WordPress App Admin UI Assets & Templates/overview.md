@@ -1,0 +1,1 @@
+Static assets and PHP/HTML templates that render the WordPress App CPT screens, create-deploy popups, log console, and email-admin views in the WPCD admin dashboard.

@@ -1,0 +1,1 @@
+New server/site operations are added by dropping a numbered `.txt` script into both `scripts/v1/` and `scripts/v2/` (keeping them in sync), then wiring the tab action or REST controller to invoke it via the shared script-handlers trait.

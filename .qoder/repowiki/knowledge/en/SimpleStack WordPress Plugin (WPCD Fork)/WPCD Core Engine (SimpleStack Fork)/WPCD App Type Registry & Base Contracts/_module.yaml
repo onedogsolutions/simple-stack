@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: core_engine/app_types
+title: WPCD App Type Registry & Base Contracts
+scope:
+    - includes/core/apps/
+source_files: []
+depends_on: []
+related_to: []

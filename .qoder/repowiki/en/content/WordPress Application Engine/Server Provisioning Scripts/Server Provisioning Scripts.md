@@ -11,6 +11,14 @@
 - [environment variables.txt (v2)](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Updated script architecture documentation to reflect the new v2 system with over 60 individual script files
+- Enhanced coverage of server preparation, site installation, backup management, security configurations, and maintenance tasks
+- Added detailed analysis of the expanded v2 script ecosystem including upgrade scripts, monitoring tools, and security utilities
+- Updated common functions library documentation to include new v2 features like admin IP validation and PHP version management
+- Expanded environment variable documentation to cover all 81+ scripts in the v2 architecture
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -24,9 +32,9 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains the server provisioning script system that automates OpenLiteSpeed setup, PHP configuration, database installation, and WordPress deployment. It covers:
+This document explains the server provisioning script system that automates OpenLiteSpeed setup, PHP configuration, database installation, and WordPress deployment. The system has evolved into a comprehensive architecture with over 60 individual script files covering server preparation, site installation, backup management, security configurations, and maintenance tasks. It covers:
 - Script versioning strategy between v1 and v2.
-- Execution order and dependency management.
+- Execution order and dependency management across the expanded script ecosystem.
 - The common functions library and environment variable handling.
 - Error recovery mechanisms and checkpoint-based resume behavior.
 - Preparation phase scripts for system optimization, security hardening, and service installation.
@@ -41,7 +49,7 @@ The repository provisions servers at cloud providers, installs OpenLiteSpeed, PH
 ## Project Structure
 Provisioning scripts live under `includes/core/apps/wordpress-app/scripts/`. There are two major versions:
 - `scripts/v1/raw/` — legacy scripts used by servers provisioned before the fork.
-- `scripts/v2/raw/` — current scripts used by new servers.
+- `scripts/v2/raw/` — current scripts used by new servers with over 60 individual script files.
 
 Each version contains:
 - A numbered preparation and feature script set (for example, `01-prepare_server.txt`, `02-install_wordpress_site.txt`, etc.).
@@ -50,8 +58,8 @@ Each version contains:
 
 ```mermaid
 graph TB
-Root["WordPress App Scripts"] --> V1["v1/raw"]
-Root --> V2["v2/raw"]
+Root["WordPress App Scripts"] --> V1["v1/raw (80 scripts)"]
+Root --> V2["v2/raw (81 scripts)"]
 V1 --> PrepV1["01-prepare_server.txt"]
 V1 --> SiteV1["02-install_wordpress_site.txt"]
 V1 --> CommonV1["9999-common-functions.txt"]
@@ -60,6 +68,10 @@ V2 --> PrepV2["01-prepare_server.txt"]
 V2 --> SiteV2["02-install_wordpress_site.txt"]
 V2 --> CommonV2["9999-common-functions.txt"]
 V2 --> EnvV2["environment variables.txt"]
+V2 --> UpgradeScripts["10xx-11xx upgrade scripts"]
+V2 --> SecurityScripts["15-40 security & firewall scripts"]
+V2 --> MonitoringScripts["20-21 monitoring scripts"]
+V2 --> MaintenanceScripts["29-58 maintenance scripts"]
 ```
 
 **Diagram sources**
@@ -135,7 +147,7 @@ Control->>SSH : "Execute site scripts (e.g., install WordPress)"
 
 ### Script Versioning Strategy: v1 vs v2
 - v1 supports both nginx and OpenLiteSpeed stacks. It installs multiple PHP versions through ondrej PPAs and includes nginx tuning and firewall rule files.
-- v2 is OpenLiteSpeed only. It pins the One-Click Installer to a tagged release, performs syntax checks, optionally verifies checksums, installs explicit LSPHP versions, centralises default PHP selection, validates Ubuntu codenames, removes nginx configuration branches, and adds stricter admin IP validation.
+- v2 is OpenLiteSpeed only with over 60 individual script files. It pins the One-Click Installer to a tagged release, performs syntax checks, optionally verifies checksums, installs explicit LSPHP versions, centralises default PHP selection, validates Ubuntu codenames, removes nginx configuration branches, and adds stricter admin IP validation.
 
 Key differences include:
 - Default PHP version: v1 uses lsphp81; v2 uses lsphp84.
@@ -143,6 +155,7 @@ Key differences include:
 - Security posture: v2 downloads and validates the installer rather than piping raw master content directly into bash.
 - Package management: v2 installs LSPHP versions explicitly instead of relying on globs.
 - Admin IP handling: v2 introduces `gf_normalise_admin_ip` and fails closed if the value is invalid.
+- Script expansion: v2 includes additional upgrade scripts (10xx-11xx), security scripts (15-40), monitoring scripts (20-21), and maintenance scripts (29-58).
 
 **Section sources**
 - [01-prepare_server.txt (v1):214-302](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L214-L302)
@@ -153,10 +166,14 @@ Key differences include:
 - [9999-common-functions.txt (v2):59-74](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L59-L74)
 
 ### Execution Order and Dependency Management
-Scripts are numbered to enforce execution order:
+Scripts are numbered to enforce execution order across the expanded v2 ecosystem:
 - `01-prepare_server.txt` prepares the OS, packages, services, and firewall.
 - `02-install_wordpress_site.txt` installs WordPress.
-- Other scripts manage HTTPS, domains, SFTP, phpMyAdmin, backups, cloning, caching, monitoring, security tools, and maintenance tasks.
+- `03-09` handle site management, HTTPS, domains, SFTP, phpMyAdmin, backups, and cloning.
+- `10-29` provide miscellaneous operations, user management, caching, logging, monitoring, and server updates.
+- `30-58` offer advanced features like database operations, security tools, Git control, and file management.
+- `60-82` include specialized tools like Netdata, WPSecurity, and site synchronization.
+- `10xx-11xx` contain upgrade scripts for various versions and features.
 
 Dependencies are managed by:
 - Numbered filenames.
@@ -177,7 +194,10 @@ Backup --> Cache["Run 16-memcached.txt / 12-redis.txt"]
 Cache --> Monitoring["Run 20-monit.txt / 21-monitorix.txt"]
 Monitoring --> Security["Run 15-6g_firewall.txt / 40-7g_firewall.txt"]
 Security --> Maintenance["Run 29-server_update.txt / 39-php_workers.txt"]
-Maintenance --> End(["Provisioning Complete"])
+Maintenance --> Advanced["Run 30-58 advanced features"]
+Advanced --> Specialized["Run 60-82 specialized tools"]
+Specialized --> Upgrades["Run 10xx-11xx upgrade scripts"]
+Upgrades --> End(["Provisioning Complete"])
 ```
 
 **Diagram sources**
@@ -461,7 +481,7 @@ Optimization techniques present in the scripts include:
 Parallel execution strategies:
 - The scripts themselves are sequential and checkpointed.
 - Parallelism is best achieved by running independent site provisioning tasks concurrently at the control plane layer, not inside a single script.
-- For long-running package installations, split them into smaller steps and report progress, as seen in the “part 1 of 2” and “part 2 of 2” patterns.
+- For long-running package installations, split them into smaller steps and report progress, as seen in the "part 1 of 2" and "part 2 of 2" patterns.
 
 Rollback procedures:
 - There is no automatic rollback mechanism.
@@ -495,7 +515,7 @@ Common issues and resolutions:
 - [01-prepare_server.txt (v2):419-444](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L419-L444)
 
 ## Conclusion
-The SimpleStack provisioning system provides a robust, secure, and deterministic way to prepare servers and deploy WordPress. v2 improves security, determinism, and maintainability by pinning external dependencies, validating environments, centralising PHP version management, and enforcing strict firewall rules. Operators should prefer v2 for new deployments, use checkpoints for resilience, back up before destructive changes, and rely on the common functions library for consistent operations.
+The SimpleStack provisioning system provides a robust, secure, and deterministic way to prepare servers and deploy WordPress. v2 improves security, determinism, and maintainability by pinning external dependencies, validating environments, centralising PHP version management, and enforcing strict firewall rules. With over 60 individual script files covering server preparation, site installation, backup management, security configurations, and maintenance tasks, operators should prefer v2 for new deployments, use checkpoints for resilience, back up before destructive changes, and rely on the common functions library for consistent operations.
 
 ## Appendices
 

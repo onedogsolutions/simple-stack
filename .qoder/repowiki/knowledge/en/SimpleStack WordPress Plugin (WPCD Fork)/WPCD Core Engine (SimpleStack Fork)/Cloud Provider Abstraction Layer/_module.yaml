@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: core_engine/cloud_providers
+title: Cloud Provider Abstraction Layer
+scope:
+    - includes/core/providers/
+source_files: []
+depends_on: []
+related_to:
+    - path: tests

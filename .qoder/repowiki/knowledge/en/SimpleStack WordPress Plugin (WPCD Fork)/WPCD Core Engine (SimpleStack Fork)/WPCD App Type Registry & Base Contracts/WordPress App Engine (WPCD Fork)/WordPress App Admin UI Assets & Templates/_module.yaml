@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: core_engine/app_types/wordpress_app/assets_and_templates
+title: WordPress App Admin UI Assets & Templates
+scope:
+    - includes/core/apps/wordpress-app/assets/
+    - includes/core/apps/wordpress-app/templates/
+source_files: []
+depends_on: []
+related_to: []

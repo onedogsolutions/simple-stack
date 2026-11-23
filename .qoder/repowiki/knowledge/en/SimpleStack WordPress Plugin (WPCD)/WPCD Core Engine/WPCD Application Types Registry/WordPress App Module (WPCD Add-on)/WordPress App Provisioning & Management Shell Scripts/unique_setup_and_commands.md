@@ -1,1 +1,0 @@
-Scripts are not executed directly from this tree — they are loaded by the PHP app, have their `##PLACEHOLDER##` tokens replaced, then run via `sudo -E bash` on the target server. User customizations for multi-tenant flows drop replacement scripts into the template site root (see `multi-tenant-pre-post-samples/readme.txt`).

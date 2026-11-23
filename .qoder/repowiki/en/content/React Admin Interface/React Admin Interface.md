@@ -11,6 +11,7 @@
 - [Modal.jsx](file://src/admin/components/Modal.jsx)
 - [Toast.jsx](file://src/admin/components/Toast.jsx)
 - [Card.jsx](file://src/admin/components/Card.jsx)
+- [Button.jsx](file://src/admin/components/Button.jsx)
 - [index.css](file://src/admin/styles/index.css)
 - [tailwind.config.js](file://tailwind.config.js)
 - [vite.config.js](file://vite.config.js)
@@ -18,25 +19,37 @@
 - [SIMPLESTACK.md](file://docs/SIMPLESTACK.md)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Updated component architecture documentation to reflect the complete React admin interface overhaul
+- Added detailed analysis of new Vite build system and Tailwind CSS v4 integration
+- Enhanced routing system documentation with hash-based navigation patterns
+- Expanded component documentation for Button, Modal, Toast, Card, and DataTable components
+- Updated styling system documentation with Tailwind v4 configuration and scoping
+- Added comprehensive API layer documentation with REST client implementation
+- Included build process documentation with Vite configuration and development workflow
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
-10. [Appendices](#appendices)
+6. [Build System and Development Workflow](#build-system-and-development-workflow)
+7. [Styling System](#styling-system)
+8. [API Layer](#api-layer)
+9. [Routing System](#routing-system)
+10. [Performance Considerations](#performance-considerations)
+11. [Troubleshooting Guide](#troubleshooting-guide)
+12. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes SimpleStack’s React-based administrative interface built with React 19 and Tailwind CSS v4. The client is a lightweight, hash-driven admin shell that renders inside the existing WordPress admin chrome. It manages routing through the URL hash, communicates with a `simple-stack/v1` REST API, and provides reusable UI primitives for tables, modals, toasts, cards, and application shells.
+This document describes SimpleStack's completely overhauled React-based administrative interface built with React 19 and Tailwind CSS v4. The client is a lightweight, hash-driven admin shell that renders inside the existing WordPress admin chrome using Vite for modern development and production builds. It manages routing through URL hashes, communicates with a `simple-stack/v1` REST API, and provides reusable UI primitives for tables, modals, toasts, cards, buttons, and application shells.
 
-The project uses Vite for development and production builds. The compiled assets are written into `assets/dist/`, which allows the plugin to run without requiring Node on the server. Tailwind CSS v4 is configured so all generated utilities are scoped under `#simplestack-admin`, preventing style leakage into the rest of wp-admin.
+The project uses Vite 7 for development and production builds, outputting compiled assets into `assets/dist/`. This allows the plugin to run without requiring Node on the server while maintaining a modern development experience. Tailwind CSS v4 is configured so all generated utilities are scoped under `#simplestack-admin`, preventing style leakage into the rest of wp-admin.
 
 ## Project Structure
-The React source lives under `src/admin/`. The entry point mounts the app into a container provided by PHP, initializes the hash route, and renders the root component. Routes are declared centrally in the root application component and resolved against a small custom router.
+The React source lives under `src/admin/` with a clean separation between components, routes, library functions, and styles. The entry point mounts the app into a container provided by PHP, initializes the hash route, and renders the root component. Routes are declared centrally in the root application component and resolved against a small custom router.
 
 ```mermaid
 graph TB
@@ -48,8 +61,10 @@ Routes --> Shell["src/admin/components/AppShell.jsx"]
 Routes --> DataTable["src/admin/components/DataTable.jsx"]
 Routes --> Modal["src/admin/components/Modal.jsx"]
 Routes --> Card["src/admin/components/Card.jsx"]
+Routes --> Button["src/admin/components/Button.jsx"]
 Entry --> Styles["src/admin/styles/index.css"]
 Styles --> TailwindConfig["tailwind.config.js"]
+Entry --> API["src/admin/lib/api.js"]
 ```
 
 **Diagram sources**
@@ -65,17 +80,18 @@ Styles --> TailwindConfig["tailwind.config.js"]
 - [SIMPLESTACK.md:117-150](file://docs/SIMPLESTACK.md#L117-L150)
 
 ## Core Components
-The interface is composed around a small set of focused components:
+The interface is composed around a focused set of reusable components designed for the WordPress admin environment:
 
 - **Application entry**: Mounts the app, seeds the initial hash route from PHP-provided data, and wraps the tree in React Strict Mode.
 - **Root application**: Holds the route table, resolves the current hash path, and renders the matched page inside a toast provider.
-- **AppShell**: Provides the header, primary navigation, breadcrumbs, and main content area.
-- **DataTable**: A sortable, keyboard-accessible table driven by column descriptors.
-- **Modal and ConfirmDialog**: Accessible dialog containers with focus management and Escape-to-close behavior.
-- **Toast and useToast**: Global notification context for success, error, and informational messages.
+- **AppShell**: Provides the header, primary navigation, breadcrumbs, and main content area with consistent branding.
+- **DataTable**: A sortable, keyboard-accessible table driven by column descriptors with loading and empty states.
+- **Modal and ConfirmDialog**: Accessible dialog containers with focus management, Escape-to-close behavior, and click-outside-to-close.
+- **Toast and useToast**: Global notification context for success, error, and informational messages with auto-dismissal.
 - **Card, Badge, Skeleton, EmptyState, ErrorPanel**: Presentational building blocks used across routes and tables.
+- **Button**: Consistent button variants (primary, secondary, ghost, danger) with size options and busy states.
 
-These components are intentionally thin and rely on Tailwind utility classes rather than custom CSS.
+These components are intentionally thin and rely on Tailwind utility classes rather than custom CSS, ensuring consistency and maintainability.
 
 **Section sources**
 - [index.jsx:15-46](file://src/admin/index.jsx#L15-L46)
@@ -85,13 +101,14 @@ These components are intentionally thin and rely on Tailwind utility classes rat
 - [Modal.jsx:20-130](file://src/admin/components/Modal.jsx#L20-L130)
 - [Toast.jsx:25-82](file://src/admin/components/Toast.jsx#L25-L82)
 - [Card.jsx:21-120](file://src/admin/components/Card.jsx#L21-L120)
+- [Button.jsx:27-59](file://src/admin/components/Button.jsx#L27-L59)
 
 ## Architecture Overview
-The admin interface follows a simple layered architecture:
+The admin interface follows a simple layered architecture designed for WordPress integration:
 
 1. **Mounting layer**: `index.jsx` finds the `#simplestack-admin` container, seeds the hash route, and creates the React root.
 2. **Routing layer**: `router.js` reads and writes `window.location.hash`. `App.jsx` maintains a static route table and matches paths using parameterized patterns.
-3. **Presentation layer**: Route components render pages using `AppShell`, `DataTable`, `Modal`, `Card`, and other shared components.
+3. **Presentation layer**: Route components render pages using `AppShell`, `DataTable`, `Modal`, `Card`, `Button`, and other shared components.
 4. **Data layer**: `api.js` wraps `fetch`, attaches the WordPress nonce, unwraps the PHP response envelope, and exposes typed methods for servers, sites, tabs, logs, and providers.
 
 ```mermaid
@@ -133,7 +150,7 @@ Page-->>WP : Render UI
 The root application defines a fixed route table mapping URL patterns to React elements. Parameterized segments such as `:id` are captured and passed as props. Unknown routes fall back to the servers list so stale bookmarks remain useful.
 
 Key behaviors:
-- Hash-based routing avoids conflicts with WordPress’s URL bar and history.
+- Hash-based routing avoids conflicts with WordPress's URL bar and history.
 - Deep links survive reloads because the PHP bootstrap can seed the initial hash.
 - Navigation is performed by updating the hash, not by pushing state.
 
@@ -262,47 +279,168 @@ Props vary by component but consistently use Tailwind classes and theme tokens.
 **Section sources**
 - [Card.jsx:1-121](file://src/admin/components/Card.jsx#L1-L121)
 
-## Dependency Analysis
-The frontend dependencies are minimal:
+### Button Component
+`Button.jsx` provides consistent button styling with multiple variants and sizes:
 
-- React 19 and ReactDOM 19 are runtime dependencies.
-- `@tanstack/react-query` is listed as a dependency but is not used directly by the analyzed files; the current implementation uses local state and direct `fetch` calls through `api.js`.
-- Development dependencies include Vite 7, the React plugin, Tailwind CSS v4, and the Tailwind Vite integration.
+Variants:
+- `primary`: Brand-colored button for main actions.
+- `secondary`: Neutral button for standard actions.
+- `ghost`: Transparent button for subtle actions.
+- `danger`: Red-tinted button for destructive actions.
 
-Build configuration:
-- The Vite build outputs to `assets/dist/`.
-- CSS code splitting is disabled so there is one stylesheet for the whole app.
-- Source maps are disabled in production builds.
-- The target is ES2020.
-- The manifest file is generated so PHP can resolve asset URLs at runtime.
+Sizes:
+- `sm`: Compact button for dense interfaces.
+- `md`: Standard button size.
 
-```mermaid
-graph LR
-Package["package.json"] --> React["react ^19.0.0"]
-Package --> DOM["react-dom ^19.0.0"]
-Package --> Query["@tanstack/react-query ^5.62.7"]
-Package --> Vite["vite ^7.0.0 (dev)"]
-Package --> Tailwind["tailwindcss ^4.0.0 (dev)"]
-Package --> TailwindVite["@tailwindcss/vite ^4.0.0 (dev)"]
-Package --> ReactPlugin["@vitejs/plugin-react ^4.3.4 (dev)"]
-```
+Props:
+- `variant`: Button variant type.
+- `size`: Button size.
+- `busy`: Shows spinner and disables button.
+- `disabled`: Disables button interaction.
+- `className`: Additional CSS classes.
+- `type`: HTML button type.
 
-**Diagram sources**
-- [package.json:13-23](file://package.json#L13-L23)
+Accessibility highlights:
+- Proper focus management with visible focus rings.
+- Disabled state clearly indicated.
+- Spinner animation for busy state.
 
 **Section sources**
-- [package.json:1-25](file://package.json#L1-L25)
+- [Button.jsx:1-60](file://src/admin/components/Button.jsx#L1-L60)
+
+## Build System and Development Workflow
+The project uses Vite 7 for modern development and production builds with Tailwind CSS v4 integration.
+
+### Build Configuration
+- **Development server**: Hot module replacement for rapid iteration.
+- **Production builds**: Optimized bundles with asset hashing.
+- **CSS processing**: Tailwind v4 with custom theme configuration.
+- **Asset output**: Committed to `assets/dist/` for server deployment.
+
+### Development Commands
+- `npm ci`: Install dependencies.
+- `npm run dev`: Start development server.
+- `npm run build`: Build production assets.
+- `npm run verify:css`: Verify CSS isolation.
+- `npm run verify`: Full verification build.
+
+### Build Outputs
+- JavaScript bundles with content hashing.
+- Single stylesheet for the entire application.
+- Manifest file for asset resolution.
+- Source maps disabled in production.
+
+**Section sources**
+- [package.json:7-12](file://package.json#L7-L12)
 - [vite.config.js:15-37](file://vite.config.js#L15-L37)
+- [SIMPLESTACK.md:300-316](file://docs/SIMPLESTACK.md#L300-L316)
+
+## Styling System
+The styling system uses Tailwind CSS v4 with strict scoping to prevent style leakage into WordPress admin.
+
+### Tailwind Configuration
+- **Scoping**: All utilities scoped under `#simplestack-admin`.
+- **Preflight disabled**: Prevents resetting global WordPress styles.
+- **Custom theme**: Brand colors, typography, and design tokens.
+- **Layer system**: Separate theme and utility layers.
+
+### Custom Theme Tokens
+- **Brand colors**: Pink-based brand palette.
+- **Ink colors**: Dark neutral palette for text.
+- **Surface colors**: Background and border colors.
+- **Semantic colors**: Positive, warning, and negative states.
+- **Typography**: System font stack and monospace fonts.
+- **Border radius**: Consistent card rounding.
+
+### CSS Architecture
+- **Entry point**: Imports Tailwind theme and utilities explicitly.
+- **Reset**: Hand-written reset scoped to mount point.
+- **Utilities**: All generated utilities prefixed with scoping selector.
+- **Verification**: Automated checks prevent style leakage.
+
+**Section sources**
+- [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
+- [index.css:1-80](file://src/admin/styles/index.css#L1-L80)
+- [SIMPLESTACK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
+
+## API Layer
+The API layer provides a typed interface to the `simple-stack/v1` REST endpoints with automatic nonce handling and response unwrapping.
+
+### Core Features
+- **Automatic nonce attachment**: WordPress security headers added automatically.
+- **Response unwrapping**: Extracts `data` from PHP response envelopes.
+- **Error handling**: Typed `ApiError` with code and status information.
+- **File uploads**: Support for FormData with JSON parameters.
+
+### API Methods
+
+#### Servers
+- `list(query)`: List servers with filtering and pagination.
+- `get(id)`: Get server details and metadata.
+- `create(body)`: Create new server and queue provisioning.
+- `remove(id)`: Delete server.
+- `runAction(id, action, params, files)`: Execute server actions.
+
+#### Sites
+- `list(query)`: List sites with filtering.
+- `get(id)`: Get site details and status.
+- `deploy(body)`: Deploy new WordPress site.
+- `remove(id)`: Trash site.
+- `runAction(id, action, params, files)`: Execute site actions.
+- `securityStatus(id)`: Get security hardening status.
+
+#### Tabs
+- `forServer(id)`: Get tab schema for server.
+- `forSite(id)`: Get tab schema for site.
+
+#### Logs
+- `forServer(serverId, query)`: Get server logs with pagination.
+- `activity(query)`: Get merged activity feed.
+
+#### Providers
+- `list(query)`: Get provider configuration and counts.
+- `save(body)`: Save provider credentials.
+- `test(slug)`: Test provider connection.
+
+**Section sources**
+- [api.js:1-292](file://src/admin/lib/api.js#L1-L292)
+
+## Routing System
+The routing system uses hash-based navigation to avoid conflicts with WordPress admin URL handling.
+
+### Router Features
+- **Hash-based navigation**: Uses `window.location.hash` for deep linking.
+- **Parameter extraction**: Supports `:param` syntax for dynamic routes.
+- **Event handling**: Subscribes to hash changes for reactive updates.
+- **Fallback routing**: Defaults to servers list for unknown routes.
+
+### Route Patterns
+- `/servers`: Server listing page.
+- `/servers/new`: Server provisioning form.
+- `/servers/:id`: Individual server detail page.
+- `/sites`: Site listing page.
+- `/sites/new`: Site deployment form.
+- `/sites/:id`: Individual site detail page.
+- `/sites/:id/security`: Site security status page.
+- `/settings/providers`: Provider configuration page.
+- `/activity`: Activity log page.
+
+### Navigation Methods
+- `navigate(path)`: Programmatic navigation.
+- `useRoute()`: React hook for current route.
+- `matchRoute(path, pattern)`: Pattern matching utility.
+
+**Section sources**
+- [router.js:1-84](file://src/admin/lib/router.js#L1-L84)
+- [App.jsx:25-54](file://src/admin/App.jsx#L25-L54)
 
 ## Performance Considerations
-- **Bundle size**: React is bundled rather than borrowed from WordPress, which simplifies the Tailwind v4 pipeline but increases bundle size compared to sharing WordPress’s copy. This trade-off is documented in the build configuration comments.
-- **CSS isolation**: Preflight is disabled and utilities are scoped under `#simplestack-admin`, reducing accidental style collisions and avoiding unnecessary resets.
-- **Single stylesheet**: `cssCodeSplit: false` produces one stylesheet, improving cacheability and simplifying verification.
-- **Sorting cost**: `DataTable` sorts rows locally. For very large datasets, consider server-side sorting or pagination at the API layer.
-- **Network requests**: The API layer unwraps responses once and throws typed errors. Consumers should avoid redundant requests and debounce search inputs where appropriate.
-- **Browser target**: The build targets ES2020, which is modern enough for most admin environments but may require polyfills if older browsers must be supported.
-
-[No sources needed since this section provides general guidance]
+- **Bundle optimization**: React is bundled with Vite for optimal performance.
+- **CSS isolation**: Scoped utilities prevent unnecessary style recalculations.
+- **Single stylesheet**: One CSS file improves cacheability and reduces requests.
+- **Component efficiency**: Lightweight components with minimal re-renders.
+- **API optimization**: Request deduplication and efficient data fetching.
+- **Browser target**: ES2020 target for modern browser compatibility.
 
 ## Troubleshooting Guide
 
@@ -365,43 +503,6 @@ References:
 - [SIMPLESTACK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
 
 ## Conclusion
-SimpleStack’s admin interface is a compact, hash-driven React application that integrates cleanly with WordPress admin. It separates concerns between mounting, routing, presentation, and API communication while keeping styling safely scoped under `#simplestack-admin`. Reusable components like `DataTable`, `Modal`, `Toast`, and `Card` reduce duplication and make adding new features straightforward. The Vite build produces committed assets so the plugin works without a Node toolchain on production servers.
+SimpleStack's completely overhauled admin interface is a compact, hash-driven React application built with modern tools that integrates cleanly with WordPress admin. The new architecture separates concerns between mounting, routing, presentation, and API communication while keeping styling safely scoped under `#simplestack-admin`. Reusable components like `DataTable`, `Modal`, `Toast`, `Card`, and `Button` reduce duplication and make adding new features straightforward. The Vite build produces committed assets so the plugin works without a Node toolchain on production servers while providing an excellent development experience.
 
-[No sources needed since this section summarizes without analyzing specific files]
-
-## Appendices
-
-### Build and Development Workflow
-- Install dependencies: `npm ci`.
-- Start development server: `npm run dev`.
-- Build production assets: `npm run build`.
-- Verify CSS isolation: `npm run verify:css`.
-- Full verification: `npm run verify`.
-
-References:
-- Scripts: [package.json:7-12](file://package.json#L7-L12)
-- Build output and plugins: [vite.config.js:15-37](file://vite.config.js#L15-L37)
-- Working instructions summary: [SIMPLESTACK.md:300-316](file://docs/SIMPLESTACK.md#L300-L316)
-
-**Section sources**
-- [package.json:7-12](file://package.json#L7-L12)
-- [vite.config.js:1-45](file://vite.config.js#L1-L45)
-- [SIMPLESTACK.md:300-316](file://docs/SIMPLESTACK.md#L300-L316)
-
-### Styling System and Accessibility Notes
-- Tailwind v4 is imported explicitly without Preflight to avoid resetting global elements.
-- All utilities are scoped under `#simplestack-admin`.
-- A hand-written reset normalizes box sizing, headings, lists, images, links, buttons, and tables within the mount point.
-- Components use semantic roles such as `dialog`, `status`, and `aria-*` attributes where appropriate.
-
-References:
-- CSS entry and reset: [index.css:1-80](file://src/admin/styles/index.css#L1-L80)
-- Tailwind configuration and scoping: [tailwind.config.js:1-20](file://tailwind.config.js#L1-L20)
-- Modal accessibility: [Modal.jsx:53-86](file://src/admin/components/Modal.jsx#L53-L86)
-- Toast accessibility: [Toast.jsx:52-72](file://src/admin/components/Toast.jsx#L52-L72)
-
-**Section sources**
-- [index.css:1-80](file://src/admin/styles/index.css#L1-L80)
-- [tailwind.config.js:1-20](file://tailwind.config.js#L1-L20)
-- [Modal.jsx:53-86](file://src/admin/components/Modal.jsx#L53-L86)
-- [Toast.jsx:52-72](file://src/admin/components/Toast.jsx#L52-L72)
+The complete rewrite brings significant improvements in developer experience, code organization, and maintainability while preserving full backward compatibility with the existing WordPress plugin architecture.

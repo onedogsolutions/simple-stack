@@ -1,0 +1,7 @@
+Two parallel script trees (`v1/` and `v2/`) mirror the same feature surface; `v2/` is the SimpleStack branch targeting Ubuntu 24.04/26.04 with OLS-only stack (per the coding intent). Each version contains:
+- Top-level action scripts (e.g. `install_wordpress_site.txt`, `backup_restore.txt`, `manage_https.txt`) invoked by WPCD's tab/action engine.
+- `raw/9999-common-functions.txt` — shared function library loaded by every action script, providing utility functions prefixed `gf_*` (global/function) and `g_*` (global), plus global variables like `$GV_UBUNTU_VERSION_STRING`, `$WWW_PATH`, `$LSDIR`, `$WEBCF`, `$VHDIR`, `$PHPVER`.
+- `multi-tenant-pre-post-samples/*.sh` — sample pre/post hooks for multi-tenant workflows.
+- `wp-backup2-helper` and `wp-sync` — companion binaries used by backup/sync actions.
+- `environment variables.txt` — authoritative contract documenting every `$action` and required environment variables per script.
+Dependency direction is one-way: top-level scripts source `raw/9999-common-functions.txt` and call its `gf_*`/`g_*` helpers; there are no cross-dependencies between sibling action scripts. The `_description.txt` and `readme.txt` files at each version root label the bundle as a WPCD management-script package.

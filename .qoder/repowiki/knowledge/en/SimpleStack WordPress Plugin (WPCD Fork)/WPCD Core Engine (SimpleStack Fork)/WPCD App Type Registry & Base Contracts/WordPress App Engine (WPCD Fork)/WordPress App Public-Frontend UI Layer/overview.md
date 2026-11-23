@@ -1,0 +1,1 @@
+Front-end rendering layer for the WordPress App plugin, exposing server/app listing, single-entry edit views, deploy forms, and provider tables via shortcodes, AJAX, and WP_List_Table subclasses.

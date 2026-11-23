@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: core_engine/shared_core
+title: 'Shared Core: Base Class, Global Helpers & Application Bootstrap'
+scope:
+    - includes/core/class-wpcd-base.php
+    - includes/core/functions.php
+    - includes/core/wp-cloud-deploy.php
+source_files: []
+depends_on: []
+related_to:
+    - path: static_assets

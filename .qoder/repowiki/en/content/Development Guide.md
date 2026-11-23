@@ -6,6 +6,10 @@
 - [composer.json](file://composer.json)
 - [package.json](file://package.json)
 - [vite.config.js](file://vite.config.js)
+- [tailwind.config.js](file://tailwind.config.js)
+- [src/admin/index.jsx](file://src/admin/index.jsx)
+- [src/admin/styles/index.css](file://src/admin/styles/index.css)
+- [tools/verify-css-isolation.mjs](file://tools/verify-css-isolation.mjs)
 - [phpunit.xml](file://phpunit.xml)
 - [phpcs.xml](file://phpcs.xml)
 - [tests/phpunit.php](file://tests/phpunit.php)
@@ -13,10 +17,17 @@
 - [bin/lint-php.sh](file://bin/lint-php.sh)
 - [bin/lint-sh.sh](file://bin/lint-sh.sh)
 - [bin/guard-wpcd-prefix.sh](file://bin/guard-wpcd-prefix.sh)
-- [tools/verify-css-isolation.mjs](file://tools/verify-css-isolation.mjs)
 - [tests/phpunit/rest-api/ControllerServersTest.php](file://tests/phpunit/rest-api/ControllerServersTest.php)
 - [tests/data/class-wpcd-rest-api-controller-test.php](file://tests/data/class-wpcd-rest-api-controller-test.php)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated Node.js build system documentation to reflect Vite 7.0.0 and Tailwind CSS v4 integration
+- Added comprehensive coverage of the new development tooling including CSS isolation verification
+- Enhanced build pipeline documentation with Vite manifest generation and asset optimization
+- Updated testing commands and development workflow sections
+- Added detailed coverage of Tailwind CSS configuration and scoping strategies
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -31,9 +42,9 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This guide explains how to develop SimpleStack locally, build the React admin interface, run tests, and maintain code quality. It covers the dual development environment for the PHP backend and the React frontend, dependency management with Composer and npm, the Vite build pipeline, PHPUnit testing, shell script validation, CSS isolation verification, coding standards, contribution workflow, debugging, performance profiling, and deployment procedures for development builds.
+This guide explains how to develop SimpleStack locally, build the React admin interface, run tests, and maintain code quality. It covers the dual development environment for the PHP backend and the React frontend, dependency management with Composer and npm, the Vite build pipeline with Tailwind CSS v4, PHPUnit testing, shell script validation, CSS isolation verification, coding standards, contribution workflow, debugging, performance profiling, and deployment procedures for development builds.
 
-SimpleStack is a WordPress plugin that provisions servers through cloud provider APIs and manages them from the WordPress admin dashboard. The admin client is built with React 19 and Tailwind CSS v4 using Vite, while the backend uses PHP 8.1+ and integrates with cloud providers over SSH and REST endpoints.
+SimpleStack is a WordPress plugin that provisions servers through cloud provider APIs and manages them from the WordPress admin dashboard. The admin client is built with React 19 and Tailwind CSS v4 using Vite 7.0.0, while the backend uses PHP 8.1+ and integrates with cloud providers over SSH and REST endpoints.
 
 **Section sources**
 - [README.md:1-46](file://README.md#L1-L46)
@@ -47,7 +58,7 @@ The repository is organized into clear layers:
 - `tests`: PHPUnit configuration, bootstrap, test data, and REST controller tests.
 - `bin`: Shell scripts for linting and guard checks.
 - `tools`: Build-time utilities such as CSS isolation verification.
-- Root configuration files: `composer.json`, `package.json`, `vite.config.js`, `phpunit.xml`, `phpcs.xml`, `wp-tests-config.php`.
+- Root configuration files: `composer.json`, `package.json`, `vite.config.js`, `tailwind.config.js`, `phpunit.xml`, `phpcs.xml`, `wp-tests-config.php`.
 
 ```mermaid
 graph TB
@@ -63,7 +74,7 @@ Tools["tools"]
 end
 subgraph "Tooling"
 Bin["bin"]
-Configs["composer.json<br/>package.json<br/>vite.config.js<br/>phpunit.xml<br/>phpcs.xml<br/>wp-tests-config.php"]
+Configs["composer.json<br/>package.json<br/>vite.config.js<br/>tailwind.config.js<br/>phpunit.xml<br/>phpcs.xml<br/>wp-tests-config.php"]
 end
 SrcAdmin --> |Vite build| AssetsDist
 AssetsDist --> |Enqueued by PHP| Core
@@ -76,6 +87,7 @@ Configs --> |Build & Test| SrcAdmin
 
 **Diagram sources**
 - [vite.config.js:11-37](file://vite.config.js#L11-L37)
+- [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 - [phpunit.xml:9-24](file://phpunit.xml#L9-L24)
 - [phpcs.xml:1-40](file://phpcs.xml#L1-L40)
 - [bin/lint-php.sh:1-33](file://bin/lint-php.sh#L1-L33)
@@ -85,6 +97,7 @@ Configs --> |Build & Test| SrcAdmin
 **Section sources**
 - [README.md:47-88](file://README.md#L47-L88)
 - [vite.config.js:1-45](file://vite.config.js#L1-L45)
+- [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 - [phpunit.xml:1-40](file://phpunit.xml#L1-L40)
 - [phpcs.xml:1-40](file://phpcs.xml#L1-L40)
 
@@ -97,6 +110,7 @@ Configs --> |Build & Test| SrcAdmin
   - Admin UI entry at `src/admin/index.jsx`.
   - Components, routes, styles, and API helpers.
   - Build output to `assets/dist` with a Vite manifest used at runtime.
+  - Tailwind CSS v4 with custom theme configuration and strict CSS isolation.
 - Tooling:
   - Composer scripts for linting, guarding naming conventions, and running tests.
   - npm scripts for building, verifying CSS isolation, and running the dev server.
@@ -112,6 +126,7 @@ Key responsibilities:
 - [composer.json:12-30](file://composer.json#L12-L30)
 - [package.json:7-23](file://package.json#L7-L23)
 - [vite.config.js:1-45](file://vite.config.js#L1-L45)
+- [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 
 ## Architecture Overview
 The development architecture consists of two environments working together:
@@ -121,9 +136,10 @@ The development architecture consists of two environments working together:
   - Registers REST routes under a namespaced API.
   - Uses providers and shell scripts to provision and manage servers.
 - React frontend:
-  - Built with Vite and Tailwind CSS v4.
+  - Built with Vite 7.0.0 and Tailwind CSS v4.
   - Bundled into `assets/dist` and enqueued by PHP.
   - Mounted at a specific DOM element inside wp-admin.
+  - Uses strict CSS isolation to prevent style leaks.
 
 ```mermaid
 sequenceDiagram
@@ -154,7 +170,7 @@ WP-->>Dev : Rendered React UI
 ### Local Development Setup
 - Install dependencies:
   - Run Composer to install PHP dependencies and WordPress core for tests.
-  - Run npm to install front-end dependencies.
+  - Run npm to install front-end dependencies including Vite, React, and Tailwind CSS.
 - Build and verify:
   - Build the React app to `assets/dist`.
   - Verify CSS isolation to ensure no styles leak into wp-admin.
@@ -172,10 +188,12 @@ Recommended commands:
 Notes:
 - Production installs do not need Node because `assets/dist` is committed.
 - The Vite manifest is read at runtime; if missing, an operator-facing notice is shown instead of a blank screen.
+- Development mode uses Vite's hot module replacement for instant feedback.
 
 **Section sources**
 - [README.md:60-88](file://README.md#L60-L88)
 - [vite.config.js:18-37](file://vite.config.js#L18-L37)
+- [package.json:7-12](file://package.json#L7-L12)
 
 ### Build Processes and Vite Pipeline
 - Entry point: `src/admin/index.jsx`.
@@ -184,6 +202,7 @@ Notes:
 - CSS handling: single stylesheet for the whole app; CSS code splitting disabled to simplify asset loading.
 - Target: ES2020.
 - Exclusions: WordPress-provided libraries are not duplicated.
+- Tailwind CSS v4 integration with custom theme configuration.
 
 ```mermaid
 flowchart TD
@@ -201,6 +220,23 @@ Output --> End(["Build Complete"])
 **Section sources**
 - [vite.config.js:1-45](file://vite.config.js#L1-L45)
 - [package.json:7-23](file://package.json#L7-L23)
+
+### Tailwind CSS Configuration and Scoping
+- Custom theme configuration with brand colors, typography, and design tokens.
+- Strict CSS isolation enforced through `important: '#simplestack-admin'`.
+- Preflight disabled to prevent global resets affecting wp-admin.
+- Content scanning configured for React components only.
+- Layer-based CSS organization with theme and utility layers.
+
+Key features:
+- Scoped utilities that cannot leak into wp-admin chrome.
+- Custom color palette with semantic naming.
+- System font stack with monospace fallbacks.
+- Responsive design tokens and border radius customization.
+
+**Section sources**
+- [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
+- [src/admin/styles/index.css:1-80](file://src/admin/styles/index.css#L1-L80)
 
 ### Testing Frameworks and PHPUnit Suite
 - Configuration:
@@ -359,11 +395,13 @@ Patterns:
   - Scope all styles to the admin mount node.
   - Avoid importing Tailwind Preflight globally.
   - Keep dependencies aligned with Vite and React versions.
+  - Use Tailwind CSS v4 utility classes with proper scoping.
 
 **Section sources**
 - [phpcs.xml:24-40](file://phpcs.xml#L24-L40)
 - [bin/lint-sh.sh:1-83](file://bin/lint-sh.sh#L1-L83)
 - [tools/verify-css-isolation.mjs:1-334](file://tools/verify-css-isolation.mjs#L1-L334)
+- [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 
 ### Submitting Contributions
 Before submitting:
@@ -389,6 +427,7 @@ Before submitting:
 - Use PHPUnit verbose output to identify failing assertions.
 - Check Vite dev server logs for frontend issues.
 - Validate CSS isolation failures to pinpoint leaked selectors.
+- Monitor Tailwind CSS build output for unused utilities.
 
 **Section sources**
 - [wp-tests-config.php:12-12](file://wp-tests-config.php#L12-L12)
@@ -403,6 +442,7 @@ Before submitting:
   - Use browser performance tools to analyze React rendering.
   - Inspect bundle size and chunk distribution.
   - Ensure no unnecessary re-renders in admin components.
+  - Monitor Tailwind CSS utility generation for unused classes.
 
 [No sources needed since this section provides general guidance]
 
@@ -437,7 +477,7 @@ npm dependencies:
   - React 19 and React DOM.
   - TanStack Query for data fetching.
 - Development:
-  - Vite, React plugin, Tailwind CSS v4, and Tailwind Vite plugin.
+  - Vite 7.0.0, React plugin, Tailwind CSS v4, and Tailwind Vite plugin.
 
 ```mermaid
 graph LR
@@ -448,8 +488,10 @@ Composer --> WPCS["wp-coding-standards/wpcs"]
 NPM["package.json"] --> React["react"]
 NPM --> ReactDOM["react-dom"]
 NPM --> TanStack["@tanstack/react-query"]
-NPM --> Vite["vite"]
-NPM --> Tailwind["tailwindcss"]
+NPM --> Vite["vite ^7.0.0"]
+NPM --> Tailwind["tailwindcss ^4.0.0"]
+NPM --> TailwindVite["@tailwindcss/vite"]
+NPM --> ReactPlugin["@vitejs/plugin-react"]
 ```
 
 **Diagram sources**
@@ -466,6 +508,8 @@ NPM --> Tailwind["tailwindcss"]
 - Avoid heavy computations in request handlers.
 - Keep React components lean and memoized where necessary.
 - Monitor bundle size and split chunks only when beneficial.
+- Optimize Tailwind CSS content scanning to reduce build times.
+- Leverage Vite's optimized dependency pre-bundling.
 
 [No sources needed since this section provides general guidance]
 
@@ -477,6 +521,7 @@ Common issues and resolutions:
 - CSS isolation failure:
   - Check for unscoped selectors and directive residue.
   - Verify Tailwind content glob matches source files.
+  - Ensure `important: '#simplestack-admin'` is configured.
 - PHPUnit bootstrap errors:
   - Run `composer install` to install WordPress test library.
   - Ensure local MySQL database matches configuration.
@@ -486,15 +531,20 @@ Common issues and resolutions:
 - Guard failures:
   - Restore required identifiers and remove forbidden constructs.
   - Ensure public endpoints are exactly those allowed.
+- Tailwind CSS build issues:
+  - Verify CSS import structure without Preflight.
+  - Check that content scanning includes all component files.
+  - Ensure theme configuration is properly loaded.
 
 **Section sources**
 - [tools/verify-css-isolation.mjs:217-251](file://tools/verify-css-isolation.mjs#L217-L251)
 - [tests/phpunit.php:12-25](file://tests/phpunit.php#L12-L25)
 - [bin/lint-sh.sh:48-65](file://bin/lint-sh.sh#L48-L65)
 - [bin/guard-wpcd-prefix.sh:22-84](file://bin/guard-wpcd-prefix.sh#L22-L84)
+- [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 
 ## Conclusion
-This guide provides a comprehensive overview of developing SimpleStack, covering setup, builds, testing, code quality, and contribution workflows. By following these practices, contributors can maintain consistency, security, and reliability across the PHP backend and React frontend while ensuring robust testing and deployment processes.
+This guide provides a comprehensive overview of developing SimpleStack, covering setup, builds, testing, code quality, and contribution workflows. By following these practices, contributors can maintain consistency, security, and reliability across the PHP backend and React frontend while ensuring robust testing and deployment processes. The new Vite and Tailwind CSS v4 build system provides modern development tooling with strict CSS isolation guarantees.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

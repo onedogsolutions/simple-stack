@@ -1,1 +1,0 @@
-WordPress plugin that boots the SimpleStack hosting control plane, wiring core runtime, React admin dashboard, static assets, bundled Meta Box dependencies, and PHPUnit tests under a single plugin entry.

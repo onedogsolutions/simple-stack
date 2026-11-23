@@ -1,8 +1,0 @@
-schema_version: 1
-module_path: core_engine/app_types/wordpress_app/script_templates
-title: WordPress App Provisioning & Management Shell Scripts
-scope:
-    - includes/core/apps/wordpress-app/scripts/
-source_files: []
-depends_on: []
-related_to: []
