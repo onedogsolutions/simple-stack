@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Tools tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,27 +11,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_TOOLS
+ * Class SSTK_WORDPRESS_TABS_TOOLS
  */
-class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_TOOLS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_TOOLS constructor.
+	 * SSTK_WORDPRESS_TABS_TOOLS constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
 		// Allow the clear_background_processes action to be triggered via an action hook.
-		add_action( "wpcd_{$this->get_app_name()}_clear_background_processes", array( $this, 'clear_background_processes' ), 10, 2 ); // Hook:wpcd_wordpress-app_clear_background_processes.
+		add_action( "sstk_{$this->get_app_name()}_clear_background_processes", array( $this, 'clear_background_processes' ), 10, 2 ); // Hook:sstk_wordpress-app_clear_background_processes.
 
 		// Allow the reset_permissions action to be triggered via an action hook.
-		add_action( "wpcd_{$this->get_app_name()}_reset_file_permissions", array( $this, 'do_reset_file_permissions_action' ), 10, 2 ); // Hook:wpcd_wordpress-app_reset_file_permissions.
+		add_action( "sstk_{$this->get_app_name()}_reset_file_permissions", array( $this, 'do_reset_file_permissions_action' ), 10, 2 ); // Hook:sstk_wordpress-app_reset_file_permissions.
 
 		// Allow update wp site option action to be triggered via an action hook.
-		add_action( "wpcd_{$this->get_app_name()}_update_wp_site_option", array( $this, 'do_update_wp_site_option_action' ), 10, 2 ); // Hook:wpcd_wordpress-app_update_wp_site_option.
+		add_action( "sstk_{$this->get_app_name()}_update_wp_site_option", array( $this, 'do_update_wp_site_option_action' ), 10, 2 ); // Hook:sstk_wordpress-app_update_wp_site_option.
 
 	}
 
@@ -59,7 +60,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Tools', 'wpcd' ),
+				'label' => __( 'Tools', 'simple-stack' ),
 				'icon'  => 'fad fa-toolbox',
 			);
 		}
@@ -75,17 +76,17 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the TOOLs tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -115,15 +116,15 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
-		$valid_actions = array( 'tools-clear-background-processes', 'tools-wpdebug-status', 'tools-edd-nginx-add', 'tools-update-restricted-php-functions', 'tools-reset-site-file-permissions', 'tools-wp-site-option' );
+		$valid_actions = array( 'tools-clear-background-processes', 'tools-wpdebug-status', 'tools-update-restricted-php-functions', 'tools-reset-site-file-permissions', 'tools-wp-site-option' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -147,14 +148,10 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 					$action = 'disable_debug';
 					$result = $this->enable_disable_wp_debug( $id, $action );
 					break;
-				case 'tools-edd-nginx-add':
-					$action = 'enable_edd';
-					$result = $this->manage_edd_nginx_rules( $id, $action );
-					break;
 				case 'tools-update-restricted-php-functions':
 					// Verify that the user is allowed to do this - only admins can...
-					if ( ! wpcd_is_admin() ) {
-						$msg    = __( 'You don\'t have permission to use this function.', 'wpcd' );
+					if ( ! sstk_is_admin() ) {
+						$msg    = __( 'You don\'t have permission to use this function.', 'simple-stack' );
 						$result = array(
 							'refresh' => 'yes',
 							'msg'     => $msg,
@@ -209,24 +206,21 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 			return $this->get_disabled_header_field();
 		}
 
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
-
 		// Basic checks passed, ok to proceed.
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// Set header description.
-		$header_debug_desc  = __( 'Enable or disable the WordPress Debug log file.  This file is stored in the wp-content folder. Once enabled you can retrieve it with your sFTP client.', 'wpcd' );
-		$header_debug_desc .= '<br /><br />' . __( 'Note that if you toggle the WP_DEBUG flag directly in wp-config.php, the status shown here might not be accurate.', 'wpcd' );
-		$header_debug_desc .= '<br /><br />' . __( 'Messages will go directly to the debug.log file located in the wp-content folder.  Nothing will be shown on the screen.', 'wpcd' );
-		$header_debug_desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $header_debug_desc );
+		$header_debug_desc  = __( 'Enable or disable the WordPress Debug log file.  This file is stored in the wp-content folder. Once enabled you can retrieve it with your sFTP client.', 'simple-stack' );
+		$header_debug_desc .= '<br /><br />' . __( 'Note that if you toggle the WP_DEBUG flag directly in wp-config.php, the status shown here might not be accurate.', 'simple-stack' );
+		$header_debug_desc .= '<br /><br />' . __( 'Messages will go directly to the debug.log file located in the wp-content folder.  Nothing will be shown on the screen.', 'simple-stack' );
+		$header_debug_desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $header_debug_desc );
 
 		/* DEBUG LOG */
 		$actions['tools-debug-log-header'] = array(
-			'label'          => __( 'Manage Debug Logs', 'wpcd' ),
+			'label'          => __( 'Manage Debug Logs', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $header_debug_desc,
@@ -243,22 +237,22 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $debug_status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable the WordPress debug log?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable the WordPress debug log?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable the WordPress debug log?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable the WordPress debug log?', 'simple-stack' );
 		}
 
 		if ( 'on' !== $debug_status ) {
-			$debug_desc = __( 'Click to enable the WordPress debug log.', 'wpcd' );
+			$debug_desc = __( 'Click to enable the WordPress debug log.', 'simple-stack' );
 		} else {
-			$debug_desc = __( 'Click to disable the WordPress debug log', 'wpcd' );
+			$debug_desc = __( 'Click to disable the WordPress debug log', 'simple-stack' );
 		}
 
 		$actions['tools-wpdebug-status'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => 'on' === $debug_status,
 				'desc'                => $debug_desc,
 				'confirmation_prompt' => $confirmation_prompt,
@@ -267,78 +261,44 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* RESET SITE PERMISSIONS */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$actions['tools-reset-site-permissions-header'] = array(
-			'label'          => __( 'Reset file permissions', 'wpcd' ),
+			'label'          => __( 'Reset file permissions', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Sometimes file permissions are inadvertently changed.  Use this to reset them to their defaults: 664 for files and 2775 for folders.', 'wpcd' ),
+				'desc' => __( 'Sometimes file permissions are inadvertently changed.  Use this to reset them to their defaults: 664 for files and 2775 for folders.', 'simple-stack' ),
 			),
 		);
 
 		$actions['tools-reset-site-file-permissions'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Reset', 'wpcd' ),
-				'confirmation_prompt' => __( 'Are you sure you would like to reset the file permissions for this website?', 'wpcd' ),
+				'std'                 => __( 'Reset', 'simple-stack' ),
+				'confirmation_prompt' => __( 'Are you sure you would like to reset the file permissions for this website?', 'simple-stack' ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
-
-		/**
-		 * EDD NGINX
-		 */
-		/* We should only show this section for nginx servers */
-		if ( 'nginx' === $webserver_type ) {
-
-			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
-
-			$desc = __( 'Easy Digital Downloads require specical rules to be added to the NGINX web server in order to protect the EDD files.  This section allows you to add those rules. You should only add them if you are using EDD.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
-
-			$actions['tools-edd-nginx-header'] = array(
-				'label'          => __( 'NGINX Rules for Easy Digital Downloads', 'wpcd' ),
-				'type'           => 'heading',
-				'raw_attributes' => array(
-					'desc' => $desc,
-				),
-			);
-
-			$actions['tools-edd-nginx-add'] = array(
-				'label'          => '',
-				'raw_attributes' => array(
-					'std'                 => __( 'Add EDD Rules', 'wpcd' ),
-					'desc'                => __( 'Add the EDD Rules for the NGINX web server.', 'wpcd' ),
-					'confirmation_prompt' => __( 'Are you sure you would like to add the EDD NGINX rules to your NGINX configuration file for this website?', 'wpcd' ),
-				),
-				'type'           => 'button',
-			);
-
-			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
-		}
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* RESTRICTED PHP FUNCTIONS */
-		if ( wpcd_is_admin() ) {
+		if ( sstk_is_admin() ) {
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-			$desc = __( 'For security purposes certain PHP functions should be restricted. You can use this option to make sure you have the most recent restrictions for your site. <br /> Note that under normal circumstances you should not need to use this option.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = __( 'For security purposes certain PHP functions should be restricted. You can use this option to make sure you have the most recent restrictions for your site. <br /> Note that under normal circumstances you should not need to use this option.', 'simple-stack' );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$actions['tools-update-restricted-php-functions-header'] = array(
-				'label'          => __( 'Restricted PHP Functions', 'wpcd' ),
+				'label'          => __( 'Restricted PHP Functions', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $desc,
@@ -346,32 +306,32 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 			);
 
 			/* Set the text of the confirmation prompt */
-			$confirmation_prompt = __( 'Are you sure you would like to reset the list of restricted PHP functions for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to reset the list of restricted PHP functions for this site?', 'simple-stack' );
 
 			$actions['tools-update-restricted-php-functions'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Reset', 'wpcd' ),
+					'std'                 => __( 'Reset', 'simple-stack' ),
 					'confirmation_prompt' => $confirmation_prompt,
 				),
 				'type'           => 'button',
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
 		/* BACKGROUND PROCESSES */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$desc = __( 'This plugin uses a lot of CRON background processes.  Sometimes they can get into a state where they never end and start to fill up the database with irrelevant messages. Use this to reset these processes.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'This plugin uses a lot of CRON background processes.  Sometimes they can get into a state where they never end and start to fill up the database with irrelevant messages. Use this to reset these processes.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['tools-clear-background-processes-header'] = array(
-			'label'          => __( 'Clear Background Processes', 'wpcd' ),
+			'label'          => __( 'Clear Background Processes', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -379,30 +339,30 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		);
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to clear and reset all background processes for this site?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to clear and reset all background processes for this site?', 'simple-stack' );
 
 		$actions['tools-clear-background-processes'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Clear', 'wpcd' ),
+				'std'                 => __( 'Clear', 'simple-stack' ),
 				'confirmation_prompt' => $confirmation_prompt,
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* WP SITE OPTIONS */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$desc = __( 'Update certain site options. Note that you should be able to change all these options from directly inside your site so there is rarely a need to use this function..', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Update certain site options. Note that you should be able to change all these options from directly inside your site so there is rarely a need to use this function..', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['tools-wp-site-option-header'] = array(
-			'label'          => __( 'Update WP Site Options', 'wpcd' ),
+			'label'          => __( 'Update WP Site Options', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -410,20 +370,20 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		);
 
 		$actions['tools-wp-site-option-name'] = array(
-			'label'          => __( 'Option Name', 'wpcd' ),
+			'label'          => __( 'Option Name', 'simple-stack' ),
 			'raw_attributes' => array(
-				'desc'           => __( 'Select the option', 'wpcd' ),
+				'desc'           => __( 'Select the option', 'simple-stack' ),
 				'options'        => $this->get_site_options_list(),
-				'data-wpcd-name' => 'wps_option',
+				'data-sstk-name' => 'wps_option',
 			),
 			'type'           => 'select',
 		);
 
 		$actions['tools-wp-site-option-value'] = array(
-			'label'          => __( 'Option Value', 'wpcd' ),
+			'label'          => __( 'Option Value', 'simple-stack' ),
 			'raw_attributes' => array(
-				'desc'           => __( 'Enter the value for the option', 'wpcd' ),
-				'data-wpcd-name' => 'wps_new_option_value',
+				'desc'           => __( 'Enter the value for the option', 'simple-stack' ),
+				'data-sstk-name' => 'wps_new_option_value',
 			),
 			'type'           => 'text',
 		);
@@ -431,27 +391,27 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		$actions['tools-wp-site-option'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Update Site Option', 'wpcd' ),
-				'confirmation_prompt' => __( 'Are you sure you would like to update this site option?', 'wpcd' ),
+				'std'                 => __( 'Update Site Option', 'simple-stack' ),
+				'confirmation_prompt' => __( 'Are you sure you would like to update this site option?', 'simple-stack' ),
 				// fields that contribute data for this action.
-				'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_tools-wp-site-option-name', '#wpcd_app_action_tools-wp-site-option-value' ) ),
+				'data-sstk-fields'    => json_encode( array( '#sstk_app_action_tools-wp-site-option-name', '#sstk_app_action_tools-wp-site-option-value' ) ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* RESET SITE PERMISSIONS - ALT */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$desc = __( 'Sometimes you might need a more restrictive set of file permissions compared to the WPCD defaults.  Use this to reset permissions to: 644 for files and 775 for folders. Warning: some non-critical operations might fail when these are enabled.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Sometimes you might need a more restrictive set of file permissions compared to the Simple Stack defaults.  Use this to reset permissions to: 644 for files and 775 for folders. Warning: some non-critical operations might fail when these are enabled.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['tools-reset-site-permissions-header-alt'] = array(
-			'label'          => __( 'Reset file permissions (Alternative)', 'wpcd' ),
+			'label'          => __( 'Reset file permissions (Alternative)', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -461,14 +421,14 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		$actions['tools-reset-site-file-permissions-alt'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Reset', 'wpcd' ),
-				'confirmation_prompt' => __( 'Are you sure you would like to reset the file permissions for this website?', 'wpcd' ),
+				'std'                 => __( 'Reset', 'simple-stack' ),
+				'confirmation_prompt' => __( 'Are you sure you would like to reset the file permissions for this website?', 'simple-stack' ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -479,9 +439,9 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_site_options_list() {
 		$options_list = array(
-			'admin_email'      => __( 'Site Admin Email Address', 'wpcd' ),
-			'default_role'     => __( 'Default Role', 'wpcd' ),
-			'timezone_string ' => __( 'Timezone String', 'wpcd' ),
+			'admin_email'      => __( 'Site Admin Email Address', 'simple-stack' ),
+			'default_role'     => __( 'Default Role', 'simple-stack' ),
+			'timezone_string ' => __( 'Timezone String', 'simple-stack' ),
 		);
 		return $options_list;
 	}
@@ -490,7 +450,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Clear background processes.
 	 *
-	 * Action Hook: wpcd_wordpress-app_clear_background_processes (optional - most times called directly and not via an action hook.)
+	 * Action Hook: sstk_wordpress-app_clear_background_processes (optional - most times called directly and not via an action hook.)
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed. Not used in this script.
@@ -499,14 +459,14 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function clear_background_processes( $id, $action ) {
 
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
-		delete_post_meta( $id, 'wpcd_command_mutex' );
-		delete_post_meta( $id, 'wpcd_temp_log_id' );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, 'sstk_command_mutex' );
+		delete_post_meta( $id, 'sstk_temp_log_id' );
 
 		// Return an error so that it can be displayed in a dialog box...
-		return new \WP_Error( __( 'Background processes have been reset.', 'wpcd' ) );
+		return new \WP_Error( __( 'Background processes have been reset.', 'simple-stack' ) );
 	}
 
 	/**
@@ -522,7 +482,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Figure out if we're disabling or enabling the flag.
@@ -547,13 +507,13 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'toggle_wp_debug.txt' );
 
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 
 			// Update metas.
@@ -564,7 +524,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 			}
 
 			$success = array(
-				'msg'     => __( 'The WordPress debug flags have been toggled.', 'wpcd' ),
+				'msg'     => __( 'The WordPress debug flags have been toggled.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 		}
@@ -573,62 +533,6 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 
 	}
 
-
-	/**
-	 * Add/Remove the NGINX rules for EDD.
-	 *
-	 * @param int    $id     The postID of the app cpt.
-	 * @param string $action The action to be performed (this matches the string required in the bash scripts).
-	 *
-	 * @return boolean|WP_Error    success/failure
-	 */
-	private function manage_edd_nginx_rules( $id, $action ) {
-
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
-
-		/* We should run this for nginx servers */
-		if ( 'nginx' !== $webserver_type ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because this action is only valid for NGINX web servers: The action is: %s', 'wpcd' ), $action ) );
-		}
-
-		$instance = $this->get_app_instance_details( $id );
-
-		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
-		}
-
-		// Get the full command to be executed by ssh.
-		$run_cmd = $this->turn_script_into_command(
-			$instance,
-			'toggle_edd_nginx_rules.txt',
-			array(
-				'action' => $action,
-				'domain' => get_post_meta(
-					$id,
-					'wpapp_domain',
-					true
-				),
-			)
-		);
-
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
-
-		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
-		$success = $this->is_ssh_successful( $result, 'toggle_edd_nginx_rules.txt' );
-
-		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
-		} else {
-			$success = array(
-				'msg'     => __( 'The NGINX rules for EDD have been added to your site and the NGINX server has been restarted.', 'wpcd' ),
-				'refresh' => 'yes',
-			);
-		}
-
-		return $success;
-
-	}
 
 	/**
 	 * Update the list of restricted PHP functions for a site
@@ -643,7 +547,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// List of functions to remove - ***should be NO spaces between the commas!***.
@@ -663,7 +567,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
@@ -685,23 +589,23 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 				)
 			);
 
-			do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+			do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 			$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 			$success = $this->is_ssh_successful( $result, 'enable_disable_php_functions.txt' );
 
 		} else {
 
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 
 		}
 
 		// If we got here it means that we've run both parts and we need to see if the second part succeeded.
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			$success = array(
-				'msg'     => __( 'The PHP restricted functions list for this site has been updated!', 'wpcd' ),
+				'msg'     => __( 'The PHP restricted functions list for this site has been updated!', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 		}
@@ -724,7 +628,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -741,16 +645,16 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'reset_site_permissions.txt' );
 
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			$success = array(
-				'msg'     => __( 'The file permissions for this site has been reset.', 'wpcd' ),
+				'msg'     => __( 'The file permissions for this site has been reset.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 		}
@@ -783,30 +687,30 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 		// Bail if no app/server details.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
 		// Make sure the option is in the approved list.
 		if ( ! in_array( $args['wps_option'], array_keys( $this->get_site_options_list() ), true ) ) {
-			$message = __( 'The option name is invalid - possible security issue.', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = __( 'The option name is invalid - possible security issue.', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
 		// Check to make sure that all required fields have values.
 		if ( ! $args['wps_option'] ) {
-			$message = __( 'The option name cannot be blank.', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = __( 'The option name cannot be blank.', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		} else {
 			// Sanitize the option name for use on the linux command line.
 			$args['wps_option'] = escapeshellarg( $args['wps_option'] );
 		}
 		if ( ! $args['wps_new_option_value'] ) {
-			$message = __( 'The new option value cannot be blank.', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = __( 'The new option value cannot be blank.', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		} else {
 			// Sanitize the option name for use on the linux command line.
@@ -830,24 +734,24 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'update_wp_site_option.txt' );
 
 		if ( ! $success ) {
 			/* Translators: %1$s is the action; %2$s is the result of the ssh call. */
-			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		} else {
 			$success = array(
-				'msg'     => __( 'The site option was updated.', 'wpcd' ),
+				'msg'     => __( 'The site option was updated.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 
 			// Let others know we've been successful.
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_successful", $id, $action, $args );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_successful", $id, $action, $args );
 		}
 
 		return $success;
@@ -857,7 +761,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Trigger the update wp site option action from an action hook.
 	 *
-	 * Action Hook: wpcd_{$this->get_app_name()}_update_wp_site_option | wpcd_wordpress-app_update_wp_site_option
+	 * Action Hook: sstk_{$this->get_app_name()}_update_wp_site_option | sstk_wordpress-app_update_wp_site_option
 	 *
 	 * @param string $id ID of app where domain change has to take place.
 	 * @param array  $args array arguments that the add admin function needs.
@@ -869,7 +773,7 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Trigger the reset file permissions action from an action hook.
 	 *
-	 * Action Hook: wpcd_{$this->get_app_name()}_reset_file_permissions | wpcd_wordpress-app_reset_file_permissions
+	 * Action Hook: sstk_{$this->get_app_name()}_reset_file_permissions | sstk_wordpress-app_reset_file_permissions
 	 *
 	 * @param string $id ID of app where domain change has to take place.
 	 * @param array  $args array arguments that the add admin function needs.
@@ -880,4 +784,4 @@ class WPCD_WORDPRESS_TABS_TOOLS extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_TOOLS();
+new SSTK_WORDPRESS_TABS_TOOLS();

@@ -1,8 +1,9 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * SimpleStack admin client entry point.
+ * Simple Stack admin client entry point.
  *
- * Mounts into the container the PHP layer prints on SimpleStack screens. If the
- * container is absent (a non-SimpleStack screen) this does nothing, so wp-admin is
+ * Mounts into the container the PHP layer prints on Simple Stack screens. If the
+ * container is absent (a non-Simple Stack screen) this does nothing, so wp-admin is
  * never touched by a stray mount.
  */
 
@@ -17,7 +18,7 @@ const container = document.getElementById( 'simplestack-admin' );
 /**
  * Seed the hash from the screen the PHP layer rendered.
  *
- * Each SimpleStack submenu (Servers, Sites, Providers, Activity) is a separate
+ * Each Simple Stack submenu (Servers, Sites, Providers, Activity) is a separate
  * `admin.php?page=` request that prints its own `data-route`. Clicking a submenu is a
  * full page load with no hash, so without this every submenu would land on `/servers`.
  * An existing hash always wins: that is a deep link or a reload of the current screen.

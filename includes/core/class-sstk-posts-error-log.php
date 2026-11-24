@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class is used for error log.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_ERROR_LOG
+ * Class SSTK_ERROR_LOG
  */
-class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
+class SSTK_ERROR_LOG extends SSTK_POSTS_LOG {
 
 	/**
-	 * WPCD_ERROR_LOG instance.
+	 * SSTK_ERROR_LOG instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -25,7 +26,7 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 	}
 
 	/**
-	 * WPCD_ERROR_LOG constructor.
+	 * SSTK_ERROR_LOG constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
@@ -45,16 +46,16 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 		add_action( 'save_post', array( $this, 'save_meta_values' ), 10, 2 );
 
 		// Filter hook to add new columns.
-		add_filter( 'manage_wpcd_error_log_posts_columns', array( $this, 'error_log_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_error_log_posts_columns', array( $this, 'error_log_table_head' ), 10, 1 );
 
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_error_log_posts_custom_column', array( $this, 'error_log_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_error_log_posts_custom_column', array( $this, 'error_log_table_content' ), 10, 2 );
 
 		// Filter hook to add sortable columns.
-		add_filter( 'manage_edit-wpcd_error_log_sortable_columns', array( $this, 'error_log_table_sorting' ), 10, 1 );
+		add_filter( 'manage_edit-sstk_error_log_sortable_columns', array( $this, 'error_log_table_sorting' ), 10, 1 );
 
 		// Filter hook to remove edit bulk action.
-		add_filter( 'bulk_actions-edit-wpcd_error_log', array( $this, 'wpcd_log_bulk_actions' ), 10, 1 );
+		add_filter( 'bulk_actions-edit-sstk_error_log', array( $this, 'sstk_log_bulk_actions' ), 10, 1 );
 	}
 
 	/**
@@ -62,25 +63,25 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 	 */
 	public function register() {
 		register_post_type(
-			'wpcd_error_log',
+			'sstk_error_log',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'Error Logs', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'Error Log', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => _x( 'Error Log', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'Error Log', 'Add New on Toolbar', 'wpcd' ),
-					'edit_item'             => __( 'Edit Error Log', 'wpcd' ),
-					'view_item'             => __( 'View Error Log', 'wpcd' ),
-					'all_items'             => __( 'Error Logs', 'wpcd' ),
-					'search_items'          => __( 'Search Error Logs', 'wpcd' ),
-					'not_found'             => __( 'No Error Logs were found.', 'wpcd' ),
-					'not_found_in_trash'    => __( 'No Error Logs were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter Error Log list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'Error Logs list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'Error Logs list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'Error Logs', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'Error Log', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => _x( 'Error Log', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'Error Log', 'Add New on Toolbar', 'simple-stack' ),
+					'edit_item'             => __( 'Edit Error Log', 'simple-stack' ),
+					'view_item'             => __( 'View Error Log', 'simple-stack' ),
+					'all_items'             => __( 'Error Logs', 'simple-stack' ),
+					'search_items'          => __( 'Search Error Logs', 'simple-stack' ),
+					'not_found'             => __( 'No Error Logs were found.', 'simple-stack' ),
+					'not_found_in_trash'    => __( 'No Error Logs were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter Error Log list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'Error Logs list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'Error Logs list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
-				'show_in_menu'        => 'edit.php?post_type=wpcd_app_server',
+				'show_in_menu'        => 'edit.php?post_type=sstk_app_server',
 				'menu_position'       => null,
 				'show_in_nav_menus'   => true,
 				'show_in_admin_bar'   => false,
@@ -93,14 +94,14 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 				'capability_type'     => 'post',
 				'capabilities'        => array(
 					'create_posts' => false,
-					'read_posts'   => 'wpcd_manage_logs',
-					'edit_posts'   => 'wpcd_manage_logs',
+					'read_posts'   => 'sstk_manage_logs',
+					'edit_posts'   => 'sstk_manage_logs',
 				),
 				'map_meta_cap'        => true,
 			)
 		);
 
-		$this->set_post_type( 'wpcd_error_log' );
+		$this->set_post_type( 'sstk_error_log' );
 
 		$search_fields = array(
 			'error_type',
@@ -139,18 +140,18 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 
 		switch ( $column_name ) {
 
-			case 'wpcd_type':
+			case 'sstk_type':
 				/* Display the error type*/
 				$value = get_post_meta( $post_id, 'error_type', true );
 
 				break;
 
-			case 'wpcd_file':
+			case 'sstk_file':
 				// Display the error file.
 				$value = get_post_meta( $post_id, 'error_file', true );
 				break;
 
-			case 'wpcd_line':
+			case 'sstk_line':
 				// Display the error line #.
 				$value = get_post_meta( $post_id, 'error_line', true );
 				break;
@@ -184,10 +185,10 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 
 		unset( $defaults['date'] );
 
-		$defaults['wpcd_type'] = __( 'Type', 'wpcd' );
-		$defaults['wpcd_file'] = __( 'File', 'wpcd' );
-		$defaults['wpcd_line'] = __( 'Line', 'wpcd' );
-		$defaults['date']      = __( 'Date', 'wpcd' );
+		$defaults['sstk_type'] = __( 'Type', 'simple-stack' );
+		$defaults['sstk_file'] = __( 'File', 'simple-stack' );
+		$defaults['sstk_line'] = __( 'Line', 'simple-stack' );
+		$defaults['date']      = __( 'Date', 'simple-stack' );
 
 		return $defaults;
 
@@ -200,9 +201,9 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 
 		add_meta_box(
 			'error_log',
-			__( 'Error Log Data', 'wpcd' ),
+			__( 'Error Log Data', 'simple-stack' ),
 			array( $this, 'render_error_log_meta_box' ),
-			'wpcd_error_log',
+			'sstk_error_log',
 			'advanced',
 			'high'
 		);
@@ -227,7 +228,7 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 		$error_data = get_post_meta( $post->ID, 'error_data', true );
 
 		ob_start();
-		require wpcd_path . 'includes/templates/error_log.php';
+		require SSTK_PATH . 'includes/templates/error_log.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -260,7 +261,7 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 
 		// Check for excluded text.
 		if ( $ok_to_log ) {
-			$exclude_msg_txt = wpcd_get_early_option( 'exclude_msg_txt' );
+			$exclude_msg_txt = sstk_get_early_option( 'exclude_msg_txt' );
 			foreach ( $exclude_msg_txt as $exclude ) {
 				if ( ! empty( $exclude ) && isset( $exclude['exclude_msg'] ) && ( ! empty( $exclude['exclude_msg'] ) ) ) {
 					if ( strpos( $msg, $exclude['exclude_msg'] ) !== false ) {
@@ -273,7 +274,7 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 
 		// Check to see if the log entry meets the include message criteria.
 		if ( $ok_to_log ) {
-			$include_msg_txt = wpcd_get_early_option( 'include_msg_txt' );
+			$include_msg_txt = sstk_get_early_option( 'include_msg_txt' );
 			if ( ! empty( $include_msg_txt ) && isset( $include_msg_txt[0] ) && ( ! empty( $include_msg_txt[0]['include_msg'] ) ) ) {
 				$ok_to_include = false;
 				foreach ( $include_msg_txt as $include ) {
@@ -294,7 +295,7 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 
 		// Check to see if the log entry meets the include file criteria.
 		if ( $ok_to_log ) {
-			$include_file_txt = wpcd_get_early_option( 'include_file_txt' );
+			$include_file_txt = sstk_get_early_option( 'include_file_txt' );
 			if ( ! empty( $include_file_txt ) && isset( $include_file_txt[0] ) && ( ! empty( $include_file_txt[0]['include_files'] ) ) ) {
 				$ok_to_include = false;
 				foreach ( $include_file_txt as $include ) {
@@ -319,14 +320,17 @@ class WPCD_ERROR_LOG extends WPCD_POSTS_LOG {
 			// Author is current user or system.
 			$author_id = get_current_user();
 
-			// Remove known password strings.
-			$pwarray = $this->wpcd_get_pw_terms_to_clean();
-			$msg     = wpcd_replace_key_value_paired_strings( $pwarray, $msg );
+			// Scrub the message and structured data before either is persisted.
+			$pwarray = $this->sstk_get_pw_terms_to_clean();
+			$secrets = sstk_collect_secret_values( $data );
+			$msg     = sstk_replace_key_value_paired_strings( $pwarray, $msg );
+			$msg     = sstk_redact_secret_text( $msg, $secrets );
+			$data    = sstk_redact_secrets( $data );
 
 			// Add post.
 			$post_id = wp_insert_post(
 				array(
-					'post_type'   => 'wpcd_error_log',
+					'post_type'   => 'sstk_error_log',
 					'post_status' => 'private',
 					'post_title'  => substr( $msg, 0, 100 ),
 					'post_author' => $author_id,

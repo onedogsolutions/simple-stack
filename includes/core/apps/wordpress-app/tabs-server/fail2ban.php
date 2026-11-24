@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Fail2ban
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,44 +11,44 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN
+ * Class SSTK_WORDPRESS_TABS_SERVER_FAIL2BAN
  */
-class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_FAIL2BAN extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app_server' ) {
+		if ( get_post_type( $id ) !== 'sstk_app_server' ) {
 			return;
 		}
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action_status" );  // Should really only exist on a server.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action" );  // Should really only exist on a server.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action_args" );  // Should really only exist on a server.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action_status" );  // Should really only exist on a server.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action" );  // Should really only exist on a server.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action_args" );  // Should really only exist on a server.
 	}
 
 	/**
@@ -75,7 +76,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Fail2ban', 'wpcd' ),
+				'label' => __( 'Fail2ban', 'simple-stack' ),
 				'icon'  => 'fad fa-axe-battle',
 			);
 		}
@@ -90,13 +91,13 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the FAIL2BAN tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -126,8 +127,8 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/**
@@ -223,15 +224,15 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 
 		switch ( $type ) {
 			case 1:
-				$desc  = __( 'Fail2ban scans log files (e.g. /var/log/nginx/error_log) and bans IPs that show malicious signs -- too many password failures, seeking for exploits, etc.<br />  However, it is not currently installed on the server.<br />  To install it just click the install button.', 'wpcd' );
-				$desc .= '<br />' . '<b>' . __( 'Warning: This is an advanced tool and, when misused can easily lock you out of your server with NO RECOURSE!', 'wpcd' ) . '</b>';
-				$desc .= '<br />' . __( 'Do not try to use it if you do not know what you are doing!', 'wpcd' );
+				$desc  = __( 'Fail2ban scans log files (e.g. /usr/local/lsws/logs/error.log) and bans IPs that show malicious signs -- too many password failures, seeking for exploits, etc.<br />  However, it is not currently installed on the server.<br />  To install it just click the install button.', 'simple-stack' );
+				$desc .= '<br />' . '<b>' . __( 'Warning: This is an advanced tool and, when misused can easily lock you out of your server with NO RECOURSE!', 'simple-stack' ) . '</b>';
+				$desc .= '<br />' . __( 'Do not try to use it if you do not know what you are doing!', 'simple-stack' );
 				break;
 			case 2:
-				$desc = __( 'Global options are used when none are set for individual protocols.  Because our screens above force you to set values for individual protocols you should never need to change these options.', 'wpcd' );
+				$desc = __( 'Global options are used when none are set for individual protocols.  Because our screens above force you to set values for individual protocols you should never need to change these options.', 'simple-stack' );
 				break;
 			case 3:
-				$desc = __( 'Fail2Ban is installed.', 'wpcd' );
+				$desc = __( 'Fail2Ban is installed.', 'simple-stack' );
 				break;
 			default:
 				$desc = '';
@@ -251,14 +252,11 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	 */
 	private function get_fail2ban_fields( $id ) {
 
-		// Get Webserver Type.
-		$webserver_type = $this->get_web_server_type( $id );
-
 		// Set up metabox items.
 		$actions = array();
 
 		// is fail2ban installed?
-		$fail2ban_status = get_post_meta( $id, 'wpcd_wpapp_fail2ban_installed', true );
+		$fail2ban_status = get_post_meta( $id, 'sstk_wpapp_fail2ban_installed', true );
 
 		if ( empty( $fail2ban_status ) ) {
 			/**
@@ -266,15 +264,15 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			 */
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			// Header description.
 			$desc = $this->get_field_header_desc( 1 );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$actions['fail2ban-header-main'] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_virus_icon( __( '%s Fail2ban', 'wpcd' ) ),
+				'label'          => sstk_apply_virus_icon( __( '%s Fail2ban', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $desc,
@@ -286,15 +284,15 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_install_icon( __( '%s Install Fail2ban', 'wpcd' ) ),
-					'desc'                => __( 'Click the button to start installing Fail2ban on the server.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to install the Fail2ban service?', 'wpcd' ),
+					'std'                 => sstk_apply_install_icon( __( '%s Install Fail2ban', 'simple-stack' ) ),
+					'desc'                => __( 'Click the button to start installing Fail2ban on the server.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+					'confirmation_prompt' => __( 'Are you sure you would like to install the Fail2ban service?', 'simple-stack' ),
 				),
 				'type'           => 'button',
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
@@ -302,7 +300,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			/* fail2ban is installed and active - instead of painting a header, we'll skip the header to save screen real estate.  So we're commenting out the header code below for now. */
 			/**
 			$actions['fail2ban-header-main'] = array(
-				'label'          => __( 'Fail2ban', 'wpcd' ),
+				'label'          => __( 'Fail2ban', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $this->get_field_header_desc( 3 ),
@@ -311,34 +309,34 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			 */
 
 			/* Get meta values for default settings - we'll adjust this later*/
-			$bantime      = (int) get_post_meta( $id, 'wpcd_wpapp_fail2ban_ban_time', true );
-			$findtime     = (int) get_post_meta( $id, 'wpcd_wpapp_fail2ban_find_time', true );
-			$maxretry     = (int) get_post_meta( $id, 'wpcd_wpapp_fail2ban_max_retry', true );
-			$whitelistips = get_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelist_ips', true );
+			$bantime      = (int) get_post_meta( $id, 'sstk_wpapp_fail2ban_ban_time', true );
+			$findtime     = (int) get_post_meta( $id, 'sstk_wpapp_fail2ban_find_time', true );
+			$maxretry     = (int) get_post_meta( $id, 'sstk_wpapp_fail2ban_max_retry', true );
+			$whitelistips = get_post_meta( $id, 'sstk_wpapp_fail2ban_whitelist_ips', true );
 
 			/**
 			 * Ban IP Addresses
 			 */
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['fail2ban-header-ban']   = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_virus_icon( __( '%s Ban IP Addresses', 'wpcd' ) ),
+				'label'          => sstk_apply_virus_icon( __( '%s Ban IP Addresses', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => '',
 				),
 			);
 			$actions['fail2ban-ban-ip-field'] = array(
-				'label'          => __( 'Ban this IP', 'wpcd' ),
+				'label'          => __( 'Ban this IP', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
 					'desc'           => '',
 					'std'            => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'banip',
+					'data-sstk-name' => 'banip',
 					'size'           => 60,
 					'columns'        => 6,
 
@@ -346,13 +344,13 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			);
 
 			$actions['fail2ban-ban-ip-desc'] = array(
-				'label'          => __( 'Reason Or Note', 'wpcd' ),
+				'label'          => __( 'Reason Or Note', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
 					'desc'           => '',
 					'std'            => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'banip_reason',
+					'data-sstk-name' => 'banip_reason',
 					'size'           => 60,
 					'columns'        => 6,
 
@@ -363,28 +361,28 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_virus_icon( __( '%s Ban IP', 'wpcd' ) ),
-					'desc'                => __( 'Click the button to ban this IP.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to ban this IP?', 'wpcd' ),
-					'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_fail2ban-ban-ip-field', '#wpcd_app_action_fail2ban-ban-ip-desc' ) ),
+					'std'                 => sstk_apply_virus_icon( __( '%s Ban IP', 'simple-stack' ) ),
+					'desc'                => __( 'Click the button to ban this IP.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+					'confirmation_prompt' => __( 'Are you sure you would like to ban this IP?', 'simple-stack' ),
+					'data-sstk-fields'    => json_encode( array( '#sstk_app_action_fail2ban-ban-ip-field', '#sstk_app_action_fail2ban-ban-ip-desc' ) ),
 					'columns'             => 6,
 				),
 				'type'           => 'button',
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 			/**
 			 * Unban / Whitelist IP Addresses
 			 */
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['fail2ban-header-unban'] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_open_icon( __( '%s Unban IP Addresses', 'wpcd' ) ),
+				'label'          => sstk_apply_open_icon( __( '%s Unban IP Addresses', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => '',
@@ -392,13 +390,13 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			);
 
 			$actions['fail2ban-unban-ip-field'] = array(
-				'label'          => __( 'Whitelist (Unban) this IP', 'wpcd' ),
+				'label'          => __( 'Whitelist (Unban) this IP', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
 					'desc'           => '',
 					'std'            => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'unbanip',
+					'data-sstk-name' => 'unbanip',
 					'size'           => 60,
 					'columns'        => 6,
 
@@ -406,13 +404,13 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			);
 
 			$actions['fail2ban-unban-ip-desc'] = array(
-				'label'          => __( 'Reason Or Note', 'wpcd' ),
+				'label'          => __( 'Reason Or Note', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
 					'desc'           => '',
 					'std'            => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'unbanip_reason',
+					'data-sstk-name' => 'unbanip_reason',
 					'size'           => 60,
 					'columns'        => 6,
 
@@ -423,27 +421,27 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_open_icon( __( '%s Whitelist/Unban IP', 'wpcd' ) ),
-					'desc'                => __( 'Click the button to whitelist this IP.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to unban this IP?', 'wpcd' ),
-					'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_fail2ban-unban-ip-field', '#wpcd_app_action_fail2ban-unban-ip-desc' ) ),
+					'std'                 => sstk_apply_open_icon( __( '%s Whitelist/Unban IP', 'simple-stack' ) ),
+					'desc'                => __( 'Click the button to whitelist this IP.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+					'confirmation_prompt' => __( 'Are you sure you would like to unban this IP?', 'simple-stack' ),
+					'data-sstk-fields'    => json_encode( array( '#sstk_app_action_fail2ban-unban-ip-field', '#sstk_app_action_fail2ban-unban-ip-desc' ) ),
 					'columns'             => 6,
 				),
 				'type'           => 'button',
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 			/**
 			 * List of banned IP addresses
 			 */
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['fail2ban-banned-ips'] = array(
-				'label'          => __( 'IPs You Have Banned', 'wpcd' ),
+				'label'          => __( 'IPs You Have Banned', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'     => $this->construct_ips_display_text( $id, 'banned' ),
 					'columns' => 6,
@@ -452,17 +450,17 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 			/**
 			 * List of white-listed IP addresses
 			 */
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['fail2ban-whitelisted-ips'] = array(
-				'label'          => __( 'Whitelisted IPs', 'wpcd' ),
+				'label'          => __( 'Whitelisted IPs', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'     => $this->construct_ips_display_text( $id, 'whitelisted' ),
 					'columns' => 6,
@@ -471,14 +469,14 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 			/**
 			 * Known Protocols
 			 */
 
 			/* Data for installed protocols that we know about */
-			$protocols = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', true ) );
+			$protocols = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', true ) );
 
 			/* Fail2Ban Individual Protocols */
 			if ( $protocols ) {
@@ -488,58 +486,58 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 					$protocol_find_time = $protocol_parms['find_time'];
 					$protocol_max_retry = $protocol_parms['max_retry'];
 
-					$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+					$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 					$actions[ "fail2ban-header-$protocol" ] = array(
 						'label'          => strtoupper( $protocol ),
 						'type'           => 'heading',
 						'raw_attributes' => array(
 							/* Translators: %s is a protocol label such as'SSHD'. */
-							'desc' => sprintf( __( '%s Jail Settings', 'wpcd' ), strtoupper( $protocol ) ),
+							'desc' => sprintf( __( '%s Jail Settings', 'simple-stack' ), strtoupper( $protocol ) ),
 						),
 					);
 
 					$actions[ "fail2ban-new-ban-time-$protocol" ]  = array(
-						'label'          => __( 'Ban Time', 'wpcd' ),
+						'label'          => __( 'Ban Time', 'simple-stack' ),
 						'type'           => 'number',
 						'raw_attributes' => array(
-							'tooltip'        => __( 'Duration (in seconds) for an IP to be banned.', 'wpcd' ),
+							'tooltip'        => __( 'Duration (in seconds) for an IP to be banned.', 'simple-stack' ),
 							'std'            => $protocol_ban_time,
 							// the key of the field (the key goes in the request).
-							'data-wpcd-name' => 'bantime_new',
+							'data-sstk-name' => 'bantime_new',
 							'columns'        => 6,
 						),
 					);
 					$actions[ "fail2ban-new-find-time-$protocol" ] = array(
-						'label'          => __( 'Find Time', 'wpcd' ),
+						'label'          => __( 'Find Time', 'simple-stack' ),
 						'type'           => 'number',
 						'raw_attributes' => array(
-							'tooltip'        => __( 'The MAX RETRY counter is set to zero if no match is found within this time period.', 'wpcd' ),
+							'tooltip'        => __( 'The MAX RETRY counter is set to zero if no match is found within this time period.', 'simple-stack' ),
 							'std'            => $protocol_find_time,
 							// the key of the field (the key goes in the request).
-							'data-wpcd-name' => 'findtime_new',
+							'data-sstk-name' => 'findtime_new',
 							'columns'        => 6,
 						),
 					);
 					$actions[ "fail2ban-new-max-retry-$protocol" ] = array(
-						'label'          => __( 'Max Retry', 'wpcd' ),
+						'label'          => __( 'Max Retry', 'simple-stack' ),
 						'type'           => 'number',
 						'raw_attributes' => array(
-							'tooltip'        => __( 'Number of matches which triggers ban action on the IP.', 'wpcd' ),
+							'tooltip'        => __( 'Number of matches which triggers ban action on the IP.', 'simple-stack' ),
 							'std'            => $protocol_max_retry,
 							// the key of the field (the key goes in the request).
-							'data-wpcd-name' => 'maxretry_new',
+							'data-sstk-name' => 'maxretry_new',
 							'columns'        => 6,
 						),
 					);
 					$actions[ "fail2ban-new-$protocol" ]           = array(
-						'label'          => __( 'Protocol', 'wpcd' ),
+						'label'          => __( 'Protocol', 'simple-stack' ),
 						'type'           => 'text',
 						'raw_attributes' => array(
-							'tooltip'        => __( 'DO NOT CHANGE!', 'wpcd' ),
+							'tooltip'        => __( 'DO NOT CHANGE!', 'simple-stack' ),
 							'std'            => $protocol,
 							// the key of the field (the key goes in the request).
-							'data-wpcd-name' => 'protocol_update',
+							'data-sstk-name' => 'protocol_update',
 							'columns'        => 6,
 						),
 					);
@@ -548,27 +546,27 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 						'label'          => '',
 						'raw_attributes' => array(
 							/* Translators: %s is a fontawesome or similar icon. */
-							'std'                 => wpcd_apply_change_icon( __( '%s Change', 'wpcd' ) ),
+							'std'                 => sstk_apply_change_icon( __( '%s Change', 'simple-stack' ) ),
 							'desc'                => '',
 							// make sure we give the user a confirmation prompt.
-							'confirmation_prompt' => sprintf( __( 'Are you sure you would like to change the parameters for the %s protocol on the Fail2Ban service?', 'wpcd' ), $protocol ),
-							'data-wpcd-fields'    => json_encode( array( "#wpcd_app_action_fail2ban-new-$protocol", "#wpcd_app_action_fail2ban-new-ban-time-$protocol", "#wpcd_app_action_fail2ban-new-find-time-$protocol", "#wpcd_app_action_fail2ban-new-max-retry-$protocol" ) ),
+							'confirmation_prompt' => sprintf( __( 'Are you sure you would like to change the parameters for the %s protocol on the Fail2Ban service?', 'simple-stack' ), $protocol ),
+							'data-sstk-fields'    => json_encode( array( "#sstk_app_action_fail2ban-new-$protocol", "#sstk_app_action_fail2ban-new-ban-time-$protocol", "#sstk_app_action_fail2ban-new-find-time-$protocol", "#sstk_app_action_fail2ban-new-max-retry-$protocol" ) ),
 							'columns'             => 4,
 						),
 						'type'           => 'button',
 					);
 
-					// Show remove and delete meta buttons if protocol is not sshd or nginx.
+					// Show remove and delete meta buttons for non-default protocols.
 					if ( ! in_array( $protocol, array_keys( $this->get_default_protocols( $id ) ), true ) ) {
 						$actions[ "fail2ban-remove-protocol-$protocol" ] = array(
 							'label'          => '',
 							'raw_attributes' => array(
-								'std'                 => __( 'Remove Protocol', 'wpcd' ),
-								'desc'                => __( 'Click the button to disable this protocol in fail2ban.', 'wpcd' ),
+								'std'                 => __( 'Remove Protocol', 'simple-stack' ),
+								'desc'                => __( 'Click the button to disable this protocol in fail2ban.', 'simple-stack' ),
 								// make sure we give the user a confirmation prompt.
 								/* Translators: %s is a fail2ban protocol such as sshd. */
-								'confirmation_prompt' => sprintf( __( 'Are you sure you would like to disable the %s protocol on the Fail2Ban service?', 'wpcd' ), $protocol ),
-								'data-wpcd-fields'    => json_encode( array( "#wpcd_app_action_fail2ban-new-$protocol" ) ),
+								'confirmation_prompt' => sprintf( __( 'Are you sure you would like to disable the %s protocol on the Fail2Ban service?', 'simple-stack' ), $protocol ),
+								'data-sstk-fields'    => json_encode( array( "#sstk_app_action_fail2ban-new-$protocol" ) ),
 								'columns'             => 4,
 							),
 							'type'           => 'button',
@@ -578,19 +576,19 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 							'label'          => '',
 							'raw_attributes' => array(
 								/* Translators: %s is a fontawesome or similar icon. */
-								'std'                 => wpcd_apply_trash_icon( __( '%s Remove Metas', 'wpcd' ) ),
-								'desc'                => __( 'Click the button to remove metas. No changes will be made to the server.', 'wpcd' ),
+								'std'                 => sstk_apply_trash_icon( __( '%s Remove Metas', 'simple-stack' ) ),
+								'desc'                => __( 'Click the button to remove metas. No changes will be made to the server.', 'simple-stack' ),
 								// make sure we give the user a confirmation prompt.
 								/* Translators: %s is a fail2ban protocol such as sshd. */
-								'confirmation_prompt' => sprintf( __( 'Are you sure you would like to remove metas for the %s protocol?', 'wpcd' ), $protocol ),
-								'data-wpcd-fields'    => json_encode( array( "#wpcd_app_action_fail2ban-new-$protocol" ) ),
+								'confirmation_prompt' => sprintf( __( 'Are you sure you would like to remove metas for the %s protocol?', 'simple-stack' ), $protocol ),
+								'data-sstk-fields'    => json_encode( array( "#sstk_app_action_fail2ban-new-$protocol" ) ),
 								'columns'             => 4,
 							),
 							'type'           => 'button',
 						);
 					}
 
-					$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+					$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 				}
 			}
 			/* End Fail2Ban Individual Protocols */
@@ -599,11 +597,11 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			 * Fail2ban General/Global Options
 			 */
 
-			$actions[] = wpcd_start_full_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_full_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['fail2ban-header-General'] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_virus_icon( __( '%s Fail2ban Global Options', 'wpcd' ) ),
+				'label'          => sstk_apply_virus_icon( __( '%s Fail2ban Global Options', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $this->get_field_header_desc( 2 ),
@@ -611,35 +609,35 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			);
 
 			$actions['fail2ban-new-ban-time']  = array(
-				'label'          => __( 'New Ban Time', 'wpcd' ),
+				'label'          => __( 'New Ban Time', 'simple-stack' ),
 				'type'           => 'number',
 				'raw_attributes' => array(
-					'desc'           => __( 'Duration (in seconds) for an IP to be banned.', 'wpcd' ),
+					'desc'           => __( 'Duration (in seconds) for an IP to be banned.', 'simple-stack' ),
 					'std'            => $bantime,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'bantime_new',
+					'data-sstk-name' => 'bantime_new',
 					'columns'        => 4,
 				),
 			);
 			$actions['fail2ban-new-find-time'] = array(
-				'label'          => __( 'New Find Time', 'wpcd' ),
+				'label'          => __( 'New Find Time', 'simple-stack' ),
 				'type'           => 'number',
 				'raw_attributes' => array(
-					'desc'           => __( 'The MAX RETRY counter is set to zero if no match is found within this time period.', 'wpcd' ),
+					'desc'           => __( 'The MAX RETRY counter is set to zero if no match is found within this time period.', 'simple-stack' ),
 					'std'            => $findtime,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'findtime_new',
+					'data-sstk-name' => 'findtime_new',
 					'columns'        => 4,
 				),
 			);
 			$actions['fail2ban-new-max-retry'] = array(
-				'label'          => __( 'New Max Retry', 'wpcd' ),
+				'label'          => __( 'New Max Retry', 'simple-stack' ),
 				'type'           => 'number',
 				'raw_attributes' => array(
-					'desc'           => __( 'Number of matches which triggers ban action on the IP.', 'wpcd' ),
+					'desc'           => __( 'Number of matches which triggers ban action on the IP.', 'simple-stack' ),
 					'std'            => $maxretry,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'maxretry_new',
+					'data-sstk-name' => 'maxretry_new',
 					'columns'        => 4,
 				),
 			);
@@ -648,15 +646,15 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_change_icon( __( '%s Change', 'wpcd' ) ),
-					'desc'                => __( 'Click the button to change your default parameters for Fail2ban.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to change default parameters for the Fail2Ban service?', 'wpcd' ),
-					'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_fail2ban-new-ban-time', '#wpcd_app_action_fail2ban-new-find-time', '#wpcd_app_action_fail2ban-new-max-retry' ) ),
+					'std'                 => sstk_apply_change_icon( __( '%s Change', 'simple-stack' ) ),
+					'desc'                => __( 'Click the button to change your default parameters for Fail2ban.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+					'confirmation_prompt' => __( 'Are you sure you would like to change default parameters for the Fail2Ban service?', 'simple-stack' ),
+					'data-sstk-fields'    => json_encode( array( '#sstk_app_action_fail2ban-new-ban-time', '#sstk_app_action_fail2ban-new-find-time', '#sstk_app_action_fail2ban-new-max-retry' ) ),
 				),
 				'type'           => 'button',
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/* End fail2ban General/Global Options */
 
@@ -664,14 +662,14 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			 * Uninstall / Upgrade fail2ban
 			 */
 
-			$actions[] = wpcd_start_full_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_full_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['fail2ban-uninstall-upgrade'] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_trash_icon( __( '%s Uninstall or Upgrade fail2ban', 'wpcd' ) ),
+				'label'          => sstk_apply_trash_icon( __( '%s Uninstall or Upgrade fail2ban', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'Remove or upgrade fail2ban.', 'wpcd' ),
+					'desc' => __( 'Remove or upgrade fail2ban.', 'simple-stack' ),
 				),
 			);
 
@@ -679,9 +677,9 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_trash_icon( __( '%s Uninstall Fail2ban', 'wpcd' ) ),
-					'desc'                => __( 'This option will completely remove Fail2ban from the server.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to remove Fail2ban from the server?', 'wpcd' ),
+					'std'                 => sstk_apply_trash_icon( __( '%s Uninstall Fail2ban', 'simple-stack' ) ),
+					'desc'                => __( 'This option will completely remove Fail2ban from the server.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+					'confirmation_prompt' => __( 'Are you sure you would like to remove Fail2ban from the server?', 'simple-stack' ),
 					'columns'             => 4,
 				),
 				'type'           => 'button',
@@ -691,9 +689,9 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_trash_icon( __( '%s Purge Fail2ban', 'wpcd' ) ),
-					'desc'                => __( 'This option will completely remove Fail2ban AND its configuration files.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to PURGE Fail2ban from the server?', 'wpcd' ),
+					'std'                 => sstk_apply_trash_icon( __( '%s Purge Fail2ban', 'simple-stack' ) ),
+					'desc'                => __( 'This option will completely remove Fail2ban AND its configuration files.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+					'confirmation_prompt' => __( 'Are you sure you would like to PURGE Fail2ban from the server?', 'simple-stack' ),
 					'columns'             => 4,
 				),
 				'type'           => 'button',
@@ -703,16 +701,16 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_upgrade_icon( __( '%s Upgrade Fail2ban', 'wpcd' ) ),
-					'desc'                => __( 'This option will run a forced upgrade on Fail2ban.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to FORCIBLY upgrade Fail2ban on the server?', 'wpcd' ),
-					'tooltip'             => __( 'You should not usually need to use this option - normal overnight background updates will usually upgrade Fail2Ban for you.', 'wpcd' ),
+					'std'                 => sstk_apply_upgrade_icon( __( '%s Upgrade Fail2ban', 'simple-stack' ) ),
+					'desc'                => __( 'This option will run a forced upgrade on Fail2ban.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+					'confirmation_prompt' => __( 'Are you sure you would like to FORCIBLY upgrade Fail2ban on the server?', 'simple-stack' ),
+					'tooltip'             => __( 'You should not usually need to use this option - normal overnight background updates will usually upgrade Fail2Ban for you.', 'simple-stack' ),
 					'columns'             => 4,
 				),
 				'type'           => 'button',
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/* End uninstall / Upgrade fail2ban*/
 
@@ -720,14 +718,14 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 
 		if ( 'no' === $fail2ban_status ) {
 			/* fail2ban is installed but not active */
-			$desc = __( 'Fail2ban scans log files (e.g. /var/log/nginx/error_log) and bans IPs that show malicious signs -- too many password failures, seeking for exploits, etc. However, it is installed but NOT active on your server at this time.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = __( 'Fail2ban scans log files such as /usr/local/lsws/logs/error.log and bans IPs that show malicious signs -- too many password failures, seeking for exploits, etc. However, it is installed but NOT active on your server at this time.', 'simple-stack' );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['fail2ban-header'] = array(
-				'label'          => __( 'fail2ban', 'wpcd' ),
+				'label'          => __( 'fail2ban', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $desc,
@@ -735,7 +733,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
@@ -744,14 +742,14 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$actions['fail2ban-metas-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_update_icon( __( '%s Manage Fail2ban Metas', 'wpcd' ) ),
+			'label'          => sstk_apply_update_icon( __( '%s Manage Fail2ban Metas', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Sometimes things get out of sync between this dashboard and what is actually on the server.  Use these options to reset things', 'wpcd' ),
+				'desc' => __( 'Sometimes things get out of sync between this dashboard and what is actually on the server.  Use these options to reset things', 'simple-stack' ),
 			),
 		);
 
@@ -759,9 +757,9 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_trash_icon( __( '%s Remove Metas', 'wpcd' ) ),
-				'desc'                => __( 'This option will reset this dashboard so that it appears that Fail2ban is not installed.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-				'confirmation_prompt' => __( 'Are you sure you would like to remove metas?  This would reset this dashboard so that it appears that Fail2ban is not installed.', 'wpcd' ),
+				'std'                 => sstk_apply_trash_icon( __( '%s Remove Metas', 'simple-stack' ) ),
+				'desc'                => __( 'This option will reset this dashboard so that it appears that Fail2ban is not installed.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+				'confirmation_prompt' => __( 'Are you sure you would like to remove metas?  This would reset this dashboard so that it appears that Fail2ban is not installed.', 'simple-stack' ),
 			),
 			'type'           => 'button',
 		);
@@ -770,40 +768,40 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_add_icon( __( '%s Add Metas', 'wpcd' ) ),
-				'desc'                => __( 'This option will reset this dashboard so that it appears that Fail2ban is installed.', 'wpcd' ), // make sure we give the user a confirmation prompt.
-				'confirmation_prompt' => __( 'Are you sure you would like to remove metas?  This would reset this dashboard so that it appears that Fail2ban is installed on the server.', 'wpcd' ),
+				'std'                 => sstk_apply_add_icon( __( '%s Add Metas', 'simple-stack' ) ),
+				'desc'                => __( 'This option will reset this dashboard so that it appears that Fail2ban is installed.', 'simple-stack' ), // make sure we give the user a confirmation prompt.
+				'confirmation_prompt' => __( 'Are you sure you would like to remove metas?  This would reset this dashboard so that it appears that Fail2ban is installed on the server.', 'simple-stack' ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * 3rd party / limited support notice
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-		$desc  = __( 'This UI for Fail2ban is provided as a convenience.  It is not a core component of this product and, as such, technical support is limited.', 'wpcd' );
+		$desc  = __( 'This UI for Fail2ban is provided as a convenience.  It is not a core component of this product and, as such, technical support is limited.', 'simple-stack' );
 		$desc .= '<br/>';
 		$desc .= '<br/>';
-		$desc .= __( 'Please try not to lock yourself out of your own server by inadvertently banning your own IP.', 'wpcd' );
+		$desc .= __( 'Please try not to lock yourself out of your own server by inadvertently banning your own IP.', 'simple-stack' );
 		$desc .= '<br/>';
 		$desc .= '<br/>';
-		$desc .= __( 'Maybe please consider whitelisting your own ip immediately after activating this module..', 'wpcd' );
+		$desc .= __( 'Maybe please consider whitelisting your own ip immediately after activating this module..', 'simple-stack' );
 
 		$actions['fail2ban-third-party-notice-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_warning_icon( __( '%s Important Notice', 'wpcd' ) ),
+			'label'          => sstk_apply_warning_icon( __( '%s Important Notice', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
 			),
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		return $actions;
 
@@ -825,7 +823,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action id we're trying to execute. It is usually a string without spaces, not a number. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -839,15 +837,15 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			case 'fail2ban_parameter':  // Updates global parameters for fail2ban
 				// Make sure all four required fields have been provided and return error if not.
 				if ( empty( $args['bantime_new'] ) ) {
-					return new \WP_Error( __( 'Unable to setup Fail2ban - no new Ban Time was was provided.', 'wpcd' ) );
+					return new \WP_Error( __( 'Unable to setup Fail2ban - no new Ban Time was was provided.', 'simple-stack' ) );
 				}
 
 				if ( empty( $args['findtime_new'] ) ) {
-					return new \WP_Error( __( 'Unable to setup Fail2ban - no user Find Time was was provided.', 'wpcd' ) );
+					return new \WP_Error( __( 'Unable to setup Fail2ban - no user Find Time was was provided.', 'simple-stack' ) );
 				}
 
 				if ( empty( $args['maxretry_new'] ) ) {
-					return new \WP_Error( __( 'Unable to setup Fail2ban - no Max Retry limit was was provided.', 'wpcd' ) );
+					return new \WP_Error( __( 'Unable to setup Fail2ban - no Max Retry limit was was provided.', 'simple-stack' ) );
 				}
 
 				if ( empty( $args['ignoreip_new'] ) ) {
@@ -859,56 +857,56 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 			case 'fail2ban_update_protocol':
 				// Make sure all required fields have been provided and return error if not.
 				if ( empty( $args['protocol_update'] ) ) {
-					return new \WP_Error( __( 'Unable to update protocol - no PROTOCOL was provided.', 'wpcd' ) );
+					return new \WP_Error( __( 'Unable to update protocol - no PROTOCOL was provided.', 'simple-stack' ) );
 				}
 
 				if ( empty( $args['bantime_new'] ) ) {
-					return new \WP_Error( __( 'Unable to update protocol - no BAN TIME was provided.', 'wpcd' ) );
+					return new \WP_Error( __( 'Unable to update protocol - no BAN TIME was provided.', 'simple-stack' ) );
 				}
 
 				if ( empty( $args['findtime_new'] ) ) {
-					return new \WP_Error( __( 'Unable to update protocol - no FIND TIME was provided.', 'wpcd' ) );
+					return new \WP_Error( __( 'Unable to update protocol - no FIND TIME was provided.', 'simple-stack' ) );
 				}
 				break;
 
 			if ( empty( $args['maxretry_new'] ) ) {
-				return new \WP_Error( __( 'Unable to update protocol - no MAX RETRY parameter was provided.', 'wpcd' ) );
+				return new \WP_Error( __( 'Unable to update protocol - no MAX RETRY parameter was provided.', 'simple-stack' ) );
 			}
 				break;
 
 			case 'fail2ban_remove_protocol':
 				if ( empty( $args['protocol_update'] ) ) {
-					return new \WP_Error( __( 'Unable to remove protocol - no PROTOCOL was provided.', 'wpcd' ) );
+					return new \WP_Error( __( 'Unable to remove protocol - no PROTOCOL was provided.', 'simple-stack' ) );
 				}
 				$args['protocol_delete'] = $args['protocol_update'];  // The array doesn't have the delete element that the bash script is expecting so make sure it gets one.
 				break;
 
 			case 'fail2ban-remove-protocol-meta':
 				// Remove a single item from the fail2ban protocols meta.
-				$protocols = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', true ) );
+				$protocols = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', true ) );
 				unset( $protocols[ $original_args['protocol_update'] ] );
-				update_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', $protocols );
+				update_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', $protocols );
 				$success = array(
-					'msg'     => __( 'The metas were removed for the selected protocol.', 'wpcd' ),
+					'msg'     => __( 'The metas were removed for the selected protocol.', 'simple-stack' ),
 					'refresh' => 'yes',
 				);
 				break;
 
 			case 'fail2ban_ban':
 				if ( empty( $args['banip'] ) ) {
-					return new \WP_Error( __( 'Please provide an IP address to ban.', 'wpcd' ) );
+					return new \WP_Error( __( 'Please provide an IP address to ban.', 'simple-stack' ) );
 				}
 				if ( ( ! filter_var( $args['banip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) && ( ! filter_var( $args['banip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) ) {
-					return new \WP_Error( __( 'Please provide a valid IP address.', 'wpcd' ) );
+					return new \WP_Error( __( 'Please provide a valid IP address.', 'simple-stack' ) );
 				}
 				break;
 
 			case 'fail2ban_unban':
 				if ( empty( $args['unbanip'] ) ) {
-					return new \WP_Error( __( 'Please provide an IP address to unban/whitelist.', 'wpcd' ) );
+					return new \WP_Error( __( 'Please provide an IP address to unban/whitelist.', 'simple-stack' ) );
 				}
 				if ( ( ! filter_var( $args['unbanip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) && ( ! filter_var( $args['unbanip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) ) {
-					return new \WP_Error( __( 'Please provide a valid IP address.', 'wpcd' ) );
+					return new \WP_Error( __( 'Please provide a valid IP address.', 'simple-stack' ) );
 				}
 				break;
 
@@ -916,7 +914,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				// Remove all fail2ban metas.
 				$this->remove_metas( $id );
 				$success = array(
-					'msg'     => __( 'Fail2ban metas have been reset. This screen will refresh and you can navigate back to this tab to see new options.', 'wpcd' ),
+					'msg'     => __( 'Fail2ban metas have been reset. This screen will refresh and you can navigate back to this tab to see new options.', 'simple-stack' ),
 					'refresh' => 'yes',
 				);
 				return $success;
@@ -926,7 +924,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				// Add fail2ban metas.
 				$this->update_default_protocol_metas( $id );
 				$success = array(
-					'msg'     => __( 'Fail2ban metas have been reset to their defaults and might not match the settings on your server! You should now be able to remove Fail2ban if necessary and reinstall as needed. This screen will refresh and you can navigate back to this tab to see new options.', 'wpcd' ),
+					'msg'     => __( 'Fail2ban metas have been reset to their defaults and might not match the settings on your server! You should now be able to remove Fail2ban if necessary and reinstall as needed. This screen will refresh and you can navigate back to this tab to see new options.', 'simple-stack' ),
 					'refresh' => 'yes',
 				);
 				return $success;
@@ -945,13 +943,13 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 		// Get the full command to be executed by ssh.
 		$run_cmd = $this->turn_script_into_command( $instance, 'fail2ban.txt', array_merge( $args, array( 'action' => $action ) ) );
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// Execute command and check result.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'fail2ban.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s : %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s : %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 
 			// Success - update some postmetas and set response message according to action.
@@ -959,41 +957,41 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				case 'fail2ban_install':
 					$this->update_default_protocol_metas( $id );
 					$success = array(
-						'msg'     => __( 'Fail2ban has been installed. This screen will refresh and you can navigate back to this tab to see new options.', 'wpcd' ),
+						'msg'     => __( 'Fail2ban has been installed. This screen will refresh and you can navigate back to this tab to see new options.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
 
 				case 'fail2ban_parameter':
 					// Change global parameters.
-					update_post_meta( $id, 'wpcd_wpapp_fail2ban_ban_time', $original_args['bantime_new'] );
-					update_post_meta( $id, 'wpcd_wpapp_fail2ban_find_time', $original_args['findtime_new'] );
-					update_post_meta( $id, 'wpcd_wpapp_fail2ban_max_retry', $original_args['maxretry_new'] );
-					update_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelist_ips', $original_args['ignoreip_new'] );
+					update_post_meta( $id, 'sstk_wpapp_fail2ban_ban_time', $original_args['bantime_new'] );
+					update_post_meta( $id, 'sstk_wpapp_fail2ban_find_time', $original_args['findtime_new'] );
+					update_post_meta( $id, 'sstk_wpapp_fail2ban_max_retry', $original_args['maxretry_new'] );
+					update_post_meta( $id, 'sstk_wpapp_fail2ban_whitelist_ips', $original_args['ignoreip_new'] );
 					$success = array(
-						'msg'     => __( 'Global defaults for fail2ban have been updated.', 'wpcd' ),
+						'msg'     => __( 'Global defaults for fail2ban have been updated.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
 
 				case 'fail2ban_update_protocol':
-					$protocols = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', true ) );
+					$protocols = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', true ) );
 					$protocols[ $original_args['protocol_update'] ]['ban_time']  = $original_args['bantime_new'];
 					$protocols[ $original_args['protocol_update'] ]['find_time'] = $original_args['findtime_new'];
 					$protocols[ $original_args['protocol_update'] ]['max_retry'] = $original_args['maxretry_new'];
-					update_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', $protocols );
+					update_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', $protocols );
 					$success = array(
-						'msg'     => __( 'Protocol parameters have been updated.', 'wpcd' ),
+						'msg'     => __( 'Protocol parameters have been updated.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
 
 				case 'fail2ban_remove_protocol':
-					$protocols = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', true ) );
+					$protocols = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', true ) );
 					unset( $protocols[ $original_args['protocol_delete'] ] );
-					update_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', $protocols );
+					update_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', $protocols );
 					$success = array(
-						'msg'     => __( 'The protocol was removed.', 'wpcd' ),
+						'msg'     => __( 'The protocol was removed.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
@@ -1001,7 +999,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				case 'fail2ban_ban':
 					$this->add_remove_banned_ips( $id, $original_args['banip'], $original_args['banip_reason'], $action );
 					$success = array(
-						'msg'     => __( 'IP was successfully banned.', 'wpcd' ),
+						'msg'     => __( 'IP was successfully banned.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
@@ -1009,14 +1007,14 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				case 'fail2ban_unban':
 					$this->add_remove_banned_ips( $id, $original_args['unbanip'], $original_args['unbanip_reason'], $action );
 					$success = array(
-						'msg'     => __( 'IP was successfully removed from the banned list.', 'wpcd' ),
+						'msg'     => __( 'IP was successfully removed from the banned list.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
 
 				case 'fail2ban_force_update':
 					$success = array(
-						'msg'     => __( 'Fail2ban has been updated.', 'wpcd' ),
+						'msg'     => __( 'Fail2ban has been updated.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
@@ -1024,7 +1022,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				case 'fail2ban_remove':
 					$this->remove_metas( $id );
 					$success = array(
-						'msg'     => __( 'fail2ban has been removed from the server.', 'wpcd' ),
+						'msg'     => __( 'fail2ban has been removed from the server.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
@@ -1032,7 +1030,7 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 				case 'fail2ban_purge':
 					$this->remove_metas( $id );
 					$success = array(
-						'msg'     => __( 'fail2ban and its configuration files have been purged from the server.', 'wpcd' ),
+						'msg'     => __( 'fail2ban and its configuration files have been purged from the server.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
@@ -1050,20 +1048,20 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	 * @param int $id post id of the server.
 	 */
 	public function remove_metas( $id ) {
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_installed' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_ban_time' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_find_time' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_max_retry' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelist_ips' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_banned_ips' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelisted_ips' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_installed' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_ban_time' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_find_time' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_max_retry' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_whitelist_ips' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_protocols' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_banned_ips' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_whitelisted_ips' );
 
 		// These are old metas used in early development - can delete these anytime.
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_bantime' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_findtime' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_maxretry' );
-		delete_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelistips' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_bantime' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_findtime' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_maxretry' );
+		delete_post_meta( $id, 'sstk_wpapp_fail2ban_whitelistips' );
 	}
 
 	/**
@@ -1073,46 +1071,13 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_default_protocols( $id ) {
 
-		// Get Webserver Type.
-		$webserver_type = $this->get_web_server_type( $id );
-
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				return array(
-					'sshd' => array(
-						'ban_time'  => 600,
-						'find_time' => 600,
-						'max_retry' => 3,
-					),
-				);
-				break;
-
-			case 'nginx':
-				return array(
-					'sshd'            => array(
-						'ban_time'  => 600,
-						'find_time' => 600,
-						'max_retry' => 3,
-					),
-					'nginx-http-auth' => array(
-						'ban_time'  => 600,
-						'find_time' => 600,
-						'max_retry' => 3,
-					),
-					'nginx-limit-req' => array(
-						'ban_time'  => 600,
-						'find_time' => 600,
-						'max_retry' => 3,
-					),
-					'nginx-botsearch' => array(
-						'ban_time'  => 600,
-						'find_time' => 600,
-						'max_retry' => 3,
-					),
-				);
-				break;
-		}
+		return array(
+			'sshd' => array(
+				'ban_time'  => 600,
+				'find_time' => 600,
+				'max_retry' => 3,
+			),
+		);
 
 	}
 
@@ -1123,12 +1088,12 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	 */
 	public function update_default_protocol_metas( $id ) {
 		$protocols = $this->get_default_protocols( $id );
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_installed', 'yes' );
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_ban_time', '600' );
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_find_time', '600' );
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_max_retry', '3' );
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelist_ips', '127.0.0.1' );
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_protocols', $protocols );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_installed', 'yes' );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_ban_time', '600' );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_find_time', '600' );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_max_retry', '3' );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_whitelist_ips', '127.0.0.1' );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_protocols', $protocols );
 	}
 
 	/**
@@ -1141,8 +1106,8 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 	 */
 	public function add_remove_banned_ips( $id, $ip, $reason, $action ) {
 
-		$banned_ips      = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_banned_ips', true ) );
-		$whitelisted_ips = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelisted_ips', true ) );
+		$banned_ips      = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_banned_ips', true ) );
+		$whitelisted_ips = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_whitelisted_ips', true ) );
 
 		// Initialize if blank.
 		if ( ! $banned_ips ) {
@@ -1179,8 +1144,8 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Write back to record.
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_banned_ips', $banned_ips );
-		update_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelisted_ips', $whitelisted_ips );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_banned_ips', $banned_ips );
+		update_post_meta( $id, 'sstk_wpapp_fail2ban_whitelisted_ips', $whitelisted_ips );
 
 	}
 
@@ -1197,10 +1162,10 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 
 		switch ( $type ) {
 			case 'banned':
-				$ips = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_banned_ips', true ) );
+				$ips = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_banned_ips', true ) );
 				break;
 			case 'whitelisted':
-				$ips = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_fail2ban_whitelisted_ips', true ) );
+				$ips = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_fail2ban_whitelisted_ips', true ) );
 				break;
 		}
 
@@ -1215,4 +1180,4 @@ class WPCD_WORDPRESS_TABS_SERVER_FAIL2BAN extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_FAIl2BAN();
+new SSTK_WORDPRESS_TABS_SERVER_FAIl2BAN();

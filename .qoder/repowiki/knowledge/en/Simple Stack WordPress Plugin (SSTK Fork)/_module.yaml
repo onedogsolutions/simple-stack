@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: SimpleStack WordPress Plugin (WPCD Fork)
+title: Simple Stack WordPress Plugin (SSTK Fork)
 scope:
     - README.md
     - license.txt
@@ -22,7 +22,7 @@ scope:
     - uninstall.php
     - vite.config.js
     - wp-tests-config.php
-    - wpcd.php
+    - simple-stack.php
 source_files: []
 depends_on: []
 related_to: []

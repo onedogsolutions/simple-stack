@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class handles DNS configurations for each
  * supported DNS provider.
  *
- * @package WPCD
+ * @package SSTK
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -11,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_DNS
+ * Class SSTK_DNS
  */
-class WPCD_DNS extends WPCD_Base {
+class SSTK_DNS extends SSTK_Base {
 
 	/**
 	 * Constructor
@@ -43,7 +44,7 @@ class WPCD_DNS extends WPCD_Base {
 	 * @return string
 	 */
 	public function get_subdomain( $length = 12 ) {
-		$subdomain = apply_filters( 'wpcd_wpapp_subdomain_string', wpcd_random_str( $length, '0123456789abcdefghijklmnopqrstuvwxyz' ) );
+		$subdomain = apply_filters( 'sstk_wpapp_subdomain_string', sstk_random_str( $length, '0123456789abcdefghijklmnopqrstuvwxyz' ) );
 		return $subdomain;
 	}
 
@@ -54,7 +55,7 @@ class WPCD_DNS extends WPCD_Base {
 	 * @return string
 	 */
 	public function get_active_root_domain() {
-		return apply_filters( 'wpcd_wpapp_active_root_domain', wpcd_get_early_option( 'wordpress_app_dns_cf_temp_domain' ) );
+		return apply_filters( 'sstk_wpapp_active_root_domain', sstk_get_early_option( 'wordpress_app_dns_cf_temp_domain' ) );
 	}
 
 	/**
@@ -72,7 +73,7 @@ class WPCD_DNS extends WPCD_Base {
 			$return = $this->get_subdomain( $subdomain_length ) . '.' . $root_domain;
 		}
 
-		return apply_filters( 'wpcd_wpapp_get_full_temp_domain', $return );
+		return apply_filters( 'sstk_wpapp_get_full_temp_domain', $return );
 
 	}
 
@@ -89,15 +90,15 @@ class WPCD_DNS extends WPCD_Base {
 
 		// if we ever support more than cloudflare, we'll first need to see which DNS provider takes precedence.
 		// For now we just pull the cloudflare values and use them.
-		if ( wpcd_get_option( 'wordpress_app_dns_cf_enable' ) ) {
+		if ( sstk_get_option( 'wordpress_app_dns_cf_enable' ) ) {
 			$root_domain = $this->get_active_root_domain();
 			if ( strpos( $domain, $root_domain ) ) {
 				// Looks like the root domain is part of the $domain string so we can try to add to the cloudflare DNS.
-				$zone_id = wpcd_get_option( 'wordpress_app_dns_cf_zone_id' );
-				$token   = wpcd_get_option( 'wordpress_app_dns_cf_token' );
-				$proxied = ! wpcd_get_option( 'wordpress_app_dns_cf_disable_proxy' );
+				$zone_id = sstk_get_option( 'wordpress_app_dns_cf_zone_id' );
+				$token   = sstk_get_option( 'wordpress_app_dns_cf_token' );
+				$proxied = ! sstk_get_option( 'wordpress_app_dns_cf_disable_proxy' );
 				// If the option to add an IPV6 AAAA record is not turned on, zero out the $ipv6 var so that we don't attempt to add the AAAA record.
-				if ( ! wpcd_get_option( 'wordpress_app_auto_add_aaaa' ) ) {
+				if ( ! sstk_get_option( 'wordpress_app_auto_add_aaaa' ) ) {
 					$ipv6 = '';
 				}
 				return $this->cloudflare_add_subdomain( $domain, $zone_id, $token, $ipv4, $proxied, $ipv6 );
@@ -127,12 +128,12 @@ class WPCD_DNS extends WPCD_Base {
 
 		// if we ever support more than cloudflare, we'll first need to see which DNS provider takes precedence.
 		// For now we just pull the cloudflare values and use them.
-		if ( wpcd_get_option( 'wordpress_app_dns_cf_auto_delete' ) ) {
+		if ( sstk_get_option( 'wordpress_app_dns_cf_auto_delete' ) ) {
 			$root_domain = $this->get_active_root_domain();
 			if ( strpos( $domain, '.' . $root_domain ) ) {
 				// Looks like the root domain is part of the $domain string so we can try to delete it from the cloudflare DNS.
-				$zone_id = wpcd_get_option( 'wordpress_app_dns_cf_zone_id' );
-				$token   = wpcd_get_option( 'wordpress_app_dns_cf_token' );
+				$zone_id = sstk_get_option( 'wordpress_app_dns_cf_zone_id' );
+				$token   = sstk_get_option( 'wordpress_app_dns_cf_token' );
 				return $this->cloudflare_delete_subdomain( $domain, $zone_id, $token );
 			}
 		}
@@ -190,8 +191,8 @@ class WPCD_DNS extends WPCD_Base {
 			if ( is_wp_error( $response ) ) {
 
 				/* Translators: 1. %s is the subdomain we are attempting to add to cloudflare. 2. %s is the error code from the wperror object */
-				$message = sprintf( __( 'We could not add the A record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'wpcd' ), $domain, $response->get_error_message() );
-				do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+				$message = sprintf( __( 'We could not add the A record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'simple-stack' ), $domain, $response->get_error_message() );
+				do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 				return false;
 
@@ -202,8 +203,8 @@ class WPCD_DNS extends WPCD_Base {
 			if ( 200 !== $response_code ) {
 
 				/* Translators: 1. %s - $domain is the subdomain that we are attempting to add to cloudflare. */
-				$message = sprintf( __( 'The automatic DNS setup for %s in Cloudflare returned an error when adding the A record. You will need to add this site manually.', 'wpcd' ), $domain );
-				do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+				$message = sprintf( __( 'The automatic DNS setup for %s in Cloudflare returned an error when adding the A record. You will need to add this site manually.', 'simple-stack' ), $domain );
+				do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 				return false;
 			}
@@ -238,8 +239,8 @@ class WPCD_DNS extends WPCD_Base {
 				if ( is_wp_error( $response ) ) {
 
 					/* Translators: 1. %s is the subdomain we are attempting to add to cloudflare. 2. %s is the error code from the wperror object */
-					$message = sprintf( __( 'We could not add the AAAA record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'wpcd' ), $domain, $response->get_error_message() );
-					do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+					$message = sprintf( __( 'We could not add the AAAA record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'simple-stack' ), $domain, $response->get_error_message() );
+					do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 					return false;
 
@@ -250,8 +251,8 @@ class WPCD_DNS extends WPCD_Base {
 				if ( 200 !== $response_code ) {
 
 					/* Translators: 1. %s - $domain is the subdomain that we are attempting to add to cloudflare. */
-					$message = sprintf( __( 'The automatic DNS setup for %s in Cloudflare returned an error when adding an AAAA record. You will need to add this site manually.', 'wpcd' ), $domain );
-					do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+					$message = sprintf( __( 'The automatic DNS setup for %s in Cloudflare returned an error when adding an AAAA record. You will need to add this site manually.', 'simple-stack' ), $domain );
+					do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 					return false;
 				}
@@ -294,8 +295,8 @@ class WPCD_DNS extends WPCD_Base {
 			if ( is_wp_error( $response ) ) {
 
 				/* Translators: 1. %s is the subdomain whose details we are attempting to get from cloudflare. 2. %s is the error code from the wperror object */
-				$message = sprintf( __( 'We could not obtain details for domain %1$s from Cloudflare - an eror was returned - %2$s.', 'wpcd' ), $domain, $response->get_error_message() );
-				do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+				$message = sprintf( __( 'We could not obtain details for domain %1$s from Cloudflare - an eror was returned - %2$s.', 'simple-stack' ), $domain, $response->get_error_message() );
+				do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 				return false;
 
@@ -313,8 +314,8 @@ class WPCD_DNS extends WPCD_Base {
 			if ( 200 !== $response_code ) {
 
 				/* Translators: 1. %s is the subdomain whose details we are attempting to get from cloudflare. 2. %s is the response code we got from cloudflare */
-				$message = sprintf( __( 'We could not obtain details for domain %1$s from Cloudflare - an eror was returned - %2$s.', 'wpcd' ), $domain, $response_code );
-				do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+				$message = sprintf( __( 'We could not obtain details for domain %1$s from Cloudflare - an eror was returned - %2$s.', 'simple-stack' ), $domain, $response_code );
+				do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 				return false;
 			}
@@ -388,8 +389,8 @@ class WPCD_DNS extends WPCD_Base {
 		if ( is_wp_error( $response ) ) {
 
 			/* Translators: 1. %s is the subdomain whose details we are attempting to get from cloudflare. 2. %s is the error code from the wperror object */
-			$message = sprintf( __( 'We could not delete the A record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'wpcd' ), $domain, $response->get_error_message() );
-			do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+			$message = sprintf( __( 'We could not delete the A record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'simple-stack' ), $domain, $response->get_error_message() );
+			do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 			return false;
 
@@ -401,8 +402,8 @@ class WPCD_DNS extends WPCD_Base {
 		if ( 200 !== $response_code ) {
 
 			/* Translators: 1. %s is the subdomain we are attempting to delete from cloudflare. 2. %s is the response code we got from cloudflare */
-			$message = sprintf( __( 'We were unable to delete the A record for domain %1$s in Cloudflare - an eror was returned: %2$s. You will need to add this site manually.', 'wpcd' ), $domain, $response_code );
-			do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+			$message = sprintf( __( 'We were unable to delete the A record for domain %1$s in Cloudflare - an eror was returned: %2$s. You will need to add this site manually.', 'simple-stack' ), $domain, $response_code );
+			do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 			return false;
 		}
@@ -436,8 +437,8 @@ class WPCD_DNS extends WPCD_Base {
 			if ( is_wp_error( $response ) ) {
 
 				/* Translators: 1. %s is the subdomain whose we are attempting to delete from cloudflare. 2. %s is the error code from the wperror object */
-				$message = sprintf( __( 'We could not delete the AAAA record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'wpcd' ), $domain, $response->get_error_message() );
-				do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+				$message = sprintf( __( 'We could not delete the AAAA record for domain %1$s to Cloudflare - an eror was returned - %2$s.', 'simple-stack' ), $domain, $response->get_error_message() );
+				do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 				return false;
 
@@ -449,8 +450,8 @@ class WPCD_DNS extends WPCD_Base {
 			if ( 200 !== $response_code ) {
 
 				/* Translators: 1. %s is the subdomain whose details we are attempting to get from cloudflare. 2. %s is the response code we got from cloudflare */
-				$message = sprintf( __( 'We were unable to delete the AAAA record for domain %1$s in Cloudflare - an eror was returned: %2$s. You will need to add this site manually.', 'wpcd' ), $domain, $response_code );
-				do_action( 'wpcd_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
+				$message = sprintf( __( 'We were unable to delete the AAAA record for domain %1$s in Cloudflare - an eror was returned: %2$s. You will need to add this site manually.', 'simple-stack' ), $domain, $response_code );
+				do_action( 'sstk_log_error', $message, 'error', __FILE__, __LINE__, array(), false );
 
 			}
 		}

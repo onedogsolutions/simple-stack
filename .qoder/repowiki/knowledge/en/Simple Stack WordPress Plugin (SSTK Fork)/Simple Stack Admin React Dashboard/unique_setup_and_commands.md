@@ -1,1 +1,1 @@
-The app only mounts when a `#simplestack-admin` element exists (it does nothing on non-SimpleStack screens). Bootstrap config (`window.simplestackAdmin`, containing `route`, `nonce`, `restUrl`, `version`) is injected by the PHP enqueue layer before the bundle runs.
+The app only mounts when a `#simplestack-admin` element exists (it does nothing on non-Simple Stack screens). Bootstrap config (`window.simplestackAdmin`, containing `route`, `nonce`, `restUrl`, `version`) is injected by the PHP enqueue layer before the bundle runs.

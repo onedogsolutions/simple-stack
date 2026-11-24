@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Parent class to display servers or apps table on front-end
@@ -27,12 +28,12 @@ if ( ! class_exists( 'WP_Screen' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
 }
 
-require_once WPCD_PATH . 'includes/core/apps/wordpress-app/public/traits/grid_table.php';
-require_once WPCD_PATH . 'includes/core/apps/wordpress-app/public/traits/table_pagination.php';
+require_once SSTK_PATH . 'includes/core/apps/wordpress-app/public/traits/grid_table.php';
+require_once SSTK_PATH . 'includes/core/apps/wordpress-app/public/traits/table_pagination.php';
 
-class WPCD_Public_List_Table extends WP_List_Table {
+class SSTK_Public_List_Table extends WP_List_Table {
 
-	use wpcd_grid_table;
+	use sstk_grid_table;
 	use table_pagination;
 
 	/**
@@ -282,18 +283,18 @@ class WPCD_Public_List_Table extends WP_List_Table {
 	public function views() {
 
 		// Should we hide the filter bar and filter view buttons from the admin?
-		if ( wpcd_is_admin() && boolval( wpcd_get_option( 'wordpress_app_fe_hide_filter_bar_from_admin' ) ) ) {
+		if ( sstk_is_admin() && boolval( sstk_get_option( 'wordpress_app_fe_hide_filter_bar_from_admin' ) ) ) {
 			return;
 		}
 
 		// Show the filter bar to non-admin users?
-		if ( ! wpcd_is_admin() && ! boolval( wpcd_get_option( 'wordpress_app_fe_show_filter_bar' ) ) ) {
+		if ( ! sstk_is_admin() && ! boolval( sstk_get_option( 'wordpress_app_fe_show_filter_bar' ) ) ) {
 			return;
 		}
 
 		$views = $this->get_views();
 
-		$views = apply_filters( "wpcd_public_table_views_{$this->post_type}", $views );
+		$views = apply_filters( "sstk_public_table_views_{$this->post_type}", $views );
 
 		if ( empty( $views ) ) {
 			return;

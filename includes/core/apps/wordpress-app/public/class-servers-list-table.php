@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Class to display servers table on front-end
@@ -6,11 +7,11 @@
  * @author Tahir Nazir
  */
 
-if ( ! class_exists( 'WPCD_Public_List_Table' ) ) {
-	require_once wpcd_path . 'includes/core/apps/wordpress-app/public/class-public-list-table.php';
+if ( ! class_exists( 'SSTK_Public_List_Table' ) ) {
+	require_once SSTK_PATH . 'includes/core/apps/wordpress-app/public/class-public-list-table.php';
 }
 
-class Servers_List_Table extends WPCD_Public_List_Table {
+class Servers_List_Table extends SSTK_Public_List_Table {
 
 	/**
 	 * Constructor
@@ -19,7 +20,7 @@ class Servers_List_Table extends WPCD_Public_List_Table {
 	 */
 	public function __construct( $args = array() ) {
 
-		$this->post_type = 'wpcd_app_server';
+		$this->post_type = 'sstk_app_server';
 
 		parent::__construct( $args );
 		$this->prepare_items();
@@ -31,7 +32,7 @@ class Servers_List_Table extends WPCD_Public_List_Table {
 	 * @return string
 	 */
 	protected function front_id() {
-		return 'wpcd_app_server_front';
+		return 'sstk_app_server_front';
 	}
 
 	/**
@@ -45,7 +46,7 @@ class Servers_List_Table extends WPCD_Public_List_Table {
 	 * Print no item message
 	 */
 	public function no_items() {
-		_e( 'We searched high and low but unfortunately we could not find any servers.', 'wpcd' );
+		_e( 'We searched high and low but unfortunately we could not find any servers.', 'simple-stack' );
 	}
 
 	/**
@@ -56,11 +57,11 @@ class Servers_List_Table extends WPCD_Public_List_Table {
 	public function get_columns() {
 
 		$columns = array(
-			'title' => __( 'Title', 'wpcd' ),
-			'date'  => __( 'Date', 'wpcd' ),
+			'title' => __( 'Title', 'simple-stack' ),
+			'date'  => __( 'Date', 'simple-stack' ),
 		);
 
-		$columns = apply_filters( 'manage_wpcd_app_server_posts_columns', $columns );
+		$columns = apply_filters( 'manage_sstk_app_server_posts_columns', $columns );
 
 		return $columns;
 	}
@@ -96,28 +97,28 @@ class Servers_List_Table extends WPCD_Public_List_Table {
 
 		if ( current_user_can( 'delete_post', $post->ID ) ) {
 			if ( 'trash' === $post->post_status ) {
-				$actions['wpcd_public_server_restore'] = sprintf(
-					'<a class="wpcd_public_row_del_item_action" data-wpcd-action="restore" data-wpcd-type="server" data-wpcd-id="%d" data-wpcd-nonce="%s" href="#">%s</a>',
+				$actions['sstk_public_server_restore'] = sprintf(
+					'<a class="sstk_public_row_del_item_action" data-sstk-action="restore" data-sstk-type="server" data-sstk-id="%d" data-sstk-nonce="%s" href="#">%s</a>',
 					$post->ID,
-					wp_create_nonce( 'wpcd_public_server_restore_' . $post->ID ),
-					esc_html( __( 'Restore', 'wpcd' ) )
+					wp_create_nonce( 'sstk_public_server_restore_' . $post->ID ),
+					esc_html( __( 'Restore', 'simple-stack' ) )
 				);
 			} elseif ( EMPTY_TRASH_DAYS ) {
 
-				$actions['wpcd_public_server_trash'] = sprintf(
-					'<a class="wpcd_public_row_del_item_action" data-wpcd-action="trash" data-wpcd-type="server" data-wpcd-id="%d" data-wpcd-nonce="%s" href="#">%s</a>',
+				$actions['sstk_public_server_trash'] = sprintf(
+					'<a class="sstk_public_row_del_item_action" data-sstk-action="trash" data-sstk-type="server" data-sstk-id="%d" data-sstk-nonce="%s" href="#">%s</a>',
 					$post->ID,
-					wp_create_nonce( 'wpcd_public_server_trash_' . $post->ID ),
-					_x( 'Trash', 'wpcd' )
+					wp_create_nonce( 'sstk_public_server_trash_' . $post->ID ),
+					_x( 'Trash', 'simple-stack' )
 				);
 			}
 
 			if ( 'trash' === $post->post_status || ! EMPTY_TRASH_DAYS ) {
-				$actions['wpcd_public_server_delete'] = sprintf(
-					'<a class="wpcd_public_row_del_item_action" data-wpcd-action="delete" data-wpcd-type="server" data-wpcd-id="%d" data-wpcd-nonce="%s" href="#">%s</a>',
+				$actions['sstk_public_server_delete'] = sprintf(
+					'<a class="sstk_public_row_del_item_action" data-sstk-action="delete" data-sstk-type="server" data-sstk-id="%d" data-sstk-nonce="%s" href="#">%s</a>',
 					$post->ID,
-					wp_create_nonce( 'wpcd_public_server_delete_' . $post->ID ),
-					esc_html( __( 'Delete Permanently', 'wpcd' ) )
+					wp_create_nonce( 'sstk_public_server_delete_' . $post->ID ),
+					esc_html( __( 'Delete Permanently', 'simple-stack' ) )
 				);
 			}
 		}
@@ -138,7 +139,7 @@ class Servers_List_Table extends WPCD_Public_List_Table {
 				break;
 			default:
 				ob_start();
-				do_action( 'manage_wpcd_app_server_posts_custom_column', $column_name, $item->ID );
+				do_action( 'manage_sstk_app_server_posts_custom_column', $column_name, $item->ID );
 				return ob_get_clean();
 				break;
 		}

@@ -22,7 +22,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how SimpleStack configures and manages WordPress object caching for WordPress applications. It covers:
+This document explains how Simple Stack configures and manages WordPress object caching for WordPress applications. It covers:
 - The WordPress object cache API and backend selection (Redis, Memcached).
 - Fallback mechanisms when an object cache is already enabled or not installed.
 - Integration with popular caching plugins such as W3 Total Cache, WP Super Cache, LiteSpeed Cache, and Cache Enabler.
@@ -32,7 +32,7 @@ This document explains how SimpleStack configures and manages WordPress object c
 - Troubleshooting cache conflicts, stale data issues, and debugging steps.
 
 ## Project Structure
-SimpleStack’s WordPress application layer provides a dedicated “Cache” tab to manage page cache and object caches (Redis/Memcached). The implementation consists of:
+Simple Stack’s WordPress application layer provides a dedicated “Cache” tab to manage page cache and object caches (Redis/Memcached). The implementation consists of:
 - A PHP class that renders the UI and dispatches actions.
 - Bash scripts executed over SSH to install, enable, disable, clear, restart, and remove Redis/Memcached services.
 - Helper functions to detect service installation status and persist per-site state.
@@ -40,7 +40,7 @@ SimpleStack’s WordPress application layer provides a dedicated “Cache” tab
 ```mermaid
 graph TB
 subgraph "Admin UI"
-UI["WPCD_WORDPRESS_TABS_CACHE<br/>Render fields and handle actions"]
+UI["SSTK_WORDPRESS_TABS_CACHE<br/>Render fields and handle actions"]
 end
 subgraph "WordPress App Layer"
 APP["Class methods for status checks<br/>and meta persistence"]
@@ -91,12 +91,12 @@ Key responsibilities:
 - [9999-common-functions.txt:124-157](file://includes/core/apps/wordpress-app/scripts/v1/raw/9999-common-functions.txt#L124-L157)
 
 ## Architecture Overview
-The following sequence shows how enabling Redis for a site flows through SimpleStack:
+The following sequence shows how enabling Redis for a site flows through Simple Stack:
 
 ```mermaid
 sequenceDiagram
 participant Admin as "Admin User"
-participant UI as "WPCD_WORDPRESS_TABS_CACHE"
+participant UI as "SSTK_WORDPRESS_TABS_CACHE"
 participant SSH as "SSH Executor"
 participant Script as "12-redis.txt"
 participant WP as "WordPress Site"
@@ -116,7 +116,7 @@ UI-->>Admin : Show success message
 
 ## Detailed Component Analysis
 
-### Cache Tab Controller (WPCD_WORDPRESS_TABS_CACHE)
+### Cache Tab Controller (SSTK_WORDPRESS_TABS_CACHE)
 Responsibilities:
 - Register tab and permissions.
 - Render fields for page cache, Redis, and Memcached.
@@ -209,13 +209,13 @@ LSCfg --> Done
 - [16-memcached.txt:72-157](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L72-L157)
 
 ### WordPress Installation Auto-Enable Redis
-During WordPress site installation, if Redis is detected on the server, SimpleStack automatically enables the Redis object cache by installing and activating the Redis plugin and linking object-cache.php. For OpenLiteSpeed, it configures LiteSpeed Cache accordingly.
+During WordPress site installation, if Redis is detected on the server, Simple Stack automatically enables the Redis object cache by installing and activating the Redis plugin and linking object-cache.php. For OpenLiteSpeed, it configures LiteSpeed Cache accordingly.
 
 **Section sources**
 - [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
 
 ### Plugin Cache Flushing Helpers
-When performing site operations, SimpleStack attempts to flush caches for popular plugins:
+When performing site operations, Simple Stack attempts to flush caches for popular plugins:
 - Cache Enabler
 - WP Super Cache
 - W3 Total Cache
@@ -237,7 +237,7 @@ This helps prevent stale content after changes.
 
 ```mermaid
 graph LR
-UI["WPCD_WORDPRESS_TABS_CACHE"] --> SSH["SSH Execution"]
+UI["SSTK_WORDPRESS_TABS_CACHE"] --> SSH["SSH Execution"]
 UI --> STATUS["Service Status Helpers"]
 SSH --> REDIS_SCRIPT["12-redis.txt"]
 SSH --> MEMC_SCRIPT["16-memcached.txt"]
@@ -272,16 +272,16 @@ MEMC_SCRIPT --> SYSTEM
 Common issues and resolutions:
 - Multiple object cache backends active:
   - Symptom: Conflicts between object-cache.php files or unexpected behavior.
-  - Resolution: Disable one backend first; SimpleStack scripts block enabling a second backend while one is active.
+  - Resolution: Disable one backend first; Simple Stack scripts block enabling a second backend while one is active.
 - Stale data after enabling Memcached:
   - Cause: Large transient entries exceed Memcached object size limits.
-  - Resolution: SimpleStack deletes all transients before enabling Memcached; re-run if necessary.
+  - Resolution: Simple Stack deletes all transients before enabling Memcached; re-run if necessary.
 - Redis not installed on server:
   - Symptom: Cannot enable Redis for a site.
   - Resolution: Install Redis on the server using the provided script or system package manager.
 - Plugin cache conflicts:
   - Symptom: Changes not reflected due to page cache.
-  - Resolution: SimpleStack flushes caches for Cache Enabler, WP Super Cache, W3 Total Cache, and Fastest Cache during operations. Manually flush if needed.
+  - Resolution: Simple Stack flushes caches for Cache Enabler, WP Super Cache, W3 Total Cache, and Fastest Cache during operations. Manually flush if needed.
 - OpenLiteSpeed object cache misconfiguration:
   - Symptom: Object cache not working under OpenLiteSpeed.
   - Resolution: Ensure LiteSpeed Cache is activated and object settings are configured correctly; verify WP_CACHE is set.
@@ -298,6 +298,6 @@ Debugging steps:
 - [9999-common-functions.txt:124-157](file://includes/core/apps/wordpress-app/scripts/v1/raw/9999-common-functions.txt#L124-L157)
 
 ## Conclusion
-SimpleStack provides a robust, script-driven approach to managing WordPress object caching. It supports Redis and Memcached backends, ensures mutual exclusivity, integrates with popular caching plugins, and automates common tasks like transient cleanup and cache flushing. By following the guidance above, administrators can design effective cache hierarchies, optimize performance, and troubleshoot issues confidently.
+Simple Stack provides a robust, script-driven approach to managing WordPress object caching. It supports Redis and Memcached backends, ensures mutual exclusivity, integrates with popular caching plugins, and automates common tasks like transient cleanup and cache flushing. By following the guidance above, administrators can design effective cache hierarchies, optimize performance, and troubleshoot issues confidently.
 
 [No sources needed since this section summarizes without analyzing specific files]

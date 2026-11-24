@@ -1,99 +1,100 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /* Format the ssl status column on the apps list screen */
-.wpcd_ssl_status {
+.sstk_ssl_status {
     display: inline-block;
     padding: 2px 8px;
     font-weight: 700;
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
     vertical-align: baseline;
     border-radius: 3px;
     margin: 2px;
 }
 
-.wpcd_ssl_status_off {
-    background-color: var(--wpcd-negative-color);
+.sstk_ssl_status_off {
+    background-color: var(--sstk-negative-color);
 }
 
-.wpcd_ssl_status_on {
-    background-color: var(--wpcd-positive-color);
+.sstk_ssl_status_on {
+    background-color: var(--sstk-positive-color);
 }
 
 /* Format the PHP version on the apps list screen */
-.wpcd_php_version {
+.sstk_php_version {
     display: inline-block;
     padding: 2px 8px;
     font-weight: 700;
     vertical-align: baseline;
     border-radius: 3px;
-    border-color: var(--wpcd-negative-color) !important;
+    border-color: var(--sstk-negative-color) !important;
     /* Not sure why important is needed for this one but oh well. */
     border: solid;
     border-width: 2px;
     margin: 2px;
 }
 
-.wpcd_php_version_8_1 {
-    border-color: var(--wpcd-positive-color) !important;
+.sstk_php_version_8_1 {
+    border-color: var(--sstk-positive-color) !important;
 }
 
-.wpcd_php_version_8_0,
-.wpcd_php_version_7_4,
-.wpcd_php_version_7_3,
-.wpcd_php_version_7_2,
-.wpcd_php_version_7_1,
-.wpcd_php_version_7_0 {
+.sstk_php_version_8_0,
+.sstk_php_version_7_4,
+.sstk_php_version_7_3,
+.sstk_php_version_7_2,
+.sstk_php_version_7_1,
+.sstk_php_version_7_0 {
     border-color: orange !important;
 }
 
-.wpcd_php_version_8_2,
-.wpcd_php_version_8_3,
-.wpcd_php_version_9_0 {
+.sstk_php_version_8_2,
+.sstk_php_version_8_3,
+.sstk_php_version_9_0 {
     border-color: purple !important;
     color: purple;
 }
 
 /* Format the ADMIN LOGIN link on the apps list screen - make sure it's only when we're in the admin area though. */
-.wp-list-table .wpcd-app-col-element-label-wp_admin_link {
+.wp-list-table .sstk-app-col-element-label-wp_admin_link {
     display: inline-block;
     padding: 2px 8px;
-	background-color: var(--wpcd-positive-color);
+	background-color: var(--sstk-positive-color);
     vertical-align: baseline;
     border-radius: 3px;
-    border-color: var(--wpcd-positive-color) !important;
+    border-color: var(--sstk-positive-color) !important;
     /* Not sure why important is needed for this one but oh well. */
     border: solid;
     border-width: 2px;
-    margin: 2px;	
+    margin: 2px;
 }
-.wp-list-table .wpcd-app-col-element-label-wp_admin_link a {
-	color: var(--wpcd-white-color);
+.wp-list-table .sstk-app-col-element-label-wp_admin_link a {
+	color: var(--sstk-white-color);
 }
-.wp-list-table .wpcd-app-col-element-label-wp_admin_link:hover {
-	box-shadow: 1px 1px 30px 0 rgba(0,0,0,.3); 
+.wp-list-table .sstk-app-col-element-label-wp_admin_link:hover {
+	box-shadow: 1px 1px 30px 0 rgba(0,0,0,.3);
 }
 
 /* Format the VIEW SITE link on the apps list screen - make sure it's only when we're in the admin area though. */
-.wp-list-table .wpcd-app-col-element-value-homepage_link {
+.wp-list-table .sstk-app-col-element-value-homepage_link {
     display: inline-block;
     padding: 2px 8px;
-	background-color: var(--wpcd-positive-color);
+	background-color: var(--sstk-positive-color);
     vertical-align: baseline;
     border-radius: 3px;
-    border-color: var(--wpcd-positive-color) !important;
+    border-color: var(--sstk-positive-color) !important;
     /* Not sure why important is needed for this one but oh well. */
     border: solid;
     border-width: 2px;
-    margin: 2px;	
+    margin: 2px;
 }
-.wp-list-table .wpcd-app-col-element-value-homepage_link a {
-	color: var(--wpcd-white-color);
+.wp-list-table .sstk-app-col-element-value-homepage_link a {
+	color: var(--sstk-white-color);
 }
-.wp-list-table .wpcd-app-col-element-value-homepage_link:hover {
-	box-shadow: 1px 1px 30px 0 rgba(0,0,0,.3); 
+.wp-list-table .sstk-app-col-element-value-homepage_link:hover {
+	box-shadow: 1px 1px 30px 0 rgba(0,0,0,.3);
 }
 
 /* Format the ONE CLICK Login link on the apps list screen - make sure it's only when we're in the admin area though. */
-.wp-list-table .wpcd-app-col-element-wrap-wp_passwordless_login_link,
-.wpcd_wordpress-app_tab2 .wpcd-app-col-element-wrap-wp_passwordless_login_link {
+.wp-list-table .sstk-app-col-element-wrap-wp_passwordless_login_link,
+.sstk_wordpress-app_tab2 .sstk-app-col-element-wrap-wp_passwordless_login_link {
     display: inline-block;
     padding: 2px 8px;
 	background-color: #4F46E5;
@@ -103,18 +104,18 @@
     /* Not sure why important is needed for this one but oh well. */
     border: solid;
     border-width: 2px;
-    margin: 2px;	
+    margin: 2px;
 }
-.wp-list-table .wpcd-app-col-element-wrap-wp_passwordless_login_link a {
-	color: var(--wpcd-white-color);
+.wp-list-table .sstk-app-col-element-wrap-wp_passwordless_login_link a {
+	color: var(--sstk-white-color);
 }
-.wp-list-table .wpcd-app-col-element-wrap-wp_passwordless_login_link:hover {
-	box-shadow: 1px 1px 30px 0 rgba(0,0,0,.3); 
+.wp-list-table .sstk-app-col-element-wrap-wp_passwordless_login_link:hover {
+	box-shadow: 1px 1px 30px 0 rgba(0,0,0,.3);
 }
 
 
 /* Format the PLUGIN AND THEME updates on the apps list screen */
-.wpcd_site_update_needed {
+.sstk_site_update_needed {
     display: inline-block;
     padding: 2px 8px;
     font-weight: 700;
@@ -128,7 +129,7 @@
 }
 
 /* Format the Syncing Destination Server on the apps list screen */
-.wpcd_destination_site_sync_server {
+.sstk_destination_site_sync_server {
     display: inline-block;
     padding: 2px 8px;
     font-weight: 700;
@@ -142,8 +143,8 @@
 }
 
 
-/** 
- * Set the width of some of the app list columns 
+/**
+ * Set the width of some of the app list columns
  */
 
 
@@ -153,18 +154,18 @@
 
 
 /*
-.post-type-wpcd_app th#title {
+.post-type-sstk_app th#title {
 	min-width: 25%;
 	width: 25%;
 }
 */
-.post-type-wpcd_app th#wpcd_wpapp_php,
-.post-type-wpcd_app th#wpcd_wpapp_ssl {
+.post-type-sstk_app th#sstk_wpapp_php,
+.post-type-sstk_app th#sstk_wpapp_ssl {
     width: 8%;
 }
 
 
-/** 
+/**
  * Make filter bar multiple rows
  */
 .tablenav .actions:not(.bulkactions) {
@@ -178,14 +179,14 @@
 }
 
 /* Format the GIT initial settings display area at the bottom of the GIT tab for a site. */
-.wpcd_git_initial_settings_data {
+.sstk_git_initial_settings_data {
 	/* Put a box around the data section */
 	border: 1px solid #FFF3CD;
 	padding: 1em;
 	border-radius: 4px;
 	background-color: #FFF3CD;
 }
-.wpcd_git_initial_settings_data .wpcd_git_initial_settings_data_inner_wrap {
+.sstk_git_initial_settings_data .sstk_git_initial_settings_data_inner_wrap {
 	display: grid;
 	grid-template-areas: "i i ";
 	/*1 row, 2 columns */
@@ -196,12 +197,12 @@
 	margin-bottom: 1em;
 	font-size: 1em;
 }
-.wpcd_git_initial_settings_data .wpcd_git_initial_settings_data_label_item {
+.sstk_git_initial_settings_data .sstk_git_initial_settings_data_label_item {
 	font-weight: bold;
 }
 
 /* Format the GIT tag list display area on the GIT tab for a site. */
-.wpcd_git_tag_list {
+.sstk_git_tag_list {
 	/* Put a box around the data section */
 	border: 1px solid #EFF6FF;
 	padding: 1em;
@@ -209,7 +210,7 @@
 	background-color: #EFF6FF;
 	min-height: 100px;
 }
-.wpcd_git_tag_list .wpcd_git_tag_list_inner_wrap {
+.sstk_git_tag_list .sstk_git_tag_list_inner_wrap {
 	display: grid;
 	grid-template-areas: "i i ";
 	/*1 row, 2 columns */
@@ -220,24 +221,24 @@
 	margin-bottom: 1em;
 	font-size: 1em;
 }
-.wpcd_git_tag_list .wpcd_git_tag_value {
+.sstk_git_tag_list .sstk_git_tag_value {
 
 	background-color: #38BDF8;
 	padding: 5px;
 	border-radius: 3px;
-	color: var(--wpcd-white-color);
+	color: var(--sstk-white-color);
 	text-align: center;
 }
 
 /* Format the push to deploy webhook and secret keys area on the GIT tab for a site. */
-.wpcd_git_push_to_deploy_data {
+.sstk_git_push_to_deploy_data {
 	/* Put a box around the data section */
 	border: 1px solid #FFF3CD;
 	padding: 1em;
 	border-radius: 4px;
 	background-color: #FFF3CD;
 }
-.wpcd_git_push_to_deploy_data .wpcd_git_push_to_deploy_inner_wrap {
+.sstk_git_push_to_deploy_data .sstk_git_push_to_deploy_inner_wrap {
 	display: grid;
 	grid-template-areas: "i ";
 	/*1 row, 1 column */
@@ -248,19 +249,19 @@
 	margin-bottom: 1em;
 	font-size: 1em;
 }
-.wpcd_git_push_to_deploy_data .wpcd_git_push_to_deploy_data_label_item {
+.sstk_git_push_to_deploy_data .sstk_git_push_to_deploy_data_label_item {
 	font-weight: bold;
 }
 
 /* Format the git history section on the GIT tab for a site. */
-.wpcd_git_logs_list {
+.sstk_git_logs_list {
 	/* Put a box around the data section */
 	border: 1px solid #FFF3CD;
 	padding: 1em;
 	border-radius: 4px;
 	background-color: #FFF3CD;
 }
-.wpcd_git_logs_list .wpcd_git_logs_list_inner_wrap {
+.sstk_git_logs_list .sstk_git_logs_list_inner_wrap {
 	display: grid;
 	grid-template-areas: "i ";
 	/*1 row, 1 columns */
@@ -271,40 +272,40 @@
 	margin-bottom: 1em;
 	font-size: 1em;
 }
-.wpcd_git_logs_list .wpcd_git_log_value,
-.wpcd_git_logs_list .wpcd_git_log_label {
+.sstk_git_logs_list .sstk_git_log_value,
+.sstk_git_logs_list .sstk_git_log_label {
 	x-font-weight: bold;
 	font-size: smaller;
 }
 
 /* Format the current branch shown at the top of each section of the GIT tab for a site. */
-.wpcd_git_site_branch_wrap {
+.sstk_git_site_branch_wrap {
 	margin-top: 1.5em;
 }
-.wpcd_git_site_branch {
+.sstk_git_site_branch {
 	border: solid 1px;
 	border-radius: 3px;
 	padding: 5px;
-	border-color: var(--wpcd-positive-color);
-	color: var(--wpcd-positive-color);
-	
+	border-color: var(--sstk-positive-color);
+	color: var(--sstk-positive-color);
+
 }
 
 /* Format the current repo shown at the top of each section of the GIT tab for a site. */
-.wpcd_git_site_repo_wrap {
+.sstk_git_site_repo_wrap {
 	margin-top: 1em;
 }
-.wpcd_git_site_repo {
+.sstk_git_site_repo {
 	border: solid 1px;
 	border-radius: 3px;
 	padding: 5px;
-	border-color: var(--wpcd-primary-brand-color);
-	color: var(--wpcd-primary-brand-color);;
-	
+	border-color: var(--sstk-primary-brand-color);
+	color: var(--sstk-primary-brand-color);;
+
 }
 
 /* Format the VERSION (git) tag list display area on the MULTI-TENANT tab for a site. */
-.wpcd_mt_version_list {
+.sstk_mt_version_list {
 	/* Put a box around the section */
 	border: 1px solid #6EE7B7;
 	padding: 1em;
@@ -312,7 +313,7 @@
 	background-color: #6EE7B7;
 	min-height: 100px;
 }
-.wpcd_mt_version_list .wpcd_mt_version_list_inner_wrap {
+.sstk_mt_version_list .sstk_mt_version_list_inner_wrap {
 	display: grid;
 	grid-template-areas: "i i ";
 	/*1 row, 1 columns */
@@ -323,24 +324,24 @@
 	margin-bottom: 1em;
 	font-size: 1em;
 }
-.wpcd_mt_version_list .wpcd_mt_version_value {
+.sstk_mt_version_list .sstk_mt_version_value {
 
 	background-color: #059669;
 	padding: 5px;
 	border-radius: 3px;
-	color: var(--wpcd-white-color);
+	color: var(--sstk-white-color);
 	text-align: center;
 }
-.wpcd_mt_version_list .wpcd_mt_version_value_inline {
+.sstk_mt_version_list .sstk_mt_version_value_inline {
 	font-weight: bold;
 }
-.wpcd_mt_version_list .wpcd_mt_version_label_desc {
+.sstk_mt_version_list .sstk_mt_version_label_desc {
 }
-.wpcd_mt_version_list .wpcd_mt_version_other_value {
+.sstk_mt_version_list .sstk_mt_version_other_value {
 }
-.wpcd_mt_version_list .wpcd_mt_destination_server {
+.sstk_mt_version_list .sstk_mt_destination_server {
 	/* The servers list under each version .*/
-	background-color: var(--wpcd-accent-background-color);
+	background-color: var(--sstk-accent-background-color);
 	font-size: 12px;
 	display: inline-block;
 	font-weight: 400;
@@ -348,22 +349,22 @@
 	padding: 1px 5px;
 	vertical-align: top;
 	border-radius: 2px;
-	color: var(--wpcd-white-color);	
+	color: var(--sstk-white-color);
 }
-.wpcd_mt_version_list .wpcd_mt_destination_server a {
-	color: var(--wpcd-white-color);
+.sstk_mt_version_list .sstk_mt_destination_server a {
+	color: var(--sstk-white-color);
 	text-decoration: none;
 }
 
 /* Format the UPGRADE TENANT RESULST list display area on the MULTI-TENANT tab for a site. */
-.wpcd_mt_upgrade_tenant_results_list {
+.sstk_mt_upgrade_tenant_results_list {
 	/* Put a box around the section */
 	border: 1px solid #CBD5E1;
 	padding: 1em;
 	border-radius: 4px;
 	background-color: #CBD5E1;
 }
-.wpcd_mt_upgrade_tenant_results_list .wpcd_mt_upgrade_tenant_results_list_inner_wrap {
+.sstk_mt_upgrade_tenant_results_list .sstk_mt_upgrade_tenant_results_list_inner_wrap {
 	display: grid;
 	grid-template-areas: "i i ";
 	/*1 row, 1 columns */
@@ -374,12 +375,12 @@
 	margin-bottom: 1em;
 	font-size: 1em;
 }
-.wpcd_mt_upgrade_tenant_results_list .wpcd_mt_upgrade_tenant_results_list_value {
+.sstk_mt_upgrade_tenant_results_list .sstk_mt_upgrade_tenant_results_list_value {
 	font-size: 14px;
 	color: black;
 	font-weight: bold;
 }
-.wpcd_mt_upgrade_tenant_results_list .wpcd_mt_upgrade_tenant_results_list_header {
+.sstk_mt_upgrade_tenant_results_list .sstk_mt_upgrade_tenant_results_list_header {
 	font-size: larger;
 	font-weight: bold;
 	margin-bottom: 10px;
@@ -398,13 +399,13 @@
 .locker {
     z-index: 1000;
     opacity: 0.8;
-    background-color: var(--wpcd-white-color);
+    background-color: var(--sstk-white-color);
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
     filter: alpha(opacity=80);
 }
 
 .locker-loader {
     z-index: 1001;
-    background: url(/wp-content/plugins/wp-cloud-deploy/assets/images/spinner.gif) no-repeat center center;
+    background: url(/wp-content/plugins/simple-stack/assets/images/spinner.gif) no-repeat center center;
 }
 /* the spinner - end */

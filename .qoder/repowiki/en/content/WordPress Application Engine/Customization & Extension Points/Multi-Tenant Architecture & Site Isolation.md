@@ -7,9 +7,9 @@
 - [58-git_control.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/58-git_control.txt)
 - [9999-common-functions.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/9999-common-functions.txt)
 - [readme.txt (v1 samples)](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/readme.txt)
-- [wpcd_mt_new_site_post_install_script.sh](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_new_site_post_install_script.sh)
-- [wpcd_mt_upgrade_site_post_upgrade_script.sh](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_upgrade_site_post_upgrade_script.sh)
-- [wpcd_mt_alternative_backup_move_link_files.sh](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_alternative_backup_move_link_files.sh)
+- [sstk_mt_new_site_post_install_script.sh](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_new_site_post_install_script.sh)
+- [sstk_mt_upgrade_site_post_upgrade_script.sh](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_upgrade_site_post_upgrade_script.sh)
+- [sstk_mt_alternative_backup_move_link_files.sh](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_alternative_backup_move_link_files.sh)
 </cite>
 
 ## Table of Contents
@@ -36,7 +36,7 @@ The multi-tenant functionality is centered around:
 ```mermaid
 graph TB
 subgraph "PHP Layer"
-MT_Trait["Trait: wpcd_wpapp_multi_tenant_app"]
+MT_Trait["Trait: sstk_wpapp_multi_tenant_app"]
 MT_Tab["Tab: multitenant-site.php"]
 end
 subgraph "Server Scripts"
@@ -88,7 +88,7 @@ participant Admin as "Admin UI"
 participant Tab as "multitenant-site.php"
 participant Trait as "multi-tenant-app.php"
 participant Server as "Server Scripts"
-participant FS as "Filesystem /var/wpcd-mt-versions"
+participant FS as "Filesystem /var/simple-stack-mt-versions"
 Admin->>Tab : Action (e.g., mt-create-version, mt-convert-site)
 Tab->>Tab : Validate inputs & permissions
 Tab->>Trait : Read/write MT metadata (version, parent, type)
@@ -122,9 +122,9 @@ The trait defines the canonical multi-tenant metadata and helper methods:
 
 ```mermaid
 classDiagram
-class WPCD_WordPress_App_Multi_Tenant {
-+wpcd_is_template_site(app_id) bool
-+wpcd_set_template_flag(app_id, flag) void
+class SSTK_WordPress_App_Multi_Tenant {
++sstk_is_template_site(app_id) bool
++sstk_set_template_flag(app_id, flag) void
 +get_product_name(id) string
 +set_product_name(id, name) void
 +get_mt_default_version(app_id) string
@@ -228,9 +228,9 @@ These hooks receive variables describing the domain, template domain, versioned 
 ```mermaid
 sequenceDiagram
 participant System as "Conversion/Upgrade Flow"
-participant HookNew as "wpcd_mt_new_site_post_install_script.sh"
-participant HookUpg as "wpcd_mt_upgrade_site_post_upgrade_script.sh"
-participant AltFiles as "wpcd_mt_alternative_backup_move_link_files.sh"
+participant HookNew as "sstk_mt_new_site_post_install_script.sh"
+participant HookUpg as "sstk_mt_upgrade_site_post_upgrade_script.sh"
+participant AltFiles as "sstk_mt_alternative_backup_move_link_files.sh"
 System->>HookNew : Execute on new tenant install
 System->>AltFiles : Optional override for file move/link
 System->>HookUpg : Execute on tenant version change
@@ -238,15 +238,15 @@ System->>HookUpg : Execute on tenant version change
 
 **Diagram sources**
 - [readme.txt (v1 samples):1-41](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/readme.txt#L1-L41)
-- [wpcd_mt_new_site_post_install_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_new_site_post_install_script.sh#L1-L40)
-- [wpcd_mt_upgrade_site_post_upgrade_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_upgrade_site_post_upgrade_script.sh#L1-L40)
-- [wpcd_mt_alternative_backup_move_link_files.sh:1-36](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_alternative_backup_move_link_files.sh#L1-L36)
+- [sstk_mt_new_site_post_install_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_new_site_post_install_script.sh#L1-L40)
+- [sstk_mt_upgrade_site_post_upgrade_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_upgrade_site_post_upgrade_script.sh#L1-L40)
+- [sstk_mt_alternative_backup_move_link_files.sh:1-36](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_alternative_backup_move_link_files.sh#L1-L36)
 
 **Section sources**
 - [readme.txt (v1 samples):1-41](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/readme.txt#L1-L41)
-- [wpcd_mt_new_site_post_install_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_new_site_post_install_script.sh#L1-L40)
-- [wpcd_mt_upgrade_site_post_upgrade_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_upgrade_site_post_upgrade_script.sh#L1-L40)
-- [wpcd_mt_alternative_backup_move_link_files.sh:1-36](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_alternative_backup_move_link_files.sh#L1-L36)
+- [sstk_mt_new_site_post_install_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_new_site_post_install_script.sh#L1-L40)
+- [sstk_mt_upgrade_site_post_upgrade_script.sh:1-40](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_upgrade_site_post_upgrade_script.sh#L1-L40)
+- [sstk_mt_alternative_backup_move_link_files.sh:1-36](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_alternative_backup_move_link_files.sh#L1-L36)
 
 ### Tenant Isolation Mechanisms
 - Filesystem isolation: each tenant has its own document root; shared code resides under a versioned directory tree.
@@ -276,9 +276,9 @@ System->>HookUpg : Execute on tenant version change
 - Replace the default file move/link behavior with your own strategy (symlink entire plugin/theme directories or copy per tenant).
 
 **Section sources**
-- [wpcd_mt_new_site_post_install_script.sh:20-33](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_new_site_post_install_script.sh#L20-L33)
-- [wpcd_mt_upgrade_site_post_upgrade_script.sh:20-33](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_upgrade_site_post_upgrade_script.sh#L20-L33)
-- [wpcd_mt_alternative_backup_move_link_files.sh:19-35](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_alternative_backup_move_link_files.sh#L19-L35)
+- [sstk_mt_new_site_post_install_script.sh:20-33](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_new_site_post_install_script.sh#L20-L33)
+- [sstk_mt_upgrade_site_post_upgrade_script.sh:20-33](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_upgrade_site_post_upgrade_script.sh#L20-L33)
+- [sstk_mt_alternative_backup_move_link_files.sh:19-35](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_alternative_backup_move_link_files.sh#L19-L35)
 
 ### Managing Shared Resources
 - Place shared plugins/themes in the template repository tagged by version.
@@ -287,7 +287,7 @@ System->>HookUpg : Execute on tenant version change
 
 **Section sources**
 - [58-git_control.txt:2282-2377](file://includes/core/apps/wordpress-app/scripts/v1/raw/58-git_control.txt#L2282-L2377)
-- [wpcd_mt_alternative_backup_move_link_files.sh:19-35](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/wpcd_mt_alternative_backup_move_link_files.sh#L19-L35)
+- [sstk_mt_alternative_backup_move_link_files.sh:19-35](file://includes/core/apps/wordpress-app/scripts/v1/multi-tenant-pre-post-samples/sstk_mt_alternative_backup_move_link_files.sh#L19-L35)
 
 ## Dependency Analysis
 ```mermaid

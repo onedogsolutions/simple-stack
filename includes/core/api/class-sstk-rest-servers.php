@@ -1,8 +1,10 @@
 <?php
 /**
- * SimpleStack REST controller for servers.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * Simple Stack REST controller for servers.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class SimpleStack_REST_Servers
+ * Class SSTK_REST_Servers
  *
  * Routes for the server list, individual server records, provisioning and the
  * server action bridge.
@@ -19,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 22 server tabs: POST /servers/{id}/action forwards straight into the engine that
  * the legacy admin-ajax handler already used.
  */
-class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
+class SSTK_REST_Servers extends SSTK_REST_Controller_Base {
 
 	/**
 	 * Route segment owned by this controller.
@@ -41,10 +43,10 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 			array_merge(
 				$this->paging_args(),
 				array(
-					'provider' => $this->arg_string( __( 'Filter by provider slug.', 'wpcd' ) ),
-					'region'   => $this->arg_string( __( 'Filter by provider region slug.', 'wpcd' ) ),
-					'status'   => $this->arg_string( __( 'Filter by recorded server state.', 'wpcd' ) ),
-					'search'   => $this->arg_string( __( 'Free text search on the server name.', 'wpcd' ) ),
+					'provider' => $this->arg_string( __( 'Filter by provider slug.', 'simple-stack' ) ),
+					'region'   => $this->arg_string( __( 'Filter by provider region slug.', 'simple-stack' ) ),
+					'status'   => $this->arg_string( __( 'Filter by recorded server state.', 'simple-stack' ) ),
+					'search'   => $this->arg_string( __( 'Free text search on the server name.', 'simple-stack' ) ),
 				)
 			)
 		);
@@ -53,13 +55,13 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 			$this->name,
 			'create_server',
 			array(
-				'name'           => $this->arg_string( __( 'Server name.', 'wpcd' ), true ),
-				'provider'       => $this->arg_string( __( 'Provider slug.', 'wpcd' ), true ),
-				'region'         => $this->arg_string( __( 'Provider region slug.', 'wpcd' ), true ),
-				'size'           => $this->arg_string( __( 'Provider size or plan slug.', 'wpcd' ), true ),
-				'os'             => $this->arg_string( __( 'Initial operating system slug.', 'wpcd' ) ),
-				'webserver_type' => $this->arg_string( __( 'Web server type.', 'wpcd' ), false, array( 'ols' ), 'ols' ),
-				'author_email'   => $this->arg_string( __( 'Owner email address.', 'wpcd' ) ),
+				'name'           => $this->arg_string( __( 'Server name.', 'simple-stack' ), true ),
+				'provider'       => $this->arg_string( __( 'Provider slug.', 'simple-stack' ), true ),
+				'region'         => $this->arg_string( __( 'Provider region slug.', 'simple-stack' ), true ),
+				'size'           => $this->arg_string( __( 'Provider size or plan slug.', 'simple-stack' ), true ),
+				'os'             => $this->arg_string( __( 'Initial operating system slug.', 'simple-stack' ) ),
+				'webserver_type' => $this->arg_string( __( 'Web server type.', 'simple-stack' ), false, array( 'ols' ), 'ols' ),
+				'author_email'   => $this->arg_string( __( 'Owner email address.', 'simple-stack' ) ),
 			)
 		);
 
@@ -80,9 +82,9 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 			'run_action',
 			array(
 				'id'         => $this->arg_id(),
-				'action'     => $this->arg_string( __( 'Action slug understood by the server action bridge.', 'wpcd' ), true ),
-				'params'     => $this->arg_params( __( 'Parameters addressed to the tab handler.', 'wpcd' ) ),
-				'additional' => $this->arg_object( __( 'Alias of params. Passed on to the lifecycle engine.', 'wpcd' ) ),
+				'action'     => $this->arg_string( __( 'Action slug understood by the server action bridge.', 'simple-stack' ), true ),
+				'params'     => $this->arg_params( __( 'Parameters addressed to the tab handler.', 'simple-stack' ) ),
+				'additional' => $this->arg_object( __( 'Alias of params. Passed on to the lifecycle engine.', 'simple-stack' ) ),
 			)
 		);
 	}
@@ -101,7 +103,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		$paging = $this->paging( $request );
 
 		$args = array(
-			'post_type'      => 'wpcd_app_server',
+			'post_type'      => 'sstk_app_server',
 			'post_status'    => 'private',
 			'posts_per_page' => $paging['per_page'],
 			'paged'          => $paging['page'],
@@ -113,7 +115,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		$provider = (string) $request->get_param( 'provider' );
 		if ( ! empty( $provider ) ) {
 			$args['meta_query'][] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'key'   => 'wpcd_server_provider',
+				'key'   => 'sstk_server_provider',
 				'value' => $provider,
 			);
 		}
@@ -121,7 +123,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		$region = (string) $request->get_param( 'region' );
 		if ( ! empty( $region ) ) {
 			$args['meta_query'][] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'key'   => 'wpcd_server_region',
+				'key'   => 'sstk_server_region',
 				'value' => $region,
 			);
 		}
@@ -129,7 +131,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		$status = (string) $request->get_param( 'status' );
 		if ( ! empty( $status ) ) {
 			$args['meta_query'][] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'key'   => 'wpcd_server_current_state',
+				'key'   => 'sstk_server_current_state',
 				'value' => $status,
 			);
 		}
@@ -172,10 +174,10 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 	public function create_server( WP_REST_Request $request ) {
 
 		$provider = (string) $request->get_param( 'provider' );
-		$providers = WPCD()->get_cloud_providers();
+		$providers = SSTK()->get_cloud_providers();
 
 		if ( ! array_key_exists( $provider, $providers ) ) {
-			return $this->error( 'simplestack_invalid_provider', __( 'The selected provider is not available.', 'wpcd' ), 400 );
+			return $this->error( 'sstk_invalid_provider', __( 'The selected provider is not available.', 'simple-stack' ), 400 );
 		}
 
 		$author_email = '';
@@ -183,20 +185,24 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		if ( ! empty( $raw_email ) ) {
 			$author_email = sanitize_email( $raw_email );
 			if ( empty( $author_email ) ) {
-				return $this->error( 'simplestack_invalid_email', __( 'The owner email address is not valid.', 'wpcd' ), 400 );
+				return $this->error( 'sstk_invalid_email', __( 'The owner email address is not valid.', 'simple-stack' ), 400 );
 			}
 		}
 
 		$os = (string) $request->get_param( 'os' );
 		if ( empty( $os ) ) {
-			$os = WPCD_WORDPRESS_APP()->get_default_os();
+			$os = SSTK_WORDPRESS_APP()->get_default_os();
+		}
+
+		if ( ! isset( SSTK()->get_os_list()[ $os ] ) ) {
+			return $this->error( 'sstk_invalid_os', __( 'The selected operating system is not supported.', 'simple-stack' ), 400 );
 		}
 
 		$attributes = array(
 			'initial_os'       => $os,
-			'initial_app_name' => WPCD_WORDPRESS_APP()->get_app_name(),
+			'initial_app_name' => SSTK_WORDPRESS_APP()->get_app_name(),
 			'server-type'      => 'wordpress-app',
-			'scripts_version'  => wpcd_get_option( 'wordpress_app_script_version' ),
+			'scripts_version'  => SSTK_WORDPRESS_APP()->get_configured_scripts_version(),
 			'region'           => (string) $request->get_param( 'region' ),
 			'size_raw'         => (string) $request->get_param( 'size' ),
 			'name'             => (string) $request->get_param( 'name' ),
@@ -208,35 +214,35 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		);
 
 		/* Create the instance at the provider and the local CPT record. */
-		$instance = WPCD_SERVER()->create_server( 'create', $attributes );
+		$instance = SSTK_SERVER()->create_server( 'create', $attributes );
 
 		if ( empty( $instance ) || is_wp_error( $instance ) ) {
-			$message = is_wp_error( $instance ) ? $instance->get_error_message() : __( 'Unable to create the server.', 'wpcd' );
-			return $this->error( 'simplestack_server_create_failed', $message, 400 );
+			$message = is_wp_error( $instance ) ? $instance->get_error_message() : __( 'Unable to create the server.', 'simple-stack' );
+			return $this->error( 'sstk_server_create_failed', $message, 400 );
 		}
 
 		/* Fill in the remaining server post fields. */
-		$instance = WPCD_WORDPRESS_APP()->add_app( $instance );
+		$instance = SSTK_WORDPRESS_APP()->add_app( $instance );
 
 		if ( empty( $instance ) || is_wp_error( $instance ) ) {
-			$message = is_wp_error( $instance ) ? $instance->get_error_message() : __( 'Unable to create the server.', 'wpcd' );
-			return $this->error( 'simplestack_server_create_failed', $message, 400 );
+			$message = is_wp_error( $instance ) ? $instance->get_error_message() : __( 'Unable to create the server.', 'simple-stack' );
+			return $this->error( 'sstk_server_create_failed', $message, 400 );
 		}
 
 		$server_id = (int) $instance['post_id'];
 
-		$task_id = WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry(
+		$task_id = SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry(
 			$server_id,
-			'simplestack_install_server',
+			'sstk_install_server',
 			$server_id,
 			$instance,
 			'in-process',
 			$server_id,
-			__( 'SimpleStack: Server is being created', 'wpcd' )
+			__( 'Simple Stack: Server is being created', 'simple-stack' )
 		);
 
 		if ( empty( $task_id ) || empty( $server_id ) ) {
-			return $this->error( 'simplestack_server_create_failed', __( 'The server record was created but the pending task entry could not be written.', 'wpcd' ), 500 );
+			return $this->error( 'sstk_server_create_failed', __( 'The server record was created but the pending task entry could not be written.', 'simple-stack' ), 500 );
 		}
 
 		return $this->respond(
@@ -269,8 +275,8 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 
 		$data                = $this->summarize( $id );
 		$data['meta']        = $this->collect_server_meta( $id );
-		$data['php_version'] = WPCD_WORDPRESS_APP()->get_php_version_for_app( $id );
-		$data['available']   = WPCD_SERVER()->is_server_available_for_commands( $id );
+		$data['php_version'] = SSTK_WORDPRESS_APP()->get_php_version_for_app( $id );
+		$data['available']   = SSTK_SERVER()->is_server_available_for_commands( $id );
 
 		return $this->respond( $data );
 	}
@@ -294,11 +300,11 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		}
 
 		/* The delete action is a filter/action chain owned by the WordPress app. */
-		do_action( 'wpcd_server_wordpress-app_action', $id, 'delete' );
+		do_action( 'sstk_server_wordpress-app_action', $id, 'delete' );
 
 		$server = get_post( $id );
 		if ( is_object( $server ) && 'trash' !== $server->post_status ) {
-			return $this->error( 'simplestack_server_delete_failed', __( 'The server record still exists and is not in the trash. The provider instance may still be running.', 'wpcd' ), 400 );
+			return $this->error( 'sstk_server_delete_failed', __( 'The server record still exists and is not in the trash. The provider instance may still be running.', 'simple-stack' ), 400 );
 		}
 
 		return $this->respond(
@@ -314,7 +320,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 	 *
 	 * POST /servers/{id}/action
 	 *
-	 * The server tabs register `wpcd_app_{app}_tab_action`, not a server-specific filter
+	 * The server tabs register `sstk_app_{app}_tab_action`, not a server-specific filter
 	 * (see tabs-server/services.php and its siblings), so the detail screen dispatches
 	 * through the same chain the site tabs use. Lifecycle verbs (reboot, resize,
 	 * snapshot, delete) still belong to do_instance_action(); it runs when no tab
@@ -346,7 +352,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		$result = $this->dispatch_tab_action( $id, $action, $params, $request->get_file_params() );
 
 		if ( null === $result ) {
-			$result = WPCD_WORDPRESS_APP()->do_instance_action( $id, $action, $params );
+			$result = SSTK_WORDPRESS_APP()->do_instance_action( $id, $action, $params );
 		}
 
 		if ( is_wp_error( $result ) ) {
@@ -373,8 +379,8 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 
 		$post = get_post( $id );
 
-		if ( ! $post || 'wpcd_app_server' !== $post->post_type ) {
-			return $this->error( 'simplestack_server_not_found', __( 'Server not found.', 'wpcd' ), 404 );
+		if ( ! $post || 'sstk_app_server' !== $post->post_type ) {
+			return $this->error( 'sstk_server_not_found', __( 'Server not found.', 'simple-stack' ), 404 );
 		}
 
 		return $post;
@@ -389,23 +395,23 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 	 */
 	protected function summarize( int $id ): array {
 
-		$provider = WPCD_SERVER()->get_server_provider( $id );
+		$provider = SSTK_SERVER()->get_server_provider( $id );
 
 		return array(
 			'id'             => $id,
-			'name'           => WPCD_SERVER()->get_server_name( $id ),
+			'name'           => SSTK_SERVER()->get_server_name( $id ),
 			'provider'       => $provider,
 			'provider_label' => $this->provider_label( $provider ),
-			'region'         => WPCD_SERVER()->get_server_region( $id ),
-			'size'           => WPCD_SERVER()->get_server_size( $id ),
-			'state'          => (string) get_post_meta( $id, 'wpcd_server_current_state', true ),
-			'health'         => (string) get_post_meta( $id, 'wpcd_server_health', true ),
-			'webserver_type' => (string) get_post_meta( $id, 'wpcd_server_webserver_type', true ),
-			'ipv4'           => WPCD_SERVER()->get_ipv4_address( $id ),
-			'ipv6'           => (string) get_post_meta( $id, 'wpcd_server_ipv6', true ),
-			'instance_id'    => WPCD_SERVER()->get_server_provider_instance_id( $id ),
-			'os'             => WPCD_SERVER()->get_server_os( $id ),
-			'app_count'      => (int) WPCD_SERVER()->get_app_count( $id ),
+			'region'         => SSTK_SERVER()->get_server_region( $id ),
+			'size'           => SSTK_SERVER()->get_server_size( $id ),
+			'state'          => (string) get_post_meta( $id, 'sstk_server_current_state', true ),
+			'health'         => (string) get_post_meta( $id, 'sstk_server_health', true ),
+			'webserver_type' => (string) get_post_meta( $id, 'sstk_server_webserver_type', true ),
+			'ipv4'           => SSTK_SERVER()->get_ipv4_address( $id ),
+			'ipv6'           => (string) get_post_meta( $id, 'sstk_server_ipv6', true ),
+			'instance_id'    => SSTK_SERVER()->get_server_provider_instance_id( $id ),
+			'os'             => SSTK_SERVER()->get_server_os( $id ),
+			'app_count'      => (int) SSTK_SERVER()->get_app_count( $id ),
 			'author'         => (int) get_post_field( 'post_author', $id ),
 			'created'        => (string) get_post_field( 'post_date_gmt', $id ),
 		);
@@ -420,13 +426,13 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 	 */
 	protected function provider_label( string $provider ): string {
 
-		$providers = WPCD()->get_cloud_providers();
+		$providers = SSTK()->get_cloud_providers();
 
 		return isset( $providers[ $provider ] ) ? (string) $providers[ $provider ] : $provider;
 	}
 
 	/**
-	 * Return every recorded server meta value, with the wpcd_server_ prefix stripped.
+	 * Return every recorded server meta value, with the sstk_server_ prefix stripped.
 	 *
 	 * The caller is responsible for redaction; respond() masks credential-shaped
 	 * keys before the payload leaves the process.
@@ -440,7 +446,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 		$meta = array();
 
 		foreach ( get_post_meta( $id ) as $key => $values ) {
-			if ( 0 !== strpos( $key, 'wpcd_server_' ) ) {
+			if ( 0 !== strpos( $key, 'sstk_server_' ) ) {
 				continue;
 			}
 
@@ -449,7 +455,7 @@ class SimpleStack_REST_Servers extends SimpleStack_REST_Controller_Base {
 				$value = $value[0];
 			}
 
-			$meta[ str_replace( 'wpcd_server_', '', $key ) ] = $value;
+			$meta[ str_replace( 'sstk_server_', '', $key ) ] = $value;
 		}
 
 		return $meta;

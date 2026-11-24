@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
-# Syntax-check the provisioning scripts. They ship as .txt but are Bash.
-# shellcheck runs in advisory mode: its findings are printed but do not fail
-# the gate, because the inherited v1 scripts carry a large warning backlog.
+# Syntax-check the provisioning scripts. They ship mostly as .txt but are Bash;
+# the backup and sync helpers are extensionless. shellcheck runs in advisory mode:
+# its findings are printed but do not fail the gate because the provisioning scripts
+# carry a large warning backlog.
 #
 set -euo pipefail
 
@@ -13,7 +14,7 @@ cd "$(dirname "$0")/.."
 NON_SHELL_PATTERN='6G-Firewall-OLS\.txt|7G-Firewall-OLS\.txt|environment variables\.txt|readme\.txt|_description\.txt'
 
 list_scripts() {
-	find includes -path '*/scripts/*/raw/*.txt' -type f -print \
+	find includes -path '*/scripts/*/raw/*' -type f -print \
 		| grep -Ev "$NON_SHELL_PATTERN"
 }
 

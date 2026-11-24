@@ -1,8 +1,10 @@
 <?php
 /**
- * SimpleStack REST controller for cloud provider settings.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * Simple Stack REST controller for cloud provider settings.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,14 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class SimpleStack_REST_Providers
+ * Class SSTK_REST_Providers
  *
  * The provider settings screen is the one place where the browser talks about
  * credentials, so this controller never returns a credential value. It returns
  * booleans ("is it set"), feature flags and counts, and it encrypts anything the
  * client writes before it reaches the options table.
  */
-class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
+class SSTK_REST_Providers extends SSTK_REST_Controller_Base {
 
 	/**
 	 * Route segment owned by this controller.
@@ -27,7 +29,7 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 	protected $name = 'settings/providers';
 
 	/**
-	 * Path fragment matching a provider slug such as vultr-v2 or digital-ocean.
+	 * Path fragment matching a provider slug such as vultr-v2 or upcloud.
 	 */
 	const SLUG_PATH = '/(?P<slug>[a-z0-9-]+)';
 
@@ -60,27 +62,27 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 		$this->register_get_route(
 			$this->name,
 			'list_providers',
-			array( 'refresh' => $this->arg_int( __( 'Set to 1 to bypass the cached region and size counts.', 'wpcd' ), false, 0, 1, 0 ) )
+			array( 'refresh' => $this->arg_int( __( 'Set to 1 to bypass the cached region and size counts.', 'simple-stack' ), false, 0, 1, 0 ) )
 		);
 
 		$this->register_post_route(
 			$this->name,
 			'save_provider',
 			array(
-				'slug'          => $this->arg_string( __( 'Provider slug.', 'wpcd' ), true ),
-				'api_key'       => $this->arg_text( __( 'Provider API key. Encrypted before it is stored.', 'wpcd' ) ),
-				'user_name'     => $this->arg_string( __( 'Provider account user name, for providers that authenticate with a user name and password instead of an api key. Encrypted before it is stored.', 'wpcd' ) ),
-				'user_password' => $this->arg_text( __( 'Provider account password. Encrypted before it is stored.', 'wpcd' ) ),
-				'ssh_key_id'    => $this->arg_string( __( 'Provider side id of the registered SSH key.', 'wpcd' ) ),
-				'ssh_key'       => $this->arg_text( __( 'Private SSH key. Encrypted before it is stored.', 'wpcd' ) ),
-				'notes'         => $this->arg_string( __( 'Free text notes for this credential.', 'wpcd' ) ),
+				'slug'          => $this->arg_string( __( 'Provider slug.', 'simple-stack' ), true ),
+				'api_key'       => $this->arg_text( __( 'Provider API key. Encrypted before it is stored.', 'simple-stack' ) ),
+				'user_name'     => $this->arg_string( __( 'Provider account user name, for providers that authenticate with a user name and password instead of an api key. Encrypted before it is stored.', 'simple-stack' ) ),
+				'user_password' => $this->arg_text( __( 'Provider account password. Encrypted before it is stored.', 'simple-stack' ) ),
+				'ssh_key_id'    => $this->arg_string( __( 'Provider side id of the registered SSH key.', 'simple-stack' ) ),
+				'ssh_key'       => $this->arg_text( __( 'Private SSH key. Encrypted before it is stored.', 'simple-stack' ) ),
+				'notes'         => $this->arg_string( __( 'Free text notes for this credential.', 'simple-stack' ) ),
 			)
 		);
 
 		$this->register_post_route(
 			$this->name . self::SLUG_PATH . '/test',
 			'test_provider',
-			array( 'slug' => $this->arg_string( __( 'Provider slug.', 'wpcd' ), true ) )
+			array( 'slug' => $this->arg_string( __( 'Provider slug.', 'simple-stack' ), true ) )
 		);
 	}
 
@@ -98,7 +100,7 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 		$refresh = (int) $request->get_param( 'refresh' );
 		$items   = array();
 
-		foreach ( WPCD()->get_cloud_providers() as $slug => $label ) {
+		foreach ( SSTK()->get_cloud_providers() as $slug => $label ) {
 			$items[] = $this->describe_provider( (string) $slug, (string) $label, 1 === $refresh );
 		}
 
@@ -123,16 +125,16 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 
 		$slug = (string) $request->get_param( 'slug' );
 
-		if ( ! array_key_exists( $slug, WPCD()->get_cloud_providers() ) ) {
-			return $this->error( 'simplestack_invalid_provider', __( 'Unknown provider.', 'wpcd' ), 400 );
+		if ( ! array_key_exists( $slug, SSTK()->get_cloud_providers() ) ) {
+			return $this->error( 'sstk_invalid_provider', __( 'Unknown provider.', 'simple-stack' ), 400 );
 		}
 
-		$api          = WPCD()->get_provider_api( $slug );
+		$api          = SSTK()->get_provider_api( $slug );
 		$uses_api_key = empty( $api ) ? true : $api->uses_api_key();
 
 		/*
 		 * Not every provider authenticates with an api key - UpCloud uses an account user
-		 * name and password.  Storing a supplied api_key under `vpn_upcloud_apikey` would
+		 * name and password.  Storing a supplied api_key under `sstk_upcloud_apikey` would
 		 * put the password somewhere no part of the provider ever reads again, so write
 		 * only the keys that match the provider's credential shape.
 		 */
@@ -142,35 +144,35 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 		/* An empty field means "leave what is stored alone" so a masked value is never written back. */
 		if ( $uses_api_key ) {
 			if ( ! empty( $api_key ) ) {
-				wpcd_set_option( "vpn_{$slug}_apikey", WPCD()->encrypt( $api_key ) );
+				sstk_set_option( "sstk_{$slug}_apikey", SSTK()->encrypt( $api_key ) );
 			}
 		} else {
 			$user_name = (string) $request->get_param( 'user_name' );
 			if ( ! empty( $user_name ) ) {
-				wpcd_set_option( "vpn_{$slug}_user_name", WPCD()->encrypt( $user_name ) );
+				sstk_set_option( "sstk_{$slug}_user_name", SSTK()->encrypt( $user_name ) );
 			}
 
 			$user_password = (string) $request->get_param( 'user_password' );
 			if ( ! empty( $user_password ) ) {
-				wpcd_set_option( "vpn_{$slug}_user_password", WPCD()->encrypt( $user_password ) );
+				sstk_set_option( "sstk_{$slug}_user_password", SSTK()->encrypt( $user_password ) );
 			}
 		}
 
 		if ( ! empty( $ssh_key ) ) {
-			wpcd_set_option( "vpn_{$slug}_sshkey", WPCD()->encrypt( $ssh_key ) );
+			sstk_set_option( "sstk_{$slug}_sshkey", SSTK()->encrypt( $ssh_key ) );
 		}
 
 		$ssh_key_id = (string) $request->get_param( 'ssh_key_id' );
 		if ( ! empty( $ssh_key_id ) ) {
-			wpcd_set_option( "vpn_{$slug}_sshkey_id", $ssh_key_id );
+			sstk_set_option( "sstk_{$slug}_sshkey_id", $ssh_key_id );
 		}
 
 		$notes = (string) $request->get_param( 'notes' );
 		if ( '' !== $notes ) {
-			wpcd_set_option( "vpn_{$slug}_keynotes", $notes );
+			sstk_set_option( "sstk_{$slug}_keynotes", $notes );
 		}
 
-		return $this->respond( $this->describe_provider( $slug, (string) WPCD()->get_cloud_providers()[ $slug ], true ) );
+		return $this->respond( $this->describe_provider( $slug, (string) SSTK()->get_cloud_providers()[ $slug ], true ) );
 	}
 
 	/**
@@ -185,14 +187,14 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 	public function test_provider( WP_REST_Request $request ) {
 
 		$slug = (string) $request->get_param( 'slug' );
-		$api  = WPCD()->get_provider_api( $slug );
+		$api  = SSTK()->get_provider_api( $slug );
 
 		if ( empty( $api ) ) {
-			return $this->error( 'simplestack_provider_unavailable', __( 'That provider is not installed in this build.', 'wpcd' ), 400 );
+			return $this->error( 'sstk_provider_unavailable', __( 'That provider is not installed in this build.', 'simple-stack' ), 400 );
 		}
 
 		if ( ! $api->credentials_available() ) {
-			return $this->error( 'simplestack_provider_credentials_missing', __( 'The provider credentials are incomplete. Add the API key and SSH key first.', 'wpcd' ), 400 );
+			return $this->error( 'sstk_provider_credentials_missing', __( 'The provider credentials are incomplete. Add the API key and SSH key first.', 'simple-stack' ), 400 );
 		}
 
 		$result = $api->call( 'test_connection', array() );
@@ -211,7 +213,7 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 			array(
 				'slug'      => $slug,
 				'connected' => true,
-				'message'   => __( 'Connection succeeded.', 'wpcd' ),
+				'message'   => __( 'Connection succeeded.', 'simple-stack' ),
 			)
 		);
 	}
@@ -227,7 +229,7 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 	 */
 	protected function describe_provider( string $slug, string $label, bool $refresh ): array {
 
-		$api = WPCD()->get_provider_api( $slug );
+		$api = SSTK()->get_provider_api( $slug );
 
 		$data = array(
 			'slug'                  => $slug,
@@ -253,10 +255,10 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 		$data['credentials_available'] = (bool) $api->credentials_available();
 		$data['uses_api_key']          = (bool) $api->uses_api_key();
 		$data['has_credentials']       = (bool) $api->has_credentials();
-		$data['has_api_key']           = ! empty( wpcd_get_early_option( "vpn_{$slug}_apikey" ) );
-		$data['has_user_password']     = ( ! empty( wpcd_get_early_option( "vpn_{$slug}_user_name" ) ) && ! empty( wpcd_get_early_option( "vpn_{$slug}_user_password" ) ) );
-		$data['has_ssh_key']           = ! empty( wpcd_get_early_option( "vpn_{$slug}_sshkey" ) );
-		$data['has_ssh_key_id']        = ! empty( wpcd_get_early_option( "vpn_{$slug}_sshkey_id" ) );
+		$data['has_api_key']           = ! empty( sstk_get_early_option( "sstk_{$slug}_apikey" ) );
+		$data['has_user_password']     = ( ! empty( sstk_get_early_option( "sstk_{$slug}_user_name" ) ) && ! empty( sstk_get_early_option( "sstk_{$slug}_user_password" ) ) );
+		$data['has_ssh_key']           = ! empty( sstk_get_early_option( "sstk_{$slug}_sshkey" ) );
+		$data['has_ssh_key_id']        = ! empty( sstk_get_early_option( "sstk_{$slug}_sshkey_id" ) );
 
 		foreach ( $this->reported_features as $feature ) {
 			$data['features'][ $feature ] = (bool) $api->get_feature_flag( $feature );
@@ -289,7 +291,7 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 	 */
 	protected function provider_counts( string $slug, $api, bool $refresh ): array {
 
-		$cache_key = 'simplestack_provider_counts_' . $slug;
+		$cache_key = 'sstk_provider_counts_' . $slug;
 
 		if ( ! $refresh ) {
 			$cached = get_transient( $cache_key );
@@ -344,8 +346,8 @@ class SimpleStack_REST_Providers extends SimpleStack_REST_Controller_Base {
 
 		$summary = array();
 
-		foreach ( array_keys( WPCD()->get_cloud_providers() ) as $slug ) {
-			$cached = get_transient( 'simplestack_provider_counts_' . $slug );
+		foreach ( array_keys( SSTK()->get_cloud_providers() ) as $slug ) {
+			$cached = get_transient( 'sstk_provider_counts_' . $slug );
 
 			$summary[ $slug ] = array(
 				'regions' => is_array( $cached ) ? (int) $cached['regions'] : 0,

@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_SSH_LOG class for ssh log.
+ * SSTK_SSH_LOG class for ssh log.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_SSH_LOG
+ * Class SSTK_SSH_LOG
  */
-class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
+class SSTK_SSH_LOG extends SSTK_POSTS_LOG {
 
 	/**
-	 * WPCD_SSH_LOG instance.
+	 * SSTK_SSH_LOG instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -25,7 +26,7 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 	}
 
 	/**
-	 * WPCD_SSH_LOG constructor.
+	 * SSTK_SSH_LOG constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
@@ -45,16 +46,16 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 		add_action( 'save_post', array( $this, 'save_meta_values' ), 10, 2 );
 
 		// Filter hook to add new columns.
-		add_filter( 'manage_wpcd_ssh_log_posts_columns', array( $this, 'ssh_log_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_ssh_log_posts_columns', array( $this, 'ssh_log_table_head' ), 10, 1 );
 
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_ssh_log_posts_custom_column', array( $this, 'ssh_log_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_ssh_log_posts_custom_column', array( $this, 'ssh_log_table_content' ), 10, 2 );
 
 		// Filter hook to add sortable columns.
-		add_filter( 'manage_edit-wpcd_ssh_log_sortable_columns', array( $this, 'ssh_log_table_sorting' ), 10, 1 );
+		add_filter( 'manage_edit-sstk_ssh_log_sortable_columns', array( $this, 'ssh_log_table_sorting' ), 10, 1 );
 
 		// Filter hook to remove edit bulk action.
-		add_filter( 'bulk_actions-edit-wpcd_ssh_log', array( $this, 'wpcd_log_bulk_actions' ), 10, 1 );
+		add_filter( 'bulk_actions-edit-sstk_ssh_log', array( $this, 'sstk_log_bulk_actions' ), 10, 1 );
 	}
 
 	/**
@@ -62,25 +63,25 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 	 */
 	public function register() {
 		register_post_type(
-			'wpcd_ssh_log',
+			'sstk_ssh_log',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'SSH Logs', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'SSH Log', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => _x( 'SSH Log', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'SSH Log', 'Add New on Toolbar', 'wpcd' ),
-					'edit_item'             => __( 'Edit SSH Log', 'wpcd' ),
-					'view_item'             => __( 'View SSH Log', 'wpcd' ),
-					'all_items'             => __( 'SSH Logs', 'wpcd' ), // Label to signify all items in a submenu link.
-					'search_items'          => __( 'Search SSH Logs', 'wpcd' ),
-					'not_found'             => __( 'No SSH Logs were found.', 'wpcd' ),
-					'not_found_in_trash'    => __( 'No SSH Logs were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter SSH Logs list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'SSH Logs list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'SSH Logs list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'SSH Logs', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'SSH Log', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => _x( 'SSH Log', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'SSH Log', 'Add New on Toolbar', 'simple-stack' ),
+					'edit_item'             => __( 'Edit SSH Log', 'simple-stack' ),
+					'view_item'             => __( 'View SSH Log', 'simple-stack' ),
+					'all_items'             => __( 'SSH Logs', 'simple-stack' ), // Label to signify all items in a submenu link.
+					'search_items'          => __( 'Search SSH Logs', 'simple-stack' ),
+					'not_found'             => __( 'No SSH Logs were found.', 'simple-stack' ),
+					'not_found_in_trash'    => __( 'No SSH Logs were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter SSH Logs list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'SSH Logs list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'SSH Logs list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
-				'show_in_menu'        => 'edit.php?post_type=wpcd_app_server',
+				'show_in_menu'        => 'edit.php?post_type=sstk_app_server',
 				'menu_position'       => null,
 				'show_in_nav_menus'   => true,
 				'show_in_admin_bar'   => false,
@@ -93,14 +94,14 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 				'capability_type'     => 'post',
 				'capabilities'        => array(
 					'create_posts' => false,
-					'read_posts'   => 'wpcd_manage_logs',
-					'edit_posts'   => 'wpcd_manage_logs',
+					'read_posts'   => 'sstk_manage_logs',
+					'edit_posts'   => 'sstk_manage_logs',
 				),
 				'map_meta_cap'        => true,
 			)
 		);
 
-		$this->set_post_type( 'wpcd_ssh_log' );
+		$this->set_post_type( 'sstk_ssh_log' );
 
 		$search_fields = array(
 			'parent_post_id',
@@ -138,7 +139,7 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 
 		switch ( $column_name ) {
 
-			case 'wpcd_server':
+			case 'sstk_server':
 				// Display the name of the server.
 				$server_post_id = get_post_meta( $post_id, 'parent_post_id', true );
 				$server_post    = get_post( $server_post_id );
@@ -147,12 +148,12 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 					$value        = sprintf( '<a href="%s">' . $server_title . '</a>', get_edit_post_link( $server_post_id ) );
 					$value        = $value . '<br />' . 'id: ' . (string) $server_post_id;
 				} else {
-					$value = __( 'missing server record - server deleted?', 'wpcd' );
+					$value = __( 'missing server record - server deleted?', 'simple-stack' );
 				}
 
 				break;
 
-			case 'wpcd_ssh_cmd':
+			case 'sstk_ssh_cmd':
 				// Display the ssh command that was executed.
 				$string_length = 100;
 				$ssh_cmd       = wp_kses_post( get_post_meta( $post_id, 'ssh_cmd', true ) );
@@ -163,7 +164,7 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 				$value = $ssh_cmd;
 				break;
 
-			case 'wpcd_ssh_result':
+			case 'sstk_ssh_result':
 				// Display a portion of the ssh command result.
 				$string_length  = 100;
 				$ssh_cmd_result = wp_kses_post( get_post_meta( $post_id, 'ssh_cmd_result', true ) );
@@ -203,10 +204,10 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 
 		unset( $defaults['date'] );
 
-		$defaults['wpcd_server']     = __( 'Server', 'wpcd' );
-		$defaults['wpcd_ssh_cmd']    = __( 'SSH CMD', 'wpcd' );
-		$defaults['wpcd_ssh_result'] = __( 'SSH Result', 'wpcd' );
-		$defaults['date']            = __( 'Date', 'wpcd' );
+		$defaults['sstk_server']     = __( 'Server', 'simple-stack' );
+		$defaults['sstk_ssh_cmd']    = __( 'SSH CMD', 'simple-stack' );
+		$defaults['sstk_ssh_result'] = __( 'SSH Result', 'simple-stack' );
+		$defaults['date']            = __( 'Date', 'simple-stack' );
 
 		return $defaults;
 
@@ -219,9 +220,9 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 
 		add_meta_box(
 			'ssh_log',
-			__( 'SSH Log', 'wpcd' ),
+			__( 'SSH Log', 'simple-stack' ),
 			array( $this, 'render_ssh_log_meta_box' ),
-			'wpcd_ssh_log',
+			'sstk_ssh_log',
 			'advanced',
 			'high'
 		);
@@ -244,7 +245,7 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 		$ssh_cmd_result = get_post_meta( $post->ID, 'ssh_cmd_result', true );
 
 		ob_start();
-		require wpcd_path . 'includes/templates/ssh_log.php';
+		require SSTK_PATH . 'includes/templates/ssh_log.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -267,9 +268,10 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @param int    $parent_post_id The post id that represents the item this log is being done against.
 	 * @param string $cmd The command that was executed.
-	 * @param string $result The result of that command.
+	 * @param string $result  The result of that command.
+	 * @param array  $secrets Exact secret values to remove from the log.
 	 */
-	public function add_ssh_log_entry( $parent_post_id, $cmd, $result ) {
+	public function add_ssh_log_entry( $parent_post_id, $cmd, $result, $secrets = array() ) {
 
 		// Author is current user or system.
 		$author_id = get_current_user();
@@ -284,7 +286,7 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 
 		$post_id = wp_insert_post(
 			array(
-				'post_type'   => 'wpcd_ssh_log',
+				'post_type'   => 'sstk_ssh_log',
 				'post_status' => 'private',
 				'post_title'  => 'Command executed against: ' . $post->post_title,
 				'post_author' => $author_id,
@@ -294,10 +296,12 @@ class WPCD_SSH_LOG extends WPCD_POSTS_LOG {
 		// Remove some strings from the result that could be confusing to the reader.
 		$result = $this->remove_common_strings( $result );
 
-		// Remove known password strings.
-		$pwarray = $this->wpcd_get_pw_terms_to_clean();
-		$cmd     = wpcd_replace_key_value_paired_strings( $pwarray, $cmd );
-		$result  = wpcd_replace_key_value_paired_strings( $pwarray, $result );
+		// Remove known password strings and exact values from both stored fields.
+		$pwarray = $this->sstk_get_pw_terms_to_clean();
+		$cmd     = sstk_replace_key_value_paired_strings( $pwarray, $cmd );
+		$result  = sstk_replace_key_value_paired_strings( $pwarray, $result );
+		$cmd     = sstk_redact_secret_text( $cmd, $secrets );
+		$result  = sstk_redact_secret_text( $result, $secrets );
 
 		if ( ! is_wp_error( $post_id ) && ! empty( $post_id ) ) {
 			update_post_meta( $post_id, 'parent_post_id', $parent_post_id );    // using the parent post id to link back to the master record.

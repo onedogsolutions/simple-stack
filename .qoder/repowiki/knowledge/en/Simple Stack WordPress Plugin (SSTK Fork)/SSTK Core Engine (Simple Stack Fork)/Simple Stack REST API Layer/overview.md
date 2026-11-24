@@ -1,1 +1,1 @@
-WordPress REST API surface under the simple-stack/v1 namespace that exposes servers, sites, logs, tabs, providers, and security posture to the SimpleStack React admin client.
+WordPress REST API surface under the simple-stack/v1 namespace that exposes servers, sites, logs, tabs, providers, and security posture to the Simple Stack React admin client.

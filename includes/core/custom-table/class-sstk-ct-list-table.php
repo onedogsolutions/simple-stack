@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Class to handle main page table view
  */
-class WPCD_CT_List_Table extends \MetaBox\CustomTable\Model\ListTable {
+class SSTK_CT_List_Table extends \MetaBox\CustomTable\Model\ListTable {
 	
 	/**
 	 * Base url for table page
@@ -38,7 +39,7 @@ class WPCD_CT_List_Table extends \MetaBox\CustomTable\Model\ListTable {
 
 		$this->_column_headers = $this->get_column_info();
 		
-		$custom_table = WPCD_MB_Custom_Table::get( $this->model->name );
+		$custom_table = SSTK_MB_Custom_Table::get( $this->model->name );
 		$per_page = $this->get_items_per_page( "{$this->model->name}_per_page", 20 );
 		
 		$page     = $this->get_pagenum();
@@ -67,7 +68,7 @@ class WPCD_CT_List_Table extends \MetaBox\CustomTable\Model\ListTable {
 	 * @return string
 	 */
 	public function item_link( $item ) {
-		$custom_table = WPCD_MB_Custom_Table::get( $this->model->name );
+		$custom_table = SSTK_MB_Custom_Table::get( $this->model->name );
 		return 
 		add_query_arg( [
 			'model-action' => 'edit',

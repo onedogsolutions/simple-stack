@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Handle admin menu, admin pages and enqueue scripts
  */
-class WPCD_CT_Admin extends \MetaBox\CustomTable\Model\Admin {
+class SSTK_CT_Admin extends \MetaBox\CustomTable\Model\Admin {
 	
 	/**
 	 * Model Object
@@ -82,7 +83,7 @@ class WPCD_CT_Admin extends \MetaBox\CustomTable\Model\Admin {
 	 * @return string
 	 */
 	public function template_submit_box() {
-		$custom_table = WPCD_MB_Custom_Table::get( $this->model->name );
+		$custom_table = SSTK_MB_Custom_Table::get( $this->model->name );
 		return $custom_table->submit_box();
 	}
 
@@ -97,7 +98,7 @@ class WPCD_CT_Admin extends \MetaBox\CustomTable\Model\Admin {
 			return;
 		}
 
-		$this->list_table = new WPCD_CT_List_Table( [
+		$this->list_table = new SSTK_CT_List_Table( [
 			'model' => $this->model,
 		] );
 		
@@ -139,7 +140,7 @@ class WPCD_CT_Admin extends \MetaBox\CustomTable\Model\Admin {
 		$action = $this->action();
 		$view = in_array( $action, ['add', 'edit'] ) ? $action : 'list-table';
 		
-		$custom_table = WPCD_MB_Custom_Table::get( $this->model->name );
+		$custom_table = SSTK_MB_Custom_Table::get( $this->model->name );
 		
 		if( !$custom_table ) {
 			return;
@@ -160,7 +161,7 @@ class WPCD_CT_Admin extends \MetaBox\CustomTable\Model\Admin {
 	 * @return boolean
 	 */
 	private function is_screen_edit() {
-		$custom_table = WPCD_MB_Custom_Table::get( $this->model->name );
+		$custom_table = SSTK_MB_Custom_Table::get( $this->model->name );
 		
 		return $custom_table->is_custom_table_page() && $custom_table->is_item_add_edit_screen();
 	}
@@ -171,7 +172,7 @@ class WPCD_CT_Admin extends \MetaBox\CustomTable\Model\Admin {
 	 * @return boolean
 	 */
 	private function is_screen_list() {
-		$custom_table = WPCD_MB_Custom_Table::get( $this->model->name );
+		$custom_table = SSTK_MB_Custom_Table::get( $this->model->name );
 		return $custom_table->is_custom_table_page() && !$custom_table->is_item_add_edit_screen();
 	}
 

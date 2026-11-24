@@ -1,0 +1,119 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+    schedule:
+        - cron: "0 0 * * MON"
+
+jobs:
+    check-cs:
+        name: Check Coding Standards
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                persist-credentials: false
+
+            - name: Setup Castor
+              uses: castor-php/setup-castor@2a495b8c91f00be6768ad8a040ba8634c797d386 # v1.1.0
+
+            - name: Run CS check
+              run: castor cs --dry-run
+
+    phpstan:
+        name: Static Analysis
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                persist-credentials: false
+
+            - name: Setup Castor
+              uses: castor-php/setup-castor@2a495b8c91f00be6768ad8a040ba8634c797d386 # v1.1.0
+
+            - name: Install dependencies
+              run: castor install
+
+            - name: Run PHPStan
+              run: castor phpstan
+
+    ci:
+        name: Test PHP ${{ matrix.php-version }} on ${{ matrix.os }} ${{ matrix.name }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, macos-latest]
+                php-version: ["8.4", "8.5"]
+                composer-flags: [""]
+                name: [""]
+                include:
+                    - os: ubuntu-latest
+                      php-version: 8.3
+                      composer-flags: "--prefer-lowest"
+                      name: "(prefer lowest dependencies)"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                persist-credentials: false
+
+            - name: Setup PHP, with composer and extensions
+              uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+              with:
+                  php-version: ${{ matrix.php-version }}
+                  extensions: mbstring, xml, ffi
+                  ini-values: phar.readonly="Off"
+
+            - name: Get composer cache directory
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+            - name: Cache composer dependencies
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: ${{ runner.os }}-composer-${{ github.sha }}
+                  restore-keys: ${{ runner.os }}-composer-
+
+            - name: Install Composer dependencies
+              run: |
+                  composer update --prefer-dist --no-interaction ${{ matrix.composer-flags }}
+
+            - name: Install libnotify4 for LibNotifyDriver
+              if: runner.os == 'Linux'
+              run: |
+                sudo apt-get install -y --no-install-recommends --no-install-suggests libnotify4
+
+            - name: Run Tests
+              run: php vendor/bin/phpunit
+
+    phar:
+        name: Create a PHAR and ensure it is working
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                persist-credentials: false
+
+            - name: Install libnotify4 for LibNotifyDriver
+              run: |
+                sudo apt-get install -y --no-install-recommends --no-install-suggests libnotify4
+
+            - name: Build the PHAR
+              uses: ./.github/actions/phar
+
+            - name: Execute the PHAR
+              run: |
+                tools/phar/build/jolinotif.phar --help
+
+            - name: Trigger a notification
+              run: |
+                # This command will fail because libnotify will fail to send a notification to a real desktop environment
+                # But we still ensure that everything else in the PHAR works
+                tools/phar/build/jolinotif.phar --title "Yolo" --body "Hello world!" --verbose | grep "Notification failed with LibNotifyDriver"

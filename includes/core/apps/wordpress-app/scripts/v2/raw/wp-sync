@@ -1,18 +1,14 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 # this is the helper script. you don't need to run it directly
 
 function check_webserver() {
-	if [ -e /usr/local/lsws/bin/lshttpd ]
-	then
-		if /usr/local/lsws/bin/lshttpd -v | grep -q Open
-		then
+	webserver_type='unsupported'
+	if [ -x /usr/local/lsws/bin/lshttpd ]; then
+		webserver_version=$(/usr/local/lsws/bin/lshttpd -v)
+		if [[ "$webserver_version" == *Open* && "$webserver_version" != *Enterprise* ]]; then
 			webserver_type='ols'
-		elif /usr/local/lsws/bin/lshttpd -v | grep -q Enterprise
-		then
-			webserver_type='ols-enterprise'
 		fi
-	else
-		webserver_type='nginx'
 	fi
 }
 
@@ -45,17 +41,20 @@ fi
 
 # What's the local server type?
 check_webserver
+if [ "$webserver_type" != "ols" ]
+then
+	echo "$(date) OpenLiteSpeed is required on the local server" >> /var/log/wp-sync.log
+	rm -f /tmp/wp-sync.lock
+	exit 1
+fi
 
 # What's the remote server type?
-remote_webserver_type=$(ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest "if sudo test -f /usr/local/lsws/bin/lshttpd; then echo "ols"; else echo "nginx"; fi")
-
-# Compare them and exit if they're not the same.
-if ! [[ $webserver_type =~ $remote_webserver_type ]]
+remote_webserver_type=$(ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest 'if [ -x /usr/local/lsws/bin/lshttpd ]; then webserver_version=$(/usr/local/lsws/bin/lshttpd -v); if [[ "$webserver_version" == *Open* && "$webserver_version" != *Enterprise* ]]; then echo ols; else echo unsupported; fi; else echo unsupported; fi')
+if [ "$remote_webserver_type" != "ols" ]
 then
-	echo "Local Webserver type is $webserver_type But Remote Webserver is other than $webserver_type . 
-	Both server webserver type should be same" >> /var/log/wp-sync.log
+	echo "$(date) OpenLiteSpeed is required on the destination server" >> /var/log/wp-sync.log
 	rm -f /tmp/wp-sync.lock
-	exit
+	exit 1
 fi
 
 # remove leftover from 71-origin.sh
@@ -104,7 +103,6 @@ ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest "rm -f /
 
 # sync files.
 rsync -aLK --delete -e "ssh -o StrictHostKeyChecking=no -i ~$localuser/.ssh/id_rsa" /var/www root@$dest:/var && echo "$(date) Site sync completed" >> /var/log/wp-sync.log || echo "$(date) Site sync failed" >> /var/log/wp-sync.log
-rsync -a --delete -e "ssh -o StrictHostKeyChecking=no -i ~$localuser/.ssh/id_rsa" /etc/nginx root@$dest:/etc > /dev/null 2>&1
 rsync -a --delete -e "ssh -o StrictHostKeyChecking=no -i ~$localuser/.ssh/id_rsa" /etc/php root@$dest:/etc  > /dev/null 2>&1
 rsync -a --delete -e "ssh -o StrictHostKeyChecking=no -i ~$localuser/.ssh/id_rsa" /usr/local/lsws root@$dest:/usr/local/ > /dev/null 2>&1
 rsync -a --delete -e "ssh -o StrictHostKeyChecking=no -i ~$localuser/.ssh/id_rsa" /etc/letsencrypt root@$dest:/etc > /dev/null 2>&1
@@ -114,20 +112,8 @@ ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest "sed -i 
 # exclude root crontab because we don't want to migrate the backup wp-backup job.
 rsync -a --delete -e "ssh -o StrictHostKeyChecking=no -i ~$localuser/.ssh/id_rsa" --exclude /var/spool/cron/crontabs/root /var/spool/cron root@$dest:/var/spool
 
-# Restart services.
-if [ "$webserver_type" = "nginx" ]
-then
-	# restart services
-	phpversion=(5.6 7.1 7.2 7.3 7.4 8.0 8.1 8.2)
-	for ver in "${phpversion[@]}"
-	do
-		ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest "[[ ! -f /etc/wpcd/php-versions-disabled/$ver ]] && systemctl restart php$ver-fpm" && echo "$(date) PHP $ver restart completed" >> /var/log/wp-sync.log || echo "$(date) PHP $ver restart failed" >> /var/log/wp-sync.log
-	done
-elif [ "$webserver_type" = "ols" ] || [ "$webserver_type" = "ols-enterprise" ]
-then
-	ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest "/usr/local/lsws/bin/lswsctrl stop >/dev/null 2>&1 ; killall lsphp >/dev/null 2>&1 ; systemctl stop lsws >/dev/null 2>&1; systemctl start lsws"
-fi
-
+# Restart OpenLiteSpeed and cron on the destination.
+ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest "systemctl restart lsws" && echo "$(date) OpenLiteSpeed restart completed" >> /var/log/wp-sync.log || echo "$(date) OpenLiteSpeed restart failed" >> /var/log/wp-sync.log
 ssh -o StrictHostKeyChecking=no -i "~$localuser/.ssh/id_rsa" root@$dest "systemctl restart cron" && echo "$(date) cron restart completed" >> /var/log/wp-sync.log || echo "$(date) cron restart failed" >> /var/log/wp-sync.log
 
 # sync sshd config.

@@ -1,8 +1,9 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
  * This file is used to create chart for server statistics data on the server detail screen.
  *
  */
-(function ($, wpcd_server_stat_data) {
+(function ($, sstk_server_stat_data) {
 
     $(document).ready(function () {
         init();
@@ -21,10 +22,10 @@
 
     function init() {
 
-        var chart_column_labels = wpcd_server_stat_data.disk_stat.chart_column_labels;
-        var chart_column_1K_blocks = wpcd_server_stat_data.disk_stat.chart_column_1K_blocks;
-        var chart_column_Used = wpcd_server_stat_data.disk_stat.chart_column_Used;
-        var chart_column_Available = wpcd_server_stat_data.disk_stat.chart_column_Available;
+        var chart_column_labels = sstk_server_stat_data.disk_stat.chart_column_labels;
+        var chart_column_1K_blocks = sstk_server_stat_data.disk_stat.chart_column_1K_blocks;
+        var chart_column_Used = sstk_server_stat_data.disk_stat.chart_column_Used;
+        var chart_column_Available = sstk_server_stat_data.disk_stat.chart_column_Available;
 
         initActions();
         
@@ -37,19 +38,19 @@
         }
 
         // VNSTAT chart for Current Day
-        if (typeof wpcd_server_stat_data.vnstat.curr_day_vnstat_data !== 'undefined'){
-            var curr_day_vnstat_data = JSON.parse(wpcd_server_stat_data.vnstat.curr_day_vnstat_data);
-            createVnstatChart('wpcd-vnstat-data-day-canvas', wpcd_server_stat_data.vnstat.chart_labels.chart_curr_day_title, curr_day_vnstat_data);
+        if (typeof sstk_server_stat_data.vnstat.curr_day_vnstat_data !== 'undefined'){
+            var curr_day_vnstat_data = JSON.parse(sstk_server_stat_data.vnstat.curr_day_vnstat_data);
+            createVnstatChart('sstk-vnstat-data-day-canvas', sstk_server_stat_data.vnstat.chart_labels.chart_curr_day_title, curr_day_vnstat_data);
         }
         // VNSTAT chart for Current month
-        if (typeof wpcd_server_stat_data.vnstat.curr_month_vnstat_data !== 'undefined') {
-            var curr_month_vnstat_data = JSON.parse(wpcd_server_stat_data.vnstat.curr_month_vnstat_data);
-            createVnstatChart('wpcd-vnstat-data-month-canvas', wpcd_server_stat_data.vnstat.chart_labels.chart_curr_month_title, curr_month_vnstat_data);
+        if (typeof sstk_server_stat_data.vnstat.curr_month_vnstat_data !== 'undefined') {
+            var curr_month_vnstat_data = JSON.parse(sstk_server_stat_data.vnstat.curr_month_vnstat_data);
+            createVnstatChart('sstk-vnstat-data-month-canvas', sstk_server_stat_data.vnstat.chart_labels.chart_curr_month_title, curr_month_vnstat_data);
         }
         // VNSTAT chart for All Time
-        if (typeof wpcd_server_stat_data.vnstat.all_time_vnstat_data !== 'undefined') {
-            var all_time_vnstat_data = JSON.parse(wpcd_server_stat_data.vnstat.all_time_vnstat_data);
-            createVnstatChart('wpcd-vnstat-data-all-canvas', wpcd_server_stat_data.vnstat.chart_labels.chart_all_time_title, all_time_vnstat_data);
+        if (typeof sstk_server_stat_data.vnstat.all_time_vnstat_data !== 'undefined') {
+            var all_time_vnstat_data = JSON.parse(sstk_server_stat_data.vnstat.all_time_vnstat_data);
+            createVnstatChart('sstk-vnstat-data-all-canvas', sstk_server_stat_data.vnstat.chart_labels.chart_all_time_title, all_time_vnstat_data);
         }
 
         if (typeof chart_column_labels !== 'undefined'
@@ -63,11 +64,11 @@
 
     function initActions() {
         // Hide text data on load
-        $('#wpcd-diskstatistics-text').closest('.rwmb-row').hide();
-        $('#wpcd-vnstat-text').closest('.rwmb-row').hide();
-        $('#wpcd-vmstat-text').closest('.rwmb-row').hide();
+        $('#sstk-diskstatistics-text').closest('.rwmb-row').hide();
+        $('#sstk-vnstat-text').closest('.rwmb-row').hide();
+        $('#sstk-vmstat-text').closest('.rwmb-row').hide();
 
-        $('body').on('click', '.wpcd-stat-switch', function (e) {
+        $('body').on('click', '.sstk-stat-switch', function (e) {
             e.preventDefault();
             var $this = $(this);
 
@@ -87,31 +88,31 @@
 
         // Holds the chart data for the Disk Statistics
         var diskStatChartData = {
-            labels: JSON.parse(wpcd_server_stat_data.disk_stat.chart_column_labels),
+            labels: JSON.parse(sstk_server_stat_data.disk_stat.chart_column_labels),
             datasets: [{
-                label: wpcd_server_stat_data.disk_stat.chart_labels.chart_column_1K_blocks,
+                label: sstk_server_stat_data.disk_stat.chart_labels.chart_column_1K_blocks,
                 borderColor: window.chartColors.red,
                 backgroundColor: window.chartColors.red,
-                data: JSON.parse(wpcd_server_stat_data.disk_stat.chart_column_1K_blocks)
+                data: JSON.parse(sstk_server_stat_data.disk_stat.chart_column_1K_blocks)
             }, {
-                label: wpcd_server_stat_data.disk_stat.chart_labels.chart_column_Used,
+                label: sstk_server_stat_data.disk_stat.chart_labels.chart_column_Used,
                 borderColor: window.chartColors.gray,
                 backgroundColor: window.chartColors.gray,
-                data: JSON.parse(wpcd_server_stat_data.disk_stat.chart_column_Used)
+                data: JSON.parse(sstk_server_stat_data.disk_stat.chart_column_Used)
             }, {
-                label: wpcd_server_stat_data.disk_stat.chart_labels.chart_column_Available,
+                label: sstk_server_stat_data.disk_stat.chart_labels.chart_column_Available,
                 borderColor: window.chartColors.green,
                 backgroundColor: window.chartColors.green,
-                data: JSON.parse(wpcd_server_stat_data.disk_stat.chart_column_Available)
+                data: JSON.parse(sstk_server_stat_data.disk_stat.chart_column_Available)
             }]
         };
         
-        if( $('#wpcd-diskstatistics-canvas').length == 0 ) {
+        if( $('#sstk-diskstatistics-canvas').length == 0 ) {
                 return;
         }
 
         // Get the element for the chart to render
-        var ctx = document.getElementById('wpcd-diskstatistics-canvas').getContext('2d');
+        var ctx = document.getElementById('sstk-diskstatistics-canvas').getContext('2d');
 
         // Create the Disk Statistics chart
         window.myBar = new Chart(ctx, {
@@ -121,7 +122,7 @@
                 responsive: true,
                 title: {
                     display: true,
-                    text: wpcd_server_stat_data.disk_stat.chart_labels.chart_main_title
+                    text: sstk_server_stat_data.disk_stat.chart_labels.chart_main_title
                 },
                 tooltips: {
                     mode: 'index',
@@ -171,8 +172,8 @@
                     ]
                 }],
                 labels: [
-                    wpcd_server_stat_data.vnstat.chart_labels.chart_rx_label,
-                    wpcd_server_stat_data.vnstat.chart_labels.chart_tx_label
+                    sstk_server_stat_data.vnstat.chart_labels.chart_rx_label,
+                    sstk_server_stat_data.vnstat.chart_labels.chart_tx_label
                 ]
             },
             options: {
@@ -203,9 +204,9 @@
 
         // Holds the chart data for the VMSTAT
         var vmstatBarChartData = {
-            labels: JSON.parse(wpcd_server_stat_data.vmstat.chart_column_labels),
+            labels: JSON.parse(sstk_server_stat_data.vmstat.chart_column_labels),
             datasets: [{
-                label: wpcd_server_stat_data.vmstat.chart_labels.chart_dataset_label,
+                label: sstk_server_stat_data.vmstat.chart_labels.chart_dataset_label,
                 backgroundColor: [
                     window.chartColors.red,
                     window.chartColors.orange,
@@ -215,16 +216,16 @@
                     window.chartColors.purple,
                     window.chartColors.gray
                 ],
-                data: JSON.parse(wpcd_server_stat_data.vmstat.chart_column_memory)
+                data: JSON.parse(sstk_server_stat_data.vmstat.chart_column_memory)
             }]
         };
         
-        if( $('#wpcd-vmstat-canvas').length == 0 ) {
+        if( $('#sstk-vmstat-canvas').length == 0 ) {
                 return;
         }
 
         // Get the element for the chart to render
-        var ctx = document.getElementById('wpcd-vmstat-canvas').getContext('2d');
+        var ctx = document.getElementById('sstk-vmstat-canvas').getContext('2d');
 
         // Create the VMSTAT chart
         window.myHorizontalBar = new Chart(ctx, {
@@ -237,10 +238,10 @@
                 },
                 title: {
                     display: true,
-                    text: wpcd_server_stat_data.vmstat.chart_labels.chart_main_title
+                    text: sstk_server_stat_data.vmstat.chart_labels.chart_main_title
                 }
             }
         });
     }
 
-})(jQuery, wpcd_server_stat_data);
+})(jQuery, sstk_server_stat_data);

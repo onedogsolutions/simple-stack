@@ -14,7 +14,7 @@
 - [power.php](file://includes/core/apps/wordpress-app/tabs-server/power.php)
 - [script-handlers.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php)
 - [theme-and-plugin-updates.php](file://includes/core/apps/wordpress-app/tabs/theme-and-plugin-updates.php)
-- [class-simplestack-rest-security.php](file://includes/core/api/class-simplestack-rest-security.php)
+- [class-sstk-rest-security.php](file://includes/core/api/class-sstk-rest-security.php)
 </cite>
 
 ## Table of Contents
@@ -30,7 +30,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack’s maintenance utilities for operating system updates, scheduled reboots, database repair and operations, and WordPress CLI management. It focuses on the Bash scripts under `includes/core/apps/wordpress-app/scripts/v2/raw`, their shared helper library, and the PHP interfaces that invoke them from the WordPress admin UI.
+This document explains Simple Stack’s maintenance utilities for operating system updates, scheduled reboots, database repair and operations, and WordPress CLI management. It focuses on the Bash scripts under `includes/core/apps/wordpress-app/scripts/v2/raw`, their shared helper library, and the PHP interfaces that invoke them from the WordPress admin UI.
 
 The maintenance surface includes:
 - Operating system package updates with background execution and callback reporting.
@@ -45,7 +45,7 @@ These utilities are designed for zero-downtime or low-downtime maintenance when 
 - [README.md:1-37](file://README.md#L1-L37)
 
 ## Project Structure
-SimpleStack’s maintenance tooling is primarily implemented as versioned Bash scripts executed over SSH against provisioned servers. The v2 script set lives under `includes/core/apps/wordpress-app/scripts/v2/raw`. A shared helper library provides common functions such as webserver detection, cache flushing, backup orchestration, user selection, and service restarts.
+Simple Stack’s maintenance tooling is primarily implemented as versioned Bash scripts executed over SSH against provisioned servers. The v2 script set lives under `includes/core/apps/wordpress-app/scripts/v2/raw`. A shared helper library provides common functions such as webserver detection, cache flushing, backup orchestration, user selection, and service restarts.
 
 ```mermaid
 graph TB
@@ -429,7 +429,7 @@ Common issues and resolutions:
 - [36-schedule-server-reboot.txt:8-35](file://includes/core/apps/wordpress-app/scripts/v2/raw/36-schedule-server-reboot.txt#L8-L35)
 
 ## Conclusion
-SimpleStack’s maintenance utilities provide a robust foundation for automated system updates, scheduled reboots, database operations, and WordPress updates with rollback capabilities. By combining background execution, callback reporting, backups, and cache management, operators can perform maintenance with minimal downtime. For production environments, prefer scheduled maintenance windows, validate prerequisites, and monitor outcomes through callbacks and logs.
+Simple Stack’s maintenance utilities provide a robust foundation for automated system updates, scheduled reboots, database operations, and WordPress updates with rollback capabilities. By combining background execution, callback reporting, backups, and cache management, operators can perform maintenance with minimal downtime. For production environments, prefer scheduled maintenance windows, validate prerequisites, and monitor outcomes through callbacks and logs.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

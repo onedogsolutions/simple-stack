@@ -19,7 +19,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s core backup operations for WordPress sites. It covers the complete backup workflow, including:
+This document explains Simple Stack’s core backup operations for WordPress sites. It covers the complete backup workflow, including:
 - File system snapshots of WordPress content
 - Web server configuration backups for nginx and OpenLiteSpeed
 - MySQL database exports
@@ -46,8 +46,8 @@ The backup feature spans two main layers:
 graph TB
 subgraph "WordPress Admin"
 UI["Backup Tab UI"]
-Controller["WPCD_WORDPRESS_TABS_BACKUP"]
-CredsTrait["wpcd_wpapp_backup_functions"]
+Controller["SSTK_WORDPRESS_TABS_BACKUP"]
+CredsTrait["sstk_wpapp_backup_functions"]
 end
 subgraph "Server"
 Script["08-backup.txt"]
@@ -99,7 +99,7 @@ The backup flow integrates the WordPress admin UI, PHP controller, and server-si
 sequenceDiagram
 participant Admin as "Admin User"
 participant UI as "Backup Tab UI"
-participant Controller as "WPCD_WORDPRESS_TABS_BACKUP"
+participant Controller as "SSTK_WORDPRESS_TABS_BACKUP"
 participant Trait as "S3 Credentials Trait"
 participant Server as "08-backup.txt"
 participant FS as "/root/.wp-backup/"
@@ -245,7 +245,7 @@ The WordPress admin UI provides a “Run Manual Backup” button. When clicked:
 sequenceDiagram
 participant Admin as "Admin User"
 participant UI as "Backup Tab UI"
-participant Controller as "WPCD_WORDPRESS_TABS_BACKUP"
+participant Controller as "SSTK_WORDPRESS_TABS_BACKUP"
 participant Server as "08-backup.txt"
 Admin->>UI : Click "Run Manual Backup"
 UI->>Controller : POST action "backup-run-manual"
@@ -299,7 +299,7 @@ The backup system has clear separation between orchestration and execution:
 
 ```mermaid
 graph LR
-Controller["WPCD_WORDPRESS_TABS_BACKUP"] --> Trait["S3 Credentials Trait"]
+Controller["SSTK_WORDPRESS_TABS_BACKUP"] --> Trait["S3 Credentials Trait"]
 Controller --> Script["08-backup.txt"]
 Script --> Tools["System Tools<br/>tar, gzip, mysqldump"]
 Script --> WSConf["Webserver Config Directories"]
@@ -344,6 +344,6 @@ Operational tips:
 - [08-backup.txt:890-935](file://includes/core/apps/wordpress-app/scripts/v1/raw/08-backup.txt#L890-L935)
 
 ## Conclusion
-SimpleStack’s backup system provides a robust, multi-layered approach to backing up WordPress environments. The PHP admin interface offers intuitive controls, while the server-side bash script handles comprehensive file, configuration, and database backups with verification and optional cloud storage. Proper configuration of S3 credentials, awareness of webserver-specific behaviors, and adherence to retention policies ensure reliable and efficient backups.
+Simple Stack’s backup system provides a robust, multi-layered approach to backing up WordPress environments. The PHP admin interface offers intuitive controls, while the server-side bash script handles comprehensive file, configuration, and database backups with verification and optional cloud storage. Proper configuration of S3 credentials, awareness of webserver-specific behaviors, and adherence to retention policies ensure reliable and efficient backups.
 
 [No sources needed since this section summarizes without analyzing specific files]

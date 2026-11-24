@@ -4,7 +4,7 @@
 **Referenced Files in This Document**
 - [LogDrawer.jsx](file://src/admin/components/LogDrawer.jsx)
 - [api.js](file://src/admin/lib/api.js)
-- [class-simplestack-rest-logs.php](file://includes/core/api/class-simplestack-rest-logs.php)
+- [class-sstk-rest-logs.php](file://includes/core/api/class-sstk-rest-logs.php)
 - [ServerDetail.jsx](file://src/admin/routes/ServerDetail.jsx)
 - [SiteDetail.jsx](file://src/admin/routes/SiteDetail.jsx)
 </cite>
@@ -36,7 +36,7 @@ This document explains how data is bound, how real-time updates work, how log le
 The LogDrawer feature spans three layers:
 - React UI: `src/admin/components/LogDrawer.jsx`
 - Frontend API client: `src/admin/lib/api.js`
-- Backend REST controller: `includes/core/api/class-simplestack-rest-logs.php`
+- Backend REST controller: `includes/core/api/class-sstk-rest-logs.php`
 - Consumer routes: `src/admin/routes/ServerDetail.jsx` and `src/admin/routes/SiteDetail.jsx`
 
 ```mermaid
@@ -48,7 +48,7 @@ LD["LogDrawer.jsx"]
 API["api.js"]
 end
 subgraph "WordPress REST"
-RLOG["SimpleStack_REST_Logs<br/>GET /servers/{id}/logs"]
+RLOG["SSTK_REST_Logs<br/>GET /servers/{id}/logs"]
 end
 SD --> LD
 SID --> LD
@@ -61,7 +61,7 @@ API --> RLOG
 - [SiteDetail.jsx:158-163](file://src/admin/routes/SiteDetail.jsx#L158-L163)
 - [LogDrawer.jsx:36-80](file://src/admin/components/LogDrawer.jsx#L36-L80)
 - [api.js:253-267](file://src/admin/lib/api.js#L253-L267)
-- [class-simplestack-rest-logs.php:44-65](file://includes/core/api/class-simplestack-rest-logs.php#L44-L65)
+- [class-sstk-rest-logs.php:44-65](file://includes/core/api/class-sstk-rest-logs.php#L44-L65)
 
 **Section sources**
 - [LogDrawer.jsx:1-11](file://src/admin/components/LogDrawer.jsx#L1-L11)
@@ -71,7 +71,7 @@ API --> RLOG
 ## Core Components
 - LogDrawer: Renders the live log panel, manages polling state, and exposes refresh and download actions.
 - api.logs.forServer: Client method that calls the server logs endpoint.
-- SimpleStack_REST_Logs: PHP controller that reads WordPress log post types and returns formatted entries with a cursor.
+- SSTK_REST_Logs: PHP controller that reads WordPress log post types and returns formatted entries with a cursor.
 - ServerDetail and SiteDetail: Parent routes that open the drawer and pass the correct server context.
 
 Responsibilities:
@@ -83,7 +83,7 @@ Responsibilities:
 **Section sources**
 - [LogDrawer.jsx:36-189](file://src/admin/components/LogDrawer.jsx#L36-L189)
 - [api.js:253-267](file://src/admin/lib/api.js#L253-L267)
-- [class-simplestack-rest-logs.php:19-100](file://includes/core/api/class-simplestack-rest-logs.php#L19-L100)
+- [class-sstk-rest-logs.php:19-100](file://includes/core/api/class-sstk-rest-logs.php#L19-L100)
 - [ServerDetail.jsx:174-179](file://src/admin/routes/ServerDetail.jsx#L174-L179)
 - [SiteDetail.jsx:158-163](file://src/admin/routes/SiteDetail.jsx#L158-L163)
 
@@ -96,7 +96,7 @@ participant User as "Operator"
 participant Route as "ServerDetail or SiteDetail"
 participant Drawer as "LogDrawer"
 participant Client as "api.js"
-participant REST as "SimpleStack_REST_Logs"
+participant REST as "SSTK_REST_Logs"
 User->>Route : Click "Show live log"
 Route->>Drawer : Set open=true, pass serverId
 Drawer->>Client : GET /servers/{id}/logs?since=&limit=50&type=all
@@ -114,7 +114,7 @@ Note over Drawer : Every 15 seconds, repeat with last cursor
 - [LogDrawer.jsx:83-101](file://src/admin/components/LogDrawer.jsx#L83-L101)
 - [LogDrawer.jsx:46-80](file://src/admin/components/LogDrawer.jsx#L46-L80)
 - [api.js:253-267](file://src/admin/lib/api.js#L253-L267)
-- [class-simplestack-rest-logs.php:76-100](file://includes/core/api/class-simplestack-rest-logs.php#L76-L100)
+- [class-sstk-rest-logs.php:76-100](file://includes/core/api/class-sstk-rest-logs.php#L76-L100)
 
 ## Detailed Component Analysis
 
@@ -188,7 +188,7 @@ End --> StopTimer["Clear interval"]
 
 **Section sources**
 - [LogDrawer.jsx:54-59](file://src/admin/components/LogDrawer.jsx#L54-L59)
-- [class-simplestack-rest-logs.php:49-54](file://includes/core/api/class-simplestack-rest-logs.php#L49-L54)
+- [class-sstk-rest-logs.php:49-54](file://includes/core/api/class-sstk-rest-logs.php#L49-L54)
 
 #### Log Level Categorization
 - Supported public types: command, ssh, error.
@@ -196,7 +196,7 @@ End --> StopTimer["Clear interval"]
 - Unknown types fall back to the default command styling.
 
 **Section sources**
-- [class-simplestack-rest-logs.php:33-37](file://includes/core/api/class-simplestack-rest-logs.php#L33-L37)
+- [class-sstk-rest-logs.php:33-37](file://includes/core/api/class-sstk-rest-logs.php#L33-L37)
 - [LogDrawer.jsx:21-25](file://src/admin/components/LogDrawer.jsx#L21-L25)
 
 #### Search Functionality
@@ -222,7 +222,7 @@ End --> StopTimer["Clear interval"]
 These examples correspond to the backend mapping of log post types to public types and fields.
 
 **Section sources**
-- [class-simplestack-rest-logs.php:187-222](file://includes/core/api/class-simplestack-rest-logs.php#L187-L222)
+- [class-sstk-rest-logs.php:187-222](file://includes/core/api/class-sstk-rest-logs.php#L187-L222)
 
 ### Backend Logs Controller
 The REST controller defines the server logs route and formats log entries for consumption by the frontend.
@@ -248,14 +248,14 @@ Cursor --> Resp["Return { items, cursor, server, type }"]
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-logs.php:44-65](file://includes/core/api/class-simplestack-rest-logs.php#L44-L65)
-- [class-simplestack-rest-logs.php:76-100](file://includes/core/api/class-simplestack-rest-logs.php#L76-L100)
-- [class-simplestack-rest-logs.php:137-178](file://includes/core/api/class-simplestack-rest-logs.php#L137-L178)
-- [class-simplestack-rest-logs.php:187-238](file://includes/core/api/class-simplestack-rest-logs.php#L187-L238)
+- [class-sstk-rest-logs.php:44-65](file://includes/core/api/class-sstk-rest-logs.php#L44-L65)
+- [class-sstk-rest-logs.php:76-100](file://includes/core/api/class-sstk-rest-logs.php#L76-L100)
+- [class-sstk-rest-logs.php:137-178](file://includes/core/api/class-sstk-rest-logs.php#L137-L178)
+- [class-sstk-rest-logs.php:187-238](file://includes/core/api/class-sstk-rest-logs.php#L187-L238)
 
 **Section sources**
-- [class-simplestack-rest-logs.php:19-100](file://includes/core/api/class-simplestack-rest-logs.php#L19-L100)
-- [class-simplestack-rest-logs.php:137-238](file://includes/core/api/class-simplestack-rest-logs.php#L137-L238)
+- [class-sstk-rest-logs.php:19-100](file://includes/core/api/class-sstk-rest-logs.php#L19-L100)
+- [class-sstk-rest-logs.php:137-238](file://includes/core/api/class-sstk-rest-logs.php#L137-L238)
 
 ### Integration with Routes
 Both ServerDetail and SiteDetail render the LogDrawer with the appropriate server context:
@@ -275,7 +275,7 @@ graph LR
 ServerDetail["ServerDetail.jsx"] --> LogDrawer["LogDrawer.jsx"]
 SiteDetail["SiteDetail.jsx"] --> LogDrawer
 LogDrawer --> ApiJs["api.js"]
-ApiJs --> RestLogs["SimpleStack_REST_Logs"]
+ApiJs --> RestLogs["SSTK_REST_Logs"]
 ```
 
 **Diagram sources**
@@ -283,7 +283,7 @@ ApiJs --> RestLogs["SimpleStack_REST_Logs"]
 - [SiteDetail.jsx:14-15](file://src/admin/routes/SiteDetail.jsx#L14-L15)
 - [LogDrawer.jsx:15-17](file://src/admin/components/LogDrawer.jsx#L15-L17)
 - [api.js:253-267](file://src/admin/lib/api.js#L253-L267)
-- [class-simplestack-rest-logs.php:44-65](file://includes/core/api/class-simplestack-rest-logs.php#L44-L65)
+- [class-sstk-rest-logs.php:44-65](file://includes/core/api/class-sstk-rest-logs.php#L44-L65)
 
 **Section sources**
 - [LogDrawer.jsx:13-17](file://src/admin/components/LogDrawer.jsx#L13-L17)

@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Cloud provider settings.
  *
@@ -129,7 +130,7 @@ export default function ProviderSettings() {
 			{ ! loading && providers.length === 0 && ! error ? (
 				<Card title="No providers registered">
 					<p className="text-sm text-ink-500">
-						The provider registry in <code className="font-mono text-xs">wp-cloud-deploy.php</code> is
+						The provider registry in <code className="font-mono text-xs">simple-stack.php</code> is
 						empty, so nothing can be provisioned.
 					</p>
 				</Card>

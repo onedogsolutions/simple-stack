@@ -20,7 +20,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the Toast notification system used by the SimpleStack admin interface. It covers toast types, positioning, auto-dismiss behavior, programmatic creation, stacking management, user interaction handling, common usage patterns, accessibility, animation considerations, and mobile responsiveness.
+This document explains the Toast notification system used by the Simple Stack admin interface. It covers toast types, positioning, auto-dismiss behavior, programmatic creation, stacking management, user interaction handling, common usage patterns, accessibility, animation considerations, and mobile responsiveness.
 
 The Toast component is a React context provider plus a hook that lets any route or component display brief feedback messages without managing global state manually.
 
@@ -279,4 +279,4 @@ Common issues and resolutions:
 - [Toast.jsx:52-72](file://src/admin/components/Toast.jsx#L52-L72)
 
 ## Conclusion
-The Toast component provides a simple, accessible, and easy-to-use notification system for the SimpleStack admin interface. It supports success, error, and info tones, fixed top-right positioning, automatic dismissal, and a straightforward programmatic API. While animations are not implemented, the design is lightweight and integrates cleanly with existing routes. For richer experiences, consider adding animations, expanded tone support, and optional custom content while maintaining accessibility best practices.
+The Toast component provides a simple, accessible, and easy-to-use notification system for the Simple Stack admin interface. It supports success, error, and info tones, fixed top-right positioning, automatic dismissal, and a straightforward programmatic API. While animations are not implemented, the design is lightweight and integrates cleanly with existing routes. For richer experiences, consider adding animations, expanded tone support, and optional custom content while maintaining accessibility best practices.

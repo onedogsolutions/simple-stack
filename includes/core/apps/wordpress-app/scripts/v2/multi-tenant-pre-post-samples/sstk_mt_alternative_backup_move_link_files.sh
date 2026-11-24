@@ -1,5 +1,6 @@
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 ################################################################################# 
-# wpcd_mt_alternative_backup_move_link_files.sh
+# sstk_mt_alternative_backup_move_link_files.sh
 # This is run for new multi-tenant sites as well as for version upgrades on
 # existing sites.
 #

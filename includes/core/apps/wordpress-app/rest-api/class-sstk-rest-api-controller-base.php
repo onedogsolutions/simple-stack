@@ -1,8 +1,10 @@
 <?php
 /**
- * WordPress App WPCD_REST_API_Controller_Base.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * WordPress App SSTK_REST_API_Controller_Base.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,16 +12,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_REST_API_Controller_Base
+ * Class SSTK_REST_API_Controller_Base
  *
  * Provides common behavior and convenience methods for all controller sub-classes
  */
-abstract class WPCD_REST_API_Controller_Base {
+abstract class SSTK_REST_API_Controller_Base {
 
 	/**
 	 * Root endpoint path
 	 */
-	const NAMESPACE = 'wpcd/v1';
+	const NAMESPACE = 'simple-stack/v1';
 
 	/**
 	 * Regex used when resource ID is present in endpoint URL
@@ -34,7 +36,7 @@ abstract class WPCD_REST_API_Controller_Base {
 	protected $name;
 
 	/**
-	 * WPCD_REST_API_Controller_Base constructor.
+	 * SSTK_REST_API_Controller_Base constructor.
 	 *
 	 * Registers routes
 	 */
@@ -83,7 +85,11 @@ abstract class WPCD_REST_API_Controller_Base {
 				'methods'             => $method,
 				'callback'            => $this->build_callback( $action ),
 				'permission_callback' => function ( WP_REST_Request $request ) {
-					return wpcd_is_admin() ?: $this->handle_exception(
+					if ( sstk_is_admin() ) {
+						return true;
+					}
+
+					return $this->handle_exception(
 						new Exception( 'Incorrect permissions', rest_authorization_required_code() ),
 						$request
 					);
@@ -148,7 +154,7 @@ abstract class WPCD_REST_API_Controller_Base {
 			$callback = array( $this, $callback );
 		}
 		// wrapper function actually used by rest api server.
-		return function( WP_REST_Request $request ) use ( $callback ) {
+		return function ( WP_REST_Request $request ) use ( $callback ) {
 			try {
 				$response = call_user_func( $callback, $request );
 			} catch ( \Throwable $e ) {
@@ -169,7 +175,7 @@ abstract class WPCD_REST_API_Controller_Base {
 	 */
 	protected function handle_exception( Throwable $e, WP_REST_Request $request ): WP_Error {
 		$status = $request->get_param( 'disable_status_code' ) ? 200 : ( $e->getCode() >= 400 ? $e->getCode() : 500 );
-		return new WP_Error( 'wpcd_rest_' . $this->get_name() . '_error', $e->getMessage(), compact( 'status' ) );
+		return new WP_Error( 'sstk_rest_' . $this->get_name() . '_error', $e->getMessage(), compact( 'status' ) );
 	}
 
 	/**
@@ -183,6 +189,7 @@ abstract class WPCD_REST_API_Controller_Base {
 	protected function validate_required_parameters( array $parameters, array $required_parameters ) {
 		foreach ( $required_parameters as $parameter ) {
 			if ( empty( $parameters[ $parameter ] ) ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Parameter names come from fixed controller allow-lists.
 				throw new Exception( "The '$parameter' parameter is required", 400 );
 			}
 		}
@@ -220,10 +227,10 @@ abstract class WPCD_REST_API_Controller_Base {
 
 				// Throw error if add user unsuccessful.
 				if ( is_wp_error( $user ) ) {
-					throw new Exception( 'Unable to add user' . $user_data->get_error_message(), 400 );
+					// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- WordPress REST serializes this message as JSON.
+					throw new Exception( 'Unable to add user' . $user->get_error_message(), 400 );
 				}
 			}
 		}
 	}
-
 }

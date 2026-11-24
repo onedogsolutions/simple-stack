@@ -143,7 +143,7 @@ Highlights:
 
 ```mermaid
 classDiagram
-class WPCD_WORDPRESS_TABS_SSL {
+class SSTK_WORDPRESS_TABS_SSL {
 +get_tab_slug() string
 +get_tab_fields(fields, id) array
 +tab_action(result, action, id) mixed

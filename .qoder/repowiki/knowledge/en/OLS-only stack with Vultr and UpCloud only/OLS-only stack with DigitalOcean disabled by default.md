@@ -1,30 +1,30 @@
 ---
 kind: design
-name: OLS-only stack with DigitalOcean disabled by default
+name: OLS-only stack with Vultr and UpCloud only
 source: session
 category: adr
 ---
 
-# OLS-only stack with DigitalOcean disabled by default
+# OLS-only stack with Vultr and UpCloud only
 
 _Source: coding plans from commit period 4c1f985 → 7c7fe68 — records intent at planning time; the implementation may lag or differ._
 
 **Status:** accepted
 
 ## Context
-The fork targets an internal SimpleStack product that ships OpenLiteSpeed exclusively; the upstream WP Cloud Deploy supported nginx+ols and DigitalOcean only.
+The fork targets an internal Simple Stack product that ships OpenLiteSpeed exclusively. The upstream product supported multiple web stacks and providers, but this fork has no production installs or legacy data to preserve.
 
 ## Decision drivers
 - product scope (OpenLiteSpeed only)
 - simplify provider surface
-- keep DO available for internal testing via opt-in
+- remove retired providers completely rather than retain dormant compatibility code
 
 ## Considered options
-- **Remove nginx and DigitalOcean entirely** _(rejected)_ — pros: Smallest codebase; cons: Breaks any existing DO deployments or add-ons expecting the slug
-- **Register Vultr/UpCloud/Custom Server alongside DO, but disable DO by default** — pros: New providers ship in-repo; DO remains addressable via `enable-do-provider` option; cons: Slightly larger provider registry
+- **Remove nginx, DigitalOcean and custom-server providers entirely** _(accepted)_ — pros: smallest supported surface and no compatibility layer; cons: none for this fork because upstream was never used in production.
+- **Retain DigitalOcean or custom servers behind opt-in flags** _(rejected)_ — leaves retired code, identifiers and untested execution paths in the release.
 
 ## Decision
-`get_webserver_list()` returns only `'ols'`; `$providers` registers `vultr-v2`, `upcloud`, `custom-server`, and `digital-ocean` with a single filter that unsets DO unless `wpcd_get_early_option('enable-do-provider')` is set. Hardcoded `'nginx'` fallbacks in `class-wordpress-app.php` are replaced with `'ols'`.
+`get_webserver_list()` returns only `'ols'`, and `$providers` registers only `vultr-v2` and `upcloud`. The DigitalOcean, custom-server, nginx and LiteSpeed Enterprise paths are removed. Provisioning is fixed to `scripts/v2/` on Ubuntu 24.04/26.04 with `lsphp83`, `lsphp84` and `lsphp85`.
 
 ## Consequences
-Existing DO users must explicitly enable the provider; nginx-based installs will fall back to OLS. Provider classes live in-repo rather than as add-ons.
+There is no migration or fallback for DigitalOcean, custom servers or nginx installs. The smaller provider and stack surface is intentional, and all first-party identifiers use the Simple Stack naming contract.

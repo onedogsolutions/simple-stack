@@ -165,10 +165,7 @@ function copy_wpconfig() {
 	su - $target_domain -c "wp cache-enabler clear 2>/dev/null"
 	rm -f wp-content/object-cache.php
 	su - $target_domain -c "wp plugin uninstall --deactivate redis-cache 2>/dev/null"
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		su - $target_domain -c "wp litespeed-option set object false && wp cache flush"
-	fi
+	su - $target_domain -c "wp litespeed-option set object false && wp cache flush"
 	su - $target_domain -c "wp --skip-plugins search-replace '$source_domain' '$target_domain'"
 	chmod -R g+w /var/www/$target_domain/html
 }
@@ -324,11 +321,6 @@ then
 	backup_target
 	copy_partial_db
 	change_domain
-fi
-
-if [[ $action == "copy_to_existing_site_copy_files_only_no_backup" || $action == "6" ]]
-then
-	copy_partial_files
 fi
 
 # Restart and cleanup.

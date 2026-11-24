@@ -5,99 +5,92 @@ category: configuration_system
 scope:
     - '**'
 source_files:
-    - wpcd.php
-    - includes/core/class-wpcd-settings.php
+    - simple-stack.php
+    - includes/core/class-sstk-settings.php
     - includes/core/functions.php
-    - includes/core/api/class-simplestack-rest-api.php
-    - includes/core/apps/class-wpcd-app-settings.php
-    - includes/core/class-wpcd-setup-wizard.php
+    - includes/core/api/class-sstk-rest-api.php
+    - includes/core/apps/wordpress-app/class-wordpress-app-settings.php
+    - includes/core/class-sstk-setup-wizard.php
 ---
 
 # Configuration System
 
 ## Approach
 
-SimpleStack (WPCD) uses a **two-tier configuration model** built on top of WordPress core:
+Simple Stack (SSTK) uses a **two-tier configuration model** built on top of WordPress core:
 
-1. **Runtime constants** — defined in `wpcd.php` and optionally overridden in `wp-config.php`.
-2. **Persistent settings** — stored under the WordPress option `wpcd_settings` via the bundled Meta Box.io (`rwmb_meta`) framework, presented through a single admin settings page.
+1. **Runtime constants** — defined in `simple-stack.php` and optionally overridden in `wp-config.php`.
+2. **Persistent settings** — stored under the WordPress option `sstk_settings` via the bundled Meta Box.io (`rwmb_meta`) framework, presented through a single admin settings page.
 
-There is no `.env`, YAML, TOML, or JSON config file loader. The only external configuration files are the bundled script templates under `includes/core/apps/wordpress-app/scripts/v*/raw/*.txt`, which are runtime command payloads, not application configuration.
+There is no `.env`, YAML, TOML, or JSON config file loader. The only external configuration files are the bundled script templates under `includes/core/apps/wordpress-app/scripts/v2/`, which are runtime command payloads, not application configuration. Provisioning is fixed to `v2`; there is no `v1` fallback.
 
 ## Key Files
 
-- `wpcd.php` — plugin bootstrap; defines all `WPCD_*` constants and wires activation/deactivation hooks.
-- `includes/core/class-wpcd-settings.php` — `WPCD_Settings` class that registers the `wpcd_settings` options page, metaboxes, tabs, and provider credential fields using Meta Box.io.
-- `includes/core/functions.php` — exposes `wpcd_get_option()`, `wpcd_get_early_option()`, `wpcd_set_option()` as the canonical API for reading/writing persistent settings.
-- `includes/core/api/class-simplestack-rest-api.php` — SimpleStack REST API registrar (`simple-stack/v1`) consumed by the React admin dashboard.
-- `includes/core/apps/class-wpcd-app-settings.php` — per-app-type settings registration (e.g., WordPress app).
-- `includes/core/class-wpcd-setup-wizard.php` — setup wizard that guides defining `WPCD_ENCRYPTION_KEY` in `wp-config.php`.
+- `simple-stack.php` — plugin bootstrap; defines all `SSTK_*` constants and wires activation/deactivation hooks.
+- `includes/core/class-sstk-settings.php` — `SSTK_Settings` class that registers the `sstk_settings` options page, metaboxes, tabs, and provider credential fields using Meta Box.io.
+- `includes/core/functions.php` — exposes `sstk_get_option()`, `sstk_get_early_option()`, `sstk_set_option()` as the canonical API for reading/writing persistent settings.
+- `includes/core/api/class-sstk-rest-api.php` — Simple Stack REST API registrar (`simple-stack/v1`) consumed by the React admin dashboard.
+- `includes/core/apps/wordpress-app/class-wordpress-app-settings.php` — WordPress app settings registration.
+- `includes/core/class-sstk-setup-wizard.php` — setup wizard that guides defining `SSTK_ENCRYPTION_KEY` in `wp-config.php`.
 
 ## Architecture and Conventions
 
 ### Persistent Settings (Meta Box.io)
 
-All user-editable settings live in one serialized array keyed by `wpcd_settings`. `WPCD_Settings::display_settings()` builds the entire settings UI declaratively by pushing metabox definitions onto the `rwmb_meta_boxes` filter. Each metabox declares an `id`, `title`, `tab`, and `fields` array with Meta Box field specs (`type`, `std`, `options`, etc.).
+All user-editable settings live in one serialized array keyed by `sstk_settings`. `SSTK_Settings::display_settings()` builds the entire settings UI declaratively by pushing metabox definitions onto the `rwmb_meta_boxes` filter. Each metabox declares an `id`, `title`, `tab`, and `fields` array with Meta Box field specs (`type`, `std`, `options`, etc.).
 
-The settings page is registered via the `mb_settings_pages` filter with page slug `wpcd_settings` (exposed at `admin.php?page=simplestack_settings`). Tabs include `general`, `logging`, `misc`, `cloud-provider`, `fields`, `tools`, plus conditional tabs for DNS/provider roles and data sync.
+The settings page is registered via the `mb_settings_pages` filter with page slug `sstk_settings` (exposed at `admin.php?page=sstk_settings`). Tabs include `general`, `cloud-provider`, `fields`, `misc`, `logging` and `tools`, plus conditional provider/DNS tabs when custom tables are enabled. Cross-site data sync is retired and has no settings tab.
 
 Access patterns:
-- Normal read: `wpcd_get_option( $option_id )` → calls `rwmb_meta( $option_id, [ 'object_type' => 'setting' ], 'wpcd_settings' )`.
-- Early read (before Meta Box.io loads): `wpcd_get_early_option( $option_id )` → reads directly from `get_option('wpcd_settings')[$option_id]`.
-- Write (rare): `wpcd_set_option( $option_id, $value )` → mutates the whole options array and calls `update_option('wpcd_settings', ...)`.
+- Normal read: `sstk_get_option( $option_id )` → calls `rwmb_meta( $option_id, [ 'object_type' => 'setting' ], 'sstk_settings' )`.
+- Early read (before Meta Box.io loads): `sstk_get_early_option( $option_id )` → reads directly from `get_option('sstk_settings')[$option_id]`.
+- Write (rare): `sstk_set_option( $option_id, $value )` → mutates the whole options array and calls `update_option('sstk_settings', ...)`.
 
 ### Runtime Constants (wp-config overridable)
 
-`wpcd.php` defines two families of constants:
+`simple-stack.php` defines uppercase `SSTK_*` constants only. Lowercase aliases were removed and are not retained for compatibility. Core definitions include `SSTK_URL`, `SSTK_PATH`, `SSTK_VERSION`, `SSTK_TEXTDOMAIN`, `SSTK_REST_VERSION`, `SSTK_DB_VERSION`, brand colors and script versioning.
 
-- Legacy lowercase constants (`wpcd_url`, `wpcd_version`, …) guarded by `if ( ! defined( 'wpcd_url' ) )` for backward compatibility.
-- Uppercase constants (`WPCD_URL`, `WPCD_VERSION`, `WPCD_TEXTDOMAIN`, `WPCD_REST_VERSION`, `WPCD_DB_VERSION`, brand colors, script versioning).
+Configuration constants can be supplied in `wp-config.php` before the plugin loads. Notable controls include:
 
-These can be overridden in `wp-config.php` before the plugin loads because each `define()` is wrapped in `! defined(...)` checks. Notable overridables include:
-
-- `WPCD_SHORT_NAME`, `WPCD_LONG_NAME` — white-label product names.
-- `WPCD_SKIP_WELCOME_MESSAGE`, `WPCD_SKIP_SSH_TIMEOUT_SETTINGS` — toggle welcome message and SSH timeout metabox.
-- `WPCD_DISABLE_EMAIL_NOTIFICATIONS` — disable email notification module.
-- `WPCD_LOAD_BACKUP_DO_PROVIDER` — conditionally load legacy DigitalOcean alternate provider.
-- `WPCD_ENCRYPTION_KEY` — required encryption key for secrets; if missing, the plugin shows an admin notice and falls back to a temporary DB-stored key.
-- `WPCD_CRONS_NOT_RUNNING_EMAIL_TEST` — force cron-missing emails during testing.
-- `WPCD_DOING_CORE_CRON` — set internally by `class-wpcd-better-crons.php` to signal better-cron execution context.
+- `SSTK_SHORT_NAME`, `SSTK_LONG_NAME` — white-label product names.
+- `SSTK_SKIP_WELCOME_MESSAGE`, `SSTK_SKIP_SSH_TIMEOUT_SETTINGS` — toggle welcome message and SSH timeout metabox.
+- `SSTK_DISABLE_EMAIL_NOTIFICATIONS` — disable email notification module.
+- `SSTK_ENCRYPTION_KEY` — preferred encryption key for secrets; if missing, the plugin shows an admin notice and uses a persistent key stored in `sstk_encryption_key_v2`.
+- `SSTK_CRONS_NOT_RUNNING_EMAIL_TEST` — force cron-missing emails during testing.
+- `SSTK_DOING_CORE_CRON` — set internally by `class-sstk-better-crons.php` to signal better-cron execution context.
 
 ### Secrets Handling
 
-Secrets (SSH keys, provider credentials, VPN passwords, AWS keys) are stored encrypted inside the `wpcd_settings` option. Encryption requires `WPCD_ENCRYPTION_KEY` to be defined in `wp-config.php`; without it, `wpcd_global_admin_notice()` emits a red admin notice warning that a temporary key is being used. Provider credentials are also gated behind the `cloud-provider` tab metaboxes generated by `WPCD_Settings::provider_fields()` / `provider_metabox_tabs()`.
+Secrets (SSH keys, provider credentials, server passwords and Monit/SMTP credentials) are stored as authenticated `sstk-encrypt-v2:` envelopes. `SSTK_ENCRYPTION_KEY` is preferred; without it, `sstk_global_admin_notice()` emits an admin notice and encryption uses the persistent `sstk_encryption_key_v2` fallback. Legacy encryption envelopes are rejected. Provider credentials are gated behind the `cloud-provider` tab metaboxes generated by `SSTK_Settings::provider_fields()` / `provider_metabox_tabs()`.
 
 ### Feature Flags
 
-Feature toggles are implemented as boolean options in `wpcd_settings` rather than dedicated feature-flag infrastructure. Examples observed:
+Feature toggles are implemented as boolean options in `sstk_settings` rather than dedicated feature-flag infrastructure. Examples observed:
 
 - `show-advanced-metaboxes` — reveal advanced detail metaboxes.
 - `hide-local-host-warning` — suppress localhost warning.
-- `enable-do-provider` — show legacy DigitalOcean provider.
-- `wpcd_hide_server_group_mb`, `wpcd_hide_site_group_mb` — hide group metaboxes from non-admins.
-- `wpcd_export_all_settings` — include settings in data-sync export.
-- `wpcd_sync_auto_export` — enable automatic data sync.
+- `sstk_hide_server_group_mb`, `sstk_hide_site_group_mb` — hide group metaboxes from non-admins.
 
-Conditional loading of modules is done via `defined()` checks around `require_once` statements in `WPCD_Init::required_files()` (e.g., backup DO provider, email notifications, custom DNS tables).
+Conditional loading of modules is done via `defined()` checks around `require_once` statements in `SSTK_Init::required_files()` (e.g., email notifications, custom DNS tables). DigitalOcean and cross-site data sync are not supported.
 
 ### Layering Summary
 
 ```
 wp-config.php constants (highest priority, compile-time)
     ↓
-WordPress options table (wpcd_settings, runtime-editable via admin UI)
+WordPress options table (sstk_settings, runtime-editable via admin UI)
     ↓
 Hardcoded defaults in PHP code (lowest priority)
 ```
 
-The `wpcd_get_long_running_command_timeout()` helper illustrates this: it reads `long-command-timeout` from options, applies a minimum floor of 25 minutes, and returns the effective value.
+The `sstk_get_long_running_command_timeout()` helper illustrates this: it reads `long-command-timeout` from options, applies a minimum floor of 25 minutes, and returns the effective value.
 
 ## Conventions and Constraints
 
-- All persistent settings are accessed through `wpcd_get_option()` / `wpcd_get_early_option()` — direct calls to `rwmb_meta()` or `get_option('wpcd_settings')` are discouraged outside the settings layer.
-- New settings are added by appending a metabox definition to the `$meta_boxes` array inside `WPCD_Settings::display_settings()` and reading them via `wpcd_get_option($field_id)`.
-- Boolean feature flags are stored as checkboxes in the `misc` tab and checked with `(bool) wpcd_get_option( 'flag-name' )`.
-- Sensitive values (SSH keys, provider tokens, VPN passwords) are stored encrypted and require `WPCD_ENCRYPTION_KEY` in `wp-config.php`; the plugin enforces this by displaying an admin notice when the constant is absent or equals the documentation placeholder.
-- Module loading is opt-in via `WPCD_*` constants checked around `require_once` blocks in `WPCD_Init::required_files()` and `activate()`.
-- The SimpleStack React dashboard consumes configuration exclusively through the `simple-stack/v1` REST API (registered by `SimpleStack_REST_API`), not by reading `wpcd_settings` directly.
+- All persistent settings are accessed through `sstk_get_option()` / `sstk_get_early_option()` — direct calls to `rwmb_meta()` or `get_option('sstk_settings')` are discouraged outside the settings layer.
+- New settings are added by appending a metabox definition to the `$meta_boxes` array inside `SSTK_Settings::display_settings()` and reading them via `sstk_get_option($field_id)`.
+- Boolean feature flags are stored as checkboxes in the `misc` tab and checked with `(bool) sstk_get_option( 'flag-name' )`.
+- Sensitive values (SSH keys, provider tokens, server passwords and Monit/SMTP credentials) use authenticated `sstk-encrypt-v2:` envelopes. `SSTK_ENCRYPTION_KEY` is preferred; the persistent database fallback is used when it is absent, with an admin notice. The documentation placeholder key is rejected by notice.
+- Module loading is opt-in via `SSTK_*` constants checked around `require_once` blocks in `SSTK_Init::required_files()` and `activate()`.
+- The Simple Stack React dashboard consumes configuration exclusively through the `simple-stack/v1` REST API (registered by `SSTK_REST_API`), not by reading `sstk_settings` directly.
 - There is no schema validation, migration system, or environment-file loader for configuration; defaults are embedded in PHP and the Meta Box field `std` attributes.

@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Security Plugin tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,40 +18,40 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 /**
- * Class WPCD_WORDPRESS_TABS_SITE_LOGS
+ * Class SSTK_WORDPRESS_TABS_SITE_LOGS
  */
-class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SITE_SECURITY extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS constructor.
+	 * SSTK_WORDPRESS_TABS_SITE_SYSTEM_USERS constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
 		// Activate SolidWP Security via an action hook.
-		add_action( 'wpcd_wordpress-app_do-activate_solidwp_security_for_site', array( $this, 'activate_solidwp_security_action' ), 10, 2 );
+		add_action( 'sstk_wordpress-app_do-activate_solidwp_security_for_site', array( $this, 'activate_solidwp_security_action' ), 10, 2 );
 
 		// Remove SolidWP Security via an action hook.
-		add_action( 'wpcd_wordpress-app_do-remove_solidwp_security_for_site', array( $this, 'remove_solidwp_security_action' ), 10, 2 );
+		add_action( 'sstk_wordpress-app_do-remove_solidwp_security_for_site', array( $this, 'remove_solidwp_security_action' ), 10, 2 );
 
 		// Add bulk action option to the site list to add or remove SolidWP Security from a site.
-		if ( true === boolval( wpcd_get_early_option( 'wordpress_app_solidwp_enable_bulk_actions' ) ) ) {
-			add_filter( 'bulk_actions-edit-wpcd_app', array( $this, 'wpcd_add_new_bulk_actions_site' ) );
+		if ( true === boolval( sstk_get_early_option( 'wordpress_app_solidwp_enable_bulk_actions' ) ) ) {
+			add_filter( 'bulk_actions-edit-sstk_app', array( $this, 'sstk_add_new_bulk_actions_site' ) );
 		}
 
 		// Action hook to handle bulk actions for site.
-		if ( true === boolval( wpcd_get_early_option( 'wordpress_app_solidwp_enable_bulk_actions' ) ) ) {
-			add_filter( 'handle_bulk_actions-edit-wpcd_app', array( $this, 'wpcd_bulk_action_handler_sites' ), 10, 3 );
+		if ( true === boolval( sstk_get_early_option( 'wordpress_app_solidwp_enable_bulk_actions' ) ) ) {
+			add_filter( 'handle_bulk_actions-edit-sstk_app', array( $this, 'sstk_bulk_action_handler_sites' ), 10, 3 );
 		}
 
 		/* Pending Logs Background Task: Activate SolidWP Security on a site */
-		add_action( 'wpcd_wordpress-app_pending_log_activate_solidwp_security', array( $this, 'pending_log_activate_solidwp_security' ), 10, 3 );
+		add_action( 'sstk_wordpress-app_pending_log_activate_solidwp_security', array( $this, 'pending_log_activate_solidwp_security' ), 10, 3 );
 
 		/* Pending Logs Background Task: Remove SolidWP Security from a site */
-		add_action( 'wpcd_wordpress-app_pending_log_remove_solidwp_security', array( $this, 'pending_log_remove_solidwp_security' ), 10, 3 );
+		add_action( 'sstk_wordpress-app_pending_log_remove_solidwp_security', array( $this, 'pending_log_remove_solidwp_security' ), 10, 3 );
 	}
 
 	/**
@@ -78,7 +79,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Security Plugin', 'wpcd' ),
+				'label' => __( 'Security Plugin', 'simple-stack' ),
 				'icon'  => 'fa-duotone fa-shield-halved',
 			);
 		}
@@ -94,11 +95,11 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -113,15 +114,15 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'site-solidwp-toggle-install' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -187,7 +188,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 		$fields = $solidwp_fields;
 
 		// Add in certain groups that only admins should see.
-		if ( wpcd_is_admin() ) {
+		if ( sstk_is_admin() ) {
 			// Nothing here for now.
 		}
 
@@ -215,47 +216,47 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 		$fields = array();
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// Heading text.
-		$desc = __( 'Activate & License SolidWP Security.', 'wpcd' );
+		$desc = __( 'Activate & License SolidWP Security.', 'simple-stack' );
 
 		// If no value is for the solidwp security account, show warning.
-		if ( empty( wpcd_get_early_option( 'wordpress_app_solidwp_file_url' ) ) || empty( WPCD()->decrypt( wpcd_get_early_option( 'wordpress_app_solidwp_user_name' ) ) ) || empty( WPCD()->decrypt( wpcd_get_early_option( 'wordpress_app_solidwp_password' ) ) ) ) {
-			$desc .= '<br/>' . __( 'Warning: At least one of the following critical items is empty in your Global Settings: 1. SolidWP Account User Name 2. Solid WP Account Password 3. Path to SolidWP Security plugin file. You will not be able to install and/or activate the license for SolidWP Security.', 'wpcd' );
+		if ( empty( sstk_get_early_option( 'wordpress_app_solidwp_file_url' ) ) || empty( SSTK()->decrypt( sstk_get_early_option( 'wordpress_app_solidwp_user_name' ) ) ) || empty( SSTK()->decrypt( sstk_get_early_option( 'wordpress_app_solidwp_password' ) ) ) ) {
+			$desc .= '<br/>' . __( 'Warning: At least one of the following critical items is empty in your Global Settings: 1. SolidWP Account User Name 2. Solid WP Account Password 3. Path to SolidWP Security plugin file. You will not be able to install and/or activate the license for SolidWP Security.', 'simple-stack' );
 		}
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_virus_icon( __( '%s SolidWP Security', 'wpcd' ) ),
+			'name' => sstk_apply_virus_icon( __( '%s SolidWP Security', 'simple-stack' ) ),
 			'desc' => $desc,
 			'tab'  => $this->get_tab_slug(),
 			'type' => 'heading',
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_solidwp_security_switch',
+			'id'         => 'sstk_app_action_solidwp_security_switch',
 			'tab'        => $this->get_tab_slug(),
 			'type'       => 'switch',
 			'std'        => $connected,
-			'on_label'   => __( 'Connected', 'wpcd' ),
-			'off_label'  => __( 'Not Connected', 'wpcd' ),
+			'on_label'   => __( 'Connected', 'simple-stack' ),
+			'off_label'  => __( 'Not Connected', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'site-solidwp-toggle-install',
+				'data-sstk-action'              => 'site-solidwp-toggle-install',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to activate SolidWP Security for this site?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to activate SolidWP Security for this site?', 'simple-stack' ),
 				// fields that contribute data for this action.
-				// 'data-wpcd-fields' => json_encode( array( '#wpcd_app_site_log_name' ) ),
+				// 'data-sstk-fields' => json_encode( array( '#sstk_app_site_log_name' ) ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $fields;
 
@@ -269,7 +270,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	 */
 	public function set_solidwp_security_connection_status( $id, $status ) {
 
-		update_post_meta( $id, 'wpcd_app_solidwp_security_connection_status', $status );
+		update_post_meta( $id, 'sstk_app_solidwp_security_connection_status', $status );
 
 	}
 
@@ -280,7 +281,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_solidwp_security_connection_status( $id ) {
 
-		return boolval( get_post_meta( $id, 'wpcd_app_solidwp_security_connection_status', true ) );
+		return boolval( get_post_meta( $id, 'sstk_app_solidwp_security_connection_status', true ) );
 
 	}
 
@@ -295,23 +296,23 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	public function install_activate_solidwp_security( $action, $id, $in_args = array() ) {
 
 		// If we don't have a solidwp account user id or password return error.
-		$solidwp_account_user_id = WPCD()->decrypt( wpcd_get_option( 'wordpress_app_solidwp_user_name' ) );
-		$solidwp_account_pasword = WPCD()->decrypt( wpcd_get_option( 'wordpress_app_solidwp_password' ) );
-		$solidwp_file_url        = wpcd_get_option( 'wordpress_app_solidwp_file_url' );
+		$solidwp_account_user_id = SSTK()->decrypt( sstk_get_option( 'wordpress_app_solidwp_user_name' ) );
+		$solidwp_account_pasword = SSTK()->decrypt( sstk_get_option( 'wordpress_app_solidwp_password' ) );
+		$solidwp_file_url        = sstk_get_option( 'wordpress_app_solidwp_file_url' );
 		if ( empty( $solidwp_account_user_id ) || empty( $solidwp_account_pasword ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Either the SolidWP account user name or password is empty in your global settings - action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Either the SolidWP account user name or password is empty in your global settings - action %s', 'simple-stack' ), $action ) );
 		}
 		if ( empty( $solidwp_file_url ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'The SolidWP file URL is empty in your global settings - action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'The SolidWP file URL is empty in your global settings - action %s', 'simple-stack' ), $action ) );
 		}
 
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Put incoming data into an array.
@@ -356,13 +357,13 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'manage_solidwp_security.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is the action; %2$s is the result of the ssh call. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Tag SolidWP Security as being connected.
@@ -386,7 +387,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		if ( empty( $in_args ) ) {
@@ -413,13 +414,13 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'manage_solidwp_security.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is the action; %2$s is the result of the ssh call. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Tag SolidWP Security as being connected.
@@ -434,15 +435,15 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Add new bulk options in site list screen.
 	 *
-	 * Filter Hook: bulk_actions-edit-wpcd_app
+	 * Filter Hook: bulk_actions-edit-sstk_app
 	 *
 	 * @param array $bulk_array bulk array.
 	 */
-	public function wpcd_add_new_bulk_actions_site( $bulk_array ) {
+	public function sstk_add_new_bulk_actions_site( $bulk_array ) {
 
-		if ( wpcd_is_admin() ) {
-			$bulk_array['wpcd_sites_activate_solidwp_security'] = __( 'Activate SolidWP Security', 'wpcd' );
-			$bulk_array['wpcd_sites_remove_solidwp_security']   = __( 'Remove SolidWP Security', 'wpcd' );
+		if ( sstk_is_admin() ) {
+			$bulk_array['sstk_sites_activate_solidwp_security'] = __( 'Activate SolidWP Security', 'simple-stack' );
+			$bulk_array['sstk_sites_remove_solidwp_security']   = __( 'Remove SolidWP Security', 'simple-stack' );
 			return $bulk_array;
 		}
 
@@ -453,20 +454,20 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Handle bulk actions for sites.
 	 *
-	 * Action Hook: handle_bulk_actions-edit-wpcd_app
+	 * Action Hook: handle_bulk_actions-edit-sstk_app
 	 *
 	 * @param string $redirect_url  redirect url.
-	 * @param string $action        bulk action slug/id - this is not the WPCD action key.
+	 * @param string $action        bulk action slug/id - this is not the SSTK action key.
 	 * @param array  $post_ids      all post ids.
 	 */
-	public function wpcd_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
+	public function sstk_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
 
 		// Lets make sure we're an admin otherwise return an error.
-		if ( ! wpcd_is_admin() ) {
-			do_action( 'wpcd_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
+		if ( ! sstk_is_admin() ) {
+			do_action( 'sstk_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
 
 			// Show error message to user at the top of the admin list as a dismissible notice.
-			wpcd_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'wpcd' ), 'error' );
+			sstk_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'simple-stack' ), 'error' );
 
 			return $redirect_url;
 		}
@@ -478,29 +479,29 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 				foreach ( $post_ids as $app_id ) {
 
 					switch ( $action ) {
-						case 'wpcd_sites_activate_solidwp_security':
-							$args['action_hook'] = 'wpcd_wordpress-app_pending_log_activate_solidwp_security';
+						case 'sstk_sites_activate_solidwp_security':
+							$args['action_hook'] = 'sstk_wordpress-app_pending_log_activate_solidwp_security';
 							$args['action']      = $action;
 							$pending_log_type    = 'activate-solidwp-security';
-							$pending_log_message = __( 'Bulk Action: Waiting to activate SolidWP Security.', 'wpcd' );
+							$pending_log_message = __( 'Bulk Action: Waiting to activate SolidWP Security.', 'simple-stack' );
 							break;
 
-						case 'wpcd_sites_remove_solidwp_security':
-							$args['action_hook'] = 'wpcd_wordpress-app_pending_log_remove_solidwp_security';
+						case 'sstk_sites_remove_solidwp_security':
+							$args['action_hook'] = 'sstk_wordpress-app_pending_log_remove_solidwp_security';
 							$args['action']      = $action;
 							$pending_log_type    = 'remove-solidwp-security';
-							$pending_log_message = __( 'Bulk Action: Waiting to remove SolidWP Security.', 'wpcd' );
+							$pending_log_message = __( 'Bulk Action: Waiting to remove SolidWP Security.', 'simple-stack' );
 							break;
 					}
 
-					// Remove the 'wpcd_sites_' from the action string - we'll use it in the message we print in the pending logs table.
-					$printed_action = str_replace( 'wpcd_sites_', '', $action );
+					// Remove the 'sstk_sites_' from the action string - we'll use it in the message we print in the pending logs table.
+					$printed_action = str_replace( 'sstk_sites_', '', $action );
 					/* Translators: %s is an internal action name. */
-					WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, $pending_log_type, $app_id, $args, 'ready', $app_id, $pending_log_message );
+					SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, $pending_log_type, $app_id, $args, 'ready', $app_id, $pending_log_message );
 				}
 
 				// Add message to be displayed in admin header.
-				wpcd_global_add_admin_notice( __( 'SolidWP Security actions have been scheduled for the selected sites. You can view the progress in the PENDING TASKS screen.', 'wpcd' ), 'success' );
+				sstk_global_add_admin_notice( __( 'SolidWP Security actions have been scheduled for the selected sites. You can view the progress in the PENDING TASKS screen.', 'simple-stack' ), 'success' );
 
 			}
 		}
@@ -512,7 +513,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	 * Returns an array of actions that is valid for the bulk actions menu.
 	 */
 	public function get_valid_bulk_actions() {
-		return array( 'wpcd_sites_activate_solidwp_security', 'wpcd_sites_remove_solidwp_security' );
+		return array( 'sstk_sites_activate_solidwp_security', 'sstk_sites_remove_solidwp_security' );
 	}
 
 	/**
@@ -520,7 +521,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do-activate_solidwp_security_for_site.
+	 * Action hook: sstk_wordpress-app_do-activate_solidwp_security_for_site.
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $teams_api_key The api key to use instead of the one in global settings (optional).
@@ -542,7 +543,7 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do-remove_solidwp_security_for_site.
+	 * Action hook: sstk_wordpress-app_do-remove_solidwp_security_for_site.
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $teams_api_key The api key to use instead of the one in global settings (optional).
@@ -562,9 +563,9 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Activate SolidWP Security for a site.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_wordpress-app_pending_log_activate_solidwp_security
+	 * Action Hook: sstk_wordpress-app_pending_log_activate_solidwp_security
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site involved in this action.
@@ -573,11 +574,11 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	public function pending_log_activate_solidwp_security( $task_id, $site_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		$action = 'solidwp_install';  // Action string doesn't matter - it's not used in the called function.
 
-		// Activate logtivity.
+		// Activate SolidWP Security.
 		$result = $this->install_activate_solidwp_security( $action, $site_id );
 
 		$task_status = 'complete';  // Assume success.
@@ -590,16 +591,16 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 				$task_status = 'failed';
 			}
 		}
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
 
 	}
 
 	/**
 	 * Remove SolidWP Security from a site.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_wordpress-app_pending_log_remove_solidwp_security
+	 * Action Hook: sstk_wordpress-app_pending_log_remove_solidwp_security
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site involved in this action.
@@ -608,11 +609,11 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 	public function pending_log_remove_solidwp_security( $task_id, $site_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		$action = 'solidwp_remove';  // Action string doesn't matter - it's not used in the called function.
 
-		// Activate logtivity.
+		// Remove SolidWP Security.
 		$result = $this->remove_solidwp_security( $action, $site_id );
 
 		$task_status = 'complete';  // Assume success.
@@ -625,10 +626,10 @@ class WPCD_WORDPRESS_TABS_SITE_SECURITY extends WPCD_WORDPRESS_TABS {
 				$task_status = 'failed';
 			}
 		}
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_SITE_SECURITY();
+new SSTK_WORDPRESS_TABS_SITE_SECURITY();

@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: core_engine/rest_api
-title: SimpleStack REST API Layer
+title: Simple Stack REST API Layer
 scope:
     - includes/core/api/
 source_files: []

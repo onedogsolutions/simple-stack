@@ -2,9 +2,9 @@ schema_version: 1
 module_path: core_engine/app_types/app_base_classes
 title: App Base Classes & SSH Abstraction
 scope:
-    - includes/core/apps/class-wpcd-app.php
-    - includes/core/apps/class-wpcd-app-settings.php
-    - includes/core/apps/class-wpcd-ssh.php
+    - includes/core/apps/class-sstk-app.php
+    - includes/core/apps/class-sstk-app-settings.php
+    - includes/core/apps/class-sstk-ssh.php
 source_files: []
 depends_on: []
 related_to: []

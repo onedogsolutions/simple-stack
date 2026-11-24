@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 
 # Enable or disable PHP functions for a site
 
@@ -62,35 +63,15 @@ then
 	IFS=","
 	for function_name in $functions_list
 	do
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			php_version=$(ls /etc/php/*/fpm/pool.d/$domain.conf | cut -d '/' -f 4)
-			sed -i "/disable_functions/ s/,[ ]*$function_name[ ]*,/,/g" /etc/php/*/fpm/pool.d/$domain.conf
-			sed -i "/disable_functions/ s/=[ ]*$function_name[ ]*,/= /g" /etc/php/*/fpm/pool.d/$domain.conf
-			sed -i "/disable_functions/ s/,[ ]*$function_name[ ]*$//g" /etc/php/*/fpm/pool.d/$domain.conf
-			sed -i "/disable_functions/ s/=[ ]*$function_name[ ]*$/= /g" /etc/php/*/fpm/pool.d/$domain.conf
-			if [ ! -f /etc/wpcd/php-versions-disabled/php$php_version ] 
-			then
-				echo #do nothing.
-			fi
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			sed -i "/disable_functions/ s/,[ ]*$function_name[ ]*,/,/g" "${VHDIR}/$domain/$g_vhost_conf"
-			sed -i "/disable_functions/ s/\"[ ]*$function_name[ ]*,/\"/g" "${VHDIR}/$domain/$g_vhost_conf"
-			sed -i "/disable_functions/ s/,[ ]*$function_name[ ]*\"/\"/g" "${VHDIR}/$domain/$g_vhost_conf"
-			sed -i "/disable_functions/ s/\"[ ]*$function_name[ ]*\"/\"\"/g"  "${VHDIR}/$domain/$g_vhost_conf"
-		fi
+		sed -i "/disable_functions/ s/,[ ]*$function_name[ ]*,/,/g" "${VHDIR}/$domain/$g_vhost_conf"
+		sed -i "/disable_functions/ s/\"[ ]*$function_name[ ]*,\"/\"/g" "${VHDIR}/$domain/$g_vhost_conf"
+		sed -i "/disable_functions/ s/,[ ]*$function_name[ ]*\"/\"/g" "${VHDIR}/$domain/$g_vhost_conf"
+		sed -i "/disable_functions/ s/\"[ ]*$function_name[ ]*\"/\"\"/g" "${VHDIR}/$domain/$g_vhost_conf"
 	done
-	
+
 	# Restart web server.
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		systemctl restart php$php_version-fpm
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		gf_restart_webserver
-	fi		
-	echo 
+	gf_restart_webserver
+	echo
 	echo "$functions_list has been enabled for $domain"
 fi
 
@@ -99,45 +80,22 @@ then
 	IFS=","
 	for function_name in $functions_list
 	do
-		if [ "$g_webserver_type" = "nginx" ]
+		grep disable_functions "${VHDIR}/$domain/$g_vhost_conf" > /dev/null 2>&1
+		if [ $? -eq 0 ]
 		then
-			php_version=$(ls /etc/php/*/fpm/pool.d/$domain.conf | cut -d '/' -f 4)
-			sed -i "s/disable_functions][ ]*=/disable_functions] = $function_name,/g"  /etc/php/*/fpm/pool.d/$domain.conf
-			if [ ! -f /etc/wpcd/php-versions-disabled/php$php_version ] 
-			then
-				echo  # nothing to do
-			fi
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			grep disable_functions "${VHDIR}/$domain/$g_vhost_conf" > /dev/null 2>&1
-			if [ $? -eq 0 ]
-			then
-				sed -i "s/disable_functions[ ]*\"/disable_functions \"$function_name,/g"  "${VHDIR}/$domain/$g_vhost_conf"
-			else
-				echo "Unable to disable function $function_name"
-			fi
+			sed -i "s/disable_functions[ ]*\"/disable_functions \"$function_name,/g" "${VHDIR}/$domain/$g_vhost_conf"
+		else
+			echo "Unable to disable function $function_name"
 		fi
 	done
 
 	# Remove any extra trailing commas.
 	# @see comment at bottom of bitbucket issue: https://bitbucket.org/structuredmarketsinc/fireupwp-bash-scripts/issues/264/ols-weird-behavior-with-the-22
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sed -i "/disable_functions/ s/,[ ]*$//g" /etc/php/*/fpm/pool.d/$domain.conf
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i "/disable_functions/ s/,\"/\"/g" "${VHDIR}/$domain/$g_vhost_conf"
-	fi
+	sed -i "/disable_functions/ s/,\"/\"/g" "${VHDIR}/$domain/$g_vhost_conf"
 
 	# Restart web server.
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		systemctl restart php$php_version-fpm
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		gf_restart_webserver
-	fi	
+	gf_restart_webserver
 
-	echo 
+	echo
 	echo "$functions_list has been disabled for $domain"
 fi

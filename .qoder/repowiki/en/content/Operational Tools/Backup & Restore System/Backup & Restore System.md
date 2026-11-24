@@ -24,7 +24,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s backup and restore system for WordPress sites and servers. It covers the complete backup lifecycle (database dumps, file system snapshots, and configuration backups), storage mechanisms (local and S3-compatible remote), encryption options, scheduling and retention, restore workflows (full, selective, conflict resolution), verification and integrity checks, and operational guidance for manual and automated operations via the admin interface.
+This document explains Simple Stack’s backup and restore system for WordPress sites and servers. It covers the complete backup lifecycle (database dumps, file system snapshots, and configuration backups), storage mechanisms (local and S3-compatible remote), encryption options, scheduling and retention, restore workflows (full, selective, conflict resolution), verification and integrity checks, and operational guidance for manual and automated operations via the admin interface.
 
 ## Project Structure
 The backup and restore functionality is implemented across:
@@ -321,6 +321,6 @@ Operational tips:
 - [backup.php (App Tab):46-133](file://includes/core/apps/wordpress-app/tabs/backup.php#L46-L133)
 
 ## Conclusion
-SimpleStack’s backup and restore system provides a robust, secure, and configurable approach to protecting WordPress environments. It supports comprehensive backups (files, configurations, databases), encrypted S3 storage, flexible scheduling and retention, and reliable restore workflows with conflict mitigation. While incremental backups and bandwidth throttling are not currently exposed, the system’s design allows for future enhancements. Administrators should configure proper S3 credentials, set sensible retention policies, and regularly verify backups to ensure recoverability.
+Simple Stack’s backup and restore system provides a robust, secure, and configurable approach to protecting WordPress environments. It supports comprehensive backups (files, configurations, databases), encrypted S3 storage, flexible scheduling and retention, and reliable restore workflows with conflict mitigation. While incremental backups and bandwidth throttling are not currently exposed, the system’s design allows for future enhancements. Administrators should configure proper S3 credentials, set sensible retention policies, and regularly verify backups to ensure recoverability.
 
 [No sources needed since this section summarizes without analyzing specific files]

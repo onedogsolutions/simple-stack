@@ -9,12 +9,12 @@
 - [script-handlers.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php)
 - [01-prepare_server.txt (v2)](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt)
 - [02-install_wordpress_site.txt (v2)](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt)
-- [66-simplestack_post_install.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt)
+- [66-sstk_post_install.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt)
 - [9999-common-functions.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt)
-- [environment variables.txt (v1)](file://includes/core/apps/wordpress-app/scripts/v1/raw/environment%20variables.txt)
-- [after-server-create-run-commands.txt (v1)](file://includes/core/apps/wordpress-app/scripts/v1/after-server-create-run-commands.txt)
-- [mt_clone_site.txt (v1)](file://includes/core/apps/wordpress-app/scripts/v1/mt_clone_site.txt)
-- [class-wpcd-posts-log.php](file://includes/core/class-wpcd-posts-log.php)
+- [environment variables.txt (v2)](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt)
+- [after-server-create-run-commands.txt (v2)](file://includes/core/apps/wordpress-app/scripts/v2/after-server-create-run-commands.txt)
+- [mt_clone_site.txt (v2)](file://includes/core/apps/wordpress-app/scripts/v2/mt_clone_site.txt)
+- [class-sstk-posts-log.php](file://includes/core/class-sstk-posts-log.php)
 </cite>
 
 ## Table of Contents
@@ -30,29 +30,29 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains how to create, customize, and maintain provisioning scripts for the WordPress application engine in SimpleStack. It covers the script execution lifecycle, naming conventions, parameter passing, server preparation, WordPress installation, post-deployment configuration, the v1 versus v2 script versions, error handling patterns, logging, and best practices for testing and cloud-provider compatibility.
+This document explains how to create, customize, and maintain provisioning scripts for the WordPress application engine in Simple Stack. It covers the script execution lifecycle, naming conventions, parameter passing, server preparation, WordPress installation, post-deployment configuration, the fixed `scripts/v2` contract, error handling patterns, logging, and best practices for testing and cloud-provider compatibility.
 
-SimpleStack provisions servers at Vultr and UpCloud, installs OpenLiteSpeed, PHP, MariaDB, Redis, Certbot, firewall rules, and a WordPress site over SSH using Bash scripts under `includes/core/apps/wordpress-app/scripts/`. The default is now v2; v1 remains for legacy servers.
+Simple Stack provisions servers at Vultr and UpCloud, installs OpenLiteSpeed, PHP, MariaDB, Redis, Certbot, firewall rules, and a WordPress site over SSH using Bash scripts under `includes/core/apps/wordpress-app/scripts/v2/`. This is the only supported script set; there is no legacy fallback or selectable version.
 
 **Section sources**
 - [README.md:1-37](file://README.md#L1-L37)
 - [SIMPLESTACK.md:154-177](file://docs/SIMPLESTACK.md#L154-L177)
 
 ## Project Structure
-Provisioning scripts are organized by version and delivery mechanism:
+Provisioning scripts use one fixed directory and two delivery mechanisms:
 
-- `scripts/vN/raw/*.txt` — plain Bash scripts downloaded verbatim from `SCRIPT_URL`.
-- `scripts/vN/*.txt` outside `raw/` — PHP templates with `##TOKEN##` placeholders substituted before execution.
-- `scripts/v2/` — SimpleStack’s current stack: OpenLiteSpeed only, Ubuntu 24.04 (`noble`) and 26.04 (`resolute`), lsphp83/84/85.
-- `scripts/v1/` — upstream script set preserved for existing servers.
+- `scripts/v2/raw/*.txt` — plain Bash scripts downloaded verbatim from `SCRIPT_URL`.
+- `scripts/v2/*.txt` outside `raw/` — PHP templates with `##TOKEN##` placeholders substituted before execution.
+- `scripts/v2/` — the Simple Stack stack: OpenLiteSpeed only, Ubuntu 24.04 (`noble`) and 26.04 (`resolute`), lsphp83/84/85.
+- `get_configured_scripts_version()` — returns `v2`; no settings field, per-server metadata, directory selector, or fallback exists.
 
 ```mermaid
 graph TB
 Admin["WordPress Admin UI"] --> REST["simple-stack/v1 REST API"]
 REST --> AppEngine["WordPress App Engine"]
-AppEngine --> ScriptResolver["Script Resolver<br/>v1 or v2"]
-ScriptResolver --> RawScripts["Raw Bash Scripts<br/>scripts/vN/raw/*.txt"]
-ScriptResolver --> TemplateScripts["PHP-templated Scripts<br/>scripts/vN/*.txt"]
+AppEngine --> ScriptResolver["Fixed Script Resolver<br/>scripts/v2"]
+ScriptResolver --> RawScripts["Raw Bash Scripts<br/>scripts/v2/raw/*.txt"]
+ScriptResolver --> TemplateScripts["PHP-templated Scripts<br/>scripts/v2/*.txt"]
 RawScripts --> Server["Remote Server via SSH"]
 TemplateScripts --> Server
 ```
@@ -70,26 +70,26 @@ The provisioning system connects three layers:
 
 1. **Server-side orchestration:** `01-prepare_server.txt` prepares the OS, web server, PHP versions, database, cache, firewall, and tools.
 2. **Site installation:** `02-install_wordpress_site.txt` creates the site user, database, virtual host, WordPress files, configuration, caching, and SSH access.
-3. **Post-install hardening:** `66-simplestack_post_install.txt` enforces security defaults and optional plugin activation after the site is fully installed.
+3. **Post-install hardening:** `66-sstk_post_install.txt` enforces security defaults and optional plugin activation after the site is fully installed.
 
 Common helpers live in `9999-common-functions.txt`, including webserver detection, PHP version management, restart routines, SSL helpers, and admin IP normalization.
 
 Key PHP integration points:
-- `get_after_server_create_commands()` selects the post-provision command wrapper.
+- `get_after_server_create_commands()` selects the post-provision command wrapper from `scripts/v2/`.
 - Placeholder substitution and script dispatch are handled through script handlers and filters.
-- Settings expose the active script version and administrative controls such as the OLS WebAdmin IP.
+- Provisioning is fixed to `v2`; the OLS WebAdmin IP remains a programmatic setting until a Simple Stack-owned UI field is added.
 
 **Section sources**
 - [01-prepare_server.txt (v2):1-708](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L1-L708)
 - [02-install_wordpress_site.txt (v2):1-324](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L1-L324)
-- [66-simplestack_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L1-L86)
+- [66-sstk_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L1-L86)
 - [9999-common-functions.txt:279-358](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L279-L358)
 - [commands-and-logs.php:238-254](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L238-L254)
 - [script-handlers.php:802-818](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L802-L818)
 - [class-wordpress-app-settings.php:972-1001](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L972-L1001)
 
 ## Architecture Overview
-The end-to-end flow starts in the WordPress admin, moves through the REST layer into the app engine, resolves the correct script version, executes commands on the remote server, and records logs.
+The end-to-end flow starts in the WordPress admin, moves through the REST layer into the app engine, resolves files from the fixed `scripts/v2/` directory, executes commands on the remote server, and records logs.
 
 ```mermaid
 sequenceDiagram
@@ -124,10 +124,10 @@ App->>Logs : Finalize provisioning log
 ### Script Execution Lifecycle
 The lifecycle has three major phases:
 
-1. **After server creation:** A wrapper command runs the selected script, writes intermediate logs, renames them on success, and calls a callback URL.
+1. **After server creation:** A wrapper command runs the fixed `v2` preparation script, writes intermediate logs, renames them on success, and calls a callback URL.
 2. **Server preparation:** `01-prepare_server.txt` validates environment, installs OpenLiteSpeed, MariaDB, lsphp83/84/85, Certbot, Redis, AWS CLI, WP-CLI, and firewall rules.
 3. **WordPress installation:** `02-install_wordpress_site.txt` creates the site directory, database, user, virtual host, downloads WordPress, configures it, enables caching, and sets up per-site SSH keys.
-4. **Post-install hook:** `simplestack_post_site_install` applies hardening and optional security plugins.
+4. **Post-install hook:** `sstk_post_site_install` applies hardening and optional security plugins.
 
 ```mermaid
 flowchart TD
@@ -141,21 +141,21 @@ InstallTools --> SiteInstall["Execute 02-install_wordpress_site.txt"]
 SiteInstall --> CreateSite["Create domain user, database, and virtual host"]
 CreateSite --> InstallWP["Download and configure WordPress"]
 InstallWP --> EnableCache["Enable page and object cache"]
-EnableCache --> PostInstall["Call simplestack_post_site_install()"]
+EnableCache --> PostInstall["Call sstk_post_site_install()"]
 PostInstall --> Done(["Provisioning Complete"])
 ```
 
 **Diagram sources**
 - [01-prepare_server.txt (v2):1-708](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L1-L708)
 - [02-install_wordpress_site.txt (v2):1-324](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L1-L324)
-- [66-simplestack_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L1-L86)
-- [after-server-create-run-commands.txt (v1):36-41](file://includes/core/apps/wordpress-app/scripts/v1/after-server-create-run-commands.txt#L36-L41)
+- [66-sstk_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L1-L86)
+- [after-server-create-run-commands.txt (v2):36-41](file://includes/core/apps/wordpress-app/scripts/v2/after-server-create-run-commands.txt#L36-L41)
 
 **Section sources**
-- [after-server-create-run-commands.txt (v1):36-41](file://includes/core/apps/wordpress-app/scripts/v1/after-server-create-run-commands.txt#L36-L41)
+- [after-server-create-run-commands.txt (v2):36-41](file://includes/core/apps/wordpress-app/scripts/v2/after-server-create-run-commands.txt#L36-L41)
 - [01-prepare_server.txt (v2):1-708](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L1-L708)
 - [02-install_wordpress_site.txt (v2):1-324](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L1-L324)
-- [66-simplestack_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L1-L86)
+- [66-sstk_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L1-L86)
 
 ### Naming Conventions and Script Organization
 - Use `scripts/v2/raw/` for raw Bash scripts that are fetched directly.
@@ -174,16 +174,16 @@ Parameters reach scripts through several channels:
 | Channel | Purpose | Example |
 |---|---|---|
 | Environment variables | Runtime configuration passed by the wrapper | `webserver_type`, `name`, `post_id`, `post_processing_script_server`, `post_processing_script_site` |
-| Script arguments | Domain, username, webserver type for post-install hook | `$1`, `$2`, `$3` in `simplestack_post_site_install()` |
+| Script arguments | Domain, username, webserver type for post-install hook | `$1`, `$2`, `$3` in `sstk_post_site_install()` |
 | PHP template placeholders | Values injected before execution | `##SCRIPT_NAME##`, `##CALLBACK_URL##`, `##SCRIPT_LOGS##` |
-| Filter-driven values | Security plugin slugs and other dynamic data | `simplestack_post_site_install_plugins` filter |
-| Settings fields | Global configuration for script behavior | `wordpress_app_script_version`, `simplestack_admin_ip` |
+| Filter-driven values | Security plugin slugs and other dynamic data | `sstk_post_site_install_plugins` filter |
+| Settings fields | Global configuration for script behavior | `sstk_admin_ip` (programmatic until a UI field is added) |
 
-The v1 environment variable documentation describes many of these variables, while v2 centralizes validation and normalization in common functions.
+The v2 environment variable documentation describes these variables, while `9999-common-functions.txt` centralizes validation and normalization.
 
 **Section sources**
-- [environment variables.txt (v1):1-23](file://includes/core/apps/wordpress-app/scripts/v1/raw/environment%20variables.txt#L1-L23)
-- [66-simplestack_post_install.txt:13-19](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L13-L19)
+- [environment variables.txt (v2):1-23](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L1-L23)
+- [66-sstk_post_install.txt:13-19](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L13-L19)
 - [script-handlers.php:802-818](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L802-L818)
 - [class-wordpress-app-settings.php:972-1001](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L972-L1001)
 
@@ -232,7 +232,7 @@ Download --> Config["Create wp-config.php and core install"]
 Config --> Hardening["Set security and performance options"]
 Hardening --> Cache["Install and configure page/object cache"]
 Cache --> SSH["Configure per-site SSH keys"]
-SSH --> Hook["Call simplestack_post_site_install()"]
+SSH --> Hook["Call sstk_post_site_install()"]
 Hook --> Blueprint{"Blueprint provided?"}
 Blueprint --> |Yes| ApplyBlueprint["Clone or extract blueprint assets"]
 Blueprint --> |No| End(["Site Ready"])
@@ -241,7 +241,7 @@ ApplyBlueprint --> End
 
 **Diagram sources**
 - [02-install_wordpress_site.txt (v2):1-324](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L1-L324)
-- [66-simplestack_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L1-L86)
+- [66-sstk_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L1-L86)
 
 **Section sources**
 - [02-install_wordpress_site.txt (v2):20-122](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L20-L122)
@@ -253,40 +253,38 @@ ApplyBlueprint --> End
 The post-install hook runs after WordPress and any blueprint assets are applied:
 
 - Sets `DISALLOW_FILE_EDIT true`.
-- Installs and activates plugins listed in `SIMPLE_STACK_SECURITY_PLUGINS`.
+- Installs and activates plugins listed in `SSTK_SECURITY_PLUGINS`.
 - Validates each plugin slug against a strict pattern to prevent command injection.
 - Returns gracefully when required parameters or `wp-config.php` are missing.
 
 You can extend this hook by adding more hardening steps, running WP-CLI maintenance tasks, seeding content, or applying deployment-specific configuration.
 
 **Section sources**
-- [66-simplestack_post_install.txt:16-85](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L16-L85)
+- [66-sstk_post_install.txt:16-85](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L16-L85)
 - [SIMPLESTACK.md:247-275](file://docs/SIMPLESTACK.md#L247-L275)
 
-### Script Versioning System: v1 vs v2
-Both versions coexist:
+### Fixed Script Version Contract
+Simple Stack is a hard cutover with no legacy installs to migrate:
 
-- Default setting is `v2`.
-- Existing servers retain their recorded `wpcd_server_scripts_version`, so changing the global setting does not retroactively re-provision older servers.
-- v2 removes nginx/LEMP branches, pins OpenLiteSpeed tooling, restricts supported Ubuntu releases, and adds hardened admin console handling.
-- v1 remains available for legacy workflows and add-ons.
+- `get_configured_scripts_version()` always returns `v2`.
+- Server creation, site installation, management actions, and readability checks all resolve under `scripts/v2/`.
+- There is no `wordpress_app_script_version` setting, per-server `sstk_server_scripts_version` metadata, directory selector, or `scripts/v1/` fallback.
+- The supported stack is OpenLiteSpeed on Ubuntu 24.04/26.04 with `lsphp83`, `lsphp84`, and `lsphp85`.
 
 ```mermaid
-stateDiagram-v2
-[*] --> Legacy : "Existing server with v1 meta"
-[*] --> Current : "New server or updated meta"
-Legacy --> Legacy : "Keep original script folder"
-Current --> Current : "Use SimpleStack v2 scripts"
+flowchart TD
+Request["Provisioning or management request"] --> Fixed["get_configured_scripts_version() returns v2"]
+Fixed --> Raw["Load scripts/v2/raw/*.txt or scripts/v2/*.txt"]
+Raw --> Execute["Replace tokens and execute over SSH"]
 ```
 
 **Diagram sources**
-- [SIMPLESTACK.md:172-192](file://docs/SIMPLESTACK.md#L172-L192)
-- [class-wordpress-app-settings.php:972-1001](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L972-L1001)
+- [SIMPLESTACK.md:154-192](file://docs/SIMPLESTACK.md#L154-L192)
+- [class-sstk-app.php:202-228](file://includes/core/apps/class-sstk-app.php#L202-L228)
 
 **Section sources**
-- [SIMPLESTACK.md:172-192](file://docs/SIMPLESTACK.md#L172-L192)
-- [README.md:101-102](file://README.md#L101-L102)
-- [class-wordpress-app-settings.php:972-1001](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L972-L1001)
+- [SIMPLESTACK.md:154-192](file://docs/SIMPLESTACK.md#L154-L192)
+- [class-sstk-app.php:202-228](file://includes/core/apps/class-sstk-app.php#L202-L228)
 
 ### Error Handling Patterns
 Common patterns include:
@@ -316,16 +314,16 @@ Next --> End
 - [01-prepare_server.txt (v2):1-20](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L1-L20)
 - [01-prepare_server.txt (v2):95-124](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L95-L124)
 - [01-prepare_server.txt (v2):427-544](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L427-L544)
-- [after-server-create-run-commands.txt (v1):36-41](file://includes/core/apps/wordpress-app/scripts/v1/after-server-create-run-commands.txt#L36-L41)
-- [class-wpcd-posts-log.php:183-197](file://includes/core/class-wpcd-posts-log.php#L183-L197)
+- [after-server-create-run-commands.txt (v2):36-41](file://includes/core/apps/wordpress-app/scripts/v2/after-server-create-run-commands.txt#L36-L41)
+- [class-sstk-posts-log.php:183-197](file://includes/core/class-sstk-posts-log.php#L183-L197)
 
 **Section sources**
 - [01-prepare_server.txt (v2):1-20](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L1-L20)
 - [01-prepare_server.txt (v2):95-124](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L95-L124)
 - [01-prepare_server.txt (v2):427-544](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L427-L544)
-- [after-server-create-run-commands.txt (v1):36-41](file://includes/core/apps/wordpress-app/scripts/v1/after-server-create-run-commands.txt#L36-L41)
-- [mt_clone_site.txt (v1):31-41](file://includes/core/apps/wordpress-app/scripts/v1/mt_clone_site.txt#L31-L41)
-- [class-wpcd-posts-log.php:183-197](file://includes/core/class-wpcd-posts-log.php#L183-L197)
+- [after-server-create-run-commands.txt (v2):36-41](file://includes/core/apps/wordpress-app/scripts/v2/after-server-create-run-commands.txt#L36-L41)
+- [mt_clone_site.txt (v2):31-41](file://includes/core/apps/wordpress-app/scripts/v2/mt_clone_site.txt#L31-L41)
+- [class-sstk-posts-log.php:183-197](file://includes/core/class-sstk-posts-log.php#L183-L197)
 
 ### Logging Capabilities
 Logging occurs at multiple levels:
@@ -339,13 +337,13 @@ Best practices:
 - Write human-readable status lines.
 - Avoid secrets in logs.
 - Use structured checkpoints for long operations.
-- Inspect logs through the SimpleStack activity feed or REST endpoints.
+- Inspect logs through the Simple Stack activity feed or REST endpoints.
 
 **Section sources**
-- [after-server-create-run-commands.txt (v1):36-41](file://includes/core/apps/wordpress-app/scripts/v1/after-server-create-run-commands.txt#L36-L41)
-- [mt_clone_site.txt (v1):31-41](file://includes/core/apps/wordpress-app/scripts/v1/mt_clone_site.txt#L31-L41)
+- [after-server-create-run-commands.txt (v2):36-41](file://includes/core/apps/wordpress-app/scripts/v2/after-server-create-run-commands.txt#L36-L41)
+- [mt_clone_site.txt (v2):31-41](file://includes/core/apps/wordpress-app/scripts/v2/mt_clone_site.txt#L31-L41)
 - [SIMPLESTACK.md:79-91](file://docs/SIMPLESTACK.md#L79-L91)
-- [class-wpcd-posts-log.php:183-197](file://includes/core/class-wpcd-posts-log.php#L183-L197)
+- [class-sstk-posts-log.php:183-197](file://includes/core/class-sstk-posts-log.php#L183-L197)
 
 ### Common Customization Scenarios
 
@@ -362,7 +360,7 @@ Best practices:
 #### Implementing Deployment Hooks
 - Use `post_processing_script_server` for server-level post-provision scripts.
 - Use `post_processing_script_site` for site-level post-install scripts.
-- Extend `simplestack_post_site_install()` for final site hardening and plugin activation.
+- Extend `sstk_post_site_install()` for final site hardening and plugin activation.
 
 **Section sources**
 - [01-prepare_server.txt (v2):180-345](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L180-L345)
@@ -370,7 +368,7 @@ Best practices:
 - [01-prepare_server.txt (v2):616-674](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L616-L674)
 - [01-prepare_server.txt (v2):693-703](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L693-L703)
 - [02-install_wordpress_site.txt (v2):224-234](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L224-L234)
-- [66-simplestack_post_install.txt:48-80](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L48-L80)
+- [66-sstk_post_install.txt:48-80](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L48-L80)
 
 ### Best Practices for Script Organization
 - Keep raw scripts self-contained; do not rely on implicit sibling includes.
@@ -401,7 +399,7 @@ Recommended workflow:
 **Section sources**
 - [README.md:79-90](file://README.md#L79-L90)
 - [SIMPLESTACK.md:300-313](file://docs/SIMPLESTACK.md#L300-L313)
-- [after-server-create-run-commands.txt (v1):36-41](file://includes/core/apps/wordpress-app/scripts/v1/after-server-create-run-commands.txt#L36-L41)
+- [after-server-create-run-commands.txt (v2):36-41](file://includes/core/apps/wordpress-app/scripts/v2/after-server-create-run-commands.txt#L36-L41)
 
 ### Maintaining Compatibility Across Cloud Providers
 - Rely on provider APIs through the registered provider classes rather than ad-hoc SSH workarounds.
@@ -419,7 +417,7 @@ Recommended workflow:
 The provisioning pipeline depends on:
 
 - **PHP layer:** WordPress app engine, REST controllers, settings, and script handlers.
-- **Shell layer:** Bash scripts sourced from v1 or v2.
+- **Shell layer:** Bash scripts sourced from `scripts/v2/`.
 - **External services:** Cloud provider APIs, LiteSpeed repositories, Certbot, WP-CLI, and optional DNS plugins.
 - **Local state:** Checkpoint folders, semaphores, and log files on the remote server.
 
@@ -463,8 +461,8 @@ Shell --> Tools["WP-CLI / AWS CLI"]
 Common issues and resolutions:
 
 - **Missing common functions:** Ensure `9999-common-functions.sh` is present and sourced.
-- **Unsupported webserver or Ubuntu release:** Confirm `webserver_type` is `ols` or `ols-enterprise` and the OS is 24.04 or 26.04.
-- **Port 7080 unreachable:** Verify `SIMPLE_STACK_ADMIN_IP` is set correctly and UFW allows it; otherwise use an SSH tunnel.
+- **Unsupported webserver or Ubuntu release:** Confirm `webserver_type` is `ols` and the OS is 24.04 or 26.04.
+- **Port 7080 unreachable:** Verify `SSTK_ADMIN_IP` is set correctly and UFW allows it; otherwise use an SSH tunnel.
 - **Certbot installation fails:** Check snapd health and retry; Certbot is required for certificate issuance.
 - **Partial provisioning:** Inspect checkpoint files and remove incomplete blocks only after understanding the failure point.
 - **Log noise:** Use built-in log sanitization and inspect command, SSH, and error logs through the REST API.
@@ -476,10 +474,10 @@ Common issues and resolutions:
 - [01-prepare_server.txt (v2):348-410](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L348-L410)
 - [01-prepare_server.txt (v2):427-544](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L427-L544)
 - [01-prepare_server.txt (v2):647-667](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L647-L667)
-- [class-wpcd-posts-log.php:183-197](file://includes/core/class-wpcd-posts-log.php#L183-L197)
+- [class-sstk-posts-log.php:183-197](file://includes/core/class-sstk-posts-log.php#L183-L197)
 
 ## Conclusion
-SimpleStack’s provisioning system centers on predictable, auditable Bash scripts executed over SSH, with strong separation between server preparation, WordPress installation, and post-install hardening. The v2 script set modernizes the stack around OpenLiteSpeed and supported Ubuntu releases, improves security, and introduces safer placeholder and admin IP handling. By following the naming conventions, parameter mechanisms, checkpoint patterns, and testing strategies described here, you can safely extend provisioning workflows, add custom software, modify server configurations, and implement reliable deployment hooks across different cloud providers.
+Simple Stack’s provisioning system centers on predictable, auditable Bash scripts executed over SSH, with strong separation between server preparation, WordPress installation, and post-install hardening. The fixed `scripts/v2/` set provides the supported OpenLiteSpeed stack, Ubuntu release guards, safer placeholder handling, and fail-closed admin IP handling. By following the naming conventions, parameter mechanisms, checkpoint patterns, and testing strategies described here, you can safely extend provisioning workflows, add custom software, modify server configurations, and implement reliable deployment hooks across the supported cloud providers.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -488,16 +486,17 @@ SimpleStack’s provisioning system centers on predictable, auditable Bash scrip
 ### Quick Reference: Key Files and Responsibilities
 - `01-prepare_server.txt` — Server stack preparation.
 - `02-install_wordpress_site.txt` — WordPress site installation.
-- `66-simplestack_post_install.txt` — Post-install hardening hook.
+- `66-sstk_post_install.txt` — Post-install hardening hook.
 - `9999-common-functions.txt` — Shared helper functions.
-- `class-wordpress-app-settings.php` — Script version and admin IP settings.
+- `class-sstk-app.php` — Fixed `v2` script resolution and the programmatic admin IP accessor.
+- `class-wordpress-app-settings.php` — WordPress app settings, including the dormant admin IP field definition.
 - `commands-and-logs.php` — After-server-create command selection.
 - `script-handlers.php` — Placeholder substitution and script dispatch.
 
 **Section sources**
 - [01-prepare_server.txt (v2):1-708](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L1-L708)
 - [02-install_wordpress_site.txt (v2):1-324](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L1-L324)
-- [66-simplestack_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L1-L86)
+- [66-sstk_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L1-L86)
 - [9999-common-functions.txt:279-358](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L279-L358)
 - [class-wordpress-app-settings.php:972-1001](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L972-L1001)
 - [commands-and-logs.php:238-254](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L238-L254)

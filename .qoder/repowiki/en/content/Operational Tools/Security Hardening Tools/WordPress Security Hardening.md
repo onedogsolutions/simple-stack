@@ -23,9 +23,9 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains how to harden WordPress security using the Solid Security plugin integration provided by SimpleStack. It covers installation, initial configuration, and audit setup; file integrity monitoring and malware scanning; login security enhancements; database security measures; two-factor authentication; admin account protection; user permission hardening; automated security checks; alert response; performance optimization for security features; backup integration; disaster recovery procedures; best practices; compliance requirements; and incident response protocols.
+This document explains how to harden WordPress security using the Solid Security plugin integration provided by Simple Stack. It covers installation, initial configuration, and audit setup; file integrity monitoring and malware scanning; login security enhancements; database security measures; two-factor authentication; admin account protection; user permission hardening; automated security checks; alert response; performance optimization for security features; backup integration; disaster recovery procedures; best practices; compliance requirements; and incident response protocols.
 
-SimpleStack provisions servers and installs WordPress over SSH, then manages everything from the WordPress admin dashboard. The repository includes a dedicated “Security Plugin” tab that integrates SolidWP Security, plus server-level malware scanning via Maldet/ClamAV and comprehensive backup scripts.
+Simple Stack provisions servers and installs WordPress over SSH, then manages everything from the WordPress admin dashboard. The repository includes a dedicated “Security Plugin” tab that integrates SolidWP Security, plus server-level malware scanning via Maldet/ClamAV and comprehensive backup scripts.
 
 ## Project Structure
 The relevant code for this guide is concentrated under the WordPress app module:
@@ -41,9 +41,9 @@ UI["Site Security Tab"]
 Settings["Global App Settings"]
 end
 subgraph "Plugin Core"
-SecTab["WPCD_WORDPRESS_TABS_SITE_SECURITY<br/>install_activate_solidwp_security()<br/>remove_solidwp_security()"]
-AppSettings["WPCD_WORDPRESS_APP_SETTINGS<br/>SolidWP fields & encryption"]
-AppCore["WPCD_WORDPRESS_APP<br/>handle_solidwp_security_for_new_site()"]
+SecTab["SSTK_WORDPRESS_TABS_SITE_SECURITY<br/>install_activate_solidwp_security()<br/>remove_solidwp_security()"]
+AppSettings["SSTK_WORDPRESS_APP_SETTINGS<br/>SolidWP fields & encryption"]
+AppCore["SSTK_WORDPRESS_APP<br/>handle_solidwp_security_for_new_site()"]
 end
 subgraph "Server"
 Script["manage_solidwp_security.txt"]
@@ -95,7 +95,7 @@ The SolidWP Security integration follows a clear flow:
 sequenceDiagram
 participant Admin as "Admin User"
 participant UI as "Site Security Tab"
-participant Core as "WPCD_WORDPRESS_TABS_SITE_SECURITY"
+participant Core as "SSTK_WORDPRESS_TABS_SITE_SECURITY"
 participant SSH as "SSH Execution"
 participant Script as "manage_solidwp_security.txt"
 participant WP as "WordPress Site"
@@ -295,7 +295,7 @@ Operational tips:
 - [services.php:1420-1443](file://includes/core/apps/wordpress-app/tabs-server/services.php#L1420-L1443)
 
 ## Conclusion
-SimpleStack provides a robust, integrated approach to WordPress security hardening:
+Simple Stack provides a robust, integrated approach to WordPress security hardening:
 - Centralized SolidWP Security activation and licensing per site
 - Secure credential handling and optional bulk operations
 - Automated activation on new sites

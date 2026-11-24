@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Site sync tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,45 +11,45 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SITE_SYNC
+ * Class SSTK_WORDPRESS_TABS_SITE_SYNC
  */
-class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SITE_SYNC extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		/* add_filter( 'wpcd_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		/* add_filter( 'sstk_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 		/* Pending Logs Background Task: Trigger a site-sync process. */
-		add_action( 'wpcd_pending_log_site_sync', array( $this, 'pending_log_site_sync' ), 10, 3 );
+		add_action( 'sstk_pending_log_site_sync', array( $this, 'pending_log_site_sync' ), 10, 3 );
 
-		// Allow the site sync action to be triggered via an action hook.  Will primarily be used by the woocommerce and powertools add-ons.
-		add_action( 'wpcd_wordpress-app_do_site_sync', array( $this, 'do_site_sync_action' ), 10, 2 );
-		add_action( 'wpcd_wordpress-app_do_site_sync_no_record', array( $this, 'do_site_sync_action_no_record' ), 10, 2 );
+		// Allow the site sync action to be triggered via an action hook.
+		add_action( 'sstk_wordpress-app_do_site_sync', array( $this, 'do_site_sync_action' ), 10, 2 );
+		add_action( 'sstk_wordpress-app_do_site_sync_no_record', array( $this, 'do_site_sync_action_no_record' ), 10, 2 );
 
 		// If the sync failed early, mark the pending log record as failed.
-		add_action( 'wpcd_wordpress-app_site_sync_failed_early', array( $this, 'handle_site_sync_site_failed' ), 10, 4 );  // Hook: wpcd_wordpress-app_site_sync_failed_early.
+		add_action( 'sstk_wordpress-app_site_sync_failed_early', array( $this, 'handle_site_sync_site_failed' ), 10, 4 );  // Hook: sstk_wordpress-app_site_sync_failed_early.
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the source app cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -76,11 +77,8 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 				 * Need to create a new app record that points to the new server.
 				 */
 
-				// What type of web server are we running?
-				$webserver_type = $this->get_web_server_type( $id );
-
-				// get new domain from temporary meta.
-				$domain = get_post_meta( $id, 'wpcd_wpapp_site_sync_domain_temp', true );
+				// Get new domain from temporary meta.
+				$domain = get_post_meta( $id, 'sstk_wpapp_site_sync_domain_temp', true );
 
 				if ( $domain ) {
 
@@ -90,7 +88,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 					if ( $app_post ) {
 
 						// Get the destination server id.
-						$destination_server_id = get_post_meta( $id, 'wpcd_wpapp_site_sync_destination_id_temp', true );
+						$destination_server_id = get_post_meta( $id, 'sstk_wpapp_site_sync_destination_id_temp', true );
 
 						/* Pull some data from the current domain because it will need to be added to the new domain */
 						$author = $app_post->post_author;
@@ -104,7 +102,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 
 						/* Start: Check if one or more post records for the same domain exists on the target server - if so then delete them. */
 						$delete_args = array(
-							'post_type'   => 'wpcd_app',
+							'post_type'   => 'sstk_app',
 							'post_status' => 'private',
 							'numberposts' => 999,
 							'meta_query'  => array(
@@ -129,7 +127,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 								// We need to do this because the AJAX user has an ID of zero and so has no permissions!.
 								// This will cause the before_delete_action hook to kill WP with the DIE statement.
 								// By now AJAX permissions have passed so can bypass that security check.
-								remove_action( 'before_delete_post', array( WPCD_POSTS_APP(), 'wpcd_app_delete_post' ), 10 );
+								remove_action( 'before_delete_post', array( SSTK_POSTS_APP(), 'sstk_app_delete_post' ), 10 );
 								wp_delete_post( $app_id, false );
 							}
 						}
@@ -152,7 +150,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 
 							// Update the new record to make sure it belongs to the same team(s).
 							// @TODO: Only the first team is copied.  If the site has more than one team, only the first one is copied over.
-							update_post_meta( $new_app_post_id, 'wpcd_assigned_teams', get_post_meta( $id, 'wpcd_assigned_teams', true ) );
+							update_post_meta( $new_app_post_id, 'sstk_assigned_teams', get_post_meta( $id, 'sstk_assigned_teams', true ) );
 
 							// Was SSL enabled for the cloned site?  If so, flip the SSL metavalues.
 							$this->set_ssl_status( $new_app_post_id, 'off' ); // Assume off for now.
@@ -181,37 +179,14 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 								$this->set_app_redis_installed_status( $new_app_post_id, false );
 							}
 
-							// Was 6G enabled on the original site?  If so, make sure we copy the metas here as well.
-							$status_6g = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_6g_status', true ) );
-							if ( ! empty( $status_6g ) ) {
-								update_post_meta( $new_app_post_id, 'wpapp_6g_status', $status_6g );
-							}
-
 							// Was 7G enabled on the original site?  If so, make sure we copy the metas here as well.
-							$status_7g = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
+							$status_7g = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
 							if ( ! empty( $status_7g ) ) {
 								update_post_meta( $new_app_post_id, 'wpapp_7g_status', $status_7g );
 							}
 
-							// Update the PHP version to match the original version.
-							// To do this we'll first stuff a dummy version into the site record.
-							// If we don't then the action to force php change might never run because current and new might be set to the same values (however inaccurate they might be).
-							// If we don't use a dummy version and stuff a blank instead, certain functions [such as get_php_version_for_app()] will see empty and return the '8.1' php default.
-							$this->set_php_version_for_app( $new_app_post_id, '999' );
-							switch ( $webserver_type ) {
-								case 'ols':
-								case 'ols-enterprise':
-									do_action( 'wpcd_wordpress-app_do_change_php_version', $new_app_post_id, $this->get_wpapp_default_php_version() );
-									// $this->set_php_version_for_app( $new_app_post_id, $this->get_wpapp_default_php_version() );
-									break;
-
-								case 'nginx':
-								default:
-									do_action( 'wpcd_wordpress-app_do_change_php_version', $new_app_post_id, $this->get_php_version_for_app( $id ) );
-									// $this->set_php_version_for_app( $new_app_post_id, $this->get_php_version_for_app( $id ) );
-									break;
-							}
-
+							// Site sync copies the OpenLiteSpeed vhost configuration, including its LSPHP handler.
+							$this->set_php_version_for_app( $new_app_post_id, $this->get_php_version_for_app( $id ) );
 							// Update the wp-login auth status.
 							$this->set_wplogin_http_auth_status( $new_app_post_id, $this->get_wplogin_http_auth_status( $id ) );
 
@@ -224,8 +199,8 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 							// Finally, lets add a meta to indicate that this was a copy.
 							update_post_meta( $new_app_post_id, 'wpapp_site_synced_from_app', $id );
 
-							// Wrapup - let things hook in here - primarily the multisite and WC add-ons.
-							do_action( "wpcd_{$this->get_app_name()}_site_sync_new_post_completed", $new_app_post_id, $id, $name );
+							// Wrapup - let integrations hook in here.
+							do_action( "sstk_{$this->get_app_name()}_site_sync_new_post_completed", $new_app_post_id, $id, $name );
 
 						}
 
@@ -233,10 +208,10 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 						if ( ! empty( $task_id ) ) {
 
 							// Grab our data array from pending tasks record...
-							$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+							$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 							// Mark the task as complete.
-							WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+							SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 
 						}
 					}
@@ -246,10 +221,10 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
 
 				}
 
@@ -274,10 +249,10 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 
 				}
 			} else {
@@ -285,10 +260,10 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
 
 				}
 
@@ -306,21 +281,21 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 			$success = $this->is_ssh_successful( $logs, 'site_sync.txt' );
 
 			if ( true === (bool) $success ) {
-				update_post_meta( $id, 'wpcd_wpapp_site_sync_scheduled', '1' );
-				update_post_meta( $id, 'wpcd_wpapp_site_sync_schedule_destination_id', get_post_meta( $id, 'wpcd_wpapp_site_sync_destination_id_temp', true ) );
-				update_post_meta( $id, 'wpcd_wpapp_site_sync_schedule_destination_ip4', get_post_meta( $id, 'wpcd_wpapp_site_sync_destination_ipv4_temp', true ) );
+				update_post_meta( $id, 'sstk_wpapp_site_sync_scheduled', '1' );
+				update_post_meta( $id, 'sstk_wpapp_site_sync_schedule_destination_id', get_post_meta( $id, 'sstk_wpapp_site_sync_destination_id_temp', true ) );
+				update_post_meta( $id, 'sstk_wpapp_site_sync_schedule_destination_ip4', get_post_meta( $id, 'sstk_wpapp_site_sync_destination_ipv4_temp', true ) );
 			}
 		}
 
 		// Delete temporary metas associated with both site-sync and schedule-site-sync actions.
-		delete_post_meta( $id, 'wpcd_wpapp_site_sync_destination_ipv4_temp' );
-		delete_post_meta( $id, 'wpcd_wpapp_site_sync_destination_id_temp' );
-		delete_post_meta( $id, 'wpcd_wpapp_site_sync_domain_temp' );
+		delete_post_meta( $id, 'sstk_wpapp_site_sync_destination_ipv4_temp' );
+		delete_post_meta( $id, 'sstk_wpapp_site_sync_destination_id_temp' );
+		delete_post_meta( $id, 'sstk_wpapp_site_sync_domain_temp' );
 
 		// Remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -349,7 +324,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Copy To Server', 'wpcd' ),
+				'label' => __( 'Copy To Server', 'simple-stack' ),
 				'icon'  => 'fad fa-sync',
 			);
 		}
@@ -365,11 +340,11 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -384,16 +359,16 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'site-sync', 'site-sync-no-record', 'schedule-site-sync', 'unschedule-site-sync', 'clear-scheduled-site-sync-meta' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -421,7 +396,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Trigger the site_sync function from an action hook.
 	 *
-	 * Action Hook: wpcd_wordpress-app_do_site_sync
+	 * Action Hook: sstk_wordpress-app_do_site_sync
 	 *
 	 * @param string $id ID of app to copy to new server.
 	 * @param array  $args array arguments that the site_sync function needs.
@@ -436,7 +411,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	 * Unlike the regular site-sync, the post-processing action
 	 * will not create a new site record.
 	 *
-	 * Action Hook: wpcd_wordpress-app_do_site_sync_no_record
+	 * Action Hook: sstk_wordpress-app_do_site_sync_no_record
 	 *
 	 * @param string $id ID of app to copy to new server.
 	 * @param array  $args array arguments that the site_sync function needs.
@@ -481,40 +456,40 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 
 		// Bail if no destination server...
 		if ( empty( $destination_id ) ) {
-			$msg = __( 'Sorry but we were unable to obtain an id for the destination server.', 'wpcd' );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
+			$msg = __( 'Sorry but we were unable to obtain an id for the destination server.', 'simple-stack' );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
 			return new \WP_Error( $msg );
 		}
 
 		/**
 		 * Check permissions on source and destination servers if a security override check is NOT in place.
 		 * The security override check is passed via another program that has done the security checks.
-		 * For example, the security override will be passed by the WC addon that sells WP sites.
+		 * Integrations can pass a security override when they need to restrict access.
 		 */
 		if ( ! isset( $in_args['sec_source_dest_check_override'] ) ) {
 			// Bail if the destination server is not something the user is authorized to use!
-			if ( ! in_array( $destination_id, wpcd_get_posts_by_permission( 'view_server', 'wpcd_app_server' ) ) ) {
-				$msg = __( 'Sorry but you are not allowed to copy sites to the specified target server.', 'wpcd' );
-				do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
-				do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
+			if ( ! in_array( $destination_id, sstk_get_posts_by_permission( 'view_server', 'sstk_app_server' ) ) ) {
+				$msg = __( 'Sorry but you are not allowed to copy sites to the specified target server.', 'simple-stack' );
+				do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+				do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
 				return new \WP_Error( $msg );
 			}
 
 			// Bail if the source server is not something the user is authorized to use!
-			if ( ! in_array( $source_id, wpcd_get_posts_by_permission( 'view_server', 'wpcd_app_server' ) ) ) {
-				$msg = __( 'Sorry but you are not allowed to copy sites from the specified source server.', 'wpcd' );
-				do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
-				do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
+			if ( ! in_array( $source_id, sstk_get_posts_by_permission( 'view_server', 'sstk_app_server' ) ) ) {
+				$msg = __( 'Sorry but you are not allowed to copy sites from the specified source server.', 'simple-stack' );
+				do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+				do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
 				return new \WP_Error( $msg );
 			}
 		}
 
 		// Bail if the source and destination servers are the same!
 		if ( $destination_id === $source_id ) {
-			$msg = __( 'Sorry but it looks like you are trying to copy the site to the same server where it currently resides. If you would like to do that, use the CLONE SITE tab instead.', 'wpcd' );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
+			$msg = __( 'Sorry but it looks like you are trying to copy the site to the same server where it currently resides. If you would like to do that, use the CLONE SITE tab instead.', 'simple-stack' );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
 			return new \WP_Error( $msg );
 		}
 
@@ -523,14 +498,14 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 
 		// Bail if no domain...
 		if ( empty( $domain ) ) {
-			$msg = __( 'Sorry but we were unable to obtain the domain name for this app.', 'wpcd' );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
+			$msg = __( 'Sorry but we were unable to obtain the domain name for this app.', 'simple-stack' );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $args );
 			return new \WP_Error( $msg );
 		} else {
 			// we have a good domain so stick it in the arg array.
 			$domain         = sanitize_text_field( $domain );  // shouldn't be necessary but doing it anyway.
-			$domain         = wpcd_clean_domain( $domain );   // shouldn't be necessary but doing it anyway.
+			$domain         = sstk_clean_domain( $domain );   // shouldn't be necessary but doing it anyway.
 			$args['domain'] = $domain;
 		}
 
@@ -543,18 +518,18 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		// Bail if error for source server.
 		if ( is_wp_error( $source_instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Unable to execute this request because we cannot get the source server instance details for action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
+			$msg = sprintf( __( 'Unable to execute this request because we cannot get the source server instance details for action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
 			return new \WP_Error( $msg );
 		}
 
 		// Bail if error for destination server.
 		if ( is_wp_error( $destination_instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Unable to execute this request because we cannot get the destination server instance details for action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $destination_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $destination_instance );
+			$msg = sprintf( __( 'Unable to execute this request because we cannot get the destination server instance details for action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $destination_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $destination_instance );
 			return new \WP_Error( $msg );
 		}
 
@@ -563,29 +538,29 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		$ipv4_destination = $destination_instance['ipv4'];
 		if ( empty( $ipv4_source ) || empty( $ipv4_destination ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Oops - either the source or destination server is missing an ipv4 address - action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
+			$msg = sprintf( __( 'Oops - either the source or destination server is missing an ipv4 address - action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
 			return new \WP_Error( $msg );
 		}
 
 		// Lets get the login user for the source server.
-		$source_ssh_user = WPCD_SERVER()->get_root_user_name( $source_id );
+		$source_ssh_user = SSTK_SERVER()->get_root_user_name( $source_id );
 		if ( empty( $source_ssh_user ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Oops - unable to get the login user name for the source server - action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
+			$msg = sprintf( __( 'Oops - unable to get the login user name for the source server - action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
 			return new \WP_Error( $msg );
 		}
 
 		// Lets get the login user for the destination server.
-		$destination_ssh_user = WPCD_SERVER()->get_root_user_name( $destination_id );
+		$destination_ssh_user = SSTK_SERVER()->get_root_user_name( $destination_id );
 		if ( empty( $destination_ssh_user ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Oops - unable to get the login user name for the destination server - action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $destination_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $destination_instance );
+			$msg = sprintf( __( 'Oops - unable to get the login user name for the destination server - action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $destination_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $destination_instance );
 			return new \WP_Error( $msg );
 		}
 
@@ -600,7 +575,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		// construct the command to set up the origin/source server.
 		$action  = 'auth';
 		$run_cmd = $this->turn_script_into_command( $source_instance, 'site_sync_origin_setup.txt', array_merge( $args, array( 'action' => $action ) ) );
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $source_instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $source_instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $source_instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $source_instance, false );
 
 		// run the command on the origin/source server and evaluate the results.
 		$result  = $this->execute_ssh( 'generic', $source_instance, array( 'commands' => $run_cmd ) );
@@ -608,35 +583,35 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		if ( ! $success ) {
 			if ( is_wp_error( $result ) ) {
 				/* translators: %s is replaced with the result of the execute_ssh command. */
-				$msg = sprintf( __( 'Unable to configure the origin server. The origin server returned this in response to commands: %s', 'wpcd' ), $result->get_error_message() );
+				$msg = sprintf( __( 'Unable to configure the origin server. The origin server returned this in response to commands: %s', 'simple-stack' ), $result->get_error_message() );
 			} else {
 				/* translators: %s is replaced with the result of the execute_ssh command. */
-				$msg = sprintf( __( 'Unable to configure the origin server. The origin server returned this in response to commands: %s', 'wpcd' ), $result );
+				$msg = sprintf( __( 'Unable to configure the origin server. The origin server returned this in response to commands: %s', 'simple-stack' ), $result );
 			}
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'error', __FILE__, __LINE__, $source_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'error', __FILE__, __LINE__, $source_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
 			return new \WP_Error( $msg );
 		}
 
 		// construct the command to set up the destination server.
 		$action  = '';  // no action needs to be passed to the script since it only does one thing.
 		$run_cmd = $this->turn_script_into_command( $destination_instance, 'site_sync_destination_setup.txt', array_merge( $args, array( 'action' => $action ) ) );
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $destination_instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $destination_instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $destination_instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $destination_instance, false );
 
 		// run the command to setup the destination server and evaluate the results.
 		$result  = $this->execute_ssh( 'generic', $destination_instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'site_sync_destination_setup.txt' );
 		if ( ! $success ) {
 			/* translators: %s is replaced with the result of the execute_ssh command. */
-			$msg = sprintf( __( 'Unable to configure the destination server. The destination server returned this in response to commands: %s', 'wpcd' ), $result );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'error', __FILE__, __LINE__, $destination_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $destination_instance );
+			$msg = sprintf( __( 'Unable to configure the destination server. The destination server returned this in response to commands: %s', 'simple-stack' ), $result );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'error', __FILE__, __LINE__, $destination_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $destination_instance );
 			return new \WP_Error( $msg );
 		} else {
 			// Command successful - update some metas on the app record to make sure that we have data to use later.
-			update_post_meta( $source_app_id, 'wpcd_wpapp_site_sync_destination_ipv4_temp', $ipv4_destination );
-			update_post_meta( $source_app_id, 'wpcd_wpapp_site_sync_destination_id_temp', $destination_id );
-			update_post_meta( $source_app_id, 'wpcd_wpapp_site_sync_domain_temp', $domain );
+			update_post_meta( $source_app_id, 'sstk_wpapp_site_sync_destination_ipv4_temp', $ipv4_destination );
+			update_post_meta( $source_app_id, 'sstk_wpapp_site_sync_destination_id_temp', $destination_id );
+			update_post_meta( $source_app_id, 'sstk_wpapp_site_sync_domain_temp', $domain );
 		}
 
 		/**
@@ -651,9 +626,9 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 
 		// Setup unique command name.
 		if ( empty( $action ) ) {
-			$msg = __( 'The $action variable is empty - returning false from site-sync routine.', 'wpcd' );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
+			$msg = __( 'The $action variable is empty - returning false from site-sync routine.', 'simple-stack' );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
 			return false;
 		}
 
@@ -684,21 +659,21 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( "$msg: %s", print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
-			do_action( "wpcd_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
+			$msg = sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( "$msg: %s", print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
+			do_action( "sstk_{$this->get_app_name()}_site_sync_failed_early", $id, $action, $msg, $source_instance );
 			return new \WP_Error( $msg );
 		}
 
 		// We might need to add an item to the PENDING TASKS LOG (generally because we're calling this from a WC order).
 		if ( isset( $in_args['pending_tasks_type'] ) ) {
-			WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $destination_id, $in_args['pending_tasks_type'], $command, $args, 'not-ready', $id, __( 'Waiting For Site Copy To Complete', 'wpcd' ) );
+			SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $destination_id, $in_args['pending_tasks_type'], $command, $args, 'not-ready', $id, __( 'Waiting For Site Copy To Complete', 'simple-stack' ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $source_instance, $action );
 
@@ -734,25 +709,25 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		// Set some source and destination vars to try to make things clearer for future readers of this script.
 		$source_app_id  = $id;
 		$source_id      = $source_server_post->ID;
-		$destination_id = (int) get_post_meta( $id, 'wpcd_wpapp_site_sync_schedule_destination_id', true );
+		$destination_id = (int) get_post_meta( $id, 'sstk_wpapp_site_sync_schedule_destination_id', true );
 
 		// Bail if no destination server...
 		if ( empty( $destination_id ) ) {
-			$msg = __( 'Sorry but we were unable to obtain an id for the destination server.', 'wpcd' );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+			$msg = __( 'Sorry but we were unable to obtain an id for the destination server.', 'simple-stack' );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
 			return new \WP_Error( $msg );
 		}
 
 		/**
 		 * Check permissions on source servers if a security override check is NOT in place.
 		 * The security override check is passed via another program that has done the security checks.
-		 * For example, the security override might be passed by the WC addon that sells WP sites.
+		 * Integrations can pass a security override when they need to restrict access.
 		 */
 		if ( ! isset( $in_args['sec_source_dest_check_override'] ) ) {
 			// Bail if the source server is not something the user is authorized to use!
-			if ( ! in_array( $source_id, wpcd_get_posts_by_permission( 'view_server', 'wpcd_app_server' ) ) ) {
-				$msg = __( 'Sorry but you are not allowed to copy sites from the specified source server.', 'wpcd' );
-				do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+			if ( ! in_array( $source_id, sstk_get_posts_by_permission( 'view_server', 'sstk_app_server' ) ) ) {
+				$msg = __( 'Sorry but you are not allowed to copy sites from the specified source server.', 'simple-stack' );
+				do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
 				return new \WP_Error( $msg );
 			}
 		}
@@ -762,13 +737,13 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 
 		// Bail if no domain...
 		if ( empty( $domain ) ) {
-			$msg = __( 'Sorry but we were unable to obtain the domain name for this app.', 'wpcd' );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
+			$msg = __( 'Sorry but we were unable to obtain the domain name for this app.', 'simple-stack' );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $args, false );  // Note that we are passing $args instead of a $instance var because we do not have a $instance var yet.
 			return new \WP_Error( $msg );
 		} else {
 			// we have a good domain so stick it in the arg array.
 			$domain         = sanitize_text_field( $domain );  // shouldn't be necessary but doing it anyway.
-			$domain         = wpcd_clean_domain( $domain );   // shouldn't be necessary but doing it anyway.
+			$domain         = sstk_clean_domain( $domain );   // shouldn't be necessary but doing it anyway.
 			$args['domain'] = $domain;
 		}
 
@@ -781,16 +756,16 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		// Bail if error for source server.
 		if ( is_wp_error( $source_instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Unable to execute this request because we cannot get the source server instance details for action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
+			$msg = sprintf( __( 'Unable to execute this request because we cannot get the source server instance details for action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
 			return new \WP_Error( $msg );
 		}
 
 		// Bail if error for destination server.
 		if ( is_wp_error( $destination_instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Unable to execute this request because we cannot get the destination server instance details for action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $destination_instance, false );
+			$msg = sprintf( __( 'Unable to execute this request because we cannot get the destination server instance details for action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $destination_instance, false );
 			return new \WP_Error( $msg );
 		}
 
@@ -799,8 +774,8 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		$ipv4_destination = $destination_instance['ipv4'];
 		if ( empty( $ipv4_source ) || empty( $ipv4_destination ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$msg = sprintf( __( 'Oops - either the source or destination server is missing an ipv4 address - action %s', 'wpcd' ), $action );
-			do_action( 'wpcd_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
+			$msg = sprintf( __( 'Oops - either the source or destination server is missing an ipv4 address - action %s', 'simple-stack' ), $action );
+			do_action( 'sstk_log_error', sprintf( '%s: %s', $msg, print_r( $args, true ) ), 'trace', __FILE__, __LINE__, $source_instance, false );
 			return new \WP_Error( $msg );
 		}
 
@@ -821,7 +796,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $source_instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $source_instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $source_instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $source_instance, false );
 
 		$result = $this->execute_ssh( 'generic', $source_instance, array( 'commands' => $run_cmd ) );
 
@@ -834,7 +809,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		$success = $this->is_ssh_successful( $result, 'site_sync_unschedule.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is the action code we're executing for the site; %2$s is the error code or message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// We got here so everything ok - remove metas.
@@ -857,12 +832,12 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	 */
 	public function clear_scheduled_site_sync_metas( $id, $action ) {
 
-		delete_post_meta( $id, 'wpcd_wpapp_site_sync_scheduled' );
-		delete_post_meta( $id, 'wpcd_wpapp_site_sync_schedule_destination_id' );
-		delete_post_meta( $id, 'wpcd_wpapp_site_sync_schedule_destination_ip4' );
+		delete_post_meta( $id, 'sstk_wpapp_site_sync_scheduled' );
+		delete_post_meta( $id, 'sstk_wpapp_site_sync_schedule_destination_id' );
+		delete_post_meta( $id, 'sstk_wpapp_site_sync_schedule_destination_ip4' );
 
 		// Return an error so that it can be displayed in a dialog box...
-		return new \WP_Error( __( 'Scheduled Site Sync Metas have been cleared.', 'wpcd' ) );
+		return new \WP_Error( __( 'Scheduled Site Sync Metas have been cleared.', 'simple-stack' ) );
 	}
 
 	/**
@@ -895,38 +870,19 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 			return array_merge( $fields, $this->get_disabled_header_field( 'site-sync' ) );
 		}
 
-		// What type of web server are we running?
-		$webserver_type = $this->get_web_server_type( $id );
-
-		// Get HTTP2 status since we cannot push a site with HTTP2 turned on.
-		// This restriction applies only to NGINX servers.
-		$http2_status = $this->http2_status( $id );
-		if ( 'on' === $http2_status && 'nginx' === $webserver_type ) {
-			$desc = __( 'You cannot copy this site to a new server at this time because HTTP2 is enabled. Please disable it before attempting this operation.', 'wpcd' );
-
-			$fields[] = array(
-				'name' => __( 'Site Sync', 'wpcd' ),
-				'tab'  => 'site-sync',
-				'type' => 'heading',
-				'desc' => $desc,
-			);
-
-			return $fields;
-		}
-
 		// We got here so ok to show fields related to copying the site to a new server.
-		$desc  = __( 'Copy this site to another server. If the domain already exists on the target server it will be overwritten.', 'wpcd' );
+		$desc  = __( 'Copy this site to another server. If the domain already exists on the target server it will be overwritten.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'You should make sure that your destination server has any optional components installed. For example,if you enabled REDIS or MEMCACHED on here, your destination should have that installed.', 'wpcd' );
+		$desc .= __( 'You should make sure that your destination server has any optional components installed. For example,if you enabled REDIS or MEMCACHED on here, your destination should have that installed.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( '***Please see important notes at the bottom of this page if this is the first time you are using this function!***', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc .= __( '***Please see important notes at the bottom of this page if this is the first time you are using this function!***', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		// Start new card.
-		$fields[] = wpcd_start_full_card_no_border( $this->get_tab_slug() );
+		$fields[] = sstk_start_full_card_no_border( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Copy To Server (aka Site Sync)', 'wpcd' ),
+			'name' => __( 'Copy To Server (aka Site Sync)', 'simple-stack' ),
 			'tab'  => 'site-sync',
 			'type' => 'heading',
 			'desc' => $desc,
@@ -937,7 +893,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		$source_server    = $this->get_server_by_app_id( $id );
 		$source_server_id = $source_server->ID;
@@ -946,7 +902,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		$webserver_type = $this->get_web_server_type( $id );
 
 		// Now we need to construct an array of server posts that the user is allowed to see.
-		$post__in = wpcd_get_posts_by_permission( 'view_server', 'wpcd_app_server' );
+		$post__in = sstk_get_posts_by_permission( 'view_server', 'sstk_app_server' );
 
 		// Remove the current ID if it's the server posts array. Note the use of ArrayMap and passing in the $source_server_id to the annonymous function.
 		$post__in = array_filter(
@@ -975,26 +931,26 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Select Destination Server', 'wpcd' ),
+			'name' => __( 'Select Destination Server', 'simple-stack' ),
 			'tab'  => 'site-sync',
 			'type' => 'heading',
-			'desc' => __( 'Where would you like to send a copy of this site?', 'wpcd' ),
+			'desc' => __( 'Where would you like to send a copy of this site?', 'simple-stack' ),
 		);
 
 		// Setup a field with the dropdown equal to the posts in the $post__in var we just setup above.
 		$fields[] = array(
-			'id'          => 'wpcd_app_site-sync-target-server',
+			'id'          => 'sstk_app_site-sync-target-server',
 			'name'        => '',
 			'tab'         => 'site-sync',
-			'label'       => __( 'Target server', 'wpcd' ),
+			'label'       => __( 'Target server', 'simple-stack' ),
 			'field_type'  => 'select',
-			'placeholder' => __( 'Select your destination server then choose an option in one of the other cards on this page.', 'wpcd' ),
+			'placeholder' => __( 'Select your destination server then choose an option in one of the other cards on this page.', 'simple-stack' ),
 			'desc'        => '',
 			'type'        => 'post',
-			'post_type'   => 'wpcd_app_server',
+			'post_type'   => 'sstk_app_server',
 			'query_args'  => array(
 				/* @TODO: need to restrict this list to only server posts of type wp server and drop existing destination and source servers */
 				'post_status'    => 'private',
@@ -1005,106 +961,106 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 			),
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'site_sync_destination',
+				'data-sstk-name' => 'site_sync_destination',
 			),
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$copy_desc = __( 'Immediately copy this site to the selected destination server.', 'wpcd' );
+		$copy_desc = __( 'Immediately copy this site to the selected destination server.', 'simple-stack' );
 		if ( 'yes' === $this->is_remote_db( $id ) ) {
-			$copy_desc .= '<br />' . '<b>' . __( 'Warning: This site appears to be using a remote database server.  Your target server should have a local database server since the database server will be switched to localhost to avoid database naming conflicts.', 'wpcd' ) . '</b>';
+			$copy_desc .= '<br />' . '<b>' . __( 'Warning: This site appears to be using a remote database server.  Your target server should have a local database server since the database server will be switched to localhost to avoid database naming conflicts.', 'simple-stack' ) . '</b>';
 		}		
 
 		$fields[] = array(
-			'name' => __( 'Copy Now', 'wpcd' ),
+			'name' => __( 'Copy Now', 'simple-stack' ),
 			'tab'  => 'site-sync',
 			'type' => 'heading',
 			'desc'       => $copy_desc,			
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_site_sync',
+			'id'         => 'sstk_app_site_sync',
 			'name'       => '',
 			'tab'        => 'site-sync',
 			'type'       => 'button',
-			'std'        => __( 'Start Copy', 'wpcd' ),
+			'std'        => __( 'Start Copy', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'site-sync',
+				'data-sstk-action'              => 'site-sync',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode( array( '#wpcd_app_site-sync-target-server' ) ),
+				'data-sstk-fields'              => wp_json_encode( array( '#sstk_app_site-sync-target-server' ) ),
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to copy this site to the specified server?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to copy this site to the specified server?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to copy this site to the specified server...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to copy this site to the specified server...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* Periodic Sync */
 		$fields[] = array(
-			'name' => __( 'Daily Sync - NOTE: Limited Release/Fast-Ring Feature', 'wpcd' ),
+			'name' => __( 'Daily Sync - NOTE: Limited Release/Fast-Ring Feature', 'simple-stack' ),
 			'tab'  => 'site-sync',
 			'type' => 'heading',
-			'desc' => __( 'Sync this site to the server selected above once per day.', 'wpcd' ),
+			'desc' => __( 'Sync this site to the server selected above once per day.', 'simple-stack' ),
 		);
 
-		if ( 1 === (int) get_post_meta( $id, 'wpcd_wpapp_site_sync_scheduled' ) ) {
+		if ( 1 === (int) get_post_meta( $id, 'sstk_wpapp_site_sync_scheduled' ) ) {
 
 			// The site is scheduled to be synced to another server already.
 			$fields[] = array(
-				'id'   => 'wpcd_app_site_sync_periodic_set',
+				'id'   => 'sstk_app_site_sync_periodic_set',
 				'name' => '',
 				'tab'  => 'site-sync',
 				'type' => 'custom-html',
 				/* Translators: %s is the server name taken from the post title of the server custom post type. */
-				'std'  => sprintf( __( 'This site has already been set up for daily syncing with another server: %s', 'wpcd' ), get_the_title( get_post_meta( $id, 'wpcd_wpapp_site_sync_schedule_destination_id', true ) ) ),
+				'std'  => sprintf( __( 'This site has already been set up for daily syncing with another server: %s', 'simple-stack' ), get_the_title( get_post_meta( $id, 'sstk_wpapp_site_sync_schedule_destination_id', true ) ) ),
 			);
 
 			/**
 			 *  Because the site is already scheduled, we can add the option to unsync.
 			 */
 			$fields[] = array(
-				'id'   => 'wpcd_app_site_sync_periodic_unsync_header',
-				'name' => __( 'Stop Scheduled Sync', 'wpcd' ),
+				'id'   => 'sstk_app_site_sync_periodic_unsync_header',
+				'name' => __( 'Stop Scheduled Sync', 'simple-stack' ),
 				'tab'  => 'site-sync',
 				'type' => 'heading',
-				'desc' => __( 'Stop daily syncing to the destination server.', 'wpcd' ),
+				'desc' => __( 'Stop daily syncing to the destination server.', 'simple-stack' ),
 			);
 
 			/* Set the text of the confirmation prompt */
-			$confirmation_prompt = __( 'Are you sure you would like to stop the daily sync for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to stop the daily sync for this site?', 'simple-stack' );
 
 			$fields[] = array(
-				'id'         => 'wpcd_app_site_sync_periodic_unsync',
+				'id'         => 'sstk_app_site_sync_periodic_unsync',
 				'tab'        => 'site-sync',
-				'std'        => __( 'Stop Syncing', 'wpcd' ),
+				'std'        => __( 'Stop Syncing', 'simple-stack' ),
 				'type'       => 'button',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'unschedule-site-sync',
+					'data-sstk-action'              => 'unschedule-site-sync',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+					'data-sstk-confirmation-prompt' => $confirmation_prompt,
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
@@ -1112,30 +1068,30 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 			 *  Because the site is already scheduled, we can add the option to clear metas and reset.
 			 */
 			$fields[] = array(
-				'id'   => 'wpcd_app_site_sync_periodic_clear_meta_header',
-				'name' => __( 'Clear Metas', 'wpcd' ),
+				'id'   => 'sstk_app_site_sync_periodic_clear_meta_header',
+				'name' => __( 'Clear Metas', 'simple-stack' ),
 				'tab'  => 'site-sync',
 				'type' => 'heading',
-				'desc' => __( 'Clear metas and reset plugin state. Any scheduled syncs for this site will still exist on the server but the plugin will not be aware of it', 'wpcd' ),
+				'desc' => __( 'Clear metas and reset plugin state. Any scheduled syncs for this site will still exist on the server but the plugin will not be aware of it', 'simple-stack' ),
 			);
 
 			/* Set the text of the confirmation prompt */
-			$confirmation_prompt = __( 'Are you sure you would like to clear and reset the metas?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to clear and reset the metas?', 'simple-stack' );
 
 			$fields[] = array(
-				'id'         => 'wpcd_app_site_sync_periodic_clear_meta',
+				'id'         => 'sstk_app_site_sync_periodic_clear_meta',
 				'tab'        => 'site-sync',
-				'std'        => __( 'Clear', 'wpcd' ),
+				'std'        => __( 'Clear', 'simple-stack' ),
 				'type'       => 'button',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'clear-scheduled-site-sync-meta',
+					'data-sstk-action'              => 'clear-scheduled-site-sync-meta',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+					'data-sstk-confirmation-prompt' => $confirmation_prompt,
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
@@ -1145,53 +1101,53 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 			 * Enable site sync button.
 			 */
 			$fields[] = array(
-				'id'         => 'wpcd_app_site_sync_periodic',
+				'id'         => 'sstk_app_site_sync_periodic',
 				'name'       => '',
 				'tab'        => 'site-sync',
 				'type'       => 'button',
-				'std'        => __( 'Schedule', 'wpcd' ),
+				'std'        => __( 'Schedule', 'simple-stack' ),
 				'desc'       => '',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'schedule-site-sync',
+					'data-sstk-action'              => 'schedule-site-sync',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// fields that contribute data for this action.
-					'data-wpcd-fields'              => wp_json_encode( array( '#wpcd_app_site-sync-target-server' ) ),
+					'data-sstk-fields'              => wp_json_encode( array( '#sstk_app_site-sync-target-server' ) ),
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to schedule this site every day to sync to the specified server?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to schedule this site every day to sync to the specified server?', 'simple-stack' ),
 					// show log console?
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to schedule copying this site to the specified server...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to schedule copying this site to the specified server...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 		}
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// Show some important notes.
-		$important_notes  = __( 'Please keep these two notes in mind before using this function:', 'wpcd' );
+		$important_notes  = __( 'Please keep these two notes in mind before using this function:', 'simple-stack' );
 		$important_notes .= '<br />';
-		$important_notes .= __( '1. Root access is usually required on both servers.  Therefore this function might not work on some server providers such as AWS EC2, AWS Lightsail, Azure & Google Cloud!', 'wpcd' );
+		$important_notes .= __( '1. Root access is required on both servers, and both servers must allow outbound SSH connections.', 'simple-stack' );
 		$important_notes .= '<br />';
-		$important_notes .= __( '2. The private ssh key must NOT be protected by a password.', 'wpcd' );
+		$important_notes .= __( '2. The private ssh key must NOT be protected by a password.', 'simple-stack' );
 		$fields[]         = array(
-			'name' => __( 'Important Notes', 'wpcd' ),
+			'name' => __( 'Important Notes', 'simple-stack' ),
 			'tab'  => 'site-sync',
 			'type' => 'heading',
 			'desc' => $important_notes,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $fields;
 
@@ -1200,9 +1156,9 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Perform a site sync - triggered via pending logs background process.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_pending_log_site_sync
+	 * Action Hook: sstk_pending_log_site_sync
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site on which this action apply.
@@ -1211,7 +1167,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	public function pending_log_site_sync( $task_id, $site_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		$args['site_sync_destination']          = $args['target_server'];
 		$args['sec_source_dest_check_override'] = 1;
@@ -1220,13 +1176,13 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		update_post_meta( $site_id, 'wpapp_pending_log_site_sync', $task_id );
 
 		// Should we create a new app record on every new copy?
-		$add_new_app_record = (bool) get_post_meta( $site_id, 'wpcd_wpapp_sitesync_schedule_new_record', true );
+		$add_new_app_record = (bool) get_post_meta( $site_id, 'sstk_wpapp_sitesync_schedule_new_record', true );
 
 		/* Trigger the site sync */
 		if ( true === $add_new_app_record ) {
-			do_action( 'wpcd_wordpress-app_do_site_sync', $site_id, $args );
+			do_action( 'sstk_wordpress-app_do_site_sync', $site_id, $args );
 		} else {
-			do_action( 'wpcd_wordpress-app_do_site_sync_no_record', $site_id, $args );
+			do_action( 'sstk_wordpress-app_do_site_sync_no_record', $site_id, $args );
 		}
 
 	}
@@ -1237,7 +1193,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 	 * Primarily, we'll be updating the pending log record as failed.
 	 * Maybe later we'll add a notification?
 	 *
-	 * Action Hook: wpcd_{$this->get_app_name()}_site_sync_failed_early | wpcd_wordpress-app_site_sync_failed_early
+	 * Action Hook: sstk_{$this->get_app_name()}_site_sync_failed_early | sstk_wordpress-app_site_sync_failed_early
 	 *
 	 * @param int    $id       Post ID of the site.
 	 * @param int    $action   String indicating the action name.
@@ -1256,7 +1212,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Bail if not a WordPress app...
-		if ( 'wordpress-app' !== WPCD_WORDPRESS_APP()->get_app_type( $id ) ) {
+		if ( 'wordpress-app' !== SSTK_WORDPRESS_APP()->get_app_type( $id ) ) {
 			return;
 		}
 
@@ -1266,22 +1222,22 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Get server instance array.
-		$instance = WPCD_WORDPRESS_APP()->get_app_instance_details( $id );
+		$instance = SSTK_WORDPRESS_APP()->get_app_instance_details( $id );
 
-		if ( 'wpcd_app' === get_post_type( $id ) ) {
+		if ( 'sstk_app' === get_post_type( $id ) ) {
 
 			// Now check the pending tasks table for a record where the key=$id and type='site-sync' and state='in-process'
 			// We are depending on the fact that there should only be one process running on a server a time and in this case it should be in-process.
-			$posts = WPCD_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $id, 'in-process', 'site-sync' );
+			$posts = SSTK_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $id, 'in-process', 'site-sync' );
 
 			if ( $posts ) {
 
 				// Grab our data array from pending tasks record...
 				$task_id = $posts[0]->ID;
-				$data    = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+				$data    = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 				// Mark post as failed.
-				WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed', '', '', false, $message );
+				SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed', '', '', false, $message );
 
 			}
 		}
@@ -1289,4 +1245,4 @@ class WPCD_WORDPRESS_TABS_SITE_SYNC extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_SITE_SYNC();
+new SSTK_WORDPRESS_TABS_SITE_SYNC();

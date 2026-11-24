@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -7,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class handle DNS Provider functionality
  */
-class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
+class SSTK_CT_DNS_Provider extends SSTK_MB_Custom_Table {
 	
 	/**
 	 * Model slug
@@ -45,7 +46,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 		
 		add_filter( "rwmb_allowed_users_field_meta", array( $this, 'field_allowed_users' ), 10, 3 );
 		add_filter( "rwmb_allowed_roles_field_meta", array( $this, 'field_allowed_roles' ), 10, 3 );
-		add_action( 'wpcd_after_public_pages_created', array( $this, 'create_public_page') );
+		add_action( 'sstk_after_public_pages_created', array( $this, 'create_public_page') );
 	}
 	
 	/**
@@ -56,12 +57,12 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 		mb_register_model( $this->get_model_name(), [
 			'table'  => $this->get_table_name(),
 			'labels' => [
-				'name'          => __( 'DNS Providers', 'wpcd' ),
-				'singular_name' => __( 'DNS Provider', 'wpcd' ),
+				'name'          => __( 'DNS Providers', 'simple-stack' ),
+				'singular_name' => __( 'DNS Provider', 'simple-stack' ),
 			],
-			'parent'      => 'edit.php?post_type=wpcd_app_server',
+			'parent'      => 'edit.php?post_type=sstk_app_server',
 			'position'    => 81,
-			'capability'  => 'wpcd_manage_settings',
+			'capability'  => 'sstk_manage_settings',
 			'show_in_menu'	=> false,
 			'show_in_menu_custom'	=> true,
 		] );
@@ -92,8 +93,8 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 
 			$page_id = wp_insert_post(
 				array(
-					'post_title'   => __( 'DNS Providers', 'wpcd' ),
-					'post_content' => '[wpcd_ct_dns_providers]',
+					'post_title'   => __( 'DNS Providers', 'simple-stack' ),
+					'post_content' => '[sstk_ct_dns_providers]',
 					'post_status'  => 'publish',
 					'post_author'  => get_current_user_id(),
 					'post_type'    => 'page',
@@ -130,15 +131,15 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 					'type' => 'hidden',
 					'std'	=> $this->get_nonce( $this->action() ),
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 					'save_field'      => false
 				),
 				
 				array(
-					'name' => __( 'DNS Name', 'wpcd' ),
+					'name' => __( 'DNS Name', 'simple-stack' ),
 					'id'   => 'dns_name',
 					'type' => 'text',
-					'desc' => __('Enter DNS provider name', 'wpcd' ),
+					'desc' => __('Enter DNS provider name', 'simple-stack' ),
 					'admin_columns' => [
 						'position' => 'after id',
 						'sort'     => true,
@@ -146,13 +147,13 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 					'required' => true
 				),
 				array(
-					'name' => __( 'Short Description', 'wpcd' ),
+					'name' => __( 'Short Description', 'simple-stack' ),
 					'id'   => 'dns_short_description',
 					'type' => 'textarea',
-					'desc' => __('Short description about dns provider', 'wpcd' ),
+					'desc' => __('Short description about dns provider', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'DNS Provider', 'wpcd' ),
+					'name' => __( 'DNS Provider', 'simple-stack' ),
 					'id'   => 'dns_provider',
 					'type' => 'select',
 					'options' => [
@@ -160,7 +161,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 						'godaddy' => 'Godaddy',
 						'dnsmadeeasy' => 'DNS Made Easy'
 					],
-					'desc' => __('Select DNS provider', 'wpcd' ),
+					'desc' => __('Select DNS provider', 'simple-stack' ),
 					'admin_columns' => [
 						'position' => 'after dns_name',
 						'sort'     => true,
@@ -168,31 +169,31 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 					'required' => true
 				),
 				array(
-					'name' => __( 'DNS Notes', 'wpcd' ),
+					'name' => __( 'DNS Notes', 'simple-stack' ),
 					'id'   => 'dns_notes',
 					'type' => 'textarea',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 				
 				array(
-					'name' => __( 'DNS Secret Key', 'wpcd' ),
+					'name' => __( 'DNS Secret Key', 'simple-stack' ),
 					'id'   => 'dns_secret_key',
 					'type' => 'textarea',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 				array(
 					'type' => 'heading',
-					'name' => __( 'Permissions', 'wpcd' )
+					'name' => __( 'Permissions', 'simple-stack' )
 				),
 			);
 		
 		
 		
-		if( wpcd_is_admin() ) {
+		if( sstk_is_admin() ) {
 			$owner_field = array(
-					'name' => __( 'Owner', 'wpcd' ),
+					'name' => __( 'Owner', 'simple-stack' ),
 					'id'   => 'owner',
 					'type' => 'user',
 					'field_type'  => 'select_advanced',
@@ -200,39 +201,39 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 					'ajax'  => true,
 					'multiple'        => false,
 					'class'	=> '',
-					'desc' => __('', 'wpcd' )
+					'desc' => __('', 'simple-stack' )
 				);
 		} else {
 			
 			$owner_field = array(
-					'name' => __( 'Owner', 'wpcd' ),
+					'name' => __( 'Owner', 'simple-stack' ),
 					'id'   => 'owner',
 					'readonly' => true,
 					'save_field' => false,
 					'std' => $this->field_owner_std(),
 					'type' => 'text',
 					'class'	=> '',
-					'desc' => __('', 'wpcd' )
+					'desc' => __('', 'simple-stack' )
 				);
 		}
 		
 		$fields[] = $owner_field;
 		
-		if( wpcd_is_admin() ) {
+		if( sstk_is_admin() ) {
 			$fields = array_merge( $fields, array(
 				array(
-					'name' => __( 'Allowed Roles', 'wpcd' ),
+					'name' => __( 'Allowed Roles', 'simple-stack' ),
 					'id'   => 'allowed_roles',
 					'type' => 'select_advanced',
-					'options'         => wpcd_get_roles(),
+					'options'         => sstk_get_roles(),
 					'select_all_none' => true,
 					'multiple'        => true,
-					'desc' => __('', 'wpcd' ),
-					'placeholder'     => __( 'Select allowed roles.', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
+					'placeholder'     => __( 'Select allowed roles.', 'simple-stack' ),
 					'save_field'      => false
 				),
 				array(
-					'name' => __( 'Allowed Users', 'wpcd' ),
+					'name' => __( 'Allowed Users', 'simple-stack' ),
 					'id'   => 'allowed_users',
 					'type' => 'user',
 					'field_type'  => 'select_advanced',
@@ -240,7 +241,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 					'ajax'  => true,
 					'multiple'        => true,
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 					'save_field'      => false
 				)
 			));
@@ -248,7 +249,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 		
 		$meta_boxes[] = array(
 			'id'				=> $this->form_meta_box_id(),
-			'title'				=> __( 'DNS Provider', 'wpcd' ),
+			'title'				=> __( 'DNS Provider', 'simple-stack' ),
 			'models'			=> [ $this->get_model_name() ],
 			'storage_type'		=> 'custom_table',
 			'table'				=> $this->get_table_name(),
@@ -278,7 +279,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 			$meta_boxes[] = array(
 				'id'				 => 'dns_provider_mb_zones',
 				'child-items-mb'	 => 'yes',
-				'title'				 => __( 'Zones', 'wpcd' ),
+				'title'				 => __( 'Zones', 'simple-stack' ),
 				'models'			 => [ $this->get_model_name() ],
 				'storage_type'		 => 'custom_table',
 				'table'				 => $this->get_table_name(),
@@ -297,7 +298,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 			$meta_boxes[] = array(
 				'id'				 => 'dns_provider_mb_zone_records',
 				'child-items-mb'	 => 'yes',
-				'title'				 => __( 'Zone Records', 'wpcd' ),
+				'title'				 => __( 'Zone Records', 'simple-stack' ),
 				'models'			 => [ $this->get_model_name() ],
 				'storage_type'		 => 'custom_table',
 				'table'				 => $this->get_table_name(),
@@ -321,7 +322,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 	 */
 	public function provider_zones() {
 		
-		$dns_zone = WPCD_MB_Custom_Table::get( 'dns_zone' );
+		$dns_zone = SSTK_MB_Custom_Table::get( 'dns_zone' );
 		return $dns_zone->provider_zones_table_view_container();
 	}
 	
@@ -333,7 +334,7 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 	 */
 	public function zone_records() {
 		
-		$dns_zone_record = WPCD_MB_Custom_Table::get( 'dns_zone_record' );
+		$dns_zone_record = SSTK_MB_Custom_Table::get( 'dns_zone_record' );
 		return $dns_zone_record->zone_records_table_view_container();
 	}
 	
@@ -389,8 +390,8 @@ class WPCD_CT_DNS_Provider extends WPCD_MB_Custom_Table {
 			$error = $this->default_permission_error( $action );
 		} else {
 			
-			$dns_zone = WPCD_MB_Custom_Table::get('dns_zone');
-			$zone_record = WPCD_MB_Custom_Table::get('dns_zone_record');
+			$dns_zone = SSTK_MB_Custom_Table::get('dns_zone');
+			$zone_record = SSTK_MB_Custom_Table::get('dns_zone_record');
 			
 			$zones = $dns_zone->api->get_items_by_parent_id( $model_id );
 			

@@ -2,7 +2,7 @@
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
-	exit
+	exit 1
 fi
 
 ## Get our common functions
@@ -43,15 +43,18 @@ user_name=$(echo $domain | cut -c1-32)
 
 if [[ $action == "enable_page_cache" || $action == "1" ]]
 then
-	if [ "$g_webserver_type" = "nginx" ]
+	if ! su - "$user_name" -c "wp --skip-plugins plugin install litespeed-cache && wp --skip-plugins plugin activate litespeed-cache"
 	then
-		su - $user_name -c "wp plugin install --activate cache-enabler"
-		su - $user_name -c "wp --skip-plugins config set WP_CACHE true --raw"
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		su - $user_name -c "wp --skip-plugins plugin install litespeed-cache && wp --skip-plugins plugin activate litespeed-cache && wp litespeed-online init"
-		su - $user_name -c "wp --skip-plugins config set WP_CACHE true --raw"
+		echo "Unable to install or activate LiteSpeed Cache for $domain"
+		exit 1
 	fi
+
+	if ! su - "$user_name" -c "wp --skip-plugins config set WP_CACHE true --raw"
+	then
+		echo "Unable to enable WP_CACHE for $domain"
+		exit 1
+	fi
+
 	gf_restart_webserver
 	echo
 	echo "WordPress Cache has been enabled for $domain"
@@ -61,16 +64,21 @@ fi
 
 if [[ $action == "disable_page_cache" || $action == "2" ]]
 then
-	if [ "$g_webserver_type" = "nginx" ]
+	if su - "$user_name" -c "wp --skip-plugins plugin is-installed litespeed-cache"
 	then
-		su - $user_name -c "wp plugin deactivate cache-enabler"
-		su - $user_name -c "wp plugin uninstall cache-enabler"
-		su - $user_name -c "wp --skip-plugins config set WP_CACHE false --raw"
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		su - $user_name -c "wp --skip-plugins plugin deactivate litespeed-cache && wp --skip-plugins plugin uninstall litespeed-cache"
-		su - $user_name -c "wp --skip-plugins config set WP_CACHE false --raw"
+		if ! su - "$user_name" -c "wp --skip-plugins plugin deactivate litespeed-cache && wp --skip-plugins plugin uninstall litespeed-cache"
+		then
+			echo "Unable to disable or uninstall LiteSpeed Cache for $domain"
+			exit 1
+		fi
 	fi
+
+	if ! su - "$user_name" -c "wp --skip-plugins config set WP_CACHE false --raw"
+	then
+		echo "Unable to disable WP_CACHE for $domain"
+		exit 1
+	fi
+
 	gf_restart_webserver
 	echo
 	echo "WordPress Cache has been disabled for $domain"
@@ -80,20 +88,12 @@ fi
 
 if [[ $action == "clear_page_cache" || $action == "3" ]]
 then
-	# if [ "$g_webserver_type" = "nginx" ]
-	# then
-	# 	su - $user_name -c "wp cache-enabler clear"
-	# elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	# then
-	# 	su - "$user_name" -c "wp litespeed-purge all"
-	# fi
-	
-	# All in one go approach for all known ones. It's not like we're checking exit status or care if each command is successful.
-	# do this if not successful||do this|| etc and a breaks out when it hits last alternate and followed by universal wordpress cache clear
-	su - "$user_name" -c "wp cache-enabler clear||wp w3-total-cache flush all||wp fastest-cache clear all||wp litespeed-purge all||wp cache flush all; wp cli cache clear;"
-	
-	# systemctl restart memcached
-	# systemctl restart redis # Would this be useful or as a server parameter like webserver_type passed in so we know which to restart?
+	if ! su - "$user_name" -c "wp litespeed-purge all && wp cache flush"
+	then
+		echo "Unable to clear LiteSpeed Cache for $domain"
+		exit 1
+	fi
+
 	gf_restart_webserver
 	echo
 	echo "WordPress Cache has been cleared for $domain"

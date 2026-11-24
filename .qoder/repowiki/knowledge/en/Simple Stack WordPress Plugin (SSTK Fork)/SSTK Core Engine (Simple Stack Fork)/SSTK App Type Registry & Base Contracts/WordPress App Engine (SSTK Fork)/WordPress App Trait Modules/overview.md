@@ -1,1 +1,1 @@
-Trait files that extend the WPCD_WORDPRESS_APP class with WordPress-specific admin UI columns, SSH command result parsing, backup credentials, multi-tenant state, security checks, and command/async execution helpers.
+Trait files that extend the SSTK_WORDPRESS_APP class with WordPress-specific admin UI columns, SSH command result parsing, backup credentials, multi-tenant state, security checks, and command/async execution helpers.

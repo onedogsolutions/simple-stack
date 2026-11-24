@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 
 if [[ "$EUID" -ne 0 ]]
 then
@@ -34,7 +35,7 @@ then
 	# 	read -p "enter callback url to get backup status:  " callback_backup
 	# fi
 	
-	########### Syncing nginx , php, letsencrypt ssl , mysql and wp-config.php files to backup directory
+	########### Syncing OpenLiteSpeed, LSPHP, Simple Stack, SSL, database and site configuration
 	########### Backup Directory format is /opt/conf-backup/$date/conf.tar.gz where date is in Hour-DayMonthYear Format
 	echo $'#!/bin/bash
 	callback_backup='$callback_backup'
@@ -55,7 +56,7 @@ then
 	rsync -az /usr/local/lsws/conf/ $backuptmp/lsws/conf/ 2>/dev/null
 	# Back up php.ini for every LSPHP version actually installed. The inherited script
 	# hard-coded lsphp72 through lsphp82 (and mislabelled 8.3 as lsphp82), so any version
-	# added later - including the lsphp83/84/85 that SimpleStack ships - was silently
+	# added later - including the lsphp83/84/85 that Simple Stack ships - was silently
 	# left out of the configuration backup.
 	for lsphp_dir in /usr/local/lsws/lsphp*
 	do
@@ -65,29 +66,19 @@ then
 		mkdir -p "$backuptmp/lsws/lsphp${lsphp_ver}/etc/php/${lsphp_dotted}/litespeed/" 2>/dev/null
 		rsync -az "${lsphp_dir}/etc/php/${lsphp_dotted}/litespeed/php.ini" "$backuptmp/lsws/lsphp${lsphp_ver}/etc/php/${lsphp_dotted}/litespeed/php.ini" 2>/dev/null
 	done
-	rsync -az /etc/nginx/ $backuptmp/nginx/ 2>/dev/null
-	rsync -az /etc/php/ $backuptmp/php/ 2>/dev/null
+	rsync -az /etc/simple-stack/ $backuptmp/simple-stack/ 2>/dev/null
 	rsync -az /etc/letsencrypt/ $backuptmp/letsencrypt/ 2>/dev/null
 	rsync -az /etc/mysql/ $backuptmp/mysql/ 2>/dev/null
 	rsync -az /etc/ssh/ $backuptmp/ssh/ 2>/dev/null
 	rsync -az /etc/passwd $backuptmp/etc/passwd 2>/dev/null
 	rsync -az /etc/shadow $backuptmp/etc/shadow 2>/dev/null
 	rsync -az /etc/fail2ban/ $backuptmp/fail2ban/ 2>/dev/null
-	rsync -az /etc/monitorix/ $backuptmp/monitorix/ 2>/dev/null
-	rsync -az /etc/crowdsec/ $backuptmp/crowdsec/ 2>/dev/null
 	rsync -az /var/spool/cron/crontabs/ $backuptmp/crontabs/ 2>/dev/null
 
 	for wpconf in /var/www/*/html/wp-config.php
 	do
 		domain=`echo $wpconf|cut -d"/" -f4`
 		rsync -az $wpconf $backuptmp/$domain/ 2>/dev/null
-	done
-
-	for filegatorconf in /var/www/*/html/*/configuration.php
-	do
-		mkdir -p $backuptmp/filegator
-		domain=`echo $filegatorconf|cut -d"/" -f4`
-		rsync -az $filegatorconf $backuptmp/filegator/$domain/ 2>/dev/null
 	done
 
 	tar czf $backupdir/conf.tar.gz $backuptmp/* 2>/dev/null

@@ -24,7 +24,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s database maintenance capabilities, focusing on repair procedures, corruption detection and recovery, optimization guidance, backup integration during maintenance, rollback procedures, and safe operational practices. It is intended for administrators who need to perform reliable database maintenance with minimal downtime and clear visibility into progress and outcomes.
+This document explains Simple Stack’s database maintenance capabilities, focusing on repair procedures, corruption detection and recovery, optimization guidance, backup integration during maintenance, rollback procedures, and safe operational practices. It is intended for administrators who need to perform reliable database maintenance with minimal downtime and clear visibility into progress and outcomes.
 
 ## Project Structure
 The database maintenance features are implemented primarily as shell scripts invoked by the WordPress app layer. Key files include:
@@ -331,4 +331,4 @@ Diagnostic steps:
 - [manage_database_operation.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/manage_database_operation.txt#L1-L11)
 
 ## Conclusion
-SimpleStack’s database maintenance tools provide a structured approach to repair, backup, and recovery. While explicit optimization scripts for fragmentation and index rebuilding are not included, the available utilities support safe maintenance through pre-operation backups, connectivity validation, and robust logging. Administrators should follow the outlined procedures to ensure reliability, minimize downtime, and maintain data integrity during maintenance operations.
+Simple Stack’s database maintenance tools provide a structured approach to repair, backup, and recovery. While explicit optimization scripts for fragmentation and index rebuilding are not included, the available utilities support safe maintenance through pre-operation backups, connectivity validation, and robust logging. Administrators should follow the outlined procedures to ensure reliability, minimize downtime, and maintain data integrity during maintenance operations.

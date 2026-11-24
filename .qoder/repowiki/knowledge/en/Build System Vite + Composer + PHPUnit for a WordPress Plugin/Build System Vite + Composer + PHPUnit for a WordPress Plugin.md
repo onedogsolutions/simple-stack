@@ -14,14 +14,14 @@ source_files:
     - phpunit-watcher.yml
     - bin/lint-php.sh
     - bin/lint-sh.sh
-    - bin/guard-wpcd-prefix.sh
+    - bin/guard-sstk-prefix.sh
 ---
 
 ## Overview
 
-The SimpleStack plugin is built with three independent toolchains that are wired together through `package.json` and `composer.json` scripts:
+The Simple Stack plugin is built with three independent toolchains that are wired together through `package.json` and `composer.json` scripts:
 
-- **Vite** (React + Tailwind v4) builds the SimpleStack admin dashboard under `src/admin/` into `assets/dist/`.
+- **Vite** (React + Tailwind v4) builds the Simple Stack admin dashboard under `src/admin/` into `assets/dist/`.
 - **Composer** manages PHP runtime dependencies (`phpseclib`) and dev/test tooling (PHPUnit, WP-CLI test suite, PHPCS).
 - **Bash helpers** in `bin/` provide linting, syntax checks, and policy guards; `tools/verify-css-isolation.mjs` enforces CSS scoping at build time.
 
@@ -40,7 +40,7 @@ There is no CI pipeline file in `.github/` (only issue templates and funding con
 | `phpunit-watcher.yml` | Watches `includes/core` and `tests/phpunit` for live test runs |
 | `bin/lint-php.sh` | Runs `php -l` over all `.php` files, pruning `node_modules`, `vendor`, `assets/dist` |
 | `bin/lint-sh.sh` | Syntax-checks provisioning scripts (`bash -n`) plus wrapper templates after `##PLACEHOLDER##` substitution; shellcheck runs advisory-only |
-| `bin/guard-wpcd-prefix.sh` | Policy guard enforcing legacy `wpcd_` identifiers, forbidding removed layers, and constraining public endpoints |
+| `bin/guard-sstk-prefix.sh` | Policy guard enforcing legacy `sstk_` identifiers, forbidding removed layers, and constraining public endpoints |
 
 ## Architecture & Conventions
 
@@ -63,7 +63,7 @@ There is no CI pipeline file in `.github/` (only issue templates and funding con
 4. No unprocessed `@tailwind` / `@config` / `@import "tailwindcss"` residue.
 5. The Vite manifest exists and lists a stylesheet.
 
-This is the primary mechanism preventing the SimpleStack dashboard from leaking styles into wp-admin's chrome.
+This is the primary mechanism preventing the Simple Stack dashboard from leaking styles into wp-admin's chrome.
 
 ### PHP dependency management
 
@@ -82,15 +82,15 @@ This is the primary mechanism preventing the SimpleStack dashboard from leaking 
 
 ### Shell-script provisioning pipeline
 
-Provisioning commands ship as `.txt` files under `includes/core/apps/*/scripts/{v1,v2}/raw/`. They are Bash scripts embedded as text resources and executed remotely on provisioned servers. `bin/lint-sh.sh` treats them as shell code, excluding known non-shell snippets (`6G-Firewall-OLS.txt`, `7G-Firewall-OLS.txt`, `environment variables.txt`, `readme.txt`, `_description.txt`). Wrapper templates next to `raw/` are checked after replacing `##PLACEHOLDER##` tokens with a dummy word, because the placeholders are substituted at runtime before execution.
+Provisioning commands ship as `.txt` files under `includes/core/apps/wordpress-app/scripts/v2/`. Raw scripts are Bash; wrapper templates carry `##PLACEHOLDER##` tokens that are substituted at runtime. `bin/lint-sh.sh` syntax-checks raw scripts, rendered wrappers and gate tools, excluding known non-shell snippets. Provisioning is fixed to `v2`; no `v1` tree or fallback exists. `composer test:uninstall` runs the standalone multisite cleanup harness without MySQL.
 
 ## Conventions & Constraints
 
 - **Prebuilt artifacts**: The Vite output in `assets/dist/` is committed; production installs do not require Node. This is stated explicitly in `vite.config.js`.
 - **CSS must stay scoped**: All Tailwind utilities are emitted under `#simplestack-admin` (`tailwind.config.js` `important`); `corePlugins.preflight` is disabled. Violations fail the build via `tools/verify-css-isolation.mjs`.
 - **PHP minimum version**: `>=8.1` is declared in `composer.json`.
-- **Legacy identifier guard**: `bin/guard-wpcd-prefix.sh` asserts that CPT slugs `wpcd_app_server` and `wpcd_app`, constants `wpcd_path`/`wpcd_url`, and classes `WPCD_SERVER`, `WPCD_WORDPRESS_APP`, `WPCD_SETTINGS` still exist in `includes/core`; it also forbids `WPCD_License`, `wisdom_`, `WPCD_WOOCOMMERCE`, and `WPCD_DATA_SYNC_REST`.
-- **Public endpoint whitelist**: Only `includes/core/apps/class-wpcd-app.php` and `includes/core/apps/wordpress-app/tabs/git-control-site.php` may use `__return_true` as a permission callback outside the new REST layer; any other occurrence fails the guard.
-- **Port 7080 policy**: `ufw allow 7080` is forbidden everywhere except frozen `scripts/v1/` provisioning scripts; this is enforced by the same guard script.
+- **Legacy identifier guard**: `bin/guard-sstk-prefix.sh` asserts that CPT slugs `sstk_app_server` and `sstk_app`, constants `SSTK_PATH`/`SSTK_URL`, and classes `SSTK_SERVER`, `SSTK_WORDPRESS_APP`, `SSTK_SETTINGS` still exist in `includes/core`; it also forbids `SSTK_License`, `wisdom_`, `SSTK_WOOCOMMERCE`, and `SSTK_DATA_SYNC_REST`.
+- **Public endpoint whitelist**: Only `includes/core/apps/class-sstk-app.php` and `includes/core/apps/wordpress-app/tabs/git-control-site.php` may use `__return_true` as a permission callback outside the new REST layer; any other occurrence fails the guard.
+- **Port 7080 policy**: public `ufw allow 7080` rules are forbidden; only validated trusted-IP rules are allowed. This is enforced by the same guard script.
 - **Shell lint is advisory for style, hard for syntax**: `shellcheck` runs in advisory mode (`-S warning`) and does not fail the gate; `bash -n` syntax checks do fail.
 - **Test exclusion**: The `integration` group is excluded from PHPUnit by default (`phpunit.xml` `<groups>`).

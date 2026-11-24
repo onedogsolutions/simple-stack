@@ -3,7 +3,7 @@
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
-	exit
+	exit 1
 fi
 
 ## Get our common functions
@@ -31,27 +31,33 @@ function clear_php_alternatives(){
 }
 
 function update_lsphp_default_version(){
-	# Always required and only affects the default server level php version not individual sites...
+	# This changes the server-level CLI default, not individual site handlers.
+	local requested_version
 	local lsphpver
-	local default_phpver
-	default_phpver='8.4'
-	lsphpver="${1:-$default_phpver}" # 8.3, 8.4, 8.5 etc
+	requested_version="${1:-8.4}"
 
-	# Accept both the dotted (8.4) and short (84) forms - different tabs send different shapes.
-	lsphpver=$(echo "$lsphpver" | sed 's|\.||g')  # 83, 84, 85 etc
+	case "$requested_version" in
+		8.3|83) lsphpver='83' ;;
+		8.4|84) lsphpver='84' ;;
+		8.5|85) lsphpver='85' ;;
+		*)
+			echo "Unsupported PHP version: $requested_version"
+			echo "Simple Stack supports PHP 8.3, 8.4 and 8.5 only."
+			return 1
+			;;
+	esac
 
-	echo "Changing php default version to lsphpver: ${lsphpver}"
-
-	# Clear alternatives defaults
-	clear_php_alternatives
-
-	# The version -> phar name mapping (phar8.4.phar) lives in one place now instead of
-	# being duplicated per version in this file.
-	if ! gf_set_default_php "$lsphpver"
+	if [ ! -x "${LSDIR}/lsphp${lsphpver}/bin/php" ]
 	then
-		echo "PHP ${lsphpver} is not installed on this server - nothing to switch to."
+		echo "PHP ${requested_version} is not installed on this server."
 		return 1
 	fi
+
+	echo "Changing PHP default version to lsphp${lsphpver}"
+	clear_php_alternatives
+
+	# The version -> phar name mapping lives in one shared helper.
+	gf_set_default_php "$lsphpver"
 }
 
 # Get the version of PHP that should be activated for the server.
@@ -61,16 +67,17 @@ if [[ -z $server_php_version ]]; then
 	read -p "New PHP Version: " server_php_version
 fi
 
-# OpenLiteSpeed is the only supported stack. The inherited nginx branch that pointed
-# /usr/bin/php at /usr/bin/php$version has been removed along with nginx itself.
-if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
+# OpenLiteSpeed is the only supported stack.
+if [ "$g_webserver_type" != "ols" ]
 then
-
-	update_lsphp_default_version "$server_php_version"
-	echo "Server level PHP version has been updated to $server_php_version for webserver type $g_webserver_type"
-	exit
+	echo "Simple Stack supports OpenLiteSpeed only."
+	exit 1
 fi
 
-# If you get here then something went wrong.
-echo "Looks like something unexpected occurred if you're seeing this message!"
+if ! update_lsphp_default_version "$server_php_version"
+then
+	exit 1
+fi
 
+echo "Server level PHP version has been updated to $server_php_version."
+exit 0

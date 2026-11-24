@@ -1,5 +1,6 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * SimpleStack admin client build.
+ * Simple Stack admin client build.
  *
  * React is bundled rather than borrowed from @wordpress/element so the Tailwind v4
  * pipeline (@tailwindcss/vite) stays reproducible. See state.md for the trade-off.

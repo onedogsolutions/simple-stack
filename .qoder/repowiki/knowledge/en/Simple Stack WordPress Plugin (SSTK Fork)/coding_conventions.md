@@ -1,4 +1,4 @@
-- Shared plugin paths and version info are exposed through both lowercase (wpcd_url, wpcd_path) and uppercase (WPCD_URL, WPCD_PATH) constants defined once in wpcd.php's constructor.
-- Brand colors are centralized as WPCD_*_BRAND_COLOR / WPCD_*_ACCENT_BG_COLOR constants split between wp-admin and front-end palettes, consumed by both PHP templates and the React dashboard.
-- The SimpleStack REST API is loaded after app/provider classes so controllers can reach the engine, registered under the simple-stack/v1 namespace and gated by manage_options.
+- Shared plugin paths and version info are exposed through both lowercase (SSTK_URL, SSTK_PATH) and uppercase (SSTK_URL, SSTK_PATH) constants defined once in simple-stack.php's constructor.
+- Brand colors are centralized as SSTK_*_BRAND_COLOR / SSTK_*_ACCENT_BG_COLOR constants split between wp-admin and front-end palettes, consumed by both PHP templates and the React dashboard.
+- The Simple Stack REST API is loaded after app/provider classes so controllers can reach the engine, registered under the simple-stack/v1 namespace and gated by manage_options.
 - Cloud provider implementations are conditionally required only when their class file exists, allowing partial checkouts to still bootstrap.

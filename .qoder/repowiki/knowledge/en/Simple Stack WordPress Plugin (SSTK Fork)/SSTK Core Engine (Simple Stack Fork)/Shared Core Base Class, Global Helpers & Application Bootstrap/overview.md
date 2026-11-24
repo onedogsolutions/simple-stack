@@ -1,1 +1,1 @@
-Provides WPCD's shared base class, global utility functions (options, permissions, strings, crypto), and the WP_CLOUD_DEPLOY bootstrap that wires admin menus, React app assets, post types, roles, and cloud-provider configuration.
+Provides SSTK's shared base class, global utility functions (options, permissions, strings, crypto), and the SSTK_CORE bootstrap that wires admin menus, React app assets, post types, roles, and cloud-provider configuration.

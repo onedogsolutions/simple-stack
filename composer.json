@@ -1,7 +1,7 @@
 {
     "name": "onedogsolutions/simple-stack",
-    "description": "SimpleStack - internal hosting control plane for One Dog Solutions.",
-    "license": "proprietary",
+    "description": "Simple Stack - internal hosting control plane for One Dog Solutions.",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "One Dog Solutions",
@@ -25,8 +25,9 @@
     "scripts": {
         "lint": "bash bin/lint-php.sh",
         "lint:sh": "bash bin/lint-sh.sh",
-        "guard": "bash bin/guard-wpcd-prefix.sh",
-        "test": "phpunit"
+        "guard": "bash bin/guard-sstk-prefix.sh",
+        "test": "phpunit",
+        "test:uninstall": "php tests/uninstall-harness.php"
     },
     "extra": {
         "wordpress-install-dir": "vendor/wordpress/wordpress"

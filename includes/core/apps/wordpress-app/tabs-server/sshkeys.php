@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * SSH Keys Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,19 +11,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_KEYS
+ * Class SSTK_WORDPRESS_TABS_KEYS
  */
-class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_KEYS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
 	}
 
@@ -51,7 +52,7 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Keys', 'wpcd' ),
+				'label' => __( 'Keys', 'simple-stack' ),
 				'icon'  => 'fad fa-key',
 			);
 		}
@@ -66,13 +67,13 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the SSH KEYS (KEYS) tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -102,15 +103,15 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'server-ssh-keys-save', 'server-ssh-keys-copy', 'server-ssh-keys-remove' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -163,11 +164,11 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		/* Pull existing data from the database */
-		$ssh_root_user            = get_post_meta( $id, 'wpcd_server_ssh_root_user', true );
-		$ssh_private_key_password = self::decrypt( get_post_meta( $id, 'wpcd_server_ssh_private_key_password', true ) );
-		$ssh_private_key          = self::decrypt( get_post_meta( $id, 'wpcd_server_ssh_private_key', true ) );
-		$ssh_public_key           = get_post_meta( $id, 'wpcd_server_ssh_public_key', true );
-		$ssh_key_notes            = get_post_meta( $id, 'wpcd_server_ssh_key_notes', true );
+		$ssh_root_user            = get_post_meta( $id, 'sstk_server_ssh_root_user', true );
+		$ssh_private_key_password = self::decrypt( get_post_meta( $id, 'sstk_server_ssh_private_key_password', true ) );
+		$ssh_private_key          = self::decrypt( get_post_meta( $id, 'sstk_server_ssh_private_key', true ) );
+		$ssh_public_key           = get_post_meta( $id, 'sstk_server_ssh_public_key', true );
+		$ssh_key_notes            = get_post_meta( $id, 'sstk_server_ssh_key_notes', true );
 
 		/* Set some defaults if certain things are blank */
 		$ssh_root_user = empty( $ssh_root_user ) ? 'root' : $ssh_root_user;
@@ -175,31 +176,31 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * SSH Page Heading & Description
 		 */
-		$desc  = __( 'Under normal circumstances we log into your server using the SSH keypair data on the SETTINGS screen associated with the provider for this server.', 'wpcd' );
-		$desc .= '<br />' . __( 'However, there are situations where you might want this server to have its own separate and unique SSH keypair.', 'wpcd' );
+		$desc  = __( 'Under normal circumstances we log into your server using the SSH keypair data on the SETTINGS screen associated with the provider for this server.', 'simple-stack' );
+		$desc .= '<br />' . __( 'However, there are situations where you might want this server to have its own separate and unique SSH keypair.', 'simple-stack' );
 
-		$actions[] = wpcd_start_full_card_page_heading( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_full_card_page_heading( $this->get_tab_slug() ); // Start new card.
 
 		$actions['server-ssh-keys-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_key_icon( __( '%s SSH Keys', 'wpcd' ) ),
+			'label'          => sstk_apply_key_icon( __( '%s SSH Keys', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
 			),
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Private Key.
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		$actions['server-ssh-keys-private-key-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_key_icon( __( '%s Private Key', 'wpcd' ) ),
+			'label'          => sstk_apply_key_icon( __( '%s Private Key', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => '',
@@ -207,55 +208,55 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 		);
 
 		$actions['server-ssh-keys-root-user-name'] = array(
-			'label'          => __( 'Root User', 'wpcd' ),
+			'label'          => __( 'Root User', 'simple-stack' ),
 			'type'           => 'text',
 			'raw_attributes' => array(
 				'std'            => $ssh_root_user,
-				'tooltip'        => __( 'The root user id - usually "root" or "ubuntu" for AWS SERVERS.', 'wpcd' ),
+				'tooltip'        => __( 'The root user id - usually "root" or "ubuntu" for AWS SERVERS.', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'ssh_root_user',
+				'data-sstk-name' => 'ssh_root_user',
 				'spellcheck'     => 'false',
 			),
 		);
 
 		$actions['server-ssh-keys-private-key'] = array(
-			'label'          => __( 'Private Key', 'wpcd' ),
+			'label'          => __( 'Private Key', 'simple-stack' ),
 			'type'           => 'textarea',
 			'raw_attributes' => array(
 				'std'            => $ssh_private_key,
-				'tooltip'        => __( 'The private key corresponding to your root user public key.', 'wpcd' ),
+				'tooltip'        => __( 'The private key corresponding to your root user public key.', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'ssh_private_key',
-				'class'          => 'wpcd_app_pass_toggle',
+				'data-sstk-name' => 'ssh_private_key',
+				'class'          => 'sstk_app_pass_toggle',
 				'spellcheck'     => 'false',
 				'rows'           => 6,
 			),
 		);
 
 		$actions['server-ssh-keys-private-key-password'] = array(
-			'label'          => __( 'Private Key Password', 'wpcd' ),
+			'label'          => __( 'Private Key Password', 'simple-stack' ),
 			'type'           => 'password',
 			'raw_attributes' => array(
 				'std'            => $ssh_private_key_password,
-				'tooltip'        => __( 'The password for your private key - this is optional and can be left blank if your private key does not have a password.', 'wpcd' ),
+				'tooltip'        => __( 'The password for your private key - this is optional and can be left blank if your private key does not have a password.', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'ssh_private_key_password',
-				'class'          => 'wpcd_app_pass_toggle',
+				'data-sstk-name' => 'ssh_private_key_password',
+				'class'          => 'sstk_app_pass_toggle',
 				'spellcheck'     => 'false',
 			),
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Public Key
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		$actions['server-ssh-keys-public-key-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_key_icon( __( '%s Public Key', 'wpcd' ) ),
+			'label'          => sstk_apply_key_icon( __( '%s Public Key', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => '',
@@ -263,25 +264,25 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 		);
 
 		$actions['server-ssh-keys-public-key'] = array(
-			'label'          => __( 'Public Key', 'wpcd' ),
+			'label'          => __( 'Public Key', 'simple-stack' ),
 			'type'           => 'textarea',
 			'raw_attributes' => array(
 				'std'            => $ssh_public_key,
-				'tooltip'        => __( 'The public key data for the private key entered above.  This is complete optional - we do not use it to connect to the server since the server should already have this information for your root user. However, sometimes it\'s good to see this data.', 'wpcd' ),
+				'tooltip'        => __( 'The public key data for the private key entered above.  This is complete optional - we do not use it to connect to the server since the server should already have this information for your root user. However, sometimes it\'s good to see this data.', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'ssh_public_key',
+				'data-sstk-name' => 'ssh_public_key',
 				'spellcheck'     => 'false',
 			),
 		);
 
 		$actions['server-ssh-keys-notes'] = array(
-			'label'          => __( 'Notes', 'wpcd' ),
+			'label'          => __( 'Notes', 'simple-stack' ),
 			'type'           => 'textarea',
 			'raw_attributes' => array(
 				'std'            => $ssh_key_notes,
-				'desc'           => __( 'Optional - your notes about this key.', 'wpcd' ),
+				'desc'           => __( 'Optional - your notes about this key.', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'ssh_key_notes',
+				'data-sstk-name' => 'ssh_key_notes',
 			),
 		);
 
@@ -290,9 +291,9 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 			'type'           => 'button',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'              => wpcd_apply_save_icon( __( '%s Save', 'wpcd' ) ),
+				'std'              => sstk_apply_save_icon( __( '%s Save', 'simple-stack' ) ),
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => json_encode( array( '#wpcd_app_action_server-ssh-keys-root-user-name', '#wpcd_app_action_server-ssh-keys-private-key', '#wpcd_app_action_server-ssh-keys-private-key-password', '#wpcd_app_action_server-ssh-keys-public-key', '#wpcd_app_action_server-ssh-keys-notes' ) ),
+				'data-sstk-fields' => json_encode( array( '#sstk_app_action_server-ssh-keys-root-user-name', '#sstk_app_action_server-ssh-keys-private-key', '#sstk_app_action_server-ssh-keys-private-key-password', '#sstk_app_action_server-ssh-keys-public-key', '#sstk_app_action_server-ssh-keys-notes' ) ),
 				'columns'          => 12,
 			),
 		);
@@ -302,7 +303,7 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 			'type'           => 'button',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'     => wpcd_apply_duplicate_icon( __( '%s Copy From Settings', 'wpcd' ) ),
+				'std'     => sstk_apply_duplicate_icon( __( '%s Copy From Settings', 'simple-stack' ) ),
 				'columns' => 6,
 			),
 		);
@@ -312,13 +313,13 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 			'type'           => 'button',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'     => wpcd_apply_trash_icon( __( '%s Remove', 'wpcd' ) ),
-				'tooltip' => __( 'Remove this key information from this server - we will revert to using the data from the settings screen to login.', 'wpcd' ),
+				'std'     => sstk_apply_trash_icon( __( '%s Remove', 'simple-stack' ) ),
+				'tooltip' => __( 'Remove this key information from this server - we will revert to using the data from the settings screen to login.', 'simple-stack' ),
 				'columns' => 6,
 			),
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		return $actions;
 
@@ -339,7 +340,7 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Grab the arguments sent from the front-end JS */
@@ -347,44 +348,44 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 
 		switch ( $action ) {
 			case 'server-ssh-keys-save':
-				$sanitized_private_key          = wp_kses( $_POST['ssh-private-key'], array(), array() ); // We have to grab the individual special item from $_POST (added by wpcd-wpapp-admin-common.js).
-				$sanitized_public_key           = wp_kses( $_POST['ssh-public-key'], array(), array() );  // We have to grab the individual special item from $_POST (added by wpcd-wpapp-admin-common.js).
-				$sanitized_private_key_password = wp_kses( sanitize_text_field( $_POST['ssh-private-key-password'] ), array(), array() );// We have to grab the individual special item from $_POST (added by wpcd-wpapp-admin-common.js).
+				$sanitized_private_key          = wp_kses( $_POST['ssh-private-key'], array(), array() ); // We have to grab the individual special item from $_POST (added by sstk-wpapp-admin-common.js).
+				$sanitized_public_key           = wp_kses( $_POST['ssh-public-key'], array(), array() );  // We have to grab the individual special item from $_POST (added by sstk-wpapp-admin-common.js).
+				$sanitized_private_key_password = wp_kses( sanitize_text_field( $_POST['ssh-private-key-password'] ), array(), array() );// We have to grab the individual special item from $_POST (added by sstk-wpapp-admin-common.js).
 
-				update_post_meta( $id, 'wpcd_server_ssh_root_user', $args['ssh_root_user'] );
-				update_post_meta( $id, 'wpcd_server_ssh_private_key_password', self::encrypt( $sanitized_private_key_password ) );
-				update_post_meta( $id, 'wpcd_server_ssh_private_key', self::encrypt( $sanitized_private_key ) );
-				update_post_meta( $id, 'wpcd_server_ssh_public_key', $sanitized_public_key );
-				update_post_meta( $id, 'wpcd_server_ssh_key_notes', $args['ssh_key_notes'] );
+				update_post_meta( $id, 'sstk_server_ssh_root_user', $args['ssh_root_user'] );
+				update_post_meta( $id, 'sstk_server_ssh_private_key_password', self::encrypt( $sanitized_private_key_password ) );
+				update_post_meta( $id, 'sstk_server_ssh_private_key', self::encrypt( $sanitized_private_key ) );
+				update_post_meta( $id, 'sstk_server_ssh_public_key', $sanitized_public_key );
+				update_post_meta( $id, 'sstk_server_ssh_key_notes', $args['ssh_key_notes'] );
 
-				$result = new \WP_error( __( 'Key information saved.', 'wpcd' ) );
+				$result = new \WP_error( __( 'Key information saved.', 'simple-stack' ) );
 				break;
 
 			case 'server-ssh-keys-copy':
 				// Copy ssh key settings from provider to this server record.
 				// Start by getting the data from options.
-				$root_user   = WPCD()->get_provider_api( $instance['provider'] )->get_root_user();
-				$passwd      = wpcd_get_option( 'vpn_' . $instance['provider'] . '_sshkey_passwd' ); // this will be encrypted but no need to decrypt since we're just copying as-is.
-				$private_key = wpcd_get_option( 'vpn_' . $instance['provider'] . '_sshkey' );  // this will be encrypted but no need to decrypt since we're just copying as-is.
-				$key_notes   = wpcd_get_option( 'vpn_' . $instance['provider'] . '_sshkeynotes' );
+				$root_user   = SSTK()->get_provider_api( $instance['provider'] )->get_root_user();
+				$passwd      = sstk_get_option( 'sstk_' . $instance['provider'] . '_sshkey_passwd' ); // this will be encrypted but no need to decrypt since we're just copying as-is.
+				$private_key = sstk_get_option( 'sstk_' . $instance['provider'] . '_sshkey' );  // this will be encrypted but no need to decrypt since we're just copying as-is.
+				$key_notes   = sstk_get_option( 'sstk_' . $instance['provider'] . '_sshkeynotes' );
 
 				// Add to the server record...
-				update_post_meta( $id, 'wpcd_server_ssh_root_user', $root_user );
-				update_post_meta( $id, 'wpcd_server_ssh_private_key_password', $passwd );
-				update_post_meta( $id, 'wpcd_server_ssh_private_key', $private_key );
-				update_post_meta( $id, 'wpcd_server_ssh_key_notes', $key_notes );
+				update_post_meta( $id, 'sstk_server_ssh_root_user', $root_user );
+				update_post_meta( $id, 'sstk_server_ssh_private_key_password', $passwd );
+				update_post_meta( $id, 'sstk_server_ssh_private_key', $private_key );
+				update_post_meta( $id, 'sstk_server_ssh_key_notes', $key_notes );
 
-				$result = new \WP_error( __( 'Key information copied from settings.', 'wpcd' ) );
+				$result = new \WP_error( __( 'Key information copied from settings.', 'simple-stack' ) );
 				break;
 
 			case 'server-ssh-keys-remove':
-				delete_post_meta( $id, 'wpcd_server_ssh_root_user' );
-				delete_post_meta( $id, 'wpcd_server_ssh_private_key_password' );
-				delete_post_meta( $id, 'wpcd_server_ssh_private_key' );
-				delete_post_meta( $id, 'wpcd_server_ssh_public_key' );
-				delete_post_meta( $id, 'wpcd_server_ssh_key_notes' );
+				delete_post_meta( $id, 'sstk_server_ssh_root_user' );
+				delete_post_meta( $id, 'sstk_server_ssh_private_key_password' );
+				delete_post_meta( $id, 'sstk_server_ssh_private_key' );
+				delete_post_meta( $id, 'sstk_server_ssh_public_key' );
+				delete_post_meta( $id, 'sstk_server_ssh_key_notes' );
 
-				$result = new \WP_error( __( 'Key information deleted.', 'wpcd' ) );
+				$result = new \WP_error( __( 'Key information deleted.', 'simple-stack' ) );
 				break;
 
 		}
@@ -395,4 +396,4 @@ class WPCD_WORDPRESS_TABS_KEYS extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_KEYS();
+new SSTK_WORDPRESS_TABS_KEYS();

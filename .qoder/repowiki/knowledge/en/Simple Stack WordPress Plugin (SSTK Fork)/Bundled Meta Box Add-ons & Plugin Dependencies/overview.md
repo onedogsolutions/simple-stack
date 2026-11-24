@@ -1,1 +1,1 @@
-Ships bundled Meta Box add-on plugins and a TGMPA configuration that auto-installs the core Meta Box plugin as a dependency of WPCloudDeploy.
+Ships bundled Meta Box add-on plugins and a TGMPA configuration that auto-installs the core Meta Box plugin as a dependency of Simple Stack.

@@ -11,7 +11,7 @@
 - [src/admin/components/Card.jsx](file://src/admin/components/Card.jsx)
 - [src/admin/components/Modal.jsx](file://src/admin/components/Modal.jsx)
 - [src/admin/components/AppShell.jsx](file://src/admin/components/AppShell.jsx)
-- [wpcd.php](file://wpcd.php)
+- [simple-stack.php](file://simple-stack.php)
 </cite>
 
 ## Table of Contents
@@ -26,7 +26,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s styling system built with Tailwind CSS v4. The admin client is a React application mounted inside WordPress admin at the `#simplestack-admin` container. Tailwind generates scoped utilities so they cannot leak into or restyle the surrounding wp-admin chrome. The build pipeline uses Vite and the Tailwind v4 Vite plugin, producing a single bundled stylesheet under `assets/dist`.
+This document explains Simple Stack’s styling system built with Tailwind CSS v4. The admin client is a React application mounted inside WordPress admin at the `#simplestack-admin` container. Tailwind generates scoped utilities so they cannot leak into or restyle the surrounding wp-admin chrome. The build pipeline uses Vite and the Tailwind v4 Vite plugin, producing a single bundled stylesheet under `assets/dist`.
 
 Key goals:
 - Keep all generated styles scoped to `#simplestack-admin`.
@@ -429,6 +429,6 @@ Guidance:
 [No sources needed since this section provides general guidance]
 
 ## Conclusion
-SimpleStack’s styling system is a focused, safety-first implementation of Tailwind CSS v4 inside WordPress admin. It uses a mount-point scoping strategy, explicit Tailwind layer imports, a minimal scoped reset, and a build-time isolation guard to protect the admin chrome. Components express design intent through Tailwind utilities backed by a shared token set. The Vite build produces a reproducible bundle, and the verification script ensures that styling remains isolated. For future growth, maintain strict scoping, centralize tokens, and continue validating the output during development and CI.
+Simple Stack’s styling system is a focused, safety-first implementation of Tailwind CSS v4 inside WordPress admin. It uses a mount-point scoping strategy, explicit Tailwind layer imports, a minimal scoped reset, and a build-time isolation guard to protect the admin chrome. Components express design intent through Tailwind utilities backed by a shared token set. The Vite build produces a reproducible bundle, and the verification script ensures that styling remains isolated. For future growth, maintain strict scoping, centralize tokens, and continue validating the output during development and CI.
 
 [No sources needed since this section summarizes without analyzing specific files]

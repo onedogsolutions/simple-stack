@@ -16,9 +16,9 @@
 - [wp-tests-config.php](file://wp-tests-config.php)
 - [bin/lint-php.sh](file://bin/lint-php.sh)
 - [bin/lint-sh.sh](file://bin/lint-sh.sh)
-- [bin/guard-wpcd-prefix.sh](file://bin/guard-wpcd-prefix.sh)
+- [bin/guard-sstk-prefix.sh](file://bin/guard-sstk-prefix.sh)
 - [tests/phpunit/rest-api/ControllerServersTest.php](file://tests/phpunit/rest-api/ControllerServersTest.php)
-- [tests/data/class-wpcd-rest-api-controller-test.php](file://tests/data/class-wpcd-rest-api-controller-test.php)
+- [tests/data/class-sstk-rest-api-controller-test.php](file://tests/data/class-sstk-rest-api-controller-test.php)
 </cite>
 
 ## Update Summary
@@ -42,9 +42,9 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This guide explains how to develop SimpleStack locally, build the React admin interface, run tests, and maintain code quality. It covers the dual development environment for the PHP backend and the React frontend, dependency management with Composer and npm, the Vite build pipeline with Tailwind CSS v4, PHPUnit testing, shell script validation, CSS isolation verification, coding standards, contribution workflow, debugging, performance profiling, and deployment procedures for development builds.
+This guide explains how to develop Simple Stack locally, build the React admin interface, run tests, and maintain code quality. It covers the dual development environment for the PHP backend and the React frontend, dependency management with Composer and npm, the Vite build pipeline with Tailwind CSS v4, PHPUnit testing, shell script validation, CSS isolation verification, coding standards, contribution workflow, debugging, performance profiling, and deployment procedures for development builds.
 
-SimpleStack is a WordPress plugin that provisions servers through cloud provider APIs and manages them from the WordPress admin dashboard. The admin client is built with React 19 and Tailwind CSS v4 using Vite 7.0.0, while the backend uses PHP 8.1+ and integrates with cloud providers over SSH and REST endpoints.
+Simple Stack is a WordPress plugin that provisions servers through cloud provider APIs and manages them from the WordPress admin dashboard. The admin client is built with React 19 and Tailwind CSS v4 using Vite 7.0.0, while the backend uses PHP 8.1+ and integrates with cloud providers over SSH and REST endpoints.
 
 **Section sources**
 - [README.md:1-46](file://README.md#L1-L46)
@@ -104,8 +104,8 @@ Configs --> |Build & Test| SrcAdmin
 ## Core Components
 - Backend (PHP):
   - REST API controllers under `includes/core/api` and app-specific REST controllers under `includes/core/apps/wordpress-app/rest-api`.
-  - Providers for Vultr, UpCloud, and custom servers.
-  - Apps like WordPress, VPN, Stable Diffusion, and basic server.
+  - Providers for Vultr API v2 and UpCloud API 1.3 only.
+  - The WordPress application engine is the only app.
 - Frontend (React + Tailwind + Vite):
   - Admin UI entry at `src/admin/index.jsx`.
   - Components, routes, styles, and API helpers.
@@ -151,7 +151,7 @@ participant REST as "REST API"
 participant Provider as "Cloud Provider API"
 Dev->>Vite : Start dev server
 Vite-->>Dev : Hot reload src/admin
-Dev->>WP : Open SimpleStack admin page
+Dev->>WP : Open Simple Stack admin page
 WP->>PHP : Enqueue built assets
 WP->>REST : Call simple-stack/v1 endpoints
 REST->>Provider : Provision / Manage servers
@@ -183,7 +183,7 @@ Recommended commands:
 - `npm run verify:css`
 - `bash bin/lint-php.sh`
 - `bash bin/lint-sh.sh`
-- `bash bin/guard-wpcd-prefix.sh`
+- `bash bin/guard-sstk-prefix.sh`
 
 Notes:
 - Production installs do not need Node because `assets/dist` is committed.
@@ -241,7 +241,7 @@ Key features:
 ### Testing Frameworks and PHPUnit Suite
 - Configuration:
   - PHPUnit 9 configured via `phpunit.xml`.
-  - Bootstrap file loads WordPress test library and SimpleStack as an mu-plugin.
+  - Bootstrap file loads WordPress test library and Simple Stack as an mu-plugin.
   - Legacy REST API feature flag is enabled during tests.
 - Database:
   - Local MySQL database matching `wp-tests-config.php`.
@@ -267,7 +267,7 @@ Example patterns:
 - [tests/phpunit.php:1-67](file://tests/phpunit.php#L1-L67)
 - [wp-tests-config.php:1-23](file://wp-tests-config.php#L1-L23)
 - [tests/phpunit/rest-api/ControllerServersTest.php:1-170](file://tests/phpunit/rest-api/ControllerServersTest.php#L1-L170)
-- [tests/data/class-wpcd-rest-api-controller-test.php:1-41](file://tests/data/class-wpcd-rest-api-controller-test.php#L1-L41)
+- [tests/data/class-sstk-rest-api-controller-test.php:1-41](file://tests/data/class-sstk-rest-api-controller-test.php#L1-L41)
 
 ### Code Quality Tools and Standards
 - PHP linting:
@@ -276,8 +276,8 @@ Example patterns:
   - Syntax check for provisioning scripts and wrappers.
   - Advisory shellcheck pass when available.
 - Naming guard:
-  - Ensures inherited identifiers remain intact.
-  - Prevents accidental global renames and enforces security constraints.
+  - Enforces the hard-cutover `SSTK_` / `sstk_` / `sstk-` / `simple-stack` contract.
+  - Rejects retired upstream identifiers and enforces REST and port-7080 security constraints.
 - Coding standards:
   - WordPress Coding Standards applied to REST API directories.
   - Documentation rules enforced.
@@ -287,29 +287,29 @@ Example patterns:
 flowchart TD
 A["Run composer scripts"] --> B["lint-php.sh"]
 A --> C["lint-sh.sh"]
-A --> D["guard-wpcd-prefix.sh"]
+A --> D["guard-sstk-prefix.sh"]
 B --> E["php -l on PHP files"]
 C --> F["bash -n on scripts and wrappers"]
 C --> G["shellcheck advisory"]
-D --> H["Check wpcd_ prefixes and security rules"]
+D --> H["Check sstk_ prefixes and security rules"]
 ```
 
 **Diagram sources**
 - [composer.json:25-30](file://composer.json#L25-L30)
 - [bin/lint-php.sh:1-33](file://bin/lint-php.sh#L1-L33)
 - [bin/lint-sh.sh:1-83](file://bin/lint-sh.sh#L1-L83)
-- [bin/guard-wpcd-prefix.sh:1-103](file://bin/guard-wpcd-prefix.sh#L1-L103)
+- [bin/guard-sstk-prefix.sh:1-103](file://bin/guard-sstk-prefix.sh#L1-L103)
 - [phpcs.xml:1-40](file://phpcs.xml#L1-L40)
 
 **Section sources**
 - [bin/lint-php.sh:1-33](file://bin/lint-php.sh#L1-L33)
 - [bin/lint-sh.sh:1-83](file://bin/lint-sh.sh#L1-L83)
-- [bin/guard-wpcd-prefix.sh:1-103](file://bin/guard-wpcd-prefix.sh#L1-L103)
+- [bin/guard-sstk-prefix.sh:1-103](file://bin/guard-sstk-prefix.sh#L1-L103)
 - [phpcs.xml:1-40](file://phpcs.xml#L1-L40)
 
 ### CSS Isolation Verification
 - Purpose:
-  - Ensure the SimpleStack stylesheet cannot leak into wp-admin.
+  - Ensure the Simple Stack stylesheet cannot leak into wp-admin.
 - Assertions:
   - No top-level selectors that style document elements.
   - All utility selectors anchored to the admin mount node.
@@ -362,7 +362,7 @@ Guidelines:
 
 **Section sources**
 - [phpcs.xml:1-40](file://phpcs.xml#L1-L40)
-- [bin/guard-wpcd-prefix.sh:53-84](file://bin/guard-wpcd-prefix.sh#L53-L84)
+- [bin/guard-sstk-prefix.sh:53-84](file://bin/guard-sstk-prefix.sh#L53-L84)
 - [tools/verify-css-isolation.mjs:253-315](file://tools/verify-css-isolation.mjs#L253-L315)
 
 ### Writing Tests
@@ -380,7 +380,7 @@ Patterns:
 
 **Section sources**
 - [tests/phpunit/rest-api/ControllerServersTest.php:1-170](file://tests/phpunit/rest-api/ControllerServersTest.php#L1-L170)
-- [tests/data/class-wpcd-rest-api-controller-test.php:1-41](file://tests/data/class-wpcd-rest-api-controller-test.php#L1-L41)
+- [tests/data/class-sstk-rest-api-controller-test.php:1-41](file://tests/data/class-sstk-rest-api-controller-test.php#L1-L41)
 
 ### Coding Conventions
 - PHP:
@@ -413,13 +413,13 @@ Before submitting:
   - Configure local MySQL database.
   - Run PHPUnit.
 - Review naming and security constraints:
-  - Do not rename inherited identifiers.
+  - Keep all first-party identifiers inside the Simple Stack naming contract; there is no upstream compatibility layer.
   - Ensure public endpoints are intentional and secured.
 
 **Section sources**
 - [README.md:79-90](file://README.md#L79-L90)
 - [composer.json:25-30](file://composer.json#L25-L30)
-- [bin/guard-wpcd-prefix.sh:1-103](file://bin/guard-wpcd-prefix.sh#L1-L103)
+- [bin/guard-sstk-prefix.sh:1-103](file://bin/guard-sstk-prefix.sh#L1-L103)
 
 ### Debugging Techniques
 - Enable WordPress debug mode in test configuration.
@@ -540,11 +540,11 @@ Common issues and resolutions:
 - [tools/verify-css-isolation.mjs:217-251](file://tools/verify-css-isolation.mjs#L217-L251)
 - [tests/phpunit.php:12-25](file://tests/phpunit.php#L12-L25)
 - [bin/lint-sh.sh:48-65](file://bin/lint-sh.sh#L48-L65)
-- [bin/guard-wpcd-prefix.sh:22-84](file://bin/guard-wpcd-prefix.sh#L22-L84)
+- [bin/guard-sstk-prefix.sh:22-84](file://bin/guard-sstk-prefix.sh#L22-L84)
 - [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 
 ## Conclusion
-This guide provides a comprehensive overview of developing SimpleStack, covering setup, builds, testing, code quality, and contribution workflows. By following these practices, contributors can maintain consistency, security, and reliability across the PHP backend and React frontend while ensuring robust testing and deployment processes. The new Vite and Tailwind CSS v4 build system provides modern development tooling with strict CSS isolation guarantees.
+This guide provides a comprehensive overview of developing Simple Stack, covering setup, builds, testing, code quality, and contribution workflows. By following these practices, contributors can maintain consistency, security, and reliability across the PHP backend and React frontend while ensuring robust testing and deployment processes. The new Vite and Tailwind CSS v4 build system provides modern development tooling with strict CSS isolation guarantees.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

@@ -67,14 +67,6 @@ function fail2ban_install
 		sed -i "s/\[monit]/\[monit]\nenabled=true\nbantime=600\nfindtime=600\nmaxretry=3/g" /etc/fail2ban/jail.local
 		echo "Monit service has been enabled"
 	fi
-	if [[ -f /var/log/nginx/error.log ]]
-	then
-		sed -i "s/\[nginx-http-auth]/\[nginx-http-auth]\nenabled=true\nbantime=600\nfindtime=600\nmaxretry=3/g" /etc/fail2ban/jail.local
-		sed -i "s/\[nginx-limit-req]/\[nginx-limit-req]\nenabled=true\nbantime=600\nfindtime=600\nmaxretry=3/g" /etc/fail2ban/jail.local
-		sed -i "s/\[nginx-botsearch]/\[nginx-botsearch]\nenabled=true\nbantime=600\nfindtime=600\nmaxretry=3/g" /etc/fail2ban/jail.local
-		echo "nginx-http-auth, nginx-limit-req,nginx-botsearch services enabled"
-	fi
-
 	curl -s https://plugins.svn.wordpress.org/wp-fail2ban/trunk/filters.d/wordpress-hard.conf > /etc/fail2ban/filter.d/wordpress-hard.conf
 	curl -s https://plugins.svn.wordpress.org/wp-fail2ban/trunk/filters.d/wordpress-soft.conf > /etc/fail2ban/filter.d/wordpress-soft.conf
 

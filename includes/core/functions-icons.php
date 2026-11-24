@@ -1,11 +1,12 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * This file contains general or helper functions for WPCD
+ * This file contains general or helper functions for SSTK
  * to prefix an icon in front of a string.
  *
  * It is used primarily for strings on buttons and section headers.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_restart_icon( $label ) {
+function sstk_apply_restart_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-sharp fa-solid fa-clock-rotate-left"></i> ' );
 
@@ -32,7 +33,7 @@ function wpcd_apply_restart_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_power_icon( $label ) {
+function sstk_apply_power_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-power-off"></i> ' );
 
@@ -45,7 +46,7 @@ function wpcd_apply_power_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_calendar_icon( $label ) {
+function sstk_apply_calendar_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-calendar-days"></i> ' );
 
@@ -58,7 +59,7 @@ function wpcd_apply_calendar_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_phone_icon( $label ) {
+function sstk_apply_phone_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-phone-office"></i> ' );
 
@@ -71,7 +72,7 @@ function wpcd_apply_phone_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_trash_icon( $label ) {
+function sstk_apply_trash_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-solid fa-trash-xmark"></i> ' );
 
@@ -84,7 +85,7 @@ function wpcd_apply_trash_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_erase_icon( $label ) {
+function sstk_apply_erase_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-eraser"></i> ' );
 
@@ -97,7 +98,7 @@ function wpcd_apply_erase_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_uninstall_icon( $label ) {
+function sstk_apply_uninstall_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-solid fa-trash-can-slash"></i> ' );
 
@@ -110,7 +111,7 @@ function wpcd_apply_uninstall_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_install_icon( $label ) {
+function sstk_apply_install_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-solid fa-grid-2-plus"></i> ' );
 
@@ -123,7 +124,7 @@ function wpcd_apply_install_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_virus_icon( $label ) {
+function sstk_apply_virus_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-virus-slash"></i> ' );
 
@@ -136,7 +137,7 @@ function wpcd_apply_virus_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_key_icon( $label ) {
+function sstk_apply_key_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-key"></i> ' );
 
@@ -149,7 +150,7 @@ function wpcd_apply_key_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_skeleton_key_icon( $label ) {
+function sstk_apply_skeleton_key_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-key-skeleton"></i> ' );
 
@@ -162,7 +163,7 @@ function wpcd_apply_skeleton_key_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_updates_icon( $label ) {
+function sstk_apply_updates_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-road-spikes"></i> ' );
 
@@ -175,7 +176,7 @@ function wpcd_apply_updates_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_upgrade_icon( $label ) {
+function sstk_apply_upgrade_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-arrows-up-to-line"></i> ' );
 
@@ -189,7 +190,7 @@ function wpcd_apply_upgrade_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_update_icon( $label ) {
+function sstk_apply_update_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-rectangles-mixed"></i> ' );
 
@@ -202,7 +203,7 @@ function wpcd_apply_update_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_run_icon( $label ) {
+function sstk_apply_run_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-rocket-launch"></i> ' );
 
@@ -215,7 +216,7 @@ function wpcd_apply_run_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_open_icon( $label ) {
+function sstk_apply_open_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-lock-open"></i> ' );
 
@@ -228,7 +229,7 @@ function wpcd_apply_open_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_close_icon( $label ) {
+function sstk_apply_close_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-lock"></i> ' );
 
@@ -241,7 +242,7 @@ function wpcd_apply_close_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_about_icon( $label ) {
+function sstk_apply_about_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-person-circle-question"></i> ' );
 
@@ -254,7 +255,7 @@ function wpcd_apply_about_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_save_icon( $label ) {
+function sstk_apply_save_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-floppy-disk"></i> ' );
 
@@ -267,7 +268,7 @@ function wpcd_apply_save_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_email_icon( $label ) {
+function sstk_apply_email_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-envelopes"></i> ' );
 
@@ -280,7 +281,7 @@ function wpcd_apply_email_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_load_icon( $label ) {
+function sstk_apply_load_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-truck-ramp-box"></i> ' );
 
@@ -293,7 +294,7 @@ function wpcd_apply_load_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_download_icon( $label ) {
+function sstk_apply_download_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-download"></i> ' );
 
@@ -306,7 +307,7 @@ function wpcd_apply_download_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_upload_icon( $label ) {
+function sstk_apply_upload_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-download"></i> ' );
 
@@ -319,7 +320,7 @@ function wpcd_apply_upload_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_logs_icon( $label ) {
+function sstk_apply_logs_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-warehouse-full"></i> ' );
 
@@ -332,7 +333,7 @@ function wpcd_apply_logs_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_warning_icon( $label ) {
+function sstk_apply_warning_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-triangle-exclamation"></i> ' );
 
@@ -345,7 +346,7 @@ function wpcd_apply_warning_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_danger_icon( $label ) {
+function sstk_apply_danger_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-skull-crossbones"></i> ' );
 
@@ -358,7 +359,7 @@ function wpcd_apply_danger_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_checkmark_icon( $label ) {
+function sstk_apply_checkmark_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-square-check"></i> ' );
 
@@ -371,7 +372,7 @@ function wpcd_apply_checkmark_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_x_icon( $label ) {
+function sstk_apply_x_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-square-xmark"></i> ' );
 
@@ -384,7 +385,7 @@ function wpcd_apply_x_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_change_icon( $label ) {
+function sstk_apply_change_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-swap-arrows"></i> ' );
 
@@ -397,7 +398,7 @@ function wpcd_apply_change_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_change_code_icon( $label ) {
+function sstk_apply_change_code_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-code-pull-request"></i> ' );
 
@@ -410,7 +411,7 @@ function wpcd_apply_change_code_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_php_icon( $label ) {
+function sstk_apply_php_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-brands fa-php"></i> ' );
 
@@ -423,7 +424,7 @@ function wpcd_apply_php_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_backup_icon( $label ) {
+function sstk_apply_backup_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-backpack"></i> ' );
 
@@ -436,7 +437,7 @@ function wpcd_apply_backup_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_restore_icon( $label ) {
+function sstk_apply_restore_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-trash-can-arrow-up"></i> ' );
 
@@ -449,7 +450,7 @@ function wpcd_apply_restore_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_prune_icon( $label ) {
+function sstk_apply_prune_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-broom-wide"></i> ' );
 }
@@ -461,7 +462,7 @@ function wpcd_apply_prune_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_snapshot_icon( $label ) {
+function sstk_apply_snapshot_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-image-polaroid"></i> ' );
 }
@@ -473,7 +474,7 @@ function wpcd_apply_snapshot_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_aws_icon( $label ) {
+function sstk_apply_aws_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-brands fa-aws"></i> ' );
 }
@@ -486,7 +487,7 @@ function wpcd_apply_aws_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_ssl_icon( $label ) {
+function sstk_apply_ssl_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-key-skeleton-left-right"></i> ' );
 
@@ -499,7 +500,7 @@ function wpcd_apply_ssl_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_clock_icon( $label ) {
+function sstk_apply_clock_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-alarm-clock"></i> ' );
 
@@ -512,7 +513,7 @@ function wpcd_apply_clock_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_duplicate_icon( $label ) {
+function sstk_apply_duplicate_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-clone"></i> ' );
 
@@ -525,7 +526,7 @@ function wpcd_apply_duplicate_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_file_manager_icon( $label ) {
+function sstk_apply_file_manager_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-list-tree"></i> ' );
 
@@ -538,7 +539,7 @@ function wpcd_apply_file_manager_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_tools_icon( $label ) {
+function sstk_apply_tools_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-screwdriver-wrench"></i> ' );
 
@@ -551,7 +552,7 @@ function wpcd_apply_tools_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_api_icon( $label ) {
+function sstk_apply_api_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-webhook"></i> ' );
 
@@ -564,7 +565,7 @@ function wpcd_apply_api_icon( $label ) {
  *
  * @param string $label The string where the icon needs to be applied.  It needs to have at least on placeholder in it (eg: '%s Restart' ).
  */
-function wpcd_apply_add_icon( $label ) {
+function sstk_apply_add_icon( $label ) {
 
 	return sprintf( $label, '<i class="fa-duotone fa-square-plus"></i> ' );
 

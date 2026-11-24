@@ -1,1 +1,1 @@
-PHPUnit test suite for the WPCD WordPress plugin, covering REST API controllers and providing test doubles for cloud providers.
+PHPUnit test suite for the SSTK WordPress plugin, covering REST API controllers and providing test doubles for cloud providers.

@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Class ControllerBaseTest
@@ -8,7 +9,7 @@
 class ControllerBaseTest extends WP_UnitTestCase
 {
     protected WP_REST_Server $rest;
-    protected WPCD_REST_API_Controller_Base $controller;
+    protected SSTK_REST_API_Controller_Base $controller;
     protected string $resource_route;
     protected string $error_route;
 
@@ -18,8 +19,8 @@ class ControllerBaseTest extends WP_UnitTestCase
     public function setUp(): void
     {
         parent::setUp();
-        require_once dirname(dirname(__DIR__)) . '/data/class-wpcd-rest-api-controller-test.php';
-        $this->controller = new WPCD_REST_API_Controller_Test();
+        require_once dirname(dirname(__DIR__)) . '/data/class-sstk-rest-api-controller-test.php';
+        $this->controller = new SSTK_REST_API_Controller_Test();
         $this->rest = rest_get_server();
         $this->resource_route = '/' . $this->controller->get_namespace();
         $this->error_route = $this->resource_route . '/error';
@@ -93,6 +94,41 @@ class ControllerBaseTest extends WP_UnitTestCase
     }
 
     /**
+     * Verifies that React screen detection uses WordPress's actual submenu hook names.
+     */
+    function test_react_screen_hooks_match_wordpress_submenu_hooks()
+    {
+        $this->assertTrue(SSTK()->is_sstk_screen('toplevel_page_simplestack'));
+        $this->assertTrue(SSTK()->is_sstk_screen('simple-stack_page_simplestack-sites'));
+        $this->assertTrue(SSTK()->is_sstk_screen('simple-stack_page_simplestack-providers'));
+        $this->assertTrue(SSTK()->is_sstk_screen('simple-stack_page_simplestack-activity'));
+        $this->assertFalse(SSTK()->is_sstk_screen('sstk_page_simplestack-providers'));
+        $this->assertFalse(SSTK()->is_sstk_screen('index.php'));
+    }
+
+    /**
+     * Verifies credential-shaped presence flags remain booleans while secret values are masked.
+     */
+    function test_secret_redactor_preserves_presence_flags()
+    {
+        $data = SSTK_Secret_Redactor::redact([
+            'credentials_available' => false,
+            'uses_api_key' => false,
+            'has_api_key' => true,
+            'api_key' => 'secret-value',
+            'root_password' => 'secret-value',
+            'optional_token' => null,
+        ]);
+
+        $this->assertFalse($data['credentials_available']);
+        $this->assertFalse($data['uses_api_key']);
+        $this->assertTrue($data['has_api_key']);
+        $this->assertNull($data['optional_token']);
+        $this->assertSame(SSTK_Secret_Redactor::MASK, $data['api_key']);
+        $this->assertSame(SSTK_Secret_Redactor::MASK, $data['root_password']);
+    }
+
+    /**
      * Verifies that exceptions and errors in endpoints get handled with a standard response.
      */
     function test_handles_exceptions_as_error_responses()
@@ -105,7 +141,7 @@ class ControllerBaseTest extends WP_UnitTestCase
         $response = $this->rest->dispatch($request);
         $this->assertFalse($response->is_error());
         $this->assertEquals([
-            'code' => 'wpcd_rest_test_error',
+            'code' => 'sstk_rest_test_error',
             'message' => 'Test Error',
             'data' => ['status' => 200]
         ], $response->get_data());

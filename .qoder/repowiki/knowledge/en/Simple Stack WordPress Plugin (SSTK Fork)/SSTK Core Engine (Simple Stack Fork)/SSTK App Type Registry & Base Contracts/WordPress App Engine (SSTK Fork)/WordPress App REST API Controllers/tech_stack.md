@@ -1,1 +1,1 @@
-Built on the WordPress REST API (`register_rest_route`, `WP_REST_Request`, `rest_ensure_response`) with the `wpcd/v1` namespace; uses PHP exceptions as the error transport converted to `WP_Error` responses.
+Built on the WordPress REST API (`register_rest_route`, `WP_REST_Request`, `rest_ensure_response`) with the `simple-stack/v1` namespace; uses PHP exceptions as the error transport converted to `WP_Error` responses.

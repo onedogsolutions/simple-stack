@@ -3,14 +3,11 @@
 <cite>
 **Referenced Files in This Document**
 - [class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
-- [class-digital-ocean-parent.php](file://includes/core/providers/class-digital-ocean-parent.php)
-- [class-digital-ocean.php](file://includes/core/providers/class-digital-ocean.php)
 - [class-upcloud.php](file://includes/core/providers/class-upcloud.php)
 - [class-vultr-v2.php](file://includes/core/providers/class-vultr-v2.php)
-- [class-custom-server-parent.php](file://includes/core/providers/class-custom-server-parent.php)
-- [class-wpcd-posts-cloud-provider.php](file://includes/core/class-wpcd-posts-cloud-provider.php)
+- [class-sstk-posts-cloud-provider.php](file://includes/core/class-sstk-posts-cloud-provider.php)
 - [ControllerServersTest.php](file://tests/phpunit/rest-api/ControllerServersTest.php)
-- [class-wpcd-cloud-provider-test.php](file://tests/data/class-wpcd-cloud-provider-test.php)
+- [class-sstk-cloud-provider-test.php](file://tests/data/class-sstk-cloud-provider-test.php)
 </cite>
 
 ## Table of Contents
@@ -26,9 +23,9 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This guide explains how to extend SimpleStack with a new cloud provider. It focuses on the provider class hierarchy, the required `call()` contract, authentication patterns, API client setup, error handling conventions, feature flags, caching, and integration with the provider registry. It also provides a complete hypothetical provider example, testing strategies, and best practices for API versioning, rate limiting, and provider-specific optimizations.
+This guide explains how to extend Simple Stack with a new cloud provider. It focuses on the provider class hierarchy, the required `call()` contract, authentication patterns, API client setup, error handling conventions, feature flags, caching, and integration with the provider registry. It also provides a complete hypothetical provider example, testing strategies, and best practices for API versioning, rate limiting, and provider-specific optimizations.
 
-SimpleStack currently ships providers for Digital Ocean (via a parent class), Vultr v2, UpCloud, and a Custom Server placeholder. The base provider contract is defined by the core provider API class, while concrete providers implement provider-specific behavior.
+Simple Stack currently ships Vultr API v2 and UpCloud API 1.3 only. The base provider contract is defined by `CLOUD_PROVIDER_API`; concrete providers implement provider-specific behavior. This guide describes the extension contract, but adding another provider requires an explicit product-scope decision and corresponding registry, credential, UI, guard, and test changes.
 
 ## Project Structure
 Provider-related code lives under the provider directory. The most important files are:
@@ -40,31 +37,22 @@ Provider-related code lives under the provider directory. The most important fil
 
 ```mermaid
 graph TB
-Base["CLOUD_PROVIDER_API<br/>Base contract"] --> DO_Parent["CLOUD_PROVIDER_API_DigitalOcean_Parent<br/>Shared DigitalOcean implementation"]
-DO_Parent --> DO["CLOUD_PROVIDER_API_DigitalOcean<br/>Concrete DigitalOcean wrapper"]
-Base --> Upcloud["CLOUD_PROVIDER_API_Upcloud<br/>UpCloud 1.3 provider"]
+Base["CLOUD_PROVIDER_API<br/>Base contract"] --> Upcloud["CLOUD_PROVIDER_API_Upcloud<br/>UpCloud 1.3 provider"]
 Base --> Vultr["CLOUD_PROVIDER_API_VultrV2<br/>Vultr v2 provider"]
-Base --> CustomParent["CLOUD_PROVIDER_API_CustomServer_Parent<br/>Custom server placeholder"]
-Registry["WPCD_POSTS_CLOUD_PROVIDER<br/>Virtual provider registry"] --> ProviderTypes["get_provider_types()"]
+Registry["SSTK_POSTS_CLOUD_PROVIDER<br/>Virtual provider registry"] --> ProviderTypes["get_provider_types()"]
 ```
 
 **Diagram sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
-- [class-digital-ocean-parent.php:15-672](file://includes/core/providers/class-digital-ocean-parent.php#L15-L672)
-- [class-digital-ocean.php:15-64](file://includes/core/providers/class-digital-ocean.php#L15-L64)
 - [class-upcloud.php:33-800](file://includes/core/providers/class-upcloud.php#L33-L800)
 - [class-vultr-v2.php:30-800](file://includes/core/providers/class-vultr-v2.php#L30-L800)
-- [class-custom-server-parent.php:15-649](file://includes/core/providers/class-custom-server-parent.php#L15-L649)
-- [class-wpcd-posts-cloud-provider.php:560-577](file://includes/core/class-wpcd-posts-cloud-provider.php#L560-L577)
+- [class-sstk-posts-cloud-provider.php:560-577](file://includes/core/class-sstk-posts-cloud-provider.php#L560-L577)
 
 **Section sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
-- [class-digital-ocean-parent.php:15-672](file://includes/core/providers/class-digital-ocean-parent.php#L15-L672)
-- [class-digital-ocean.php:15-64](file://includes/core/providers/class-digital-ocean.php#L15-L64)
 - [class-upcloud.php:33-800](file://includes/core/providers/class-upcloud.php#L33-L800)
 - [class-vultr-v2.php:30-800](file://includes/core/providers/class-vultr-v2.php#L30-L800)
-- [class-custom-server-parent.php:15-649](file://includes/core/providers/class-custom-server-parent.php#L15-L649)
-- [class-wpcd-posts-cloud-provider.php:560-577](file://includes/core/class-wpcd-posts-cloud-provider.php#L560-L577)
+- [class-sstk-posts-cloud-provider.php:560-577](file://includes/core/class-sstk-posts-cloud-provider.php#L560-L577)
 
 ## Core Components
 The provider system is built around a base class that defines shared state, credential helpers, feature flags, cache keys, and UI hooks. Concrete providers override this base class to implement their own API endpoints, authentication, and response mapping.
@@ -72,22 +60,16 @@ The provider system is built around a base class that defines shared state, cred
 Key responsibilities:
 
 - **Base provider class**: Provides provider identity, dashboard/help links, root user configuration, feature flags, cache key generation, transient storage, credential checks, and helper methods for translating provider states.
-- **DigitalOcean parent class**: Implements a common DigitalOcean-style REST flow, including a centralized `call()` method that maps methods to endpoints, builds requests, handles retries, decodes responses, and caches results.
-- **Concrete DigitalOcean class**: A thin wrapper that allows overriding provider name, slug, region prefix, dashboard link, and API key loading.
-- **UpCloud provider**: Directly extends the base class and implements HTTP Basic authentication, plan resolution, storage template cloning, SSH key handling, power operations, resize, snapshots support decisions, and status inference.
+- **UpCloud provider**: Directly extends the base class and implements HTTP Basic authentication, plan resolution, storage template cloning, SSH key handling, power operations, resize, and status inference.
 - **Vultr v2 provider**: Directly extends the base class and implements bearer token authentication, paginated list fetching, instance lifecycle, snapshot management, SSH key registration, and status inference.
-- **Custom Server parent**: Demonstrates a non-API provider that simulates regions, sizes, keys, creation, and status using local settings rather than remote calls.
 
 **Section sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
-- [class-digital-ocean-parent.php:15-672](file://includes/core/providers/class-digital-ocean-parent.php#L15-L672)
-- [class-digital-ocean.php:15-64](file://includes/core/providers/class-digital-ocean.php#L15-L64)
 - [class-upcloud.php:33-800](file://includes/core/providers/class-upcloud.php#L33-L800)
 - [class-vultr-v2.php:30-800](file://includes/core/providers/class-vultr-v2.php#L30-L800)
-- [class-custom-server-parent.php:15-649](file://includes/core/providers/class-custom-server-parent.php#L15-L649)
 
 ## Architecture Overview
-At runtime, SimpleStack invokes a provider through its `call($method, $attributes)` interface. The caller passes a method name such as `regions`, `sizes`, `keys`, `create`, `details`, `status`, `reboot`, `off`, `on`, `delete`, `resize`, `snapshot`, `ssh_create`, or `test_connection`. Each provider maps those methods to its own API endpoints and normalizes the response into a consistent shape.
+At runtime, Simple Stack invokes a provider through its `call($method, $attributes)` interface. The caller passes a method name such as `regions`, `sizes`, `keys`, `create`, `details`, `status`, `reboot`, `off`, `on`, `delete`, `resize`, `snapshot`, `ssh_create`, or `test_connection`. Each provider maps those methods to its own API endpoints and normalizes the response into a consistent shape.
 
 ```mermaid
 sequenceDiagram
@@ -110,7 +92,6 @@ end
 ```
 
 **Diagram sources**
-- [class-digital-ocean-parent.php:162-533](file://includes/core/providers/class-digital-ocean-parent.php#L162-L533)
 - [class-upcloud.php:310-372](file://includes/core/providers/class-upcloud.php#L310-L372)
 - [class-vultr-v2.php:183-250](file://includes/core/providers/class-vultr-v2.php#L183-L250)
 - [class-cloud-provider-api.php:481-585](file://includes/core/providers/class-cloud-provider-api.php#L481-L585)
@@ -120,7 +101,7 @@ end
 ### Base Provider Contract
 The base provider class defines:
 
-- Provider identity fields: friendly name, slug, baseline provider name/slug for custom servers.
+- Provider identity fields: friendly name, slug, and base provider type for virtual aliases.
 - Dashboard and help links.
 - Root user configuration.
 - Feature flags for capabilities like snapshots, backups, dynamic tags, custom images, resize, SSH key creation, and connection testing.
@@ -140,30 +121,8 @@ When implementing a new provider, you should:
 **Section sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
 
-### DigitalOcean Parent Implementation
-The DigitalOcean parent class demonstrates a centralized `call()` implementation:
-
-- Maps methods to endpoints.
-- Builds JSON bodies for POST requests.
-- Uses bearer token authorization.
-- Performs basic retry logic for specific methods.
-- Decodes JSON responses.
-- Normalizes provider-specific responses into a standard structure.
-- Caches read-only methods.
-
-This pattern is useful when your provider has many related endpoints and a predictable request/response shape.
-
-**Section sources**
-- [class-digital-ocean-parent.php:15-672](file://includes/core/providers/class-digital-ocean-parent.php#L15-L672)
-
-### Concrete DigitalOcean Wrapper
-The concrete DigitalOcean class shows how to wrap a parent implementation while allowing runtime overrides for display name, slug, region prefix, dashboard link, and API key source. This is helpful when you need multiple instances of the same provider type with different account settings.
-
-**Section sources**
-- [class-digital-ocean.php:15-64](file://includes/core/providers/class-digital-ocean.php#L15-L64)
-
 ### UpCloud Provider
-UpCloud directly extends the base provider and differs from DigitalOcean-style providers in several ways:
+UpCloud directly extends the base provider and uses a credential model distinct from Vultr's bearer token:
 
 - Authentication uses HTTP Basic with username and password instead of a bearer token.
 - `uses_api_key()` returns false.
@@ -193,22 +152,8 @@ Vultr v2 also extends the base provider and follows a modern REST pattern:
 **Section sources**
 - [class-vultr-v2.php:30-800](file://includes/core/providers/class-vultr-v2.php#L30-L800)
 
-### Custom Server Parent
-The Custom Server parent demonstrates a provider that does not call a real cloud API. Instead, it:
-
-- Reads IPv4/IPv6 addresses, region name, size, and SSH key name from settings.
-- Returns static or configured values for regions, sizes, and keys.
-- Generates a fake provider instance ID for create.
-- Returns simulated status and details based on local WordPress posts and settings.
-- Overrides `credentials_available()` to require at least an IPv4 address.
-
-This is valuable as a reference for providers that integrate through a proxy, webhook, or internal service rather than a public REST API.
-
-**Section sources**
-- [class-custom-server-parent.php:15-649](file://includes/core/providers/class-custom-server-parent.php#L15-L649)
-
 ## Dependency Analysis
-The provider classes form a clear inheritance hierarchy. The base class is the single source of shared behavior. Concrete providers either extend the base class directly or extend a provider-specific parent that already centralizes common logic.
+The supported provider classes extend `CLOUD_PROVIDER_API` directly. The base class is the single source of shared state, credential-shape, cache, and UI behavior; each concrete provider owns its HTTP and response-mapping implementation.
 
 ```mermaid
 classDiagram
@@ -227,15 +172,6 @@ class CLOUD_PROVIDER_API {
 +get_cached_data(method) mixed
 +clear_cache() void
 }
-class CLOUD_PROVIDER_API_DigitalOcean_Parent {
-+call(method, attributes) mixed
-+get_image_name(attributes) string
-+get_ipv4_from_body(body) string
-+get_ipv6_from_body(body) string
-}
-class CLOUD_PROVIDER_API_DigitalOcean {
-+__construct(args)
-}
 class CLOUD_PROVIDER_API_Upcloud {
 +uses_api_key() bool
 +has_credentials() bool
@@ -247,47 +183,33 @@ class CLOUD_PROVIDER_API_VultrV2 {
 +get_secret_key() string
 +call(method, attributes) mixed
 }
-class CLOUD_PROVIDER_API_CustomServer_Parent {
-+call(method, attributes) mixed
-+credentials_available() bool
-}
-CLOUD_PROVIDER_API_DigitalOcean_Parent --|> CLOUD_PROVIDER_API
-CLOUD_PROVIDER_API_DigitalOcean --|> CLOUD_PROVIDER_API_DigitalOcean_Parent
 CLOUD_PROVIDER_API_Upcloud --|> CLOUD_PROVIDER_API
 CLOUD_PROVIDER_API_VultrV2 --|> CLOUD_PROVIDER_API
-CLOUD_PROVIDER_API_CustomServer_Parent --|> CLOUD_PROVIDER_API
 ```
 
 **Diagram sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
-- [class-digital-ocean-parent.php:15-672](file://includes/core/providers/class-digital-ocean-parent.php#L15-L672)
-- [class-digital-ocean.php:15-64](file://includes/core/providers/class-digital-ocean.php#L15-L64)
 - [class-upcloud.php:33-800](file://includes/core/providers/class-upcloud.php#L33-L800)
 - [class-vultr-v2.php:30-800](file://includes/core/providers/class-vultr-v2.php#L30-L800)
-- [class-custom-server-parent.php:15-649](file://includes/core/providers/class-custom-server-parent.php#L15-L649)
 
 **Section sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
-- [class-digital-ocean-parent.php:15-672](file://includes/core/providers/class-digital-ocean-parent.php#L15-L672)
-- [class-digital-ocean.php:15-64](file://includes/core/providers/class-digital-ocean.php#L15-L64)
 - [class-upcloud.php:33-800](file://includes/core/providers/class-upcloud.php#L33-L800)
 - [class-vultr-v2.php:30-800](file://includes/core/providers/class-vultr-v2.php#L30-L800)
-- [class-custom-server-parent.php:15-649](file://includes/core/providers/class-custom-server-parent.php#L15-L649)
 
 ## Detailed Component Analysis
 
 ### Step-by-Step Process for Implementing a New Provider
 
 #### Step 1: Choose Your Inheritance Path
-- Extend `CLOUD_PROVIDER_API` directly if your provider has unique authentication, request building, and response mapping.
-- Extend a provider-specific parent like `CLOUD_PROVIDER_API_DigitalOcean_Parent` if your provider shares a similar REST pattern and you want to reuse the centralized `call()` flow.
+- Extend `CLOUD_PROVIDER_API` directly. The supported implementations do not share a provider-specific parent class, so authentication, request building, and response mapping belong in the concrete provider.
 
 #### Step 2: Define Provider Identity
 In your constructor:
 
 - Call the parent constructor.
 - Set the provider name and slug.
-- Optionally set baseline provider name and slug for custom server scenarios.
+- Set the base provider name and slug used by virtual provider aliases.
 - Set the provider dashboard link where users obtain credentials.
 - Set the region prefix if you need to distinguish multiple accounts of the same provider type.
 
@@ -316,9 +238,9 @@ Your `call()` method should:
 
 1. Return cached data for safe read methods when available.
 2. Validate required credentials.
-3. Normalize legacy `provider_instance_id` into `id` when needed.
+3. Normalize the engine's `provider_instance_id` attribute into `id` when needed.
 4. Dispatch to provider-specific handlers for each method.
-5. Map provider responses into a normalized structure expected by SimpleStack.
+5. Map provider responses into a normalized structure expected by Simple Stack.
 6. Cache read-only results.
 7. Return `WP_Error` objects for failures.
 
@@ -350,11 +272,10 @@ For a brand-new provider class, ensure the provider type is registered so it can
 
 **Section sources**
 - [class-cloud-provider-api.php:15-753](file://includes/core/providers/class-cloud-provider-api.php#L15-L753)
-- [class-digital-ocean-parent.php:162-533](file://includes/core/providers/class-digital-ocean-parent.php#L162-L533)
 - [class-upcloud.php:310-372](file://includes/core/providers/class-upcloud.php#L310-L372)
 - [class-vultr-v2.php:183-250](file://includes/core/providers/class-vultr-v2.php#L183-L250)
-- [class-wpcd-posts-cloud-provider.php:560-577](file://includes/core/class-wpcd-posts-cloud-provider.php#L560-L577)
-- [class-wpcd-posts-cloud-provider.php:588-617](file://includes/core/class-wpcd-posts-cloud-provider.php#L588-L617)
+- [class-sstk-posts-cloud-provider.php:560-577](file://includes/core/class-sstk-posts-cloud-provider.php#L560-L577)
+- [class-sstk-posts-cloud-provider.php:588-617](file://includes/core/class-sstk-posts-cloud-provider.php#L588-L617)
 
 ### Complete Hypothetical Provider Example
 Below is a conceptual outline for a new provider called “ExampleCloud”. This is not copied from the repository; it illustrates how to apply the documented patterns.
@@ -367,7 +288,7 @@ Below is a conceptual outline for a new provider called “ExampleCloud”. This
 - Constructor:
   - Call parent constructor.
   - Set provider name and slug.
-  - Set baseline provider name and slug.
+  - Set the base provider name and slug used by virtual aliases.
   - Set dashboard link.
   - Set feature flags for SSH creation, connection testing, snapshots, resize, and backups.
   - Load encrypted API key.
@@ -393,7 +314,7 @@ This example follows the same structure as Vultr v2 and UpCloud, with explicit v
 [No sources needed since this section describes a hypothetical implementation]
 
 ### Testing Strategies
-SimpleStack includes PHPUnit tests and a test provider injection pattern:
+Simple Stack includes PHPUnit tests and a test provider injection pattern:
 
 - The test controller creates a server post and sets provider metadata.
 - It loads a test provider class and registers it under a test key.
@@ -411,7 +332,7 @@ Recommended testing approach:
 
 **Section sources**
 - [ControllerServersTest.php:150-172](file://tests/phpunit/rest-api/ControllerServersTest.php#L150-L172)
-- [class-wpcd-cloud-provider-test.php](file://tests/data/class-wpcd-cloud-provider-test.php)
+- [class-sstk-cloud-provider-test.php](file://tests/data/class-sstk-cloud-provider-test.php)
 
 ## Dependency Analysis
 The provider registry integrates with the virtual provider post type. The virtual provider UI lists provider types and allows administrators to define multiple accounts. Active virtual providers are merged into the providers array.
@@ -419,19 +340,19 @@ The provider registry integrates with the virtual provider post type. The virtua
 ```mermaid
 flowchart TD
 Admin["Admin User"] --> VirtualProviderUI["Virtual Provider UI"]
-VirtualProviderUI --> PostType["wpcd_cloud_provider Post Type"]
+VirtualProviderUI --> PostType["sstk_cloud_provider Post Type"]
 PostType --> ProviderTypes["get_provider_types()"]
 PostType --> ProvidersArray["Providers Array"]
 ProvidersArray --> Runtime["Runtime Provider Selection"]
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-cloud-provider.php:560-577](file://includes/core/class-wpcd-posts-cloud-provider.php#L560-L577)
-- [class-wpcd-posts-cloud-provider.php:588-617](file://includes/core/class-wpcd-posts-cloud-provider.php#L588-L617)
+- [class-sstk-posts-cloud-provider.php:560-577](file://includes/core/class-sstk-posts-cloud-provider.php#L560-L577)
+- [class-sstk-posts-cloud-provider.php:588-617](file://includes/core/class-sstk-posts-cloud-provider.php#L588-L617)
 
 **Section sources**
-- [class-wpcd-posts-cloud-provider.php:560-577](file://includes/core/class-wpcd-posts-cloud-provider.php#L560-L577)
-- [class-wpcd-posts-cloud-provider.php:588-617](file://includes/core/class-wpcd-posts-cloud-provider.php#L588-L617)
+- [class-sstk-posts-cloud-provider.php:560-577](file://includes/core/class-sstk-posts-cloud-provider.php#L560-L577)
+- [class-sstk-posts-cloud-provider.php:588-617](file://includes/core/class-sstk-posts-cloud-provider.php#L588-L617)
 
 ## Performance Considerations
 - Use the provided cache helpers for read-only methods like regions, sizes, and keys.
@@ -457,10 +378,9 @@ Common issues and debugging techniques:
 **Section sources**
 - [class-upcloud.php:310-372](file://includes/core/providers/class-upcloud.php#L310-L372)
 - [class-vultr-v2.php:183-250](file://includes/core/providers/class-vultr-v2.php#L183-L250)
-- [class-digital-ocean-parent.php:348-390](file://includes/core/providers/class-digital-ocean-parent.php#L348-L390)
 
 ## Conclusion
-Extending SimpleStack with a new provider means implementing the `call()` contract, configuring credentials and feature flags, normalizing responses, handling errors consistently, and integrating with the provider registry. Use the existing providers as references: DigitalOcean parent for a centralized REST flow, UpCloud for HTTP Basic authentication and state inference, Vultr v2 for bearer tokens and paginated lists, and Custom Server for a non-API provider. Follow the testing patterns to validate behavior without depending on live APIs, and adopt best practices for API versioning, rate limiting, caching, and secret safety.
+Extending Simple Stack with a provider means implementing the `call()` contract, configuring credentials and feature flags, normalizing responses, handling errors consistently, and integrating with the registry. Use UpCloud as the reference for HTTP Basic authentication and state inference, and Vultr v2 for bearer tokens, paginated lists, and snapshots. The shipping scope remains Vultr and UpCloud only; another provider requires an explicit scope change. Follow the testing patterns to validate behavior without depending on live APIs, and adopt best practices for API versioning, rate limiting, caching, and secret safety.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

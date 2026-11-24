@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /******************************************************************************************/
 
 /* Style Metabox.io Tabs in the settings screen                                           */
@@ -33,28 +34,28 @@
 
 /* Background color and text for tabs - vertical */
 .rwmb-settings-no-boxes .rwmb-tabs-left .rwmb-tab-nav {
-    background-color: var(--wpcd-accent-background-color);
+    background-color: var(--sstk-accent-background-color);
 }
 
 .rwmb-settings-no-boxes .rwmb-tabs-left .rwmb-tab-nav .rwmb-tab-active {
-    background-image: linear-gradient( to right, var(--wpcd-accent-background-color), var(--wpcd-accent-background-color) 50%, var(--wpcd-alternate-accent-background-color) 50%);
+    background-image: linear-gradient( to right, var(--sstk-accent-background-color), var(--sstk-accent-background-color) 50%, var(--sstk-alternate-accent-background-color) 50%);
     background-size: 200% 100%;
     background-position: 100%;
     transition: all 0.5s cubic-bezier(0.000, 0.000, 0.230, 1);
 }
 
 .rwmb-settings-no-boxes .rwmb-tabs-left .rwmb-tab-nav a {
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
 }
 
 .rwmb-settings-no-boxes .rwmb-tabs-left .rwmb-tab-nav .rwmb-tab-active a {
-    color: var(--wpcd-primary-brand-color);
+    color: var(--sstk-primary-brand-color);
     font-weight: bold;
 }
 
 /* Hover color for vertical tabs */
 .rwmb-settings-no-boxes .rwmb-tabs-left .rwmb-tab-nav a:hover {
-    color: var(--wpcd-primary-brand-color);
+    color: var(--sstk-primary-brand-color);
     transition: all 1s cubic-bezier(0.000, 0.000, 0.230, 1);
 }
 
@@ -69,15 +70,14 @@ Additional headers added to that tab will need to
 be added here.
 */
 .rwmb-settings-no-boxes #general .rwmb-heading-wrapper, 
-.rwmb-settings-no-boxes #wpcd_deploy_your_first_wordpress_site .rwmb-heading-wrapper,
-/* @TODO: This one should probably be extracted to it's own wpcd-wpapp-admin-settings.css file since it's specific to the WordPress app */
+.rwmb-settings-no-boxes #sstk_deploy_your_first_wordpress_site .rwmb-heading-wrapper,
+/* @TODO: This one should probably be extracted to it's own sstk-wpapp-admin-settings.css file since it's specific to the WordPress app */
 
 .rwmb-settings-no-boxes #ssh-and-webserver-timeouts .rwmb-heading-wrapper, 
 .rwmb-settings-no-boxes #backup .rwmb-heading-wrapper, 
 .rwmb-settings-no-boxes #provider-cache-settings .rwmb-heading-wrapper, 
 .rwmb-settings-no-boxes #logging .rwmb-heading-wrapper, 
 .rwmb-settings-no-boxes #fields .rwmb-heading-wrapper, 
-.rwmb-settings-no-boxes #data-sync .rwmb-heading-wrapper, 
 .rwmb-settings-no-boxes .postbox {
     padding-bottom: 0px;
     margin-bottom: 0px !important;
@@ -86,54 +86,53 @@ be added here.
 }
 
 .rwmb-settings-no-boxes #general .rwmb-heading-wrapper p,
-.rwmb-settings-no-boxes #wpcd_deploy_your_first_wordpress_site .rwmb-heading-wrapper p,
-/* @TODO: This one should probably be extracted to it's own wpcd-wpapp-admin-settings.css file since it's specific to the WordPress app */
+.rwmb-settings-no-boxes #sstk_deploy_your_first_wordpress_site .rwmb-heading-wrapper p,
+/* @TODO: This one should probably be extracted to it's own sstk-wpapp-admin-settings.css file since it's specific to the WordPress app */
 .rwmb-settings-no-boxes #ssh-and-webserver-timeouts .rwmb-heading-wrapper p, .rwmb-settings-no-boxes #backup .rwmb-heading-wrapper p {
     font-size: 1.05em;
 }
 
 .rwmb-settings-no-boxes #general .rwmb-heading-wrapper h4,
-.rwmb-settings-no-boxes #wpcd_deploy_your_first_wordpress_site .rwmb-heading-wrapper h4,
-/* @TODO: This one should probably be extracted to it's own wpcd-wpapp-admin-settings.css file since it's specific to the WordPress app */
+.rwmb-settings-no-boxes #sstk_deploy_your_first_wordpress_site .rwmb-heading-wrapper h4,
+/* @TODO: This one should probably be extracted to it's own sstk-wpapp-admin-settings.css file since it's specific to the WordPress app */
 
 .rwmb-settings-no-boxes #ssh-and-webserver-timeouts .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #backup .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #provider-cache-settings .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #show-advanced-metaboxes .rwmb-heading-wrapper h4, 
-.rwmb-settings-no-boxes #hide-wpcd-warnings .rwmb-heading-wrapper h4,
+.rwmb-settings-no-boxes #hide-sstk-warnings .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #hide-do-provider-mb .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #long-command-timeout-mb .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #logging .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #fields .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #hide-general-option .rwmb-heading-wrapper h4,
-.rwmb-settings-no-boxes #wpcd-hide-groups-fields .rwmb-heading-wrapper h4,
-.rwmb-settings-no-boxes #wpcd-wisdom-opt-out-fields .rwmb-heading-wrapper h4,
-.rwmb-settings-no-boxes #wpcd-email-warning-fields .rwmb-heading-wrapper h4,
+.rwmb-settings-no-boxes #sstk-hide-groups-fields .rwmb-heading-wrapper h4,
+.rwmb-settings-no-boxes #sstk-wisdom-opt-out-fields .rwmb-heading-wrapper h4,
+.rwmb-settings-no-boxes #sstk-email-warning-fields .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #license .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #tools .rwmb-heading-wrapper h4,
-.rwmb-settings-no-boxes #data-sync .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #cloud-providers .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #wordpress-app .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #wordpress-app-security .rwmb-heading-wrapper h4,
 .rwmb-settings-no-boxes #vultr-api-v1-options .rwmb-heading-wrapper h4
 
  {
-    color: var(--wpcd-primary-brand-color);
+    color: var(--sstk-primary-brand-color);
 }
 
-.rwmb-settings-no-boxes .wpcd_settings_larger_header_label h4 {
+.rwmb-settings-no-boxes .sstk_settings_larger_header_label h4 {
     /* Some things just need to be a little bigger to emphasize that they are a separate section */
     font-size: larger;
 }
 
 /**
 Start styling for for the DEPLOY YOUR FIRST WORDPRESS SITE section. Make the background white and add some padding with a little animation to draw attention to it.
-@TODO: This section should probably be extracted to it's own wpcd-wpapp-admin-settings.css file since it's specific to the WordPress app
+@TODO: This section should probably be extracted to it's own sstk-wpapp-admin-settings.css file since it's specific to the WordPress app
 **/
-.rwmb-settings-no-boxes #wpcd_deploy_your_first_wordpress_site .rwmb-heading-wrapper {
-    background-color: var(--wpcd-white-color);
+.rwmb-settings-no-boxes #sstk_deploy_your_first_wordpress_site .rwmb-heading-wrapper {
+    background-color: var(--sstk-white-color);
     padding: 2em;
-    border: solid 1px var(--wpcd-white-color);
+    border: solid 1px var(--sstk-white-color);
     border-radius: 8px;
 	max-width: 800px;
 	margin-left: 2em;
@@ -142,7 +141,7 @@ Start styling for for the DEPLOY YOUR FIRST WORDPRESS SITE section. Make the bac
 	/* Important needed for margins because metabox has !important in their own stylesheets so we have no choice but to use it to override their defaults. */
 }
 
-.rwmb-settings-no-boxes #wpcd_deploy_your_first_wordpress_site .rwmb-heading-wrapper #wpcd_deploy_your_first_wordpress_site_heading {
+.rwmb-settings-no-boxes #sstk_deploy_your_first_wordpress_site .rwmb-heading-wrapper #sstk_deploy_your_first_wordpress_site_heading {
     /* change size of metabox title for the DEPLOY YOUR FIRST WORDPRESS SITE section */
     font-size: 1.7em;
 }
@@ -150,7 +149,7 @@ Start styling for for the DEPLOY YOUR FIRST WORDPRESS SITE section. Make the bac
 /*
 In the DEPLOY YOUR FIRST WORDPRESS SITE section, make the fonts bigger and space out the lines a bit more.
 */
-.rwmb-settings-no-boxes #wpcd_deploy_your_first_wordpress_site .rwmb-heading-wrapper #wpcd_deploy_your_first_wordpress_site_heading-description {
+.rwmb-settings-no-boxes #sstk_deploy_your_first_wordpress_site .rwmb-heading-wrapper #sstk_deploy_your_first_wordpress_site_heading-description {
     font-size: 1.2em;
     font-style: inherit;
     line-height: 2em;
@@ -159,7 +158,7 @@ In the DEPLOY YOUR FIRST WORDPRESS SITE section, make the fonts bigger and space
 /*
 In the DEPLOY YOUR FIRST WORDPRESS SITE section, adjust list elements.
 */
-.rwmb-settings-no-boxes #wpcd_deploy_your_first_wordpress_site .rwmb-heading-wrapper li {
+.rwmb-settings-no-boxes #sstk_deploy_your_first_wordpress_site .rwmb-heading-wrapper li {
     font-size: 1.0em;
     line-height: 1.6em;
 }
@@ -185,8 +184,8 @@ In the DEPLOY YOUR FIRST WORDPRESS SITE section, adjust list elements.
 /**
  * Text shown when an API key is not setup.
  */
-.rwmb-settings-no-boxes .wpcd_settings_key_not_available_instructions {
-    color: var(--wpcd-primary-brand-color);
+.rwmb-settings-no-boxes .sstk_settings_key_not_available_instructions {
+    color: var(--sstk-primary-brand-color);
     font-size: 1.2 em;
     font-weight: bold;
 }
@@ -200,12 +199,12 @@ In the DEPLOY YOUR FIRST WORDPRESS SITE section, adjust list elements.
 /* End style Metabox.io Tabs in the main settings screen */
 
 /* If any error messages are present on the settings screen, make sure they are in RED */
-.wpcd_settings_err_msg {
-    color: var(--wpcd-negative-color);
+.sstk_settings_err_msg {
+    color: var(--sstk-negative-color);
 }
 
 /* the password toggle icon */
-.wpcd_settings_pass_toggle_icon {
+.sstk_settings_pass_toggle_icon {
     vertical-align: middle;
     width: 30px;
     height: 30px;
@@ -215,13 +214,13 @@ In the DEPLOY YOUR FIRST WORDPRESS SITE section, adjust list elements.
 /**
  * Text shown when Provider is in use.
  */
-.rwmb-settings-no-boxes .rwmb-tab-panel .wpcd_settings_provider_in_use_warning .rwmb-input {
+.rwmb-settings-no-boxes .rwmb-tab-panel .sstk_settings_provider_in_use_warning .rwmb-input {
     width: 100%;
 }
 
-.rwmb-settings-no-boxes .wpcd_settings_provider_in_use_warning {
-    background-color: var(--wpcd-negative-color);
-	color: var(--wpcd-white-color);
+.rwmb-settings-no-boxes .sstk_settings_provider_in_use_warning {
+    background-color: var(--sstk-negative-color);
+	color: var(--sstk-white-color);
     xfont-weight: bold;
 	border: solid;
 	border-width: 1px;
@@ -230,22 +229,22 @@ In the DEPLOY YOUR FIRST WORDPRESS SITE section, adjust list elements.
 }
 
 /* Received Files listing on the Sync Tab. */
-.wpcd-received-files-list-item {
+.sstk-received-files-list-item {
     margin-bottom: 15px;
 }
 
-.wpcd-received-files-list a {
-    color: var(--wpcd-primary-brand-color);
+.sstk-received-files-list a {
+    color: var(--sstk-primary-brand-color);
     text-decoration: none;
     box-shadow: none;
 }
 
-.wpcd-received-files-list-item-links {
+.sstk-received-files-list-item-links {
     display: inline-block;
     margin-right: 15px;
 }
 
-.wpcd-received-files-list-item-links-separator {
+.sstk-received-files-list-item-links-separator {
     display: inline-block;
     margin-right: 5px;
     margin-left: 5px;
@@ -327,97 +326,97 @@ span.display_waiting_message {
 /** 
  * Faq and help page
  */
-.wpcd_settings_help_text_wrapper {
+.sstk_settings_help_text_wrapper {
     line-height: 2.5em;
 }
 
-.wpcd_settings_help_text_wrapper h2 {
+.sstk_settings_help_text_wrapper h2 {
     margin-bottom: 0.25em;
 }
 
-.wpcd_settings_help_text_wrapper a {
+.sstk_settings_help_text_wrapper a {
     text-decoration: none;
 }
 
-.wpcd_settings_help_text_wrapper a:hover {
+.sstk_settings_help_text_wrapper a:hover {
     text-decoration: underline;
     font-weight: bold;
 }
 
-.wpcd_settings_help_text_left_column {
+.sstk_settings_help_text_left_column {
     float: left;
     width: 30%;
 }
 
-.wpcd_settings_help_text_middle_column {
+.sstk_settings_help_text_middle_column {
     float: left;
     width: 30%;
 }
 
-.wpcd_settings_help_text_right_column {
+.sstk_settings_help_text_right_column {
     float: left;
     width: 30%;
 }
 
-.wpcd_settings_help_text_wrapper:after {
+.sstk_settings_help_text_wrapper:after {
     clear: both;
 }
 
-.wpcd_faq_help_sec {
+.sstk_faq_help_sec {
     width: 90%;
     margin-left: 15px;
     margin-top: 25px;
 }
 
-.wpcd_faq_help_sec h1.wp-heading-inline {
+.sstk_faq_help_sec h1.wp-heading-inline {
     margin-top: 25px;
     margin-bottom: 25px;
 }
 
-.wpcd_help_button {
+.sstk_help_button {
     border: solid 1px;
     border-color: #EF6F90;
     background-color: #EF6F90;
     border-radius: 4px;
     padding: 1em 2em 1em 2em;
     text-decoration: none;
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
     line-height: 4em;
 }
 
-.wpcd_help_button:hover {
+.sstk_help_button:hover {
     background-color: #03114A;
     border-color: #03114A;
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
 }
 
-.wpcd_help_button.wpcd_help_button_all_docs {
+.sstk_help_button.sstk_help_button_all_docs {
     background-color: #03114A;
     border-color: #03114A;
     margin-top: 1em;
 }
 
-.wpcd_help_button.wpcd_help_button_all_docs:hover {
+.sstk_help_button.sstk_help_button_all_docs:hover {
     border-color: #EF6F90;
     background-color: #EF6F90;
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
 }
 
 /* Provider toggle switch */
-.wpcd_provider_active_switch {
+.sstk_provider_active_switch {
     position: relative;
     display: inline-block;
     width: 55px;
     height: 25px;
 }
 
-.wpcd_provider_active_switch input {
+.sstk_provider_active_switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.wpcd_provider_active_slider {
+.sstk_provider_active_slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -429,38 +428,38 @@ span.display_waiting_message {
     transition: .4s;
 }
 
-.wpcd_provider_active_slider:before {
+.sstk_provider_active_slider:before {
     position: absolute;
     content: "";
     height: 20px;
     width: 20px;
     left: 5px;
     bottom: 3px;
-    background-color: var(--wpcd-white-color);
+    background-color: var(--sstk-white-color);
     -webkit-transition: .4s;
     transition: .4s;
 }
 
-input:checked+.wpcd_provider_active_slider {
+input:checked+.sstk_provider_active_slider {
     background-color: #2196F3;
 }
 
-input:focus+.wpcd_provider_active_slider {
+input:focus+.sstk_provider_active_slider {
     box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked+.wpcd_provider_active_slider:before {
+input:checked+.sstk_provider_active_slider:before {
     -webkit-transform: translateX(26px);
     -ms-transform: translateX(26px);
     transform: translateX(26px);
 }
 
 /* Rounded sliders */
-.wpcd_provider_active_slider.round {
+.sstk_provider_active_slider.round {
     border-radius: 34px;
 }
 
-.wpcd_provider_active_slider.round:before {
+.sstk_provider_active_slider.round:before {
     border-radius: 50%;
 }
 
@@ -469,6 +468,6 @@ input:checked+.wpcd_provider_active_slider:before {
 /* Provider status - css */
 .all_provider_list_table {
     pointer-events: none;
-    background-color: var(--wpcd-white-color);
+    background-color: var(--sstk-white-color);
     opacity: 0.5;
 }

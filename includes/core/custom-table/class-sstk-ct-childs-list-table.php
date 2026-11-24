@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Display table for child model
  */
-class WPCD_CT_Childs_List_Table extends WPCD_CT_List_Table {
+class SSTK_CT_Childs_List_Table extends SSTK_CT_List_Table {
 	
 	/**
 	 * Base url for table page
@@ -56,12 +57,12 @@ class WPCD_CT_Childs_List_Table extends WPCD_CT_List_Table {
 	
 	public function item_link( $item ) {
 		
-		$custom_table = WPCD_MB_Custom_Table::get($this->model->name);
+		$custom_table = SSTK_MB_Custom_Table::get($this->model->name);
 		$view = $custom_table->get_view();
 		
 		return add_query_arg( [
-					'action' =>  "wpcd_{$this->model->name}_inline_edit",
-					'model-id'     => apply_filters("wpcd_ct_{$this->model->name}_child_table_item_id", $item['ID'], $item ),
+					'action' =>  "sstk_{$this->model->name}_inline_edit",
+					'model-id'     => apply_filters("sstk_ct_{$this->model->name}_child_table_item_id", $item['ID'], $item ),
 					'parent-id'		=> isset( $item['parent_id'] ) ?  $item['parent_id'] : '',
 					'nonce'			=> $custom_table->get_view_nonce( $view, "edit_{$this->model->name}" ),
 					'view'			=> $view,
@@ -86,7 +87,7 @@ class WPCD_CT_Childs_List_Table extends WPCD_CT_List_Table {
 		
 		$this->_column_headers = $this->get_column_info();
 		
-		$custom_table = WPCD_MB_Custom_Table::get( $this->model->name );
+		$custom_table = SSTK_MB_Custom_Table::get( $this->model->name );
 		
 		$per_page = $this->get_items_per_page( "{$this->model->name}_per_page", 20 );
 		$page     = $this->get_pagenum();
@@ -181,22 +182,22 @@ class WPCD_CT_Childs_List_Table extends WPCD_CT_List_Table {
 			return '';
 		}
 		
-		$custom_table = WPCD_MB_Custom_Table::get($this->model->name);
+		$custom_table = SSTK_MB_Custom_Table::get($this->model->name);
 		
 		$actions = [
-			'wpcd-ct-edit' => sprintf(
-				'<a href="%s" class="wpcd-ct-edit-child-item mp_edit_inline">' . esc_html__( 'Edit', 'mb-custom-table' ) . '</a>',
+			'sstk-ct-edit' => sprintf(
+				'<a href="%s" class="sstk-ct-edit-child-item mp_edit_inline">' . esc_html__( 'Edit', 'mb-custom-table' ) . '</a>',
 				$this->item_link( $item )
 			),
-			'wpcd-ct-delete' => sprintf(
-				'<a href="#" data-id="%d" data-model="%s" data-nonce="%s" class="wpcd-ct-delete-child-item">' . esc_html__( 'Delete', 'mb-custom-table' ) . '</a>',
+			'sstk-ct-delete' => sprintf(
+				'<a href="#" data-id="%d" data-model="%s" data-nonce="%s" class="sstk-ct-delete-child-item">' . esc_html__( 'Delete', 'mb-custom-table' ) . '</a>',
 				$item['ID'],
 				$this->model->name,
 				$custom_table->get_nonce('delete')
 			)
 		];
 
-		$actions = apply_filters( "wpcd_mbct_{$this->model->name}_child_table_row_actions", $actions, $item );
+		$actions = apply_filters( "sstk_mbct_{$this->model->name}_child_table_row_actions", $actions, $item );
 		
 		return $this->row_actions( $actions );
 	}

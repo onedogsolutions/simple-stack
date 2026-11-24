@@ -1,6 +1,6 @@
-- Every controller extends `SimpleStack_REST_Controller_Base` and registers routes exclusively through the protected `register_*_route` helpers rather than calling `register_rest_route` directly.
+- Every controller extends `SSTK_REST_Controller_Base` and registers routes exclusively through the protected `register_*_route` helpers rather than calling `register_rest_route` directly.
 - Route parameters are declared via the base's typed helper methods (`arg_id`, `arg_int`, `arg_string`, `arg_text`, `arg_object`, `arg_params`) which always supply both a `sanitize_callback` and a `validate_callback`.
 - Controller handlers return success via `$this->respond($data)` and failures via `$this->error($code, $message, $status)`, never constructing `WP_REST_Response` or `WP_Error` directly.
-- All response payloads pass through `SimpleStack_Secret_Redactor::redact()` inside the base `respond()` method, so sensitive values are stripped before serialization.
+- All response payloads pass through `SSTK_Secret_Redactor::redact()` inside the base `respond()` method, so sensitive values are stripped before serialization.
 - Each controller file guards against direct access with `if ( ! defined( 'ABSPATH' ) ) { exit; }` at the top of the file.
 - List endpoints normalize pagination through the shared `paging()` helper, capping `per_page` at `MAX_PER_PAGE` (200) and computing an `offset` from page/per_page.

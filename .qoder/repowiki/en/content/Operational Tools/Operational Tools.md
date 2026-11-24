@@ -14,7 +14,7 @@
 - [backup_restore_delete_and_prune_server.txt](file://includes/core/apps/wordpress-app/scripts/v1/backup_restore_delete_and_prune_server.txt)
 - [monit.txt](file://includes/core/apps/wordpress-app/scripts/v1/monit.txt)
 - [netdata.txt](file://includes/core/apps/wordpress-app/scripts/v1/netdata.txt)
-- [class-wpcd-app.php](file://includes/core/apps/class-wpcd-app.php)
+- [class-sstk-app.php](file://includes/core/apps/class-sstk-app.php)
 </cite>
 
 ## Table of Contents
@@ -29,7 +29,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s operational tools for backup and restore, security hardening with 6G/7G firewall rules, monitoring setup with Monit and Netdata, performance optimization utilities, and system maintenance tasks. It also documents the script execution framework, parameter passing, and output capture mechanisms used by these tools. Practical examples are included for scheduling backups, configuring firewalls, setting up monitoring alerts, and running maintenance tasks. Guidance is provided for troubleshooting failures, analyzing logs, and recovering from failed operations.
+This document explains Simple Stack’s operational tools for backup and restore, security hardening with 6G/7G firewall rules, monitoring setup with Monit and Netdata, performance optimization utilities, and system maintenance tasks. It also documents the script execution framework, parameter passing, and output capture mechanisms used by these tools. Practical examples are included for scheduling backups, configuring firewalls, setting up monitoring alerts, and running maintenance tasks. Guidance is provided for troubleshooting failures, analyzing logs, and recovering from failed operations.
 
 ## Project Structure
 Operational tools are implemented as shell scripts under the WordPress app scripts directory. The key areas covered here include:
@@ -449,6 +449,6 @@ Recovery procedures:
 - [43-netdata.txt:1-717](file://includes/core/apps/wordpress-app/scripts/v1/raw/43-netdata.txt#L1-L717)
 
 ## Conclusion
-SimpleStack’s operational tools provide a robust framework for managing backups, securing sites with 6G/7G firewall rules, and setting up comprehensive monitoring with Monit and Netdata. The scripts follow a consistent execution model, support both interactive and automated usage, and integrate tightly with system services. By following the documented workflows and troubleshooting guidance, administrators can reliably maintain system health, enforce security policies, and optimize performance.
+Simple Stack’s operational tools provide a robust framework for managing backups, securing sites with 6G/7G firewall rules, and setting up comprehensive monitoring with Monit and Netdata. The scripts follow a consistent execution model, support both interactive and automated usage, and integrate tightly with system services. By following the documented workflows and troubleshooting guidance, administrators can reliably maintain system health, enforce security policies, and optimize performance.
 
 [No sources needed since this section summarizes without analyzing specific files]

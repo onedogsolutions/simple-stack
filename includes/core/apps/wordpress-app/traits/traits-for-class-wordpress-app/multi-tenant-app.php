@@ -1,15 +1,16 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains support code for multi-tenant functions.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_wpapp_multi_tenant_app
+ * Trait sstk_wpapp_multi_tenant_app
  */
-trait wpcd_wpapp_multi_tenant_app {
+trait sstk_wpapp_multi_tenant_app {
 
 	/**
 	 * Return whether a site is a template site or not.
@@ -20,8 +21,8 @@ trait wpcd_wpapp_multi_tenant_app {
 	 *
 	 * @return boolean
 	 */
-	public function wpcd_is_template_site( $app_id ) {
-		$is_template_site = (bool) get_post_meta( $app_id, 'wpcd_is_template_site', true );
+	public function sstk_is_template_site( $app_id ) {
+		$is_template_site = (bool) get_post_meta( $app_id, 'sstk_is_template_site', true );
 		return $is_template_site;
 	}
 
@@ -33,11 +34,11 @@ trait wpcd_wpapp_multi_tenant_app {
 	 * @param int     $app_id The post id of the site we're working with.
 	 * @param boolean $flag Whether to set it on or off.
 	 */
-	public function wpcd_set_template_flag( $app_id, $flag ) {
+	public function sstk_set_template_flag( $app_id, $flag ) {
 		if ( true === $flag ) {
-			update_post_meta( $app_id, 'wpcd_is_template_site', true );
+			update_post_meta( $app_id, 'sstk_is_template_site', true );
 		} else {
-			update_post_meta( $app_id, 'wpcd_is_template_site', false );
+			update_post_meta( $app_id, 'sstk_is_template_site', false );
 		}
 
 		// If setting to false, we need to check the MT site type.
@@ -50,24 +51,24 @@ trait wpcd_wpapp_multi_tenant_app {
 	}
 
 	/**
-	 * Returns the wpcd product name set for a template site.
+	 * Returns the sstk product name set for a template site.
 	 *
 	 * @param int $id The post id of the site we're working with.
 	 *
 	 * @return string
 	 */
 	public function get_product_name( $id ) {
-		return get_post_meta( $id, 'wpcd_app_mt_template_product_name', true );
+		return get_post_meta( $id, 'sstk_app_mt_template_product_name', true );
 	}
 
 	/**
-	 * Sets the wpcd product name for a template site.
+	 * Sets the sstk product name for a template site.
 	 *
 	 * @param int    $id The post id of the site we're working with.
 	 * @param string $name The new product name to set for the site.
 	 */
 	public function set_product_name( $id, $name ) {
-		update_post_meta( $id, 'wpcd_app_mt_template_product_name', $name );
+		update_post_meta( $id, 'sstk_app_mt_template_product_name', $name );
 	}
 
 	/**
@@ -81,7 +82,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	 */
 	public function get_mt_default_version( $app_id ) {
 
-		return get_post_meta( $app_id, 'wpcd_app_mt_default_version', true );
+		return get_post_meta( $app_id, 'sstk_app_mt_default_version', true );
 
 	}
 
@@ -97,7 +98,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	 */
 	public function set_mt_default_version( $app_id, $version ) {
 
-		return update_post_meta( $app_id, 'wpcd_app_mt_default_version', $version );
+		return update_post_meta( $app_id, 'sstk_app_mt_default_version', $version );
 
 	}
 
@@ -114,7 +115,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	 */
 	public function get_mt_version( $app_id ) {
 
-		return get_post_meta( $app_id, 'wpcd_app_mt_version', true );
+		return get_post_meta( $app_id, 'sstk_app_mt_version', true );
 
 	}
 
@@ -132,7 +133,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	 */
 	public function set_mt_version( $app_id, $version ) {
 
-		return update_post_meta( $app_id, 'wpcd_app_mt_version', $version );
+		return update_post_meta( $app_id, 'sstk_app_mt_version', $version );
 
 	}
 
@@ -149,7 +150,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	 */
 	public function get_mt_parent( $app_id ) {
 
-		return get_post_meta( $app_id, 'wpcd_app_mt_parent', true );
+		return get_post_meta( $app_id, 'sstk_app_mt_parent', true );
 
 	}
 
@@ -167,7 +168,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	 */
 	public function set_mt_parent( $app_id, $parent_id ) {
 
-		return update_post_meta( $app_id, 'wpcd_app_mt_parent', $parent_id );
+		return update_post_meta( $app_id, 'sstk_app_mt_parent', $parent_id );
 
 	}
 
@@ -188,7 +189,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	 */
 	public function set_mt_site_type( $app_id, $site_type ) {
 
-		return update_post_meta( $app_id, 'wpcd_app_mt_site_type', $site_type );
+		return update_post_meta( $app_id, 'sstk_app_mt_site_type', $site_type );
 
 	}
 
@@ -212,7 +213,7 @@ trait wpcd_wpapp_multi_tenant_app {
 		$return = 'standard';  // Default is a standard site.
 
 		// Check if it's a template site.
-		if ( $this->wpcd_is_template_site( $app_id ) ) {
+		if ( $this->sstk_is_template_site( $app_id ) ) {
 			$return = 'template';
 		}
 
@@ -222,7 +223,7 @@ trait wpcd_wpapp_multi_tenant_app {
 		// 'mt_version_clone'.
 		// 'mt_tenant'.
 		// 'mt_template_clone'.
-		$mt_site_type = get_post_meta( $app_id, 'wpcd_app_mt_site_type', true );
+		$mt_site_type = get_post_meta( $app_id, 'sstk_app_mt_site_type', true );
 		if ( ! empty( $mt_site_type ) ) {
 			$return = $mt_site_type;
 		}
@@ -246,7 +247,7 @@ trait wpcd_wpapp_multi_tenant_app {
 	public function get_mt_version_history( $id ) {
 
 		// Get current tag list.
-		$versions = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_app_mt_version_history', true ) );
+		$versions = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_app_mt_version_history', true ) );
 
 		// Make sure we have something in the logs array otherwise create a blank one.
 		if ( empty( $versions ) ) {
@@ -274,17 +275,17 @@ trait wpcd_wpapp_multi_tenant_app {
 	public function get_mt_version_sites_by_version( $mt_version ) {
 
 		$query_args = array(
-			'post_type'   => 'wpcd_app',
+			'post_type'   => 'sstk_app',
 			'post_status' => 'private',
 			'numberposts' => -1,
 			'meta_query'  => array(
 				'relation' => 'AND',
 				array(
-					'key'   => 'wpcd_app_mt_site_type',
+					'key'   => 'sstk_app_mt_site_type',
 					'value' => 'mt_version',
 				),
 				array(
-					'key'   => 'wpcd_app_mt_version',
+					'key'   => 'sstk_app_mt_version',
 					'value' => $mt_version,
 				),
 			),
@@ -309,17 +310,17 @@ trait wpcd_wpapp_multi_tenant_app {
 	public function get_mt_version_clone_sites_by_version_and_server_id( $mt_version, $server_id ) {
 
 		$query_args = array(
-			'post_type'   => 'wpcd_app',
+			'post_type'   => 'sstk_app',
 			'post_status' => 'private',
 			'numberposts' => -1,
 			'meta_query'  => array(
 				'relation' => 'AND',
 				array(
-					'key'   => 'wpcd_app_mt_site_type',
+					'key'   => 'sstk_app_mt_site_type',
 					'value' => 'mt_version_clone',
 				),
 				array(
-					'key'   => 'wpcd_app_mt_version',
+					'key'   => 'sstk_app_mt_version',
 					'value' => $mt_version,
 				),
 				array(
@@ -344,10 +345,10 @@ trait wpcd_wpapp_multi_tenant_app {
 	public function clone_mt_metas( $id, $target_id ) {
 
 		// Template flag.
-		$is_template = $this->wpcd_is_template_site( $id );
-		$this->wpcd_set_template_flag( $target_id, $is_template );
+		$is_template = $this->sstk_is_template_site( $id );
+		$this->sstk_set_template_flag( $target_id, $is_template );
 
-		if ( true === wpcd_is_mt_enabled() ) {
+		if ( true === sstk_is_mt_enabled() ) {
 			// MT Version.
 			$mt_version = $this->get_mt_version( $id );
 			if ( ! empty( $mt_version ) ) {

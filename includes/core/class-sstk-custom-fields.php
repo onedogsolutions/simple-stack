@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class handles custom fields.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,11 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Setup certain custom field functions.
  *
- * @package wpcd
- * @version 1.0.0 / wpcd
+ * @package simple-stack
+ * @version 1.0.0 / sstk
  * @since 4.2.0
  */
-class WPCD_Custom_Fields {
+class SSTK_Custom_Fields {
 
 	/**
 	 * The array of custom fields.
@@ -61,7 +62,7 @@ class WPCD_Custom_Fields {
 	 * @return array
 	 */
 	public function get_fields() {
-		return apply_filters( 'wpcd_get_custom_fields', $this->custom_fields );
+		return apply_filters( 'sstk_get_custom_fields', $this->custom_fields );
 	}
 
 	/**

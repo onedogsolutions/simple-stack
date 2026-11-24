@@ -1,7 +1,8 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Servers list.
  *
- * Replaces the `wpcd_app_server` CPT edit screen. Filtering mirrors the REST query
+ * Replaces the `sstk_app_server` CPT edit screen. Filtering mirrors the REST query
  * arguments so the URL stays shareable through the hash.
  */
 

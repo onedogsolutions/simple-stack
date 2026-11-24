@@ -2,8 +2,8 @@
 	"name": "simple-stack",
 	"version": "1.0.0",
 	"private": true,
-	"description": "SimpleStack admin client. Built into assets/dist/ and enqueued from PHP.",
-	"license": "proprietary",
+	"description": "Simple Stack admin client. Built into assets/dist/ and enqueued from PHP.",
+	"license": "GPL-2.0-or-later",
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",

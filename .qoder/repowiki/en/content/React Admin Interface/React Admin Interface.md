@@ -16,7 +16,7 @@
 - [tailwind.config.js](file://tailwind.config.js)
 - [vite.config.js](file://vite.config.js)
 - [package.json](file://package.json)
-- [SIMPLESTACK.md](file://docs/SIMPLESTACK.md)
+- [SSTK.md](file://docs/SIMPLESTACK.md)
 </cite>
 
 ## Update Summary
@@ -44,7 +44,7 @@
 12. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes SimpleStack's completely overhauled React-based administrative interface built with React 19 and Tailwind CSS v4. The client is a lightweight, hash-driven admin shell that renders inside the existing WordPress admin chrome using Vite for modern development and production builds. It manages routing through URL hashes, communicates with a `simple-stack/v1` REST API, and provides reusable UI primitives for tables, modals, toasts, cards, buttons, and application shells.
+This document describes Simple Stack's completely overhauled React-based administrative interface built with React 19 and Tailwind CSS v4. The client is a lightweight, hash-driven admin shell that renders inside the existing WordPress admin chrome using Vite for modern development and production builds. It manages routing through URL hashes, communicates with a `simple-stack/v1` REST API, and provides reusable UI primitives for tables, modals, toasts, cards, buttons, and application shells.
 
 The project uses Vite 7 for development and production builds, outputting compiled assets into `assets/dist/`. This allows the plugin to run without requiring Node on the server while maintaining a modern development experience. Tailwind CSS v4 is configured so all generated utilities are scoped under `#simplestack-admin`, preventing style leakage into the rest of wp-admin.
 
@@ -77,7 +77,7 @@ Entry --> API["src/admin/lib/api.js"]
 **Section sources**
 - [index.jsx:1-47](file://src/admin/index.jsx#L1-L47)
 - [App.jsx:1-70](file://src/admin/App.jsx#L1-L70)
-- [SIMPLESTACK.md:117-150](file://docs/SIMPLESTACK.md#L117-L150)
+- [SSTK.md:117-150](file://docs/SIMPLESTACK.md#L117-L150)
 
 ## Core Components
 The interface is composed around a focused set of reusable components designed for the WordPress admin environment:
@@ -141,8 +141,8 @@ Page-->>WP : Render UI
 - [api.js:67-119](file://src/admin/lib/api.js#L67-L119)
 
 **Section sources**
-- [SIMPLESTACK.md:15-32](file://docs/SIMPLESTACK.md#L15-L32)
-- [SIMPLESTACK.md:117-150](file://docs/SIMPLESTACK.md#L117-L150)
+- [SSTK.md:15-32](file://docs/SIMPLESTACK.md#L15-L32)
+- [SSTK.md:117-150](file://docs/SIMPLESTACK.md#L117-L150)
 
 ## Detailed Component Analysis
 
@@ -333,7 +333,7 @@ The project uses Vite 7 for modern development and production builds with Tailwi
 **Section sources**
 - [package.json:7-12](file://package.json#L7-L12)
 - [vite.config.js:15-37](file://vite.config.js#L15-L37)
-- [SIMPLESTACK.md:300-316](file://docs/SIMPLESTACK.md#L300-L316)
+- [SSTK.md:300-316](file://docs/SIMPLESTACK.md#L300-L316)
 
 ## Styling System
 The styling system uses Tailwind CSS v4 with strict scoping to prevent style leakage into WordPress admin.
@@ -361,7 +361,7 @@ The styling system uses Tailwind CSS v4 with strict scoping to prevent style lea
 **Section sources**
 - [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 - [index.css:1-80](file://src/admin/styles/index.css#L1-L80)
-- [SIMPLESTACK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
+- [SSTK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
 
 ## API Layer
 The API layer provides a typed interface to the `simple-stack/v1` REST endpoints with automatic nonce handling and response unwrapping.
@@ -494,15 +494,15 @@ Reference:
 
 References:
 - Bootstrap object access: [api.js:18-22](file://src/admin/lib/api.js#L18-L22)
-- CSS isolation verification script reference: [SIMPLESTACK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
+- CSS isolation verification script reference: [SSTK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
 
 **Section sources**
 - [App.jsx:25-68](file://src/admin/App.jsx#L25-L68)
 - [router.js:29-32](file://src/admin/lib/router.js#L29-L32)
 - [api.js:18-119](file://src/admin/lib/api.js#L18-L119)
-- [SIMPLESTACK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
+- [SSTK.md:138-150](file://docs/SIMPLESTACK.md#L138-L150)
 
 ## Conclusion
-SimpleStack's completely overhauled admin interface is a compact, hash-driven React application built with modern tools that integrates cleanly with WordPress admin. The new architecture separates concerns between mounting, routing, presentation, and API communication while keeping styling safely scoped under `#simplestack-admin`. Reusable components like `DataTable`, `Modal`, `Toast`, `Card`, and `Button` reduce duplication and make adding new features straightforward. The Vite build produces committed assets so the plugin works without a Node toolchain on production servers while providing an excellent development experience.
+Simple Stack's completely overhauled admin interface is a compact, hash-driven React application built with modern tools that integrates cleanly with WordPress admin. The new architecture separates concerns between mounting, routing, presentation, and API communication while keeping styling safely scoped under `#simplestack-admin`. Reusable components like `DataTable`, `Modal`, `Toast`, `Card`, and `Button` reduce duplication and make adding new features straightforward. The Vite build produces committed assets so the plugin works without a Node toolchain on production servers while providing an excellent development experience.
 
 The complete rewrite brings significant improvements in developer experience, code organization, and maintainability while preserving full backward compatibility with the existing WordPress plugin architecture.

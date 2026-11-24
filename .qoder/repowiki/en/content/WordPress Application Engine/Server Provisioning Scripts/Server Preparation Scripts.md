@@ -6,7 +6,7 @@
 - [9999-common-functions.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt)
 - [54-ubuntupro.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/54-ubuntupro.txt)
 - [55-ols_options.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt)
-- [class-wpcd-app.php](file://includes/core/apps/class-wpcd-app.php)
+- [class-sstk-app.php](file://includes/core/apps/class-sstk-app.php)
 - [SIMPLESTACK.md](file://docs/SIMPLESTACK.md)
 </cite>
 
@@ -23,7 +23,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains the server preparation phase used by SimpleStack to provision Ubuntu servers for OpenLiteSpeed-based WordPress hosting. It covers:
+This document explains the server preparation phase used by Simple Stack to provision Ubuntu servers for OpenLiteSpeed-based WordPress hosting. It covers:
 
 - Ubuntu version validation and supported release mapping.
 - Repository management, package installation, and dependency setup.
@@ -45,12 +45,12 @@ The preparation logic lives under the WordPress app script collection. The key f
 | `includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt` | Shared functions and global variables, including Ubuntu version detection, LSPHP defaults, webserver detection, default PHP selection, admin IP normalisation, and restart helpers. |
 | `includes/core/apps/wordpress-app/scripts/v2/raw/54-ubuntupro.txt` | Interactive helper to attach or detach an Ubuntu Pro token. Not part of the automated preparation flow. |
 | `includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt` | Interactive OpenLiteSpeed options menu covering compression, HTTP/2, browser cache, XML-RPC, REST API, security headers, CSP, HSTS, XSS protection, and more. |
-| `includes/core/apps/class-wpcd-app.php` | WordPress plugin code that routes commands such as `prepare_server`, logs completion events, and exposes hooks for extensions. |
-| `docs/SIMPLESTACK.md` | High-level documentation describing SimpleStack’s scope, supported stack, and important security notes about port 7080. |
+| `includes/core/apps/class-sstk-app.php` | WordPress plugin code that routes commands such as `prepare_server`, logs completion events, and exposes hooks for extensions. |
+| `docs/SIMPLESTACK.md` | High-level documentation describing Simple Stack’s scope, supported stack, and important security notes about port 7080. |
 
 ```mermaid
 graph TB
-App["WordPress Plugin<br/>class-wpcd-app.php"] --> Prep["Server Preparation<br/>01-prepare_server.txt"]
+App["WordPress Plugin<br/>class-sstk-app.php"] --> Prep["Server Preparation<br/>01-prepare_server.txt"]
 Prep --> Common["Shared Functions<br/>9999-common-functions.txt"]
 Prep --> OLS["OpenLiteSpeed Installer<br/>ols1clk.sh (external)"]
 Prep --> Repo["LiteSpeed Repo Script<br/>repo.litespeed.sh (external)"]
@@ -66,7 +66,7 @@ UbuntuPro["Ubuntu Pro Helper<br/>54-ubuntupro.txt"] -. "Optional manual step" .-
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:866-950](file://includes/core/apps/class-wpcd-app.php#L866-L950)
+- [class-sstk-app.php:866-950](file://includes/core/apps/class-sstk-app.php#L866-L950)
 - [01-prepare_server.txt:180-345](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L180-L345)
 - [9999-common-functions.txt:16-70](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L16-L70)
 - [55-ols_options.txt:109-160](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt#L109-L160)
@@ -77,7 +77,7 @@ UbuntuPro["Ubuntu Pro Helper<br/>54-ubuntupro.txt"] -. "Optional manual step" .-
 - [9999-common-functions.txt:16-70](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L16-L70)
 - [54-ubuntupro.txt:1-82](file://includes/core/apps/wordpress-app/scripts/v2/raw/54-ubuntupro.txt#L1-L82)
 - [55-ols_options.txt:1-160](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt#L1-L160)
-- [class-wpcd-app.php:866-950](file://includes/core/apps/class-wpcd-app.php#L866-L950)
+- [class-sstk-app.php:866-950](file://includes/core/apps/class-sstk-app.php#L866-L950)
 - [SIMPLESTACK.md:181-195](file://docs/SIMPLESTACK.md#L181-L195)
 
 ## Core Components
@@ -88,7 +88,7 @@ The preparation phase is driven by a single main script that coordinates multipl
 - Forces noninteractive package installation.
 - Loads shared functions from the common functions file.
 - Normalises the administration IP before firewall rules are applied.
-- Validates the webserver type; SimpleStack only supports OpenLiteSpeed and LiteSpeed Enterprise.
+- Validates the webserver type; Simple Stack supports OpenLiteSpeed only.
 - Validates the Ubuntu release against supported versions.
 - Creates a checkpoint directory for resumable runs.
 - Installs OpenLiteSpeed, MariaDB, LSPHP versions, Certbot, Redis, WP-CLI, AWS CLI, and configures UFW.
@@ -99,10 +99,10 @@ The preparation phase is driven by a single main script that coordinates multipl
 - Detects Ubuntu version and codename.
 - Defines supported Ubuntu releases: 24.04 (`noble`) and 26.04 (`resolute`).
 - Tracks installed LSPHP versions and the default short PHP version.
-- Detects whether OpenLiteSpeed, LiteSpeed Enterprise, or another webserver is present.
+- Detects whether OpenLiteSpeed is present; other webserver types are unsupported.
 - Sets the default `php`, `phar`, `pecl`, and `pear` alternatives to a chosen LSPHP binary.
 - Lists installed LSPHP versions.
-- Normalises the `SIMPLE_STACK_ADMIN_IP` value so invalid inputs cannot accidentally open the WebAdmin console.
+- Normalises the `SSTK_ADMIN_IP` value so invalid inputs cannot accidentally open the WebAdmin console.
 - Restarts the appropriate webserver safely.
 
 ### Optional Helpers
@@ -189,7 +189,7 @@ The script manages repositories in stages:
 2. Refreshes existing APT repositories.
 3. Installs `software-properties-common`.
 4. Adds the Ondřej Surý PHP PPA.
-5. Deliberately avoids adding the nginx PPA because SimpleStack provisions OpenLiteSpeed only.
+5. Does not add an nginx PPA because Simple Stack provisions OpenLiteSpeed only.
 6. Installs `curl` and `net-tools`.
 7. Downloads and executes `repo.litespeed.sh` to add the official LiteSpeed repository.
 8. Runs `apt-get update` again after adding the LiteSpeed repository.
@@ -227,7 +227,7 @@ The script integrates the official OpenLiteSpeed one-click installer securely:
 
 - Downloads `ols1clk.sh` from a tagged release URL.
 - Performs a syntax check with `bash -n`.
-- Optionally verifies the SHA-256 checksum using `SIMPLE_STACK_OLS1CLK_SHA256`.
+- Optionally verifies the SHA-256 checksum using `SSTK_OLS1CLK_SHA256`.
 - Runs the installer with `--lsphp 81` to establish the OpenLiteSpeed baseline.
 - Later installs additional LSPHP versions explicitly rather than relying on repository globs.
 
@@ -260,7 +260,7 @@ Bash-->>Prep : Exit status
 - [01-prepare_server.txt:185-256](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L185-L256)
 
 ### PHP Version Management
-SimpleStack installs three LSPHP versions:
+Simple Stack installs three LSPHP versions:
 
 - `lsphp83`
 - `lsphp84`
@@ -304,7 +304,7 @@ The firewall is configured with a deny-by-default strategy:
 - Opens SSH based on `/etc/ssh/sshd_config`.
 - Opens ports 80 and 443 for HTTP and HTTPS.
 - Denies port 7080, the OpenLiteSpeed WebAdmin console, by default.
-- If `SIMPLE_STACK_ADMIN_IP` is set and valid, opens port 7080 only for that address.
+- If `SSTK_ADMIN_IP` is set and valid, opens port 7080 only for that address.
 - Enables UFW.
 
 The admin IP is normalised before use. Invalid values, empty strings, or unreplaced placeholders collapse to an empty string, keeping port 7080 closed. This is a deliberate fail-closed security measure.
@@ -318,7 +318,7 @@ AllowOutgoing --> AllowSSH["Allow SSH port"]
 AllowSSH --> AllowHTTP["Allow port 80"]
 AllowHTTP --> AllowHTTPS["Allow port 443"]
 AllowHTTPS --> DenyAdmin["Deny port 7080"]
-DenyAdmin --> AdminIP{"Valid SIMPLE_STACK_ADMIN_IP?"}
+DenyAdmin --> AdminIP{"Valid SSTK_ADMIN_IP?"}
 AdminIP --> |Yes| AllowAdmin["Allow 7080 from admin IP"]
 AdminIP --> |No| KeepClosed["Keep 7080 closed"]
 AllowAdmin --> EnableUFW["Enable ufw"]
@@ -336,7 +336,7 @@ EnableUFW --> End(["Firewall ready"])
 - [SIMPLESTACK.md:181-195](file://docs/SIMPLESTACK.md#L181-L195)
 
 ### Checkpoint System for Resumable Installations
-The preparation script uses a `.wpcd-server-provision-checkpoints` directory to track progress:
+The preparation script uses a `.sstk-server-provision-checkpoints` directory to track progress:
 
 | Checkpoint | Purpose |
 |---|---|
@@ -410,7 +410,7 @@ The WordPress plugin routes the `prepare_server` command and emits completion ev
 ```mermaid
 sequenceDiagram
 participant UI as "UI / Task Runner"
-participant App as "class-wpcd-app.php"
+participant App as "class-sstk-app.php"
 participant Server as "Remote Server"
 participant Script as "01-prepare_server.txt"
 UI->>App : Request prepare_server
@@ -422,10 +422,10 @@ App-->>UI : Update task status
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:866-950](file://includes/core/apps/class-wpcd-app.php#L866-L950)
+- [class-sstk-app.php:866-950](file://includes/core/apps/class-sstk-app.php#L866-L950)
 
 **Section sources**
-- [class-wpcd-app.php:866-950](file://includes/core/apps/class-wpcd-app.php#L866-L950)
+- [class-sstk-app.php:866-950](file://includes/core/apps/class-sstk-app.php#L866-L950)
 
 ## Dependency Analysis
 The preparation scripts have both internal and external dependencies.
@@ -480,15 +480,15 @@ Prep --> UFW["UFW"]
 
 | Symptom | Likely Cause | Recommended Action |
 |---|---|---|
-| Provisioning stops early with “unsupported webserver” | `webserver_type` is not `ols` or `ols-enterprise` | Ensure the environment supplies a supported webserver type. |
+| Provisioning stops early with “unsupported webserver” | `webserver_type` is not `ols` | Ensure the environment supplies `webserver_type=ols`; LiteSpeed Enterprise and other webservers are not supported. |
 | Provisioning stops with unsupported Ubuntu version | Running on an unsupported distribution | Use Ubuntu 24.04 or 26.04. |
 | Repository refresh fails | Network or APT configuration issue | Check connectivity, DNS, and APT configuration before retrying. |
 | LiteSpeed repository script fails | Network or repository URL issue | Verify TLS connectivity and the LiteSpeed repository URL. |
 | `ols1clk.sh` syntax check fails | Corrupted or incompatible downloaded installer | Inspect the downloaded script and ensure the pinned tag matches expectations. |
-| Checksum verification fails | `SIMPLE_STACK_OLS1CLK_SHA256` does not match the fetched script | Update the expected checksum or fetch the intended tagged release. |
+| Checksum verification fails | `SSTK_OLS1CLK_SHA256` does not match the fetched script | Update the expected checksum or fetch the intended tagged release. |
 | Certbot installation fails | `snapd` unhealthy or network issue | Check `systemctl status snapd`, network access, and retry. |
 | Redis config missing after install | Partial Redis installation | Reinstall Redis and verify `/etc/redis/redis.conf`. |
-| Port 7080 unreachable | Admin IP not configured or blocked by firewall | Provide a valid `SIMPLE_STACK_ADMIN_IP`; otherwise expect port 7080 to stay closed. |
+| Port 7080 unreachable | Admin IP not configured or blocked by firewall | Provide a valid `SSTK_ADMIN_IP`; otherwise expect port 7080 to stay closed. |
 | Firewall rules look wrong | Non-fatal firewall rule errors occurred | Manually inspect UFW rules and correct them if necessary. |
 | Configuration block resumes incorrectly | `checkpoint150.txt` exists without `checkpoint150-end.txt` | Do not resume; provision a fresh server as instructed. |
 
@@ -513,7 +513,7 @@ Prep --> UFW["UFW"]
 - [54-ubuntupro.txt:16-31](file://includes/core/apps/wordpress-app/scripts/v2/raw/54-ubuntupro.txt#L16-L31)
 
 ## Conclusion
-The SimpleStack server preparation phase is a hardened, checkpointed provisioning pipeline focused on OpenLiteSpeed and Ubuntu 24.04/26.04. It validates the operating system, manages repositories securely, installs OpenLiteSpeed through a pinned one-click installer, configures multiple LSPHP versions, enforces restrictive PHP settings, and applies a deny-by-default firewall with explicit exceptions for SSH, HTTP, HTTPS, and optionally the OpenLiteSpeed WebAdmin console.
+The Simple Stack server preparation phase is a hardened, checkpointed provisioning pipeline focused on OpenLiteSpeed and Ubuntu 24.04/26.04. It validates the operating system, manages repositories securely, installs OpenLiteSpeed through a pinned one-click installer, configures multiple LSPHP versions, enforces restrictive PHP settings, and applies a deny-by-default firewall with explicit exceptions for SSH, HTTP, HTTPS, and optionally the OpenLiteSpeed WebAdmin console.
 
 For operators extending the system:
 

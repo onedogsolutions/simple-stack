@@ -6,8 +6,8 @@
 - [functions-icons.php](file://includes/core/functions-icons.php)
 - [functions-kses.php](file://includes/core/functions-kses.php)
 - [functions-metabox.php](file://includes/core/functions-metabox.php)
-- [class-wpcd-posts-log.php](file://includes/core/class-wpcd-posts-log.php)
-- [class-wpcd-settings.php](file://includes/core/class-wpcd-settings.php)
+- [class-sstk-posts-log.php](file://includes/core/class-sstk-posts-log.php)
+- [class-sstk-settings.php](file://includes/core/class-sstk-settings.php)
 - [class-wordpress-app.php](file://includes/core/apps/wordpress-app/class-wordpress-app.php)
 - [log-console.php](file://includes/core/apps/wordpress-app/templates/log-console.php)
 </cite>
@@ -24,7 +24,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s utility functions and helper methods that power common operations across the application. It focuses on:
+This document explains Simple Stack’s utility functions and helper methods that power common operations across the application. It focuses on:
 - Reusable helpers for file handling, string manipulation, WordPress integration, and security.
 - The icon management system used to keep UI elements consistent.
 - KSES sanitization helpers for secure HTML processing.
@@ -32,15 +32,15 @@ This document explains SimpleStack’s utility functions and helper methods that
 - Logging utilities, date formatting helpers, and URL generation patterns.
 - Security considerations and best practices for extending the utility library.
 
-The goal is to make these utilities understandable for both developers and non-technical users who need to extend or maintain SimpleStack safely.
+The goal is to make these utilities understandable for both developers and non-technical users who need to extend or maintain Simple Stack safely.
 
 ## Project Structure
-SimpleStack centralizes reusable PHP helpers under `includes/core`. The most relevant files for this documentation are:
+Simple Stack centralizes reusable PHP helpers under `includes/core`. The most relevant files for this documentation are:
 - `functions.php`: General-purpose helpers (string cleaning, permissions, random values, UUIDs, clipboard wrappers, etc.).
 - `functions-icons.php`: Icon prefix helpers for consistent FontAwesome usage.
 - `functions-kses.php`: KSES allowed HTML arrays and filtering helpers.
 - `functions-metabox.php`: Metabox card container helpers for admin UI layout.
-- `class-wpcd-posts-log.php` and `class-wpcd-settings.php`: Logging configuration and log post type behavior.
+- `class-sstk-posts-log.php` and `class-sstk-settings.php`: Logging configuration and log post type behavior.
 - `class-wordpress-app.php`: Example URL generation for site admin links.
 - `log-console.php`: Admin template for displaying command logs.
 
@@ -53,8 +53,8 @@ K["functions-kses.php"]
 M["functions-metabox.php"]
 end
 subgraph "Logging"
-L["class-wpcd-posts-log.php"]
-S["class-wpcd-settings.php"]
+L["class-sstk-posts-log.php"]
+S["class-sstk-settings.php"]
 end
 subgraph "WordPress App Integration"
 W["class-wordpress-app.php"]
@@ -73,8 +73,8 @@ W --> T
 - [functions-icons.php:1-572](file://includes/core/functions-icons.php#L1-L572)
 - [functions-kses.php:1-55](file://includes/core/functions-kses.php#L1-L55)
 - [functions-metabox.php:1-161](file://includes/core/functions-metabox.php#L1-L161)
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
-- [class-wpcd-settings.php:208-224](file://includes/core/class-wpcd-settings.php#L208-L224)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
+- [class-sstk-settings.php:208-224](file://includes/core/class-sstk-settings.php#L208-L224)
 - [class-wordpress-app.php:1079-1112](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L1079-L1112)
 - [log-console.php:1-17](file://includes/core/apps/wordpress-app/templates/log-console.php#L1-L17)
 
@@ -83,8 +83,8 @@ W --> T
 - [functions-icons.php:1-572](file://includes/core/functions-icons.php#L1-L572)
 - [functions-kses.php:1-55](file://includes/core/functions-kses.php#L1-L55)
 - [functions-metabox.php:1-161](file://includes/core/functions-metabox.php#L1-L161)
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
-- [class-wpcd-settings.php:208-224](file://includes/core/class-wpcd-settings.php#L208-L224)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
+- [class-sstk-settings.php:208-224](file://includes/core/class-sstk-settings.php#L208-L224)
 - [class-wordpress-app.php:1079-1112](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L1079-L1112)
 - [log-console.php:1-17](file://includes/core/apps/wordpress-app/templates/log-console.php#L1-L17)
 
@@ -146,13 +146,13 @@ This section summarizes the main utility areas and their responsibilities.
 - [functions-icons.php:22-572](file://includes/core/functions-icons.php#L22-L572)
 - [functions-kses.php:18-54](file://includes/core/functions-kses.php#L18-L54)
 - [functions-metabox.php:28-158](file://includes/core/functions-metabox.php#L28-L158)
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
-- [class-wpcd-settings.php:208-224](file://includes/core/class-wpcd-settings.php#L208-L224)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
+- [class-sstk-settings.php:208-224](file://includes/core/class-sstk-settings.php#L208-L224)
 - [class-wordpress-app.php:1079-1112](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L1079-L1112)
 - [log-console.php:1-17](file://includes/core/apps/wordpress-app/templates/log-console.php#L1-L17)
 
 ## Architecture Overview
-At runtime, SimpleStack’s utilities are invoked from various parts of the plugin:
+At runtime, Simple Stack’s utilities are invoked from various parts of the plugin:
 - Admin screens use metabox helpers to render structured cards.
 - Buttons and labels use icon helpers to ensure consistent visuals.
 - User input is sanitized through KSES helpers before being rendered.
@@ -180,7 +180,7 @@ Logs->>Logs : "Clean old entries"
 - [functions-metabox.php:28-158](file://includes/core/functions-metabox.php#L28-L158)
 - [functions-kses.php:18-54](file://includes/core/functions-kses.php#L18-L54)
 - [class-wordpress-app.php:1079-1112](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L1079-L1112)
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
 
 ## Detailed Component Analysis
 
@@ -296,8 +296,8 @@ Purpose:
 - Provide a helper to sanitize user-provided HTML using `wp_kses`.
 
 Key functions:
-- `wpcd_kses_allowed_select()`: Returns an array of allowed tags and attributes for SELECT and OPTION elements.
-- `wpcd_kses_select($data)`: Sanitizes a string using the allowed SELECT configuration.
+- `sstk_kses_allowed_select()`: Returns an array of allowed tags and attributes for SELECT and OPTION elements.
+- `sstk_kses_select($data)`: Sanitizes a string using the allowed SELECT configuration.
 
 Security considerations:
 - Only explicitly allow necessary tags and attributes to minimize XSS risk.
@@ -322,13 +322,13 @@ Purpose:
 - Support different column widths and special page headings.
 
 Available helpers:
-- Full-width card: `wpcd_start_full_card($tab)`
-- Full-width card without border: `wpcd_start_full_card_no_border($tab)`
-- Full-width card for page heading: `wpcd_start_full_card_page_heading($tab)`
-- Half-width card: `wpcd_start_half_card($tab)`
-- One-third width card: `wpcd_start_one_third_card($tab)`
-- Two-thirds width card: `wpcd_start_two_thirds_card($tab)`
-- Closing card: `wpcd_end_card($tab)`
+- Full-width card: `sstk_start_full_card($tab)`
+- Full-width card without border: `sstk_start_full_card_no_border($tab)`
+- Full-width card for page heading: `sstk_start_full_card_page_heading($tab)`
+- Half-width card: `sstk_start_half_card($tab)`
+- One-third width card: `sstk_start_one_third_card($tab)`
+- Two-thirds width card: `sstk_start_two_thirds_card($tab)`
+- Closing card: `sstk_end_card($tab)`
 
 Usage pattern:
 - Wrap related fields within start and end helpers to create visually grouped sections.
@@ -370,12 +370,12 @@ Skip --> Done
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
-- [class-wpcd-settings.php:208-224](file://includes/core/class-wpcd-settings.php#L208-L224)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
+- [class-sstk-settings.php:208-224](file://includes/core/class-sstk-settings.php#L208-L224)
 
 **Section sources**
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
-- [class-wpcd-settings.php:208-224](file://includes/core/class-wpcd-settings.php#L208-L224)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
+- [class-sstk-settings.php:208-224](file://includes/core/class-sstk-settings.php#L208-L224)
 - [log-console.php:1-17](file://includes/core/apps/wordpress-app/templates/log-console.php#L1-L17)
 
 ### Date Formatting Helpers
@@ -440,7 +440,7 @@ WP["WordPress Core APIs"] --> F["functions.php"]
 FA["FontAwesome Classes"] --> I["functions-icons.php"]
 KSES["wp_kses"] --> K["functions-kses.php"]
 MB["Metabox.io Field Structures"] --> M["functions-metabox.php"]
-POSTS["Post Types & Options"] --> L["class-wpcd-posts-log.php"]
+POSTS["Post Types & Options"] --> L["class-sstk-posts-log.php"]
 ```
 
 **Diagram sources**
@@ -448,14 +448,14 @@ POSTS["Post Types & Options"] --> L["class-wpcd-posts-log.php"]
 - [functions-icons.php:1-572](file://includes/core/functions-icons.php#L1-L572)
 - [functions-kses.php:1-55](file://includes/core/functions-kses.php#L1-L55)
 - [functions-metabox.php:1-161](file://includes/core/functions-metabox.php#L1-L161)
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
 
 **Section sources**
 - [functions.php:1-2041](file://includes/core/functions.php#L1-L2041)
 - [functions-icons.php:1-572](file://includes/core/functions-icons.php#L1-L572)
 - [functions-kses.php:1-55](file://includes/core/functions-kses.php#L1-L55)
 - [functions-metabox.php:1-161](file://includes/core/functions-metabox.php#L1-L161)
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
 
 ## Performance Considerations
 - Avoid excessive recursion in string manipulation; prefer iterative approaches when possible.
@@ -478,10 +478,10 @@ Common issues and resolutions:
 - [functions.php:267-305](file://includes/core/functions.php#L267-L305)
 - [functions-kses.php:18-54](file://includes/core/functions-kses.php#L18-L54)
 - [functions-metabox.php:28-158](file://includes/core/functions-metabox.php#L28-L158)
-- [class-wpcd-posts-log.php:199-240](file://includes/core/class-wpcd-posts-log.php#L199-L240)
+- [class-sstk-posts-log.php:199-240](file://includes/core/class-sstk-posts-log.php#L199-L240)
 - [class-wordpress-app.php:1079-1112](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L1079-L1112)
 
 ## Conclusion
-SimpleStack’s utility functions provide a robust foundation for string handling, security, UI consistency, and WordPress integration. By leveraging icon helpers, KSES sanitization, metabox card builders, and logging utilities, developers can build secure and maintainable admin interfaces. When extending the library, follow established patterns: validate inputs, sanitize outputs, use prepared queries, and keep helpers focused and cohesive.
+Simple Stack’s utility functions provide a robust foundation for string handling, security, UI consistency, and WordPress integration. By leveraging icon helpers, KSES sanitization, metabox card builders, and logging utilities, developers can build secure and maintainable admin interfaces. When extending the library, follow established patterns: validate inputs, sanitize outputs, use prepared queries, and keep helpers focused and cohesive.
 
 [No sources needed since this section summarizes without analyzing specific files]

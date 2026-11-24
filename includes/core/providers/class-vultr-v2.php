@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Vultr provider (API v2).
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,11 +18,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * A few things worth knowing before editing this file:
  *
  * - Authentication is a bearer token.  The token is read from the
- *   `vpn_vultr-v2_apikey` option and is encrypted at rest, so it must pass through
- *   WPCD()->decrypt() before use.
+ *   `sstk_vultr-v2_apikey` option and is encrypted at rest, so it must pass through
+ *   SSTK()->decrypt() before use.
  * - Vultr's power endpoints (reboot, start, halt) answer with 204 No Content and
- *   hand back no operation id, unlike DigitalOcean.  There is therefore nothing to
- *   poll and the completion of those actions has to be inferred from the instance's
+ *   hand back no operation id. There is therefore nothing to poll, so completion
+ *   has to be inferred from the instance's
  *   `power_status` / `server_status`.  See call_power() and call_status().
  * - `user_data` must be base64 encoded by us; the API does not encode it.
  * - The api key must never reach a log line, an exception message or a REST
@@ -69,7 +70,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	 * CLOUD_PROVIDER_API_VultrV2 constructor.
 	 *
 	 * @param array $args Optional overrides, used when this class is instantiated for a
-	 *                    virtual provider defined in the wpcd_cloud_provider post type.
+	 *                    virtual provider defined in the sstk_cloud_provider post type.
 	 */
 	public function __construct( $args = array() ) {
 
@@ -79,7 +80,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		$this->set_provider( 'Vultr' );
 		$this->set_provider_slug( 'vultr-v2' );
 
-		/* Set baseline provider name and slug - these stay put even on custom servers. */
+		/* Set the underlying provider type name and slug for virtual provider aliases. */
 		$this->set_base_provider_name( 'Vultr' );
 		$this->set_base_provider_slug( 'vultr-v2' );
 
@@ -108,8 +109,8 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		$this->set_feature_flag( 'enable_backups_on_server_create', true );
 
 		/*
-		 * Explicitly off.  WPCD stores a custom image id per OS in
-		 * `vpn_{provider}_{os}` options but no code path in this tree reads them
+		 * Explicitly off.  SSTK stores a custom image id per OS in
+		 * `sstk_{provider}_{os}` options but no code path in this tree reads them
 		 * back, so advertising the feature would only produce fields that do
 		 * nothing.
 		 */
@@ -118,11 +119,11 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		$this->set_feature_flag( 'enable_dynamic_tags_on_server_create', false );
 
 		/* Pull the api key from settings - it is stored encrypted. */
-		$this->set_api_key( WPCD()->decrypt( wpcd_get_early_option( 'vpn_' . $this->get_provider_slug() . '_apikey' ) ) );
+		$this->set_api_key( SSTK()->decrypt( sstk_get_early_option( 'sstk_' . $this->get_provider_slug() . '_apikey' ) ) );
 
 		/* Add the link to the Vultr dashboard next to the api key field. */
 		$provider = $this->get_provider_slug();
-		add_filter( "wpcd_cloud_provider_settings_api_key_label_desc_{$provider}", array( $this, 'set_link_to_provider_dashboard' ) );
+		add_filter( "sstk_cloud_provider_settings_api_key_label_desc_{$provider}", array( $this, 'set_link_to_provider_dashboard' ) );
 
 	}
 
@@ -169,10 +170,10 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	 * Recognised attributes:
 	 *  [id] / [provider_instance_id] - the Vultr instance id.
 	 *  [region]                      - region id, eg: ewr.
-	 *  [size]                        - WPCD size key; mapped through settings.
+	 *  [size]                        - SSTK size key; mapped through settings.
 	 *  [size_raw]                    - Vultr plan id, used when [size] is not mapped.
 	 *  [name]                        - label applied to the new instance.
-	 *  [initial_os]                  - WPCD OS key, eg: ubuntu2404lts.
+	 *  [initial_os]                  - SSTK OS key, eg: ubuntu2404lts.
 	 *  [post_id]                     - server post id; used to read the pending action.
 	 *  [new_size]                    - Vultr plan id for a resize.
 	 *  [snapshot_id]                 - snapshot to delete.
@@ -205,7 +206,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		$needs_id = array( 'details', 'status', 'reboot', 'off', 'on', 'delete', 'resize', 'snapshot', 'list_snapshots' );
 
 		if ( in_array( $method, $needs_id, true ) && '' === $id ) {
-			return new WP_Error( 'vultr-missing-id', __( 'A provider instance id is required for this operation.', 'wpcd' ) );
+			return new WP_Error( 'vultr-missing-id', __( 'A provider instance id is required for this operation.', 'simple-stack' ) );
 		}
 
 		switch ( $method ) {
@@ -244,7 +245,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 			case 'test_connection':
 				return $this->call_test_connection();
 			default:
-				return new WP_Error( 'not-supported', __( 'This operation is not supported by the Vultr provider.', 'wpcd' ) );
+				return new WP_Error( 'not-supported', __( 'This operation is not supported by the Vultr provider.', 'simple-stack' ) );
 		}
 
 	}
@@ -321,7 +322,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 			$cost      = isset( $plan->monthly_cost ) ? (string) $plan->monthly_cost : '0';
 
 			/* translators: %1$s is the Vultr plan id; the remaining replacements describe the plan. */
-			$return[ $plan->id ] = sprintf( __( '%1$s (%2$d CPUs, %3$d MB RAM, %4$d GB SSD, $%5$s per month, %6$d GB bandwidth)', 'wpcd' ), $plan->id, $vcpus, $ram, $disk, $cost, $bandwidth );
+			$return[ $plan->id ] = sprintf( __( '%1$s (%2$d CPUs, %3$d MB RAM, %4$d GB SSD, $%5$s per month, %6$d GB bandwidth)', 'simple-stack' ), $plan->id, $vcpus, $ram, $disk, $cost, $bandwidth );
 		}
 
 		ksort( $return );
@@ -370,25 +371,25 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 
 		$region = isset( $attributes['region'] ) ? trim( (string) $attributes['region'] ) : '';
 		if ( '' === $region ) {
-			return new WP_Error( 'vultr-missing-region', __( 'A region is required to create a Vultr instance.', 'wpcd' ) );
+			return new WP_Error( 'vultr-missing-region', __( 'A region is required to create a Vultr instance.', 'simple-stack' ) );
 		}
 
 		$provider = $this->get_provider_slug();
 
 		/*
-		 * WPCD stores the real plan id against a size key (small, medium, ...) in
+		 * SSTK stores the real plan id against a size key (small, medium, ...) in
 		 * settings so that products can be mapped to plans without hardcoding ids
 		 * in this class.  fall back to size_raw when nothing has been mapped.
 		 */
 		$plan = '';
 		if ( ! empty( $attributes['size'] ) ) {
-			$plan = (string) wpcd_get_option( 'vpn_' . $provider . '_' . $attributes['size'] );
+			$plan = (string) sstk_get_option( 'sstk_' . $provider . '_' . $attributes['size'] );
 		}
 		if ( empty( $plan ) && ! empty( $attributes['size_raw'] ) ) {
 			$plan = trim( (string) $attributes['size_raw'] );
 		}
 		if ( '' === $plan ) {
-			return new WP_Error( 'vultr-missing-size', __( 'A plan is required to create a Vultr instance.', 'wpcd' ) );
+			return new WP_Error( 'vultr-missing-size', __( 'A plan is required to create a Vultr instance.', 'simple-stack' ) );
 		}
 
 		$os_id = $this->resolve_os_id( $attributes );
@@ -397,13 +398,13 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		}
 
 		/* Startup commands are supplied by the application layer. */
-		$run_cmd = apply_filters( 'wpcd_cloud_provider_run_cmd', '', $attributes );
-		$run_cmd = apply_filters( 'wpcd_cloud_provider_run_cmd_' . $provider, $run_cmd, $attributes );
+		$run_cmd = apply_filters( 'sstk_cloud_provider_run_cmd', '', $attributes );
+		$run_cmd = apply_filters( 'sstk_cloud_provider_run_cmd_' . $provider, $run_cmd, $attributes );
 
 		$name     = isset( $attributes['name'] ) ? (string) $attributes['name'] : '';
 		$hostname = $this->normalise_hostname( $name );
 
-		$backups = (bool) wpcd_get_option( 'vpn_' . $provider . '_enable_provider_backups_on_server_create' );
+		$backups = (bool) sstk_get_option( 'sstk_' . $provider . '_enable_provider_backups_on_server_create' );
 
 		$body = array(
 			'region'   => $region,
@@ -415,7 +416,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		);
 
 		/* The public key lives at Vultr; the create endpoint takes a list of key ids. */
-		$sshkey_id = (int) wpcd_get_option( 'vpn_' . $provider . '_sshkey_id' );
+		$sshkey_id = (int) sstk_get_option( 'sstk_' . $provider . '_sshkey_id' );
 		if ( $sshkey_id > 0 ) {
 			$body['sshkey_id'] = array( $sshkey_id );
 		}
@@ -437,7 +438,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		}
 
 		if ( empty( $payload->instance->id ) ) {
-			return new WP_Error( 'vultr-create-failed', __( 'Vultr accepted the request but did not return an instance id.', 'wpcd' ) );
+			return new WP_Error( 'vultr-create-failed', __( 'Vultr accepted the request but did not return an instance id.', 'simple-stack' ) );
 		}
 
 		$instance = $payload->instance;
@@ -479,7 +480,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	/**
 	 * Report on the operation that an async action started.
 	 *
-	 * This is only ever called by WPCD_SERVER::handle_async_action() on the second
+	 * This is only ever called by SSTK_SERVER::handle_async_action() on the second
 	 * pass.  Vultr returns 204 with no operation id for power changes, so completion
 	 * has to be inferred:
 	 *
@@ -519,7 +520,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 
 		$pending = '';
 		if ( ! empty( $attributes['post_id'] ) ) {
-			$pending = (string) get_post_meta( (int) $attributes['post_id'], 'wpcd_server_action', true );
+			$pending = (string) get_post_meta( (int) $attributes['post_id'], 'sstk_server_action', true );
 		}
 
 		switch ( $pending ) {
@@ -569,7 +570,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		);
 
 		if ( ! isset( $endpoints[ $method ] ) ) {
-			return new WP_Error( 'not-supported', __( 'This power operation is not supported by the Vultr provider.', 'wpcd' ) );
+			return new WP_Error( 'not-supported', __( 'This power operation is not supported by the Vultr provider.', 'simple-stack' ) );
 		}
 
 		$payload = $this->execute( 'instances/' . rawurlencode( $id ) . '/' . $endpoints[ $method ], 'POST' );
@@ -622,7 +623,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 
 		$new_size = isset( $attributes['new_size'] ) ? trim( (string) $attributes['new_size'] ) : '';
 		if ( '' === $new_size ) {
-			return new WP_Error( 'vultr-missing-size', __( 'A new plan is required to resize a Vultr instance.', 'wpcd' ) );
+			return new WP_Error( 'vultr-missing-size', __( 'A new plan is required to resize a Vultr instance.', 'simple-stack' ) );
 		}
 
 		$payload = $this->execute( 'instances/' . rawurlencode( $id ), 'PATCH', array( 'plan' => $new_size ) );
@@ -640,8 +641,8 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	/**
 	 * Request a snapshot of an instance.
 	 *
-	 * Unlike DigitalOcean, Vultr returns the final snapshot id immediately, so the
-	 * caller can treat this id as authoritative rather than looking it up later.
+	 * Vultr returns the final snapshot id immediately, so the caller can treat this
+	 * id as authoritative rather than looking it up later.
 	 *
 	 * @param string $id Vultr instance id.
 	 *
@@ -650,7 +651,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	private function call_snapshot( $id ) {
 
 		/* translators: %s is the instance id being snapshotted. */
-		$description = sprintf( __( 'SimpleStack snapshot of instance %s', 'wpcd' ), $id );
+		$description = sprintf( __( 'Simple Stack snapshot of instance %s', 'simple-stack' ), $id );
 
 		$payload = $this->execute( 'instances/' . rawurlencode( $id ) . '/snapshot', 'POST', array( 'description' => $description ) );
 
@@ -683,7 +684,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 
 		$snapshot_id = isset( $attributes['snapshot_id'] ) ? trim( (string) $attributes['snapshot_id'] ) : '';
 		if ( '' === $snapshot_id ) {
-			return new WP_Error( 'vultr-missing-snapshot-id', __( 'A snapshot id is required to delete a snapshot.', 'wpcd' ) );
+			return new WP_Error( 'vultr-missing-snapshot-id', __( 'A snapshot id is required to delete a snapshot.', 'simple-stack' ) );
 		}
 
 		$payload = $this->execute( 'snapshots/' . rawurlencode( $snapshot_id ), 'DELETE' );
@@ -747,7 +748,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		}
 
 		if ( '' === $snapshot_id ) {
-			return new WP_Error( 'vultr-missing-snapshot-id', __( 'A snapshot id is required to read a snapshot status.', 'wpcd' ) );
+			return new WP_Error( 'vultr-missing-snapshot-id', __( 'A snapshot id is required to read a snapshot status.', 'simple-stack' ) );
 		}
 
 		$payload = $this->execute( 'snapshots/' . rawurlencode( $snapshot_id ), 'GET' );
@@ -777,7 +778,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		$key_name   = isset( $attributes['public_key_name'] ) ? trim( (string) $attributes['public_key_name'] ) : '';
 
 		if ( '' === $public_key ) {
-			return new WP_Error( 'vultr-missing-public-key', __( 'A public key is required to register an ssh key.', 'wpcd' ) );
+			return new WP_Error( 'vultr-missing-public-key', __( 'A public key is required to register an ssh key.', 'simple-stack' ) );
 		}
 
 		if ( '' === $key_name ) {
@@ -798,7 +799,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		}
 
 		if ( empty( $payload->ssh_key->id ) ) {
-			return new WP_Error( 'vultr-ssh-create-failed', __( 'Vultr accepted the key but did not return an id for it.', 'wpcd' ) );
+			return new WP_Error( 'vultr-ssh-create-failed', __( 'Vultr accepted the key but did not return an id for it.', 'simple-stack' ) );
 		}
 
 		return array( 'ssh_key_id' => $payload->ssh_key->id );
@@ -875,7 +876,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		}
 
 		if ( empty( $payload->instance ) ) {
-			return new WP_Error( 'vultr-no-instance', __( 'Vultr did not return an instance record.', 'wpcd' ) );
+			return new WP_Error( 'vultr-no-instance', __( 'Vultr did not return an instance record.', 'simple-stack' ) );
 		}
 
 		return $payload->instance;
@@ -883,7 +884,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	}
 
 	/**
-	 * Resolve the WPCD OS key into a Vultr os_id.
+	 * Resolve the SSTK OS key into a Vultr os_id.
 	 *
 	 * @param array $attributes Attributes; expects [initial_os].
 	 *
@@ -930,12 +931,12 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		}
 
 		/* translators: %s is the OS label we tried to find at the provider. */
-		return new WP_Error( 'vultr-no-os', sprintf( __( 'Vultr does not offer an image named "%s".', 'wpcd' ), $label ) );
+		return new WP_Error( 'vultr-no-os', sprintf( __( 'Vultr does not offer an image named "%s".', 'simple-stack' ), $label ) );
 
 	}
 
 	/**
-	 * Map a WPCD OS key to the label Vultr uses for the same image.
+	 * Map a SSTK OS key to the label Vultr uses for the same image.
 	 *
 	 * @param array $attributes Attributes; expects [initial_os].
 	 *
@@ -944,9 +945,6 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	private function get_os_label( $attributes ) {
 
 		$labels = array(
-			'ubuntu1804lts' => 'Ubuntu 18.04 LTS x64',
-			'ubuntu2004lts' => 'Ubuntu 20.04 LTS x64',
-			'ubuntu2204lts' => 'Ubuntu 22.04 LTS x64',
 			'ubuntu2404lts' => 'Ubuntu 24.04 LTS x64',
 			'ubuntu2604lts' => 'Ubuntu 26.04 LTS x64',
 		);
@@ -971,7 +969,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		$ip = isset( $instance->main_ip ) ? trim( (string) $instance->main_ip ) : '';
 
 		if ( '' === $ip || '0.0.0.0' === $ip ) {
-			/* Mirrors the DigitalOcean provider so callers only have one sentinel to know. */
+			/* Use the shared missing-address sentinel. */
 			return 'error-no-ip-found';
 		}
 
@@ -1063,7 +1061,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 	 * @return string
 	 */
 	private function power_action_transient( $id ) {
-		return 'wpcd_vultr_power_started_' . md5( (string) $id );
+		return 'sstk_vultr_power_started_' . md5( (string) $id );
 	}
 
 	/**
@@ -1198,7 +1196,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		 * headers both carry either the bearer token or the cloud-init payload and
 		 * neither belongs in a log file or in a support bundle.
 		 */
-		do_action( 'wpcd_log_error', "Vultr API $action $endpoint failed with status $code", 'error', __FILE__, __LINE__ );
+		do_action( 'sstk_log_error', "Vultr API $action $endpoint failed with status $code", 'error', __FILE__, __LINE__ );
 
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error( 'vultr-transport-error', $response->get_error_message() );
@@ -1207,7 +1205,7 @@ class CLOUD_PROVIDER_API_VultrV2 extends CLOUD_PROVIDER_API {
 		$error_code    = 'vultr-error';
 		$error_message = sprintf(
 			/* translators: %d is the HTTP status code returned by Vultr. */
-			__( 'The Vultr API request failed with HTTP status %d.', 'wpcd' ),
+			__( 'The Vultr API request failed with HTTP status %d.', 'simple-stack' ),
 			$code
 		);
 

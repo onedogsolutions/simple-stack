@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: core_engine
-title: WPCD Core Engine (SimpleStack Fork)
+title: SSTK Core Engine (Simple Stack Fork)
 scope:
     - includes/core/
 source_files: []

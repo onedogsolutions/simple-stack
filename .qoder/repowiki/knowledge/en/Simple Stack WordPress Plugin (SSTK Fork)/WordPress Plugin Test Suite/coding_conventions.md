@@ -1,4 +1,4 @@
-- REST controller tests extend `WP_UnitTestCase`, resolve their target controller in `setUp()` via `WPCD_WORDPRESS_APP()->get_rest_controller(...)`, and dispatch requests through `rest_get_server()->dispatch(...)` rather than making HTTP calls.
+- REST controller tests extend `WP_UnitTestCase`, resolve their target controller in `setUp()` via `SSTK_WORDPRESS_APP()->get_rest_controller(...)`, and dispatch requests through `rest_get_server()->dispatch(...)` rather than making HTTP calls.
 - Each REST controller has a dedicated test class under `tests/phpunit/rest-api/` named `ControllerXxxTest.php`, mirroring the controller's resource name.
-- External/cloud dependencies are replaced by loading a test double from `tests/data/` and registering it into `WPCD()->classes[...]` inside a helper method (e.g. `create_test_provider`).
-- Test data fixtures are created using the plugin's own helpers such as `WPCD_SERVER()->create_server_post(...)` combined with `update_post_meta(...)` instead of raw database writes.
+- External/cloud dependencies are replaced by loading a test double from `tests/data/` and registering it into `SSTK()->classes[...]` inside a helper method (e.g. `create_test_provider`).
+- Test data fixtures are created using the plugin's own helpers such as `SSTK_SERVER()->create_server_post(...)` combined with `update_post_meta(...)` instead of raw database writes.

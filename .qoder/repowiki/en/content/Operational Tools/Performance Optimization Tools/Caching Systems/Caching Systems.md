@@ -2,18 +2,20 @@
 
 <cite>
 **Referenced Files in This Document**
-- [SIMPLESTACK.md](file://docs/SIMPLESTACK.md)
+- [docs/SIMPLESTACK.md](file://docs/SIMPLESTACK.md)
 - [class-wordpress-app-settings.php](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php)
-- [install_redis.txt](file://includes/core/apps/wordpress-app/scripts/v1/install_redis.txt)
-- [install_memcached.txt](file://includes/core/apps/wordpress-app/scripts/v1/install_memcached.txt)
-- [manage_redis.txt](file://includes/core/apps/wordpress-app/scripts/v1/manage_redis.txt)
-- [manage_memcached.txt](file://includes/core/apps/wordpress-app/scripts/v1/manage_memcached.txt)
-- [install_redis_v2.txt](file://includes/core/apps/wordpress-app/scripts/v2/install_redis.txt)
-- [install_memcached_v2.txt](file://includes/core/apps/wordpress-app/scripts/v2/install_memcached.txt)
-- [manage_redis_v2.txt](file://includes/core/apps/wordpress-app/scripts/v2/manage_redis.txt)
-- [manage_memcached_v2.txt](file://includes/core/apps/wordpress-app/scripts/v2/manage_memcached.txt)
-- [02-install_wordpress_site.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt)
-- [16-memcached.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt)
+- [class-wordpress-app.php](file://includes/core/apps/wordpress-app/class-wordpress-app.php)
+- [cache.php](file://includes/core/apps/wordpress-app/tabs/cache.php)
+- [02-install_wordpress_site.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt)
+- [12-redis.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/12-redis.txt)
+- [16-memcached.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/16-memcached.txt)
+- [18-wp_cache.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/18-wp_cache.txt)
+- [55-ols_options.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt)
+- [install_redis.txt](file://includes/core/apps/wordpress-app/scripts/v2/install_redis.txt)
+- [manage_redis.txt](file://includes/core/apps/wordpress-app/scripts/v2/manage_redis.txt)
+- [install_memcached.txt](file://includes/core/apps/wordpress-app/scripts/v2/install_memcached.txt)
+- [manage_memcached.txt](file://includes/core/apps/wordpress-app/scripts/v2/manage_memcached.txt)
+- [manage_pagecache.txt](file://includes/core/apps/wordpress-app/scripts/v2/manage_pagecache.txt)
 </cite>
 
 ## Table of Contents
@@ -29,360 +31,327 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack’s caching systems for WordPress sites, focusing on Redis and Memcached installation, configuration, and management through the provided provisioning scripts. It covers:
-- How object caching is enabled during site installation
-- Differences between Nginx and OpenLiteSpeed (OLS) paths
-- Script-based installation and management workflows
-- Practical guidance for cache hierarchy, tuning, monitoring, invalidation, persistence, replication, and disaster recovery
 
-The repository implements a WordPress hosting control plane where site provisioning scripts install and configure caching layers automatically when available.
+Simple Stack installs LiteSpeed Cache on new WordPress sites and can use either Redis or Memcached as its object-cache backend. The web server is OpenLiteSpeed, and every cache installation or management command uses the fixed `scripts/v2/` provisioning tree.
+
+The implementation separates four operations:
+
+- LiteSpeed Cache installation, removal, and page-cache purging.
+- Redis installation and per-site object-cache configuration.
+- Memcached installation and per-site object-cache configuration.
+- LiteSpeed Cache browser-cache settings for a site.
+
+Redis and Memcached are alternatives for a site's object cache. Both are addressed on the server loopback interface, and both are configured through LiteSpeed Cache rather than a separate web-server-specific plugin path.
 
 **Section sources**
-- [SIMPLESTACK.md:15-32](file://docs/SIMPLESTACK.md#L15-L32)
+- [02-install_wordpress_site.txt:148-180](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L148-L180)
+- [12-redis.txt:79-169](file://includes/core/apps/wordpress-app/scripts/v2/raw/12-redis.txt#L79-L169)
+- [16-memcached.txt:65-171](file://includes/core/apps/wordpress-app/scripts/v2/raw/16-memcached.txt#L65-L171)
 
 ## Project Structure
-SimpleStack provisions WordPress sites using script templates under `includes/core/apps/wordpress-app/scripts/`. Two versions coexist:
-- v1: upstream-compatible scripts
-- v2: SimpleStack-modified scripts
 
-Caching-related files include:
-- Installation wrappers that download and execute action scripts
-- Raw scripts that perform actual installation and configuration
-- WordPress app settings that expose UI toggles for page cache and Redis object cache
+| Layer | Responsibility | Key Files |
+|---|---|---|
+| WordPress App settings | Defines post-install options to disable page cache or Redis object cache for new sites | `class-wordpress-app-settings.php` |
+| Site cache tab | Checks site/team permissions and dispatches page-cache, Redis, and Memcached actions | `tabs/cache.php` |
+| New-site installer | Enables `WP_CACHE`, installs LiteSpeed Cache, and enables Redis when detected | `raw/02-install_wordpress_site.txt` |
+| Backend installers | Install/remove Redis or Memcached and install matching LSPHP extensions | `raw/12-redis.txt`, `raw/16-memcached.txt` |
+| Page-cache manager | Installs, removes, or purges LiteSpeed Cache | `raw/18-wp_cache.txt` |
+| OLS options | Controls LiteSpeed Cache browser caching and related OpenLiteSpeed settings | `raw/55-ols_options.txt` |
+| Wrappers | Fetch common/action scripts, substitute parameters, and execute the selected operation | `install_*.txt`, `manage_*.txt` |
 
 ```mermaid
 graph TB
-subgraph "WordPress App"
-Settings["WordPress App Settings<br/>UI toggles"]
-end
-subgraph "Provisioning Scripts"
-V1InstallRedis["v1/install_redis.txt"]
-V1InstallMemcached["v1/install_memcached.txt"]
-V1ManageRedis["v1/manage_redis.txt"]
-V1ManageMemcached["v1/manage_memcached.txt"]
-V2InstallRedis["v2/install_redis.txt"]
-V2InstallMemcached["v2/install_memcached.txt"]
-V2ManageRedis["v2/manage_redis.txt"]
-V2ManageMemcached["v2/manage_memcached.txt"]
-InstallWP["raw/02-install_wordpress_site.txt"]
-MemcachedRaw["raw/16-memcached.txt"]
-end
-Settings --> InstallWP
-InstallWP --> V1InstallRedis
-InstallWP --> V1InstallMemcached
-InstallWP --> V2InstallRedis
-InstallWP --> V2InstallMemcached
-V1InstallRedis --> |executes| ActionRedis["Action script (external)"]
-V1InstallMemcached --> |executes| ActionMemcached["Action script (external)"]
-V2InstallRedis --> |executes| ActionRedis
-V2InstallMemcached --> |executes| ActionMemcached
-V1ManageRedis --> |executes| ActionRedis
-V1ManageMemcached --> |executes| ActionMemcached
-V2ManageRedis --> |executes| ActionRedis
-V2ManageMemcached --> |executes| ActionMemcached
-MemcachedRaw --> ActionMemcached
+    Settings["WordPress App Settings"] --> NewSite["New-Site Completion Handlers"]
+    NewSite --> Pending["Pending Cache Tasks"]
+    CacheTab["Site Cache Tab<br/>Permissions and actions"] --> Manage["Management Wrappers"]
+    Services["Server Services Tab"] --> Install["Installation Wrappers"]
+    Install --> RedisRaw["raw/12-redis.txt"]
+    Install --> MemcachedRaw["raw/16-memcached.txt"]
+    Manage --> RedisRaw
+    Manage --> MemcachedRaw
+    Manage --> PageRaw["raw/18-wp_cache.txt"]
+    RedisRaw --> LSCache["LiteSpeed Cache"]
+    MemcachedRaw --> LSCache
+    PageRaw --> LSCache
+    LSCache --> Redis["Redis<br/>127.0.0.1:6379"]
+    LSCache --> Memcached["Memcached<br/>127.0.0.1:11211"]
+    OLS["raw/55-ols_options.txt"] --> Browser["LiteSpeed Cache<br/>Browser Settings"]
 ```
 
 **Diagram sources**
-- [class-wordpress-app-settings.php:1486-1496](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L1486-L1496)
-- [install_redis.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_redis.txt#L1-L11)
-- [install_memcached.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_memcached.txt#L1-L11)
-- [manage_redis.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_redis.txt#L1-L9)
-- [manage_memcached.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_memcached.txt#L1-L9)
-- [install_redis_v2.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_redis.txt#L1-L11)
-- [install_memcached_v2.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_memcached.txt#L1-L11)
-- [manage_redis_v2.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_redis.txt#L1-L9)
-- [manage_memcached_v2.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_memcached.txt#L1-L9)
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
-
-**Section sources**
-- [SIMPLESTACK.md:152-177](file://docs/SIMPLESTACK.md#L152-L177)
+- [class-wordpress-app.php:3024-3048](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L3024-L3048)
+- [cache.php:112-168](file://includes/core/apps/wordpress-app/tabs/cache.php#L112-L168)
+- [install_redis.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_redis.txt#L1-L11)
+- [manage_memcached.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_memcached.txt#L1-L9)
 
 ## Core Components
-- WordPress App Settings: Exposes UI options to disable automatic page cache and Redis object cache for new sites.
-- Provisioning Scripts:
-  - Installation wrappers (v1 and v2) fetch and run action scripts with placeholders like `##ACTION##`, `##SCRIPT_URL##`, and `##CALLBACK_URL##`.
-  - Management wrappers accept `action` and `domain` parameters to manage existing caches.
-- Raw Site Installation Script: Installs Redis object cache plugins and configures OLS or Nginx accordingly.
-- Raw Memcached Script: Installs Memcached integration and sets up object-cache.php or Litespeed Cache configuration.
 
-Key responsibilities:
-- Detect web server type (Nginx vs OLS)
-- Install and activate appropriate WordPress plugins
-- Configure object cache host/port/kind
-- Ensure WP_CACHE is enabled where required
-- Handle conflicts when an object cache is already active
+### New-Site Defaults
+
+The site installation script:
+
+1. Sets `WP_CACHE` to `true`.
+2. Installs and activates LiteSpeed Cache.
+3. Runs `wp litespeed-online init`.
+4. Checks for `redis-cli`.
+5. If Redis is present, configures LiteSpeed Cache object caching on `127.0.0.1:6379` with `object-kind 1` and flushes the cache.
+6. If Redis is absent, leaves object caching disabled and reports that Redis was not detected.
 
 **Section sources**
-- [class-wordpress-app-settings.php:1486-1496](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L1486-L1496)
-- [install_redis.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_redis.txt#L1-L11)
-- [install_memcached.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_memcached.txt#L1-L11)
-- [manage_redis.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_redis.txt#L1-L9)
-- [manage_memcached.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_memcached.txt#L1-L9)
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
+- [02-install_wordpress_site.txt:148-180](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L148-L180)
+
+### Site Cache Tab
+
+`SSTK_WORDPRESS_TABS_CACHE` exposes page-cache, Redis, and Memcached controls. It verifies that the current user can view the site and passes the cache tab's team/admin-lock checks before dispatching actions.
+
+Supported actions are:
+
+- `site-toggle-redis`
+- `site-toggle-redis-local-value`
+- `site-toggle-memcached`
+- `site-toggle-memcached-local-value`
+- `site-toggle-pagecache`
+- `site-clear-pagecache`
+
+The `local-value` actions only change Simple Stack's stored status metadata. They do not change the remote server or WordPress configuration.
+
+**Section sources**
+- [cache.php:94-168](file://includes/core/apps/wordpress-app/tabs/cache.php#L94-L168)
+- [cache.php:386-410](file://includes/core/apps/wordpress-app/tabs/cache.php#L386-L410)
+- [cache.php:488-512](file://includes/core/apps/wordpress-app/tabs/cache.php#L488-L512)
+
+### Redis and Memcached Services
+
+Both raw service scripts support install, per-site enable, per-site disable, cache clear, restart, and removal.
+
+The install actions also attempt to install the matching extension for every LSPHP version in the server's configured PHP version array. A missing extension is reported as a warning rather than aborting the service installation.
+
+| Backend | Local Endpoint | LiteSpeed Cache `object-kind` |
+|---|---|---|
+| Redis | `127.0.0.1:6379` | `1` |
+| Memcached | `127.0.0.1:11211` | `0` |
+
+**Section sources**
+- [12-redis.txt:37-76](file://includes/core/apps/wordpress-app/scripts/v2/raw/12-redis.txt#L37-L76)
+- [16-memcached.txt:37-62](file://includes/core/apps/wordpress-app/scripts/v2/raw/16-memcached.txt#L37-L62)
 
 ## Architecture Overview
-The caching architecture integrates three layers:
-- Application layer: WordPress with object caching plugin(s)
-- Cache backends: Redis (port 6379) and Memcached (port 11211)
-- Web server: Nginx or OpenLiteSpeed (OLS), which may also provide page caching
 
 ```mermaid
-graph TB
-Client["Client Request"] --> WebServer["Web Server<br/>Nginx or OLS"]
-WebServer --> WP["WordPress Application"]
-WP --> ObjectCache["Object Cache Layer<br/>Plugin + Backend"]
-ObjectCache --> Redis["Redis<br/>Port 6379"]
-ObjectCache --> Memcached["Memcached<br/>Port 11211"]
-WP --> PageCache["Page Cache<br/>(Optional, OLS/Nginx)"]
+sequenceDiagram
+    participant Operator as "Site Operator"
+    participant Tab as "Cache Tab"
+    participant Wrapper as "Management Wrapper"
+    participant Raw as "Redis/Memcached Raw Script"
+    participant WP as "WP-CLI"
+    participant LSCache as "LiteSpeed Cache"
+    participant Backend as "Local Object Cache"
+
+    Operator->>Tab : Enable or disable object cache
+    Tab->>Tab : Check site and cache-tab permissions
+    Tab->>Wrapper : Submit action and domain
+    Wrapper->>Raw : Fetch and execute script as root
+    Raw->>Raw : Confirm backend command exists
+    Raw->>Raw : Reject an existing object-cache.php when enabling
+    Raw->>WP : Install/activate LiteSpeed Cache and set WP_CACHE
+    WP->>LSCache : Set object=true, host, port, and kind
+    LSCache->>Backend : Connect over loopback
+    Raw->>WP : Flush cache
+    Raw-->>Tab : Command result
+    Tab-->>Operator : Update status metadata and request refresh
 ```
 
 **Diagram sources**
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
+- [cache.php:319-477](file://includes/core/apps/wordpress-app/tabs/cache.php#L319-L477)
+- [manage_redis.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_redis.txt#L1-L9)
+- [12-redis.txt:79-153](file://includes/core/apps/wordpress-app/scripts/v2/raw/12-redis.txt#L79-L153)
+- [16-memcached.txt:65-142](file://includes/core/apps/wordpress-app/scripts/v2/raw/16-memcached.txt#L65-L142)
 
 ## Detailed Component Analysis
 
 ### Redis Object Caching
-Behavior during site installation:
-- If Redis CLI is present, the script installs and activates the Redis object cache plugin.
-- For Nginx, it symlinks the plugin’s object-cache.php into wp-content.
-- For OLS, it ensures Litespeed Cache is installed and active, then sets object cache options:
-  - Host: 127.0.0.1
-  - Port: 6379
-  - Kind: Redis
-- After configuration, it flushes the cache.
 
-```mermaid
-sequenceDiagram
-participant Installer as "Site Installer"
-participant Shell as "Bash Environment"
-participant WPCLI as "WP-CLI"
-participant Plugin as "Redis Object Cache Plugin"
-participant OLS as "OpenLiteSpeed Cache"
-participant Redis as "Redis Backend"
-Installer->>Shell : Check redis-cli availability
-alt Redis detected
-Installer->>WPCLI : Install and activate redis-cache
-alt Nginx
-Installer->>Shell : Symlink object-cache.php
-else OLS
-Installer->>WPCLI : Install/activate litespeed-cache
-Installer->>OLS : Set object=true, port=6379, host=127.0.0.1, kind=Redis
-Installer->>WPCLI : Flush cache
-end
-OLS-->>Redis : Connect via TCP
-else Redis not detected
-Installer->>Installer : Skip object cache
-end
-```
+The Redis management script requires `redis-cli` before enabling or disabling a site. When enabling Redis, it:
 
-**Diagram sources**
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
+- Rejects the operation if `wp-content/object-cache.php` already exists.
+- Installs and activates LiteSpeed Cache if needed.
+- Sets `WP_CACHE` to `true`.
+- Sets LiteSpeed Cache object caching to `127.0.0.1:6379` with `object-kind 1`.
+- Flushes the cache.
+
+Disabling Redis sets LiteSpeed Cache's `object` option to `false` and flushes the cache. It does not remove the LiteSpeed Cache plugin.
+
+The clear action runs `redis-cli FLUSHALL`. This clears every Redis database on the server, not only the selected WordPress site.
 
 **Section sources**
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
+- [12-redis.txt:79-169](file://includes/core/apps/wordpress-app/scripts/v2/raw/12-redis.txt#L79-L169)
 
 ### Memcached Object Caching
-Behavior during site installation:
-- The script checks whether an object cache is already enabled; if so, it exits to avoid conflicts.
-- It deletes all transients to reduce options table size (important due to Memcached object size limits).
-- For Nginx, it downloads Automattic’s object-cache.php into wp-content.
-- For OLS, it ensures Litespeed Cache is installed and active, sets object cache options:
-  - Host: 127.0.0.1
-  - Port: 11211
-  - Kind: Memcached
-- It enables WP_CACHE and flushes the cache.
+
+The Memcached enable action requires the `memcached` command. Before enabling it for a site, the script:
+
+- Rejects the operation if `wp-content/object-cache.php` already exists.
+- Deletes all WordPress transients to reduce the options-table object size.
+- Installs and activates LiteSpeed Cache.
+- Sets `WP_CACHE` to `true`.
+- Sets object caching to `127.0.0.1:11211` with `object-kind 0`.
+- Flushes the cache.
+
+Disabling Memcached sets LiteSpeed Cache's `object` option to `false` and flushes the cache. The clear action sends `flush_all` to Memcached over loopback, which clears the Memcached server rather than only the selected site.
+
+**Section sources**
+- [16-memcached.txt:65-171](file://includes/core/apps/wordpress-app/scripts/v2/raw/16-memcached.txt#L65-L171)
+
+### LiteSpeed Cache Page Caching
+
+The page-cache manager installs or activates LiteSpeed Cache and enables `WP_CACHE` when page caching is turned on. Turning page caching off deactivates and uninstalls LiteSpeed Cache, sets `WP_CACHE` to `false`, and restarts OpenLiteSpeed.
+
+Because Redis and Memcached object caching both use LiteSpeed Cache, removing that plugin also removes the active object-cache integration for the site. Operators should not treat the page-cache and object-cache controls as independent plugin lifecycles.
+
+The clear action runs both `wp litespeed-purge all` and `wp cache flush`, then restarts OpenLiteSpeed.
 
 ```mermaid
 flowchart TD
-Start(["Start Memcached Setup"]) --> CheckExisting["Check if object cache already enabled"]
-CheckExisting --> |Yes| ExitConflict["Exit with conflict message"]
-CheckExisting --> |No| DeleteTransients["Delete all transients"]
-DeleteTransients --> WebserverType{"Web server type?"}
-WebserverType --> |Nginx| DownloadOC["Download object-cache.php"]
-WebserverType --> |OLS| EnsureLSCache["Ensure Litespeed Cache active"]
-EnsureLSCache --> SetOptions["Set object=true, port=11211, host=127.0.0.1, kind=Memcached"]
-DownloadOC --> EnableWPCACHE["Enable WP_CACHE"]
-SetOptions --> EnableWPCACHE
-EnableWPCACHE --> FlushCache["Flush cache"]
-FlushCache --> End(["Complete"])
-ExitConflict --> End
+    Start(["Page Cache Action"]) --> Mode{"Requested Mode"}
+    Mode --> |Enable| Install["Install/Activate LiteSpeed Cache"]
+    Install --> EnableConstant["Set WP_CACHE true"]
+    Mode --> |Disable| Remove["Deactivate and Uninstall LiteSpeed Cache"]
+    Remove --> DisableConstant["Set WP_CACHE false"]
+    Mode --> |Clear| Purge["litespeed-purge all and cache flush"]
+    EnableConstant --> Restart["Restart OpenLiteSpeed"]
+    DisableConstant --> Restart
+    Purge --> Restart
 ```
 
-**Diagram sources**
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
+**Section sources**
+- [18-wp_cache.txt:44-100](file://includes/core/apps/wordpress-app/scripts/v2/raw/18-wp_cache.txt#L44-L100)
+- [cache.php:180-307](file://includes/core/apps/wordpress-app/tabs/cache.php#L180-L307)
+
+### Browser Caching
+
+Browser caching is a separate LiteSpeed Cache option managed through the Tweaks workflow. The OpenLiteSpeed options script sets:
+
+- `cache-browser 1` to enable browser caching.
+- `cache-browser 0` to disable it.
+
+This is distinct from Redis/Memcached object caching and from the page-cache purge operation.
 
 **Section sources**
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
+- [55-ols_options.txt:298-380](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt#L298-L380)
 
-### WordPress App Settings Integration
-The WordPress application exposes UI controls that affect caching behavior:
-- Disable automatic page cache for new sites
-- Disable automatic Redis object cache for new sites
+### New-Site Cache Settings
 
-These settings influence provisioning defaults but do not override runtime backend configuration performed by the raw scripts.
+The WordPress App settings screen defines two options:
 
-```mermaid
-classDiagram
-class WordPressAppSettings {
-+string cache_tab_label
-+bool disable_page_cache
-+bool disable_redis_cache
-}
-class ProvisioningScripts {
-+install_redis()
-+install_memcached()
-+manage_redis()
-+manage_memcached()
-}
-WordPressAppSettings --> ProvisioningScripts : "affects defaults"
-```
+- `wordpress_app_sites_disable_page_cache`
+- `wordpress_app_sites_disable_redis_cache`
 
-**Diagram sources**
-- [class-wordpress-app-settings.php:1486-1496](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L1486-L1496)
+When enabled, the corresponding new-site completion handler queues a pending task after installation. The cache tab's pending-task callbacks then run the existing page-cache or Redis action and record the task result. These options affect newly installed sites; they do not retroactively change existing sites.
 
 **Section sources**
-- [class-wordpress-app-settings.php:1486-1496](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L1486-L1496)
+- [class-wordpress-app-settings.php:1449-1460](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L1449-L1460)
+- [class-wordpress-app.php:3024-3048](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L3024-L3048)
+- [cache.php:967-1027](file://includes/core/apps/wordpress-app/tabs/cache.php#L967-L1027)
 
-### Script Wrappers and Execution Model
-Both v1 and v2 use wrapper scripts to:
-- Download common functions and action scripts from remote URLs
-- Substitute placeholders (`##ACTION##`, `##SCRIPT_URL##`, `##DOMAIN##`, etc.)
-- Execute the action script with elevated privileges and log output
-- Notify a callback URL upon completion
+### Wrapper Execution and Trust Boundary
 
-```mermaid
-sequenceDiagram
-participant Admin as "Admin UI / REST"
-participant Wrapper as "Wrapper Script"
-participant Remote as "Remote Script Host"
-participant Action as "Action Script"
-participant Logs as "Log Files"
-Admin->>Wrapper : Trigger install/manage with placeholders
-Wrapper->>Remote : Download common functions and action script
-Wrapper->>Wrapper : Replace placeholders and set env vars
-Wrapper->>Action : Execute with sudo and logging
-Action->>Logs : Write intermed logs
-Wrapper->>Remote : Call callback URL
-```
+Installation wrappers download the common-functions file and selected action script, substitute placeholders, execute the action script as root, and move completed install logs into place. Installation wrappers also invoke the configured completion callback. Management wrappers execute the selected action synchronously with the supplied action and domain.
 
-**Diagram sources**
-- [install_redis.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_redis.txt#L1-L11)
-- [install_memcached.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_memcached.txt#L1-L11)
-- [manage_redis.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_redis.txt#L1-L9)
-- [manage_memcached.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_memcached.txt#L1-L9)
-- [install_redis_v2.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_redis.txt#L1-L11)
-- [install_memcached_v2.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_memcached.txt#L1-L11)
-- [manage_redis_v2.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_redis.txt#L1-L9)
-- [manage_memcached_v2.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_memcached.txt#L1-L9)
+The wrappers currently use `wget --no-check-certificate`. Script URLs, transport, and downloaded content therefore form a privileged trust boundary and must be controlled and verified by the operator.
 
 **Section sources**
-- [install_redis.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_redis.txt#L1-L11)
-- [install_memcached.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v1/install_memcached.txt#L1-L11)
-- [manage_redis.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_redis.txt#L1-L9)
-- [manage_memcached.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v1/manage_memcached.txt#L1-L9)
-- [install_redis_v2.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_redis.txt#L1-L11)
-- [install_memcached_v2.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_memcached.txt#L1-L11)
-- [manage_redis_v2.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_redis.txt#L1-L9)
-- [manage_memcached_v2.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_memcached.txt#L1-L9)
+- [install_redis.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_redis.txt#L1-L11)
+- [install_memcached.txt:1-11](file://includes/core/apps/wordpress-app/scripts/v2/install_memcached.txt#L1-L11)
+- [manage_redis.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_redis.txt#L1-L9)
+- [manage_memcached.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_memcached.txt#L1-L9)
 
 ## Dependency Analysis
-- Web server detection determines the path taken:
-  - Nginx: symlink object-cache.php or download Automattic’s object-cache.php
-  - OLS: ensure Litespeed Cache plugin is active and configure object cache options
-- Redis presence is checked before enabling Redis object caching
-- Memcached setup requires no pre-existing object cache and reduces transient sizes to respect Memcached object size limits
+
+- New-site Redis configuration requires `redis-cli` to be present before site installation.
+- Per-site Redis and Memcached enable actions require the corresponding backend command on the server.
+- Both backends require LiteSpeed Cache and `WP_CACHE` for the configured integration.
+- The existing `object-cache.php` check prevents enabling either backend through these scripts when that drop-in is present. It does not detect every possible LiteSpeed Cache object-cache configuration.
+- Memcached setup deletes all transients before changing the backend.
+- Page-cache removal uninstalls the same plugin used by both object-cache backends.
+- Browser caching is configured independently through LiteSpeed Cache options.
 
 ```mermaid
 graph LR
-WebServer["Web Server Type"] --> |Nginx| NginxPath["Symlink or download object-cache.php"]
-WebServer --> |OLS| OLSPath["Activate Litespeed Cache and set options"]
-RedisDetected["Redis CLI Detected?"] --> |Yes| EnableRedis["Enable Redis object cache"]
-RedisDetected --> |No| SkipRedis["Skip Redis object cache"]
-ExistingOC["Existing Object Cache?"] --> |Yes| BlockMemcached["Block Memcached setup"]
-ExistingOC --> |No| ProceedMemcached["Proceed with Memcached setup"]
+    NewSite["New Site"] --> LSCache["LiteSpeed Cache"]
+    NewSite --> RedisCheck{"redis-cli present?"}
+    RedisCheck --> |Yes| Redis["Redis Object Cache"]
+    RedisCheck --> |No| NoObject["Object Cache Left Disabled"]
+    Redis --> DropinCheck{"object-cache.php present?"}
+    Memcached["Memcached Enable"] --> DropinCheck
+    DropinCheck --> |Yes| Reject["Reject Enable Action"]
+    DropinCheck --> |No| Configure["Configure LiteSpeed Cache"]
+    PageDisable["Disable Page Cache"] --> RemovePlugin["Uninstall LiteSpeed Cache"]
+    RemovePlugin --> ObjectImpact["Object Cache Integration Removed"]
 ```
 
-**Diagram sources**
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
-
-**Section sources**
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
-
 ## Performance Considerations
-- Object cache selection:
-  - Redis supports larger objects and richer data structures; suitable for complex query caching and session storage.
-  - Memcached has a strict per-object size limit; the script explicitly deletes transients to keep the options table small.
-- Web server page caching:
-  - OLS can be configured to enable page caching alongside object caching.
-- Memory allocation and tuning:
-  - Tune Redis memory limits and eviction policies according to workload.
-  - Tune Memcached max memory and item size limits to accommodate WordPress object sizes.
-- Cache warming:
-  - Pre-warm popular pages and critical queries after deployment to improve first-hit performance.
-- Invalidation policies:
-  - Use plugin-provided cache flush operations after content updates.
-  - Implement tag-based invalidation where supported by your caching stack.
 
-[No sources needed since this section provides general guidance]
+- Redis is the only object backend enabled automatically during site installation, and only when `redis-cli` is already available.
+- Memcached's item-size limit makes large option-table objects a concern. The script's transient deletion reduces that risk but does not replace capacity planning.
+- Flushing Redis or Memcached affects all sites sharing that backend. Schedule server-wide flushes accordingly.
+- Page-cache purges and backend flushes are different operations; use the action that matches the stale data being investigated.
+- The scripts do not configure Redis replication, persistence policy, Memcached replication, or a multi-node cache cluster. Those are separate infrastructure decisions.
+- Monitor backend memory, evictions, hit rates, connection failures, and PHP extension availability alongside WordPress response times.
+- Reconfigure or warm caches deliberately after backend recovery; the scripts do not automate cache warming.
 
 ## Troubleshooting Guide
-Common issues and resolutions:
-- Conflict when enabling Memcached:
-  - Symptom: Script exits because an object cache is already enabled.
-  - Resolution: Disable the existing object cache before enabling Memcached.
-- Redis not detected:
-  - Symptom: Object cache was not enabled for the domain.
-  - Resolution: Install Redis and redis-cli, then re-run site installation or cache management actions.
-- OLS object cache not active:
-  - Symptom: Litespeed Cache not installed or not active.
-  - Resolution: Allow the script to install and activate Litespeed Cache, then verify object cache options are set correctly.
-- Transient size causing Memcached failures:
-  - Symptom: Large options table exceeds Memcached object size limits.
-  - Resolution: Delete all transients before enabling Memcached; the script performs this step automatically.
 
-Operational tips:
-- Monitor cache hit rates using Redis INFO and Memcached stats.
-- Verify object-cache.php presence and permissions for Nginx deployments.
-- Confirm WP_CACHE is enabled and object cache options match your backend.
+| Symptom | Checks |
+|---|---|
+| New site has no Redis object cache | Confirm `redis-cli` was installed before site installation and inspect the install log. |
+| Redis/Memcached enable is rejected | Check for `wp-content/object-cache.php` and remove or migrate the existing drop-in before retrying. |
+| Backend command not found | Confirm the service is installed, the expected CLI is on `PATH`, and the service is running. |
+| LiteSpeed Cache cannot connect | Verify the loopback endpoint, service status, firewall rules, PHP extension, and `object-host`/`object-port` settings. |
+| Object cache stops after disabling page cache | Reinstall LiteSpeed Cache and reapply the desired Redis or Memcached settings; page-cache disable uninstalls the shared plugin. |
+| Cache clear affects other sites | Expected for `FLUSHALL` and Memcached `flush_all`; both are server-wide operations. |
+| Memcached writes fail for large values | Inspect item sizes, the options table, transient usage, and Memcached memory/item limits. |
+| Browser cache differs from page cache | Inspect LiteSpeed Cache `cache-browser` separately from page-cache and object-cache settings. |
+
+Useful checks include:
+
+```bash
+systemctl status redis
+systemctl status memcached
+redis-cli ping
+wp plugin status litespeed-cache
+wp litespeed-option get object
+wp litespeed-option get object-host
+wp litespeed-option get object-port
+wp litespeed-option get object-kind
+```
 
 **Section sources**
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
+- [12-redis.txt:79-185](file://includes/core/apps/wordpress-app/scripts/v2/raw/12-redis.txt#L79-L185)
+- [16-memcached.txt:65-172](file://includes/core/apps/wordpress-app/scripts/v2/raw/16-memcached.txt#L65-L172)
+- [18-wp_cache.txt:44-100](file://includes/core/apps/wordpress-app/scripts/v2/raw/18-wp_cache.txt#L44-L100)
 
 ## Conclusion
-SimpleStack automates the installation and configuration of Redis and Memcached object caching for WordPress sites, adapting to Nginx and OpenLiteSpeed environments. The system enforces safe defaults, avoids conflicts, and leverages Litespeed Cache for OLS deployments. Administrators should monitor cache performance, tune backend memory settings, and apply consistent invalidation policies to maintain optimal performance.
 
-[No sources needed since this section summarizes without analyzing specific files]
+Simple Stack uses LiteSpeed Cache as the common integration layer for page caching, browser caching, and optional Redis or Memcached object caching on OpenLiteSpeed. New sites enable Redis automatically only when its CLI is present; both backends can otherwise be managed through the fixed `scripts/v2/` wrappers and raw scripts. Operators must account for shared plugin lifecycle, server-wide cache flushes, and the privileged wrapper download boundary.
 
 ## Appendices
 
 ### A. Configuration Summary
-- Redis object cache:
-  - Host: 127.0.0.1
-  - Port: 6379
-  - Kind: Redis
-- Memcached object cache:
-  - Host: 127.0.0.1
-  - Port: 11211
-  - Kind: Memcached
-- Web server:
-  - Nginx: symlink or download object-cache.php
-  - OLS: activate Litespeed Cache and set object cache options
 
-**Section sources**
-- [02-install_wordpress_site.txt:186-215](file://includes/core/apps/wordpress-app/scripts/v1/raw/02-install_wordpress_site.txt#L186-L215)
-- [16-memcached.txt:88-120](file://includes/core/apps/wordpress-app/scripts/v1/raw/16-memcached.txt#L88-L120)
+| Setting | Redis | Memcached |
+|---|---|---|
+| Host | `127.0.0.1` | `127.0.0.1` |
+| Port | `6379` | `11211` |
+| `object-kind` | `1` | `0` |
+| Required CLI | `redis-cli` | `memcached` |
+| WordPress integration | LiteSpeed Cache | LiteSpeed Cache |
+| Clear scope | All Redis databases | All Memcached items |
 
-### B. Disaster Recovery Procedures
-- Backup Redis data using RDB snapshots and AOF persistence; restore on failure.
-- Back up Memcached configurations and warm caches post-recovery.
-- Validate object-cache.php presence and permissions after restoration.
-- Re-run cache management actions to ensure correct plugin activation and options.
+### B. Recovery Guidance
 
-[No sources needed since this section provides general guidance]
+- Restore backend service health before flushing or warming caches.
+- Confirm the required LSPHP extension is installed for every active PHP version.
+- Reapply LiteSpeed Cache object settings after reinstalling the plugin.
+- Treat cache contents as rebuildable unless an external persistence policy says otherwise.
+- Use WordPress and application backups for recovery; the cache-management scripts are not a backup system.

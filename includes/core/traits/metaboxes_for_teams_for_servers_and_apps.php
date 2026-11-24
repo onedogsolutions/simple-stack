@@ -1,16 +1,17 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains some of the metabox related code for the server and apps cpt screens.
- * Used only by the class-wpcd-posts-app-server.php and class-wpcd-posts-app.php files which define the WPCD_POSTS_APP_SERVER and WPCD_POSTS_APP classes respectively.
+ * Used only by the class-sstk-posts-app-server.php and class-sstk-posts-app.php files which define the SSTK_POSTS_APP_SERVER and SSTK_POSTS_APP classes respectively.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_metaboxes_for_teams_for_servers_and_apps
+ * Trait sstk_metaboxes_for_teams_for_servers_and_apps
  */
-trait wpcd_metaboxes_for_teams_for_servers_and_apps {
+trait sstk_metaboxes_for_teams_for_servers_and_apps {
 
 	/**
 	 * Initialization hook to bootstrap the other hooks need.
@@ -20,10 +21,10 @@ trait wpcd_metaboxes_for_teams_for_servers_and_apps {
 	public function init_hooks_for_teams_for_servers_and_apps() {
 
 		// Filter hook to add metabox for team.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'wpcd_register_teams_metaboxes' ) );
+		add_filter( 'rwmb_meta_boxes', array( $this, 'sstk_register_teams_metaboxes' ) );
 
 		// Filter hook to restrict change in team metabox if user is not admin or superadmin.
-		add_action( 'rwmb_wpcd_assign_teams_before_save_post', array( $this, 'wpcd_assign_teams_before_save_post' ) );
+		add_action( 'rwmb_sstk_assign_teams_before_save_post', array( $this, 'sstk_assign_teams_before_save_post' ) );
 	}
 
 	/**
@@ -35,21 +36,21 @@ trait wpcd_metaboxes_for_teams_for_servers_and_apps {
 	 *
 	 * @return array new array of metaboxes
 	 */
-	public function wpcd_register_teams_metaboxes( $metaboxes ) {
+	public function sstk_register_teams_metaboxes( $metaboxes ) {
 
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 			return $metaboxes;
 		}
 
 		$post_type = $this->get_post_type();
 
-		$prefix = 'wpcd_';
+		$prefix = 'sstk_';
 
 		// Register the metabox for assigning teams.
 		$metaboxes[] = array(
 			'id'       => $prefix . 'assign_teams',
-			'title'    => __( 'Assign Teams', 'wpcd' ),
-			'pages'    => array( $post_type ), // displays on wpcd_app_server post type only.
+			'title'    => __( 'Assign Teams', 'simple-stack' ),
+			'pages'    => array( $post_type ), // displays on sstk_app_server post type only.
 			'context'  => 'side',
 			'priority' => 'low',
 			'fields'   => array(
@@ -57,9 +58,9 @@ trait wpcd_metaboxes_for_teams_for_servers_and_apps {
 					'name'        => '',
 					'id'          => $prefix . 'assigned_teams',
 					'type'        => 'post',
-					'post_type'   => array( 'wpcd_team' ),
+					'post_type'   => array( 'sstk_team' ),
 					'field_type'  => 'select_advanced',
-					'placeholder' => __( 'Select a team', 'wpcd' ),
+					'placeholder' => __( 'Select a team', 'simple-stack' ),
 					'multiple'    => true,
 					'query_args'  => array(
 						'post_status'    => 'private',
@@ -78,13 +79,13 @@ trait wpcd_metaboxes_for_teams_for_servers_and_apps {
 	 *
 	 * @return void
 	 */
-	public function wpcd_assign_teams_before_save_post( $post_id ) {
+	public function sstk_assign_teams_before_save_post( $post_id ) {
 
-		$wpcd_assigned_teams = filter_input( INPUT_POST, 'wpcd_assigned_teams', FILTER_SANITIZE_NUMBER_INT, FILTER_REQUIRE_ARRAY );
-		$post_teams          = get_post_meta( $post_id, 'wpcd_assigned_teams', false );
+		$sstk_assigned_teams = filter_input( INPUT_POST, 'sstk_assigned_teams', FILTER_SANITIZE_NUMBER_INT, FILTER_REQUIRE_ARRAY );
+		$post_teams          = get_post_meta( $post_id, 'sstk_assigned_teams', false );
 
-		if ( ! wpcd_is_admin() && count( $wpcd_assigned_teams ) != count( $post_teams ) && array_diff( $wpcd_assigned_teams, $post_teams ) != array_diff( $post_teams, $wpcd_assigned_teams ) ) {
-			wp_die( esc_html( __( 'You are not allowed to save/change teams.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() && count( $sstk_assigned_teams ) != count( $post_teams ) && array_diff( $sstk_assigned_teams, $post_teams ) != array_diff( $post_teams, $sstk_assigned_teams ) ) {
+			wp_die( esc_html( __( 'You are not allowed to save/change teams.', 'simple-stack' ) ) );
 		}
 	}
 }

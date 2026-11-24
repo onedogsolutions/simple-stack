@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Application chrome: header, primary navigation, breadcrumbs.
  *
@@ -31,14 +32,14 @@ export default function AppShell( { path, title, subtitle, breadcrumbs = [], act
 		<div className="min-h-screen bg-surface-muted px-6 py-6 font-sans text-ink-900">
 			<header className="mb-5 flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<p className="text-xs font-semibold uppercase tracking-wider text-brand-600">SimpleStack</p>
+					<p className="text-xs font-semibold uppercase tracking-wider text-brand-600">Simple Stack</p>
 					<h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">{ title }</h1>
 					{ subtitle ? <p className="mt-1 text-sm text-ink-500">{ subtitle }</p> : null }
 				</div>
 				{ action }
 			</header>
 
-			<nav className="mb-5 flex flex-wrap gap-1" aria-label="SimpleStack sections">
+			<nav className="mb-5 flex flex-wrap gap-1" aria-label="Simple Stack sections">
 				{ NAV.map( ( item ) => {
 					const active = isActive( item.path );
 

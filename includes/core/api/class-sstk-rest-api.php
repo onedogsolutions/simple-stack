@@ -1,8 +1,10 @@
 <?php
 /**
- * SimpleStack REST API registrar.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * Simple Stack REST API registrar.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,30 +12,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class SimpleStack_REST_API
+ * Class SSTK_REST_API
  *
- * Loads the SimpleStack controllers and registers the simple-stack/v1 namespace.
+ * Loads and registers the six admin SPA controllers under simple-stack/v1.
  *
- * This is the single API surface the React admin client talks to. It exists
- * alongside the legacy wpcd/v1 controllers, which stay untouched for remote
- * server callbacks and add-on compatibility.
+ * The WordPress App controller family and the independently authenticated command
+ * and webhook callbacks register their own routes under the same namespace.
  */
-class SimpleStack_REST_API {
+class SSTK_REST_API {
 
 	/**
-	 * Controllers that make up the namespace.
+	 * Admin SPA controllers loaded by this registrar.
 	 *
 	 * Order matters only for readability; each controller registers its own routes.
 	 *
 	 * @var array
 	 */
 	protected $controllers = array(
-		'SimpleStack_REST_Servers',
-		'SimpleStack_REST_Sites',
-		'SimpleStack_REST_Logs',
-		'SimpleStack_REST_Tabs',
-		'SimpleStack_REST_Providers',
-		'SimpleStack_REST_Security',
+		'SSTK_REST_Servers',
+		'SSTK_REST_Sites',
+		'SSTK_REST_Logs',
+		'SSTK_REST_Tabs',
+		'SSTK_REST_Providers',
+		'SSTK_REST_Security',
 	);
 
 	/**
@@ -62,16 +63,16 @@ class SimpleStack_REST_API {
 	 */
 	public static function load_files() {
 
-		$path = wpcd_path . 'includes/core/api/';
+		$path = SSTK_PATH . 'includes/core/api/';
 
-		require_once $path . 'class-simplestack-secret-redactor.php';
-		require_once $path . 'class-simplestack-rest-controller-base.php';
-		require_once $path . 'class-simplestack-rest-servers.php';
-		require_once $path . 'class-simplestack-rest-sites.php';
-		require_once $path . 'class-simplestack-rest-logs.php';
-		require_once $path . 'class-simplestack-rest-tabs.php';
-		require_once $path . 'class-simplestack-rest-providers.php';
-		require_once $path . 'class-simplestack-rest-security.php';
+		require_once $path . 'class-sstk-secret-redactor.php';
+		require_once $path . 'class-sstk-rest-controller-base.php';
+		require_once $path . 'class-sstk-rest-servers.php';
+		require_once $path . 'class-sstk-rest-sites.php';
+		require_once $path . 'class-sstk-rest-logs.php';
+		require_once $path . 'class-sstk-rest-tabs.php';
+		require_once $path . 'class-sstk-rest-providers.php';
+		require_once $path . 'class-sstk-rest-security.php';
 	}
 
 	/**
@@ -90,7 +91,7 @@ class SimpleStack_REST_API {
 
 			$controller = new $class_name();
 
-			if ( ! $controller instanceof SimpleStack_REST_Controller_Base ) {
+			if ( ! $controller instanceof SSTK_REST_Controller_Base ) {
 				continue;
 			}
 
@@ -114,21 +115,21 @@ class SimpleStack_REST_API {
 	 * @return string
 	 */
 	public static function get_namespace(): string {
-		return SimpleStack_REST_Controller_Base::NAMESPACE;
+		return SSTK_REST_Controller_Base::NAMESPACE;
 	}
 }
 
 /**
- * Return the shared SimpleStack REST API instance.
+ * Return the shared Simple Stack REST API instance.
  *
- * @return SimpleStack_REST_API
+ * @return SSTK_REST_API
  */
-function simplestack_rest_api() {
+function sstk_rest_api() {
 
 	static $instance = null;
 
 	if ( null === $instance ) {
-		$instance = new SimpleStack_REST_API();
+		$instance = new SSTK_REST_API();
 	}
 
 	return $instance;

@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_PENDING_TASKS_LOG class for pending tasks log.
+ * SSTK_PENDING_TASKS_LOG class for pending tasks log.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_PENDING_TASKS_LOG
+ * Class SSTK_PENDING_TASKS_LOG
  */
-class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
+class SSTK_PENDING_TASKS_LOG extends SSTK_POSTS_LOG {
 
 	/**
-	 * WPCD_PENDING_TASKS_LOG instance.
+	 * SSTK_PENDING_TASKS_LOG instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -25,7 +26,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	}
 
 	/**
-	 * WPCD_PENDING_TASKS_LOG constructor.
+	 * SSTK_PENDING_TASKS_LOG constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
@@ -45,48 +46,48 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		add_action( 'save_post', array( $this, 'save_meta_values' ), 10, 2 );
 
 		// Filter hook to add new columns.
-		add_filter( 'manage_wpcd_pending_log_posts_columns', array( $this, 'pending_tasks_log_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_pending_log_posts_columns', array( $this, 'pending_tasks_log_table_head' ), 10, 1 );
 
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_pending_log_posts_custom_column', array( $this, 'pending_tasks_log_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_pending_log_posts_custom_column', array( $this, 'pending_tasks_log_table_content' ), 10, 2 );
 
 		// Filter hook to add sortable columns.
-		add_filter( 'manage_edit-wpcd_pending_log_sortable_columns', array( $this, 'pending_tasks_log_table_sorting' ), 10, 1 );
+		add_filter( 'manage_edit-sstk_pending_log_sortable_columns', array( $this, 'pending_tasks_log_table_sorting' ), 10, 1 );
 
 		// Filter hook to remove edit bulk action - handled in ancestor class.
-		add_filter( 'bulk_actions-edit-wpcd_pending_log', array( $this, 'wpcd_log_bulk_actions' ), 10, 1 );
+		add_filter( 'bulk_actions-edit-sstk_pending_log', array( $this, 'sstk_log_bulk_actions' ), 10, 1 );
 
 		// Filter hook to add new bulk actions.
-		add_filter( 'bulk_actions-edit-wpcd_pending_log', array( $this, 'wpcd_pending_log_bulk_actions' ), 10, 1 );
+		add_filter( 'bulk_actions-edit-sstk_pending_log', array( $this, 'sstk_pending_log_bulk_actions' ), 10, 1 );
 
 		// Action hook to handle bulk actions.
-		add_filter( 'handle_bulk_actions-edit-wpcd_pending_log', array( $this, 'wpcd_bulk_action_handler_pending_log' ), 10, 3 );
+		add_filter( 'handle_bulk_actions-edit-sstk_pending_log', array( $this, 'sstk_bulk_action_handler_pending_log' ), 10, 3 );
 
 		// When we're querying to find out the status of a server.
-		add_filter( 'wpcd_is_server_available_for_commands', array( &$this, 'wpcd_is_server_available_for_commands' ), 10, 2 );
+		add_filter( 'sstk_is_server_available_for_commands', array( &$this, 'sstk_is_server_available_for_commands' ), 10, 2 );
 
 		// Action hook to extend admin filter options.
-		add_action( 'restrict_manage_posts', array( $this, 'wpcd_pending_log_table_filtering' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'sstk_pending_log_table_filtering' ) );
 
 		// Filter hook to filter pending logs screen on custom meta data.
-		add_filter( 'parse_query', array( $this, 'wpcd_pending_logs_list_parse_query' ), 10, 1 );
+		add_filter( 'parse_query', array( $this, 'sstk_pending_logs_list_parse_query' ), 10, 1 );
 
 		// Action hook to clean up pending logs.
-		add_action( 'wpcd_clean_up_pending_logs', array( $this, 'wpcd_clean_up_pending_logs' ) );
+		add_action( 'sstk_clean_up_pending_logs', array( $this, 'sstk_clean_up_pending_logs' ) );
 
 		// Action hook to fire on new site created on WP Multisite.
-		add_action( 'wp_initialize_site', array( $this, 'wpcd_clean_up_pending_logs_for_new_site' ), 10, 2 );
+		add_action( 'wp_initialize_site', array( $this, 'sstk_clean_up_pending_logs_for_new_site' ), 10, 2 );
 
 		// Action hook to clean up pending logs.
-		add_action( 'wp_ajax_clean_up_pending_logs_action', array( $this, 'wpcd_clean_up_pending_logs_callback' ) );
+		add_action( 'wp_ajax_clean_up_pending_logs_action', array( $this, 'sstk_clean_up_pending_logs_callback' ) );
 
 		// Action hook of notification to long pending task.
-		add_action( 'wpcd_email_alert_for_long_pending_tasks', array( $this, 'wpcd_send_email_alert_for_long_pending_tasks' ) );
+		add_action( 'sstk_email_alert_for_long_pending_tasks', array( $this, 'sstk_send_email_alert_for_long_pending_tasks' ) );
 
 		// Delete the pending logs on site deletion.
-		add_action( 'wp_trash_post', array( $this, 'wpcd_wpapp_pending_log_post_delete' ), 11, 1 );
-		add_action( 'before_delete_post', array( $this, 'wpcd_wpapp_pending_log_post_delete' ), 11, 1 );
-		add_action( 'wpcd_before_remove_site_action', array( $this, 'wpcd_wpapp_pending_log_post_delete' ), 11, 1 );
+		add_action( 'wp_trash_post', array( $this, 'sstk_wpapp_pending_log_post_delete' ), 11, 1 );
+		add_action( 'before_delete_post', array( $this, 'sstk_wpapp_pending_log_post_delete' ), 11, 1 );
+		add_action( 'sstk_before_remove_site_action', array( $this, 'sstk_wpapp_pending_log_post_delete' ), 11, 1 );
 
 	}
 
@@ -95,25 +96,25 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 */
 	public function register() {
 		register_post_type(
-			'wpcd_pending_log',
+			'sstk_pending_log',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'Pending Tasks', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'Pending Task', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => _x( 'Pending Task', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'Pending Task', 'Add New on Toolbar', 'wpcd' ),
-					'edit_item'             => __( 'Edit Pending Task', 'wpcd' ),
-					'view_item'             => __( 'View Pending Task', 'wpcd' ),
-					'all_items'             => __( 'Pending Tasks', 'wpcd' ), // Label to signify all items in a submenu link.
-					'search_items'          => __( 'Search Pending Task Log', 'wpcd' ),
-					'not_found'             => __( 'No Pending Task Logs were found.', 'wpcd' ),
-					'not_found_in_trash'    => __( 'No Pending Task Logs were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter Pending Tasks Log list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'Pending Tasks Log list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'Pending Task list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'Pending Tasks', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'Pending Task', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => _x( 'Pending Task', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'Pending Task', 'Add New on Toolbar', 'simple-stack' ),
+					'edit_item'             => __( 'Edit Pending Task', 'simple-stack' ),
+					'view_item'             => __( 'View Pending Task', 'simple-stack' ),
+					'all_items'             => __( 'Pending Tasks', 'simple-stack' ), // Label to signify all items in a submenu link.
+					'search_items'          => __( 'Search Pending Task Log', 'simple-stack' ),
+					'not_found'             => __( 'No Pending Task Logs were found.', 'simple-stack' ),
+					'not_found_in_trash'    => __( 'No Pending Task Logs were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter Pending Tasks Log list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'Pending Tasks Log list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'Pending Task list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
-				'show_in_menu'        => 'edit.php?post_type=wpcd_app_server',
+				'show_in_menu'        => 'edit.php?post_type=sstk_app_server',
 				'menu_position'       => 10,
 				'show_in_nav_menus'   => true,
 				'show_in_admin_bar'   => false,
@@ -126,14 +127,14 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 				'capability_type'     => 'post',
 				'capabilities'        => array(
 					'create_posts' => false,
-					'read_posts'   => 'wpcd_manage_logs',
-					'edit_posts'   => 'wpcd_manage_logs',
+					'read_posts'   => 'sstk_manage_logs',
+					'edit_posts'   => 'sstk_manage_logs',
 				),
 				'map_meta_cap'        => true,
 			)
 		);
 
-		$this->set_post_type( 'wpcd_pending_log' );
+		$this->set_post_type( 'sstk_pending_log' );
 
 		$search_fields = array(
 			'parent_post_id',
@@ -178,7 +179,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 
 		switch ( $column_name ) {
 
-			case 'wpcd_pending_task_parent_id':
+			case 'sstk_pending_task_parent_id':
 				// Display the name of the server or app.
 				$parent_post_id = get_post_meta( $post_id, 'parent_post_id', true );
 				if ( $parent_post_id ) {
@@ -188,14 +189,14 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 						$value = sprintf( '<a href="%s">' . $title . '</a>', get_edit_post_link( $parent_post_id ) );
 						$value = $value . '<br />' . 'id: ' . (string) $parent_post_id;
 					} else {
-						$value = __( 'Parent post not found', 'wpcd' );
+						$value = __( 'Parent post not found', 'simple-stack' );
 					}
 				} else {
-					$value = __( 'Parent post not found', 'wpcd' );
+					$value = __( 'Parent post not found', 'simple-stack' );
 				}
 
 				break;
-			case 'wpcd_pending_task_associated_server':
+			case 'sstk_pending_task_associated_server':
 				// Display the name of the server.
 				$server_id = get_post_meta( $post_id, 'pending_task_associated_server_id', true );
 				if ( ! empty( $server_id ) ) {
@@ -205,23 +206,23 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 						$value = sprintf( '<a href="%s">' . $title . '</a>', get_edit_post_link( $server_id ) );
 						$value = $value . '<br />' . 'id: ' . (string) $server_id;
 					} else {
-						$value = __( 'No Server', 'wpcd' );
+						$value = __( 'No Server', 'simple-stack' );
 					}
 				} else {
-					$value = __( 'No Server', 'wpcd' );
+					$value = __( 'No Server', 'simple-stack' );
 				}
 
 				break;
-			case 'wpcd_pending_task_type':
-			case 'wpcd_pending_task_key':
-			case 'wpcd_pending_task_details':
-			case 'wpcd_pending_task_state':
-			case 'wpcd_pending_task_attempts':
-			case 'wpcd_pending_task_comment':
+			case 'sstk_pending_task_type':
+			case 'sstk_pending_task_key':
+			case 'sstk_pending_task_details':
+			case 'sstk_pending_task_state':
+			case 'sstk_pending_task_attempts':
+			case 'sstk_pending_task_comment':
 				$value = wp_kses_post( get_post_meta( $post_id, substr( $column_name, 5 ), true ) );
 				break;
 
-			case 'wpcd_pending_task_reference':
+			case 'sstk_pending_task_reference':
 				$value = wp_kses_post( get_post_meta( $post_id, substr( $column_name, 5 ), true ) );
 				if ( is_numeric( $value ) ) {
 					// There's a good chance it's a post id so make it an admin post link.
@@ -229,8 +230,8 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 				}
 				break;
 
-			case 'wpcd_pending_task_start_date':
-			case 'wpcd_pending_task_complete_date':
+			case 'sstk_pending_task_start_date':
+			case 'sstk_pending_task_complete_date':
 				$value = wp_kses_post( get_post_meta( $post_id, substr( $column_name, 5 ), true ) );
 				if ( ! empty( $value ) ) {
 					$value = date( date( 'Y-m-d @ H:i', $value ) );
@@ -255,19 +256,19 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 
 		unset( $defaults['date'] );
 
-		$defaults['wpcd_pending_task_parent_id']         = __( 'Owner/Parent', 'wpcd' );
-		$defaults['wpcd_pending_task_type']              = __( 'Type', 'wpcd' );
-		$defaults['wpcd_pending_task_key']               = __( 'Key', 'wpcd' );
-		$defaults['wpcd_pending_task_state']             = __( 'State', 'wpcd' );
-		$defaults['wpcd_pending_task_attempts']          = __( 'Attempts', 'wpcd' );
-		$defaults['wpcd_pending_task_comment']           = __( 'Comment', 'wpcd' );
-		$defaults['wpcd_pending_task_associated_server'] = __( 'Server', 'wpcd' );
-		$defaults['wpcd_pending_task_start_date']        = __( 'Start Date', 'wpcd' );
-		$defaults['wpcd_pending_task_complete_date']     = __( 'Complete Date', 'wpcd' );
-		$defaults['date']                                = __( 'Date', 'wpcd' );
+		$defaults['sstk_pending_task_parent_id']         = __( 'Owner/Parent', 'simple-stack' );
+		$defaults['sstk_pending_task_type']              = __( 'Type', 'simple-stack' );
+		$defaults['sstk_pending_task_key']               = __( 'Key', 'simple-stack' );
+		$defaults['sstk_pending_task_state']             = __( 'State', 'simple-stack' );
+		$defaults['sstk_pending_task_attempts']          = __( 'Attempts', 'simple-stack' );
+		$defaults['sstk_pending_task_comment']           = __( 'Comment', 'simple-stack' );
+		$defaults['sstk_pending_task_associated_server'] = __( 'Server', 'simple-stack' );
+		$defaults['sstk_pending_task_start_date']        = __( 'Start Date', 'simple-stack' );
+		$defaults['sstk_pending_task_complete_date']     = __( 'Complete Date', 'simple-stack' );
+		$defaults['date']                                = __( 'Date', 'simple-stack' );
 
-		// $defaults['wpcd_pending_task_details']    = __( 'Data', 'wpcd' );
-		// $defaults['wpcd_pending_task_reference']     = __( 'Reference', 'wpcd' );
+		// $defaults['sstk_pending_task_details']    = __( 'Data', 'simple-stack' );
+		// $defaults['sstk_pending_task_reference']     = __( 'Reference', 'simple-stack' );
 
 		return $defaults;
 
@@ -280,28 +281,28 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @return void
 	 */
-	public function wpcd_pending_log_table_filtering() {
+	public function sstk_pending_log_table_filtering() {
 
 		global $typenow, $pagenow;
 
-		$post_type = 'wpcd_pending_log';
+		$post_type = 'sstk_pending_log';
 
 		if ( is_admin() && 'edit.php' === $pagenow && $typenow === $post_type ) {
 
 			// Log Type.
-			$log_type = $this->generate_pending_logs_meta_dropdown( $post_type, 'pending_task_type', __( 'All Types', 'wpcd' ) );
+			$log_type = $this->generate_pending_logs_meta_dropdown( $post_type, 'pending_task_type', __( 'All Types', 'simple-stack' ) );
 			echo $log_type;
 
 			// Log State.
-			$log_state = $this->generate_pending_logs_meta_dropdown( $post_type, 'pending_task_state', __( 'All States', 'wpcd' ) );
+			$log_state = $this->generate_pending_logs_meta_dropdown( $post_type, 'pending_task_state', __( 'All States', 'simple-stack' ) );
 			echo $log_state;
 
 			// Log Owner/Parent.
-			$log_owner = $this->generate_pending_logs_meta_dropdown( $post_type, 'parent_post_id', __( 'All Parents', 'wpcd' ) );
+			$log_owner = $this->generate_pending_logs_meta_dropdown( $post_type, 'parent_post_id', __( 'All Parents', 'simple-stack' ) );
 			echo $log_owner;
 
 			// Log Reference.
-			$log_reference = $this->generate_pending_logs_meta_dropdown( $post_type, 'pending_task_reference', __( 'All References', 'wpcd' ) );
+			$log_reference = $this->generate_pending_logs_meta_dropdown( $post_type, 'pending_task_reference', __( 'All References', 'simple-stack' ) );
 			echo $log_reference;
 
 		}
@@ -350,11 +351,11 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @param  object $query query.
 	 */
-	public function wpcd_pending_logs_list_parse_query( $query ) {
+	public function sstk_pending_logs_list_parse_query( $query ) {
 		global $pagenow;
 
 		$filter_action = sanitize_text_field( filter_input( INPUT_GET, 'filter_action', FILTER_UNSAFE_RAW ) );
-		if ( is_admin() && $query->is_main_query() && 'wpcd_pending_log' === $query->query['post_type'] && 'edit.php' === $pagenow && ! empty( $filter_action ) ) {
+		if ( is_admin() && $query->is_main_query() && 'sstk_pending_log' === $query->query['post_type'] && 'edit.php' === $pagenow && ! empty( $filter_action ) ) {
 			$qv = &$query->query_vars;
 
 			// Pending Task Type.
@@ -410,9 +411,9 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 
 		add_meta_box(
 			'pending_task_log',
-			__( 'Pending Tasks Log', 'wpcd' ),
+			__( 'Pending Tasks Log', 'simple-stack' ),
 			array( $this, 'render_pending_task_log_meta_box' ),
-			'wpcd_pending_log',
+			'sstk_pending_log',
 			'advanced',
 			'high'
 		);
@@ -446,7 +447,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		$parent_post_id                    = get_post_meta( $post->ID, 'parent_post_id', true );
 
 		ob_start();
-		require wpcd_path . 'includes/templates/pending_tasks_log.php';
+		require SSTK_PATH . 'includes/templates/pending_tasks_log.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -486,7 +487,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		if ( empty( $post_id ) ) {
 			$post_id = wp_insert_post(
 				array(
-					'post_type'   => 'wpcd_pending_log',
+					'post_type'   => 'sstk_pending_log',
 					'post_status' => 'private',
 					'post_title'  => 'Pending Task For: ' . $post->post_title,
 					'post_author' => $author_id,
@@ -514,10 +515,10 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 			update_post_meta( $post_id, 'pending_task_comment', $task_comment );
 
 			// Now stamp the record with the SERVER ID regardless of the parent post type.
-			if ( 'wpcd_app_server' === $parent_post_type ) {
+			if ( 'sstk_app_server' === $parent_post_type ) {
 				update_post_meta( $post_id, 'pending_task_associated_server_id', $parent_post_id );
-			} elseif ( 'wpcd_app' === $parent_post_type ) {
-				$server_id = WPCD_WORDPRESS_APP()->get_server_id_by_app_id( $parent_post_id );
+			} elseif ( 'sstk_app' === $parent_post_type ) {
+				$server_id = SSTK_WORDPRESS_APP()->get_server_id_by_app_id( $parent_post_id );
 				update_post_meta( $post_id, 'pending_task_associated_server_id', $server_id );
 			}
 		}
@@ -528,7 +529,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 
 		/* @TODO: Need a custom version of this so that we only clean up COMPLETED items! */
 
-		// $this->clean_up_old_log_entries( 'wpcd_command_log' );
+		// $this->clean_up_old_log_entries( 'sstk_command_log' );
 
 		return $post_id;
 
@@ -545,7 +546,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	public function get_tasks_by_key_state_type( $key, $state, $type ) {
 
 		$args = array(
-			'post_type'      => 'wpcd_pending_log',
+			'post_type'      => 'sstk_pending_log',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
@@ -580,7 +581,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	public function get_tasks_by_state_reference( $state, $reference ) {
 
 		$args = array(
-			'post_type'      => 'wpcd_pending_log',
+			'post_type'      => 'sstk_pending_log',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
@@ -614,7 +615,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	public function get_tasks_by_parent_state_type( $parent, $state, $type, $orderby = 'ID', $order = 'ASC' ) {
 
 		$args = array(
-			'post_type'      => 'wpcd_pending_log',
+			'post_type'      => 'sstk_pending_log',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'orderby'        => $orderby,
@@ -753,21 +754,21 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 * is 'in-process' on the server and where the start_time
 	 * is less than an hour ago.
 	 *
-	 * Filter Hook: wpcd_is_server_available_for_commands
+	 * Filter Hook: sstk_is_server_available_for_commands
 	 *
 	 * @param boolean $is_available   Current boolean that indicates whether the server is available.
 	 * @param int     $server_id      Server id to check.
 	 *
 	 * @return boolean
 	 */
-	public function wpcd_is_server_available_for_commands( $is_available, $server_id ) {
+	public function sstk_is_server_available_for_commands( $is_available, $server_id ) {
 
 		// Only need to check if server is unavailable if $is_available is true - we're not going to override it if it's already false!.
 		if ( true === $is_available ) {
-			if ( ( ! empty( get_post_meta( $server_id, 'wpcd_server_wordpress-app_action', true ) ) ) || ( ! empty( get_post_meta( $server_id, 'wpcd_server_wordpress-app_action_status', true ) ) ) ) {
+			if ( ( ! empty( get_post_meta( $server_id, 'sstk_server_wordpress-app_action', true ) ) ) || ( ! empty( get_post_meta( $server_id, 'sstk_server_wordpress-app_action_status', true ) ) ) ) {
 				return false;
 			}
-			if ( ( ! empty( get_post_meta( $server_id, 'wpcd_app_wordpress-app_action', true ) ) ) || ( ! empty( get_post_meta( $server_id, 'wpcd_app_wordpress-app_action_status', true ) ) ) ) {
+			if ( ( ! empty( get_post_meta( $server_id, 'sstk_app_wordpress-app_action', true ) ) ) || ( ! empty( get_post_meta( $server_id, 'sstk_app_wordpress-app_action_status', true ) ) ) ) {
 				// We really shouldn't get here but there was a bug where we were using the incorrect metas.  This is prophylactic code just in case we missed some cleanup spots.
 				return false;
 			}
@@ -776,7 +777,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		// Ok, so far the server is still available for commands.
 		// So lets check the pending log records to make sure that nothing else is running right now.
 		$args = array(
-			'post_type'      => 'wpcd_pending_log',
+			'post_type'      => 'sstk_pending_log',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
@@ -809,7 +810,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	public function do_tasks() {
 
 		$args = array(
-			'post_type'      => 'wpcd_pending_log',
+			'post_type'      => 'sstk_pending_log',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'orderby'        => 'ID',
@@ -832,7 +833,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 			$parent_post_type = get_post_meta( $task->ID, 'pending_task_parent_post_type', true );
 
 			// Check to make sure that the server is available.
-			$is_server_available = WPCD_SERVER()->is_server_available_for_commands( $server_id );
+			$is_server_available = SSTK_SERVER()->is_server_available_for_commands( $server_id );
 
 			// If server is available, see what we need to do...
 			if ( true === $is_server_available ) {
@@ -847,7 +848,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 					$args['pending_task_parent_post_type']     = $parent_post_type;
 
 					// Mark the task as 'in process'.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task->ID, $args, 'in-process' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task->ID, $args, 'in-process' );
 
 					// Fire the hook - the hook needs to be responsible for marking the task as finished since we cannot receive any data directly from the action hook.
 					if ( isset( $args['action_hook'] ) ) {
@@ -857,8 +858,8 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 				}
 			} else {
 				/* Translators: %s is the post id of the server we are skipping. */
-				$msg = sprintf( __( 'The PENDING TASKS background process is skipping tasks on the server with ID %s because it is not available at this time - likely in use by another process.', 'wpcd' ), $server_id );
-				do_action( 'wpcd_log_error', $msg, 'trace', __FILE__, __LINE__, array(), false );
+				$msg = sprintf( __( 'The PENDING TASKS background process is skipping tasks on the server with ID %s because it is not available at this time - likely in use by another process.', 'simple-stack' ), $server_id );
+				do_action( 'sstk_log_error', $msg, 'trace', __FILE__, __LINE__, array(), false );
 				update_post_meta( $task->ID, 'pending_task_history', $msg );
 			}
 		}
@@ -868,17 +869,17 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	/**
 	 * Adds actions to set the state of a task.
 	 *
-	 * Filter hook: bulk_actions-edit-{cpt-name} | bulk_actions-edit-wpcd_pending_log
+	 * Filter hook: bulk_actions-edit-{cpt-name} | bulk_actions-edit-sstk_pending_log
 	 *
 	 * @param  array $actions actions.
 	 *
 	 * @return array
 	 */
-	public function wpcd_pending_log_bulk_actions( $actions ) {
-		$actions['wpcd-pending-log-reset-to-ready']      = __( 'Reset state to READY', 'wpcd' );
-		$actions['wpcd-pending-log-reset-to-in-process'] = __( 'Reset state to IN-PROCESS', 'wpcd' );
-		$actions['wpcd-pending-log-reset-to-complete']   = __( 'Mark as Complete', 'wpcd' );
-		$actions['wpcd-pending-log-reset-to-failed']     = __( 'Mark as Failed', 'wpcd' );
+	public function sstk_pending_log_bulk_actions( $actions ) {
+		$actions['sstk-pending-log-reset-to-ready']      = __( 'Reset state to READY', 'simple-stack' );
+		$actions['sstk-pending-log-reset-to-in-process'] = __( 'Reset state to IN-PROCESS', 'simple-stack' );
+		$actions['sstk-pending-log-reset-to-complete']   = __( 'Mark as Complete', 'simple-stack' );
+		$actions['sstk-pending-log-reset-to-failed']     = __( 'Mark as Failed', 'simple-stack' );
 		return $actions;
 	}
 
@@ -886,16 +887,16 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 * Handle bulk actions for pending logs.
 	 *
 	 * @param string $redirect_url  redirect url.
-	 * @param string $action        bulk action slug/id - this is not the WPCD action key.
+	 * @param string $action        bulk action slug/id - this is not the SSTK action key.
 	 * @param array  $post_ids      all post ids.
 	 */
-	public function wpcd_bulk_action_handler_pending_log( $redirect_url, $action, $post_ids ) {
+	public function sstk_bulk_action_handler_pending_log( $redirect_url, $action, $post_ids ) {
 		// Let's remove query args first for redirect url.
-		// $redirect_url = remove_query_arg( array( 'wpcd_soft_reboot' ), $redirect_url );
+		// $redirect_url = remove_query_arg( array( 'sstk_soft_reboot' ), $redirect_url );
 
 		// Lets make sure we're an admin otherwise return an error.
-		if ( ! wpcd_is_admin() ) {
-			do_action( 'wpcd_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
+		if ( ! sstk_is_admin() ) {
+			do_action( 'sstk_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
 			// @todo: show error message to user in a dialog box OR show error message at the top of the admin list as a dismissible notice.
 			return $redirect_url;
 		}
@@ -903,16 +904,16 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		if ( ! empty( $post_ids ) ) {
 			foreach ( $post_ids as $app_id ) {
 				switch ( $action ) {
-					case 'wpcd-pending-log-reset-to-ready':
+					case 'sstk-pending-log-reset-to-ready':
 						$this->update_task_by_id( $app_id, array(), 'ready', '', '', true );
 						break;
-					case 'wpcd-pending-log-reset-to-in-process':
+					case 'sstk-pending-log-reset-to-in-process':
 						$this->update_task_by_id( $app_id, array(), 'in-process', '', '', time() );
 						break;
-					case 'wpcd-pending-log-reset-to-complete':
+					case 'sstk-pending-log-reset-to-complete':
 						$this->update_task_by_id( $app_id, array(), 'complete-manual' );
 						break;
-					case 'wpcd-pending-log-reset-to-failed':
+					case 'sstk-pending-log-reset-to-failed':
 						$this->update_task_by_id( $app_id, array(), 'failed-manual' );
 						break;
 				}
@@ -926,11 +927,11 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * Action Hook: wp_ajax_clean_up_pending_logs_action
 	 */
-	public function wpcd_clean_up_pending_logs_callback() {
-		$this->wpcd_clean_up_pending_logs();
+	public function sstk_clean_up_pending_logs_callback() {
+		$this->sstk_clean_up_pending_logs();
 
 		$response = array(
-			'message' => __( 'Pending logs cleaned up successfully.', 'wpcd' ),
+			'message' => __( 'Pending logs cleaned up successfully.', 'simple-stack' ),
 		);
 		wp_send_json( $response, 200 );
 		exit();
@@ -942,17 +943,17 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 * Anything that has been running for too long
 	 * (around 2 hours) will be marked as failed.
 	 */
-	public function wpcd_clean_up_pending_logs() {
+	public function sstk_clean_up_pending_logs() {
 
 		// The function ran so update the transient to let the monitoring process know that it ran (even if no records were processed).
 		// We are using 180 minutes here instead of 15 minutes because this cron runs on a 60 minute schedule instead of a 1 min or 15 min schedule.
-		set_transient( 'wpcd_clean_up_pending_logs_is_active', 1, ( 60 * 3 ) * MINUTE_IN_SECONDS );
+		set_transient( 'sstk_clean_up_pending_logs_is_active', 1, ( 60 * 3 ) * MINUTE_IN_SECONDS );
 
 		// Get pending logs.
 		$compare_date = time() - ( 3600 * 2 );
 
 		$pending_logs_args = array(
-			'post_type'   => 'wpcd_pending_log',
+			'post_type'   => 'sstk_pending_log',
 			'post_status' => 'private',
 			'numberposts' => -1,
 			'orderby'     => 'date',
@@ -1005,7 +1006,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		$logs_found       = get_posts( $pending_logs_args );
 		$logs_found_count = count( $logs_found );
 
-		$auto_trim_pending_log_limit = (int) wpcd_get_early_option( 'auto_trim_pending_log_limit' );
+		$auto_trim_pending_log_limit = (int) sstk_get_early_option( 'auto_trim_pending_log_limit' );
 
 		if ( empty( $auto_trim_pending_log_limit ) ) {
 			$auto_trim_pending_log_limit = 100;
@@ -1024,22 +1025,22 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 					$parent_post_type     = get_post_meta( $log_id, 'pending_task_parent_post_type', true );
 					$parent_post_id       = get_post_meta( $log_id, 'parent_post_id', true );
 					$pending_task_comment = get_post_meta( $log_id, 'pending_task_comment', true );
-					if ( 'wpcd_app' === $parent_post_type ) {
-						do_action( 'wpcd_wordpress-app_clear_background_processes', $parent_post_id, 'clear_background_processes_via_pending_log_action' );
+					if ( 'sstk_app' === $parent_post_type ) {
+						do_action( 'sstk_wordpress-app_clear_background_processes', $parent_post_id, 'clear_background_processes_via_pending_log_action' );
 					}
-					if ( 'wpcd_app_server' === $parent_post_type ) {
-						do_action( 'wpcd_wordpress-app_server_cleanup_metas', $parent_post_id, 'server_cleanup_metas_via_pending_log_action' );
+					if ( 'sstk_app_server' === $parent_post_type ) {
+						do_action( 'sstk_wordpress-app_server_cleanup_metas', $parent_post_id, 'server_cleanup_metas_via_pending_log_action' );
 					}
 
 					/* Translators: %s is the ID of the pending log recording being cleaned up. */
-					$message = sprintf( __( 'A pending task with id %s was marked as failed because it took too long to complete.', 'wpcd' ), (string) $log_id );
+					$message = sprintf( __( 'A pending task with id %s was marked as failed because it took too long to complete.', 'simple-stack' ), (string) $log_id );
 					if ( ! empty( $pending_task_comment ) ) {
 						$message .= ' - ' . $pending_task_comment;
 					}
 
 					// Add a user friendly notification record.
 					/* Translators: %1$s is the task id; %2$s is pending log comment message. */
-					do_action( 'wpcd_log_notification', $parent_post_id, 'alert', sprintf( __( 'Stuck pending log cleaned up successfully for task id %1$s.(%2$s)', 'wpcd' ), $log_id, $pending_task_comment ), 'stuck', null );
+					do_action( 'sstk_log_notification', $parent_post_id, 'alert', sprintf( __( 'Stuck pending log cleaned up successfully for task id %1$s.(%2$s)', 'simple-stack' ), $log_id, $pending_task_comment ), 'stuck', null );
 
 					$count++;
 				}
@@ -1047,14 +1048,11 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		}
 
 		/* Clean up old log entries */
-		$this->clean_up_old_log_entries( 'wpcd_command_log' );
-		$this->clean_up_old_log_entries( 'wpcd_error_log' );
-		$this->clean_up_old_log_entries( 'wpcd_notify_log' );
-		$this->clean_up_old_log_entries( 'wpcd_notify_sent' );
-		$this->clean_up_old_log_entries( 'wpcd_ssh_log' );
-		if ( function_exists( 'WPCD' ) && class_exists( 'WPCD_WooCommerce_Init' ) ) {
-			$this->clean_up_old_log_entries( 'wpcd_app_update_log' );
-		}
+		$this->clean_up_old_log_entries( 'sstk_command_log' );
+		$this->clean_up_old_log_entries( 'sstk_error_log' );
+		$this->clean_up_old_log_entries( 'sstk_notify_log' );
+		$this->clean_up_old_log_entries( 'sstk_notify_sent' );
+		$this->clean_up_old_log_entries( 'sstk_ssh_log' );
 
 	}
 
@@ -1072,13 +1070,13 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 			$blog_ids = get_sites( array( 'fields' => 'ids' ) );
 			foreach ( $blog_ids as $blog_id ) {
 				switch_to_blog( $blog_id );
-				self::wpcd_clean_up_pending_logs_events();
-				self::wpcd_send_email_alert_for_long_pending_tasks_events();
+				self::sstk_clean_up_pending_logs_events();
+				self::sstk_send_email_alert_for_long_pending_tasks_events();
 				restore_current_blog();
 			}
 		} else {
-			self::wpcd_clean_up_pending_logs_events();
-			self::wpcd_send_email_alert_for_long_pending_tasks_events();
+			self::sstk_clean_up_pending_logs_events();
+			self::sstk_send_email_alert_for_long_pending_tasks_events();
 		}
 
 	}
@@ -1088,13 +1086,13 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_clean_up_pending_logs_events() {
+	public static function sstk_clean_up_pending_logs_events() {
 		// Clear old crons.
-		wp_unschedule_hook( 'wpcd_clean_up_pending_logs' );
+		wp_unschedule_hook( 'sstk_clean_up_pending_logs' );
 
 		// Schedule cron.
-		if ( ! defined( 'DISABLE_WPCD_CRON' ) || ( defined( 'DISABLE_WPCD_CRON' ) && ! DISABLE_WPCD_CRON ) ) {
-			wp_schedule_event( time(), 'hourly', 'wpcd_clean_up_pending_logs' );
+		if ( ! defined( 'DISABLE_SSTK_CRON' ) || ( defined( 'DISABLE_SSTK_CRON' ) && ! DISABLE_SSTK_CRON ) ) {
+			wp_schedule_event( time(), 'hourly', 'sstk_clean_up_pending_logs' );
 		}
 
 	}
@@ -1104,13 +1102,13 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_send_email_alert_for_long_pending_tasks_events() {
+	public static function sstk_send_email_alert_for_long_pending_tasks_events() {
 		// Clear old crons.
-		wp_unschedule_hook( 'wpcd_email_alert_for_long_pending_tasks' );
+		wp_unschedule_hook( 'sstk_email_alert_for_long_pending_tasks' );
 
 		// Schedule cron.
-		if ( ! defined( 'DISABLE_WPCD_CRON' ) || ( defined( 'DISABLE_WPCD_CRON' ) && ! DISABLE_WPCD_CRON ) ) {
-			wp_schedule_event( time(), 'every_fifteen_minute', 'wpcd_email_alert_for_long_pending_tasks' );
+		if ( ! defined( 'DISABLE_SSTK_CRON' ) || ( defined( 'DISABLE_SSTK_CRON' ) && ! DISABLE_SSTK_CRON ) ) {
+			wp_schedule_event( time(), 'sstk_every_fifteen_minutes', 'sstk_email_alert_for_long_pending_tasks' );
 		}
 	}
 
@@ -1128,13 +1126,13 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 			$blog_ids = get_sites( array( 'fields' => 'ids' ) );
 			foreach ( $blog_ids as $blog_id ) {
 				switch_to_blog( $blog_id );
-				self::wpcd_cleanup_pending_logs_clear_scheduled_events();
-				self::wpcd_clear_send_email_for_long_pending_task_events();
+				self::sstk_cleanup_pending_logs_clear_scheduled_events();
+				self::sstk_clear_send_email_for_long_pending_task_events();
 				restore_current_blog();
 			}
 		} else {
-			self::wpcd_cleanup_pending_logs_clear_scheduled_events();
-			self::wpcd_clear_send_email_for_long_pending_task_events();
+			self::sstk_cleanup_pending_logs_clear_scheduled_events();
+			self::sstk_clear_send_email_for_long_pending_task_events();
 		}
 
 	}
@@ -1144,8 +1142,8 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_clear_send_email_for_long_pending_task_events() {
-		wp_unschedule_hook( 'wpcd_email_alert_for_long_pending_tasks' );
+	public static function sstk_clear_send_email_for_long_pending_task_events() {
+		wp_unschedule_hook( 'sstk_email_alert_for_long_pending_tasks' );
 	}
 
 
@@ -1154,8 +1152,8 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_cleanup_pending_logs_clear_scheduled_events() {
-		wp_unschedule_hook( 'wpcd_clean_up_pending_logs' );
+	public static function sstk_cleanup_pending_logs_clear_scheduled_events() {
+		wp_unschedule_hook( 'sstk_clean_up_pending_logs' );
 	}
 
 	/**
@@ -1167,9 +1165,9 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 * @param  array  $args args.
 	 * @return void
 	 */
-	public function wpcd_clean_up_pending_logs_for_new_site( $new_site, $args ) {
+	public function sstk_clean_up_pending_logs_for_new_site( $new_site, $args ) {
 
-		$plugin_name = wpcd_plugin;
+		$plugin_name = SSTK_PLUGIN;
 
 		// To check the plugin is active network-wide.
 		if ( is_plugin_active_for_network( $plugin_name ) ) {
@@ -1177,8 +1175,8 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 			$blog_id = $new_site->blog_id;
 
 			switch_to_blog( $blog_id );
-			self::wpcd_clean_up_pending_logs_events();
-			self::wpcd_send_email_alert_for_long_pending_tasks_events();
+			self::sstk_clean_up_pending_logs_events();
+			self::sstk_send_email_alert_for_long_pending_tasks_events();
 			restore_current_blog();
 		}
 
@@ -1189,7 +1187,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @param int $post_id site post id.
 	 */
-	public function wpcd_wpapp_pending_log_post_delete( $post_id ) {
+	public function sstk_wpapp_pending_log_post_delete( $post_id ) {
 
 		$state_meta = array(
 			'relation' => 'OR',
@@ -1208,9 +1206,9 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		);
 
 		// Delete the pending logs where the OWNER/PARENT is the same as site or server id.
-		if ( ( get_post_type( $post_id ) === 'wpcd_app' || get_post_type( $post_id ) === 'wpcd_app_server' ) && wpcd_is_admin() ) {
+		if ( ( get_post_type( $post_id ) === 'sstk_app' || get_post_type( $post_id ) === 'sstk_app_server' ) && sstk_is_admin() ) {
 			$log_args = array(
-				'post_type'      => 'wpcd_pending_log',
+				'post_type'      => 'sstk_pending_log',
 				'post_status'    => 'private',
 				'posts_per_page' => -1,
 				'fields'         => 'ids', // Only get post IDs.
@@ -1234,9 +1232,9 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		}
 
 		// Delete the pending logs where the ASSOCIATED SERVER ID is the same as site id.
-		if ( get_post_type( $post_id ) === 'wpcd_app_server' ) {
+		if ( get_post_type( $post_id ) === 'sstk_app_server' ) {
 			$pending_log_args = array(
-				'post_type'      => 'wpcd_pending_log',
+				'post_type'      => 'sstk_pending_log',
 				'post_status'    => 'private',
 				'posts_per_page' => -1,
 				'fields'         => 'ids', // Only get post IDs.
@@ -1262,17 +1260,17 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 	}
 
 	/**
-	 * Send email to wpcd site admin if any pending task has been started but more than 15 mins has gone by without it completing.
+	 * Send email to sstk site admin if any pending task has been started but more than 15 mins has gone by without it completing.
 	 *
 	 * @return void
 	 */
-	public function wpcd_send_email_alert_for_long_pending_tasks() {
+	public function sstk_send_email_alert_for_long_pending_tasks() {
 
 		// Set transient to indicate this task was run.
-		set_transient( 'wpcd_send_email_alert_for_long_pending_tasks_is_active', 1, ( 15 * MINUTE_IN_SECONDS ) );
+		set_transient( 'sstk_send_email_alert_for_long_pending_tasks_is_active', 1, ( 15 * MINUTE_IN_SECONDS ) );
 
 		// Do not bother if a setting is enabled to prevent these emails from being sent.
-		if ( true === (bool) wpcd_get_early_option( 'wpcd_do_not_send_pending_log_warning_emails' ) ) {
+		if ( true === (bool) sstk_get_early_option( 'sstk_do_not_send_pending_log_warning_emails' ) ) {
 			return;
 		}
 
@@ -1280,7 +1278,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		$compare_time = time() - ( 15 * MINUTE_IN_SECONDS );
 
 		$pending_task_args = array(
-			'post_type'   => 'wpcd_pending_log',
+			'post_type'   => 'sstk_pending_log',
 			'post_status' => 'private',
 			'numberposts' => -1,
 			'orderby'     => 'date',
@@ -1336,11 +1334,11 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 		if ( ! empty( $pending_task_found ) ) {
 
 			// Starting text of email.
-			$email_body  = __( 'The following background tasks (aka pending task) have been started but are taking a long time to complete - more than 15 minutes.  Most tasks take less time than that.', 'wpcd' ) . '<br /><br />';
-			$email_body  = __( 'Creating a new server, changing domains on large sites and backing up large sites are some of the tasks that might take longer than 15 minutes.', 'wpcd' ) . '<br /><br />';
-			$email_body  = __( 'You should take a look at the tasks listed below to see if there is a legitimate reason that they are taking longer to complete or if there is an issue that is preventing them from completing properly.', 'wpcd' ) . '<br /><br />';
-			$email_body .= __( 'You can start your investigation on the PENDING TASKS screen.  There you can use the ALL STATES dropdown on the filter bar to view all tasks that are in-process.', 'wpcd' ) . '<br /><br />';
-			$email_body .= __( 'Please note that a task that is taking too long to complete will prevent other tasks from running on the server.', 'wpcd' ) . '<br /><br />';
+			$email_body  = __( 'The following background tasks (aka pending task) have been started but are taking a long time to complete - more than 15 minutes.  Most tasks take less time than that.', 'simple-stack' ) . '<br /><br />';
+			$email_body  = __( 'Creating a new server, changing domains on large sites and backing up large sites are some of the tasks that might take longer than 15 minutes.', 'simple-stack' ) . '<br /><br />';
+			$email_body  = __( 'You should take a look at the tasks listed below to see if there is a legitimate reason that they are taking longer to complete or if there is an issue that is preventing them from completing properly.', 'simple-stack' ) . '<br /><br />';
+			$email_body .= __( 'You can start your investigation on the PENDING TASKS screen.  There you can use the ALL STATES dropdown on the filter bar to view all tasks that are in-process.', 'simple-stack' ) . '<br /><br />';
+			$email_body .= __( 'Please note that a task that is taking too long to complete will prevent other tasks from running on the server.', 'simple-stack' ) . '<br /><br />';
 			$email_body .= '<hr />';
 
 			// Add in details to email for each pending task affected.
@@ -1363,20 +1361,20 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 				// Add message if this is the last email we'll send for this task - we'll only send 3 emails for each task.
 				// Note that this condition might never be met because the task will likely be marked as failed-timeout after 2 hours.
 				if ( 2 === $sent_count ) {
-					$email_body .= __( 'This is the last alert you will receive about this overdue task.', 'wpcd' ) . '<br /><br />';
+					$email_body .= __( 'This is the last alert you will receive about this overdue task.', 'simple-stack' ) . '<br /><br />';
 				}
 
-				$email_body .= wp_sprintf( '%s: %s', __( 'Task Id', 'wpcd' ), $task_detail_id ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Pending Task Type', 'wpcd' ), $pending_task_type ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Key', 'wpcd' ), $pending_task_key ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'State', 'wpcd' ), $pending_task_state ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Attempts To Complete', 'wpcd' ), $pending_task_attempts ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Reference', 'wpcd' ), $pending_task_reference ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Comment', 'wpcd' ), $pending_task_comment ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Date Started', 'wpcd' ), gmdate( 'Y-m-d @ H:i', $pending_task_start_date ) ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Log Owner or Parent ID', 'wpcd' ), $parent_post_id ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Parent Post Type', 'wpcd' ), $pending_task_parent_post_type ) . '<br /><br />';
-				$email_body .= wp_sprintf( '%s: %s', __( 'Associated Server ID', 'wpcd' ), $pending_task_associated_server_id ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Task Id', 'simple-stack' ), $task_detail_id ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Pending Task Type', 'simple-stack' ), $pending_task_type ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Key', 'simple-stack' ), $pending_task_key ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'State', 'simple-stack' ), $pending_task_state ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Attempts To Complete', 'simple-stack' ), $pending_task_attempts ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Reference', 'simple-stack' ), $pending_task_reference ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Comment', 'simple-stack' ), $pending_task_comment ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Date Started', 'simple-stack' ), gmdate( 'Y-m-d @ H:i', $pending_task_start_date ) ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Log Owner or Parent ID', 'simple-stack' ), $parent_post_id ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Parent Post Type', 'simple-stack' ), $pending_task_parent_post_type ) . '<br /><br />';
+				$email_body .= wp_sprintf( '%s: %s', __( 'Associated Server ID', 'simple-stack' ), $pending_task_associated_server_id ) . '<br /><br />';
 				$email_body .= '<hr />';
 
 				// Update the task detail record to mark warning email as being sent - we'll allow it to be sent up to three times.
@@ -1390,7 +1388,7 @@ class WPCD_PENDING_TASKS_LOG extends WPCD_POSTS_LOG {
 			// Send the email.
 			wp_mail(
 				get_option( 'admin_email' ),
-				__( 'One or more background tasks are taking a long time to complete.', 'wpcd' ),
+				__( 'One or more background tasks are taking a long time to complete.', 'simple-stack' ),
 				$email_body,
 				array( 'Content-Type: text/html; charset=UTF-8' )
 			);

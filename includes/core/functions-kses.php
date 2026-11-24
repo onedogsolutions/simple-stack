@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * This file contains general or helper functions for WPCD
+ * This file contains general or helper functions for SSTK
  * that return data filtered for various KSES parameters.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 5.7.
  */
-function wpcd_kses_allowed_select() {
+function sstk_kses_allowed_select() {
 
 	$allowed_html['select'] = array(
 		'class'    => true,
@@ -47,8 +48,8 @@ function wpcd_kses_allowed_select() {
  *
  * @param string $data String to filter.
  */
-function wpcd_kses_select( $data ) {
+function sstk_kses_select( $data ) {
 
-	return wp_kses( $data, wpcd_kses_allowed_select() );
+	return wp_kses( $data, sstk_kses_allowed_select() );
 
 }

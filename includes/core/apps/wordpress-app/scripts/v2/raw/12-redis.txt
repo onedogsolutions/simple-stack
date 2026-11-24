@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
@@ -60,22 +61,14 @@ then
 	sed -i "s/supervised no/supervised systemd/g" /etc/redis/redis.conf
 	systemctl restart redis
 
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		apt-get install -y php7.4-redis php8.0-redis php8.1-redis php8.2-redis php8.3-redis
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		# Install the redis extension for every LSPHP version SimpleStack manages, rather
-		# than the inherited hard-coded lsphp74/80/81/82 list, which left 83/84/85 without
-		# a redis client extension.
-		for v in "${g_php_versions[@]}"
-		do
-			if ! apt-get install -y "lsphp${v}-redis" > /dev/null 2>&1
-			then
-				echo "WARNING - lsphp${v}-redis could not be installed; continuing without it."
-			fi
-		done
-	fi
+	# Install the Redis extension for every LSPHP version managed by Simple Stack.
+	for v in "${g_php_versions[@]}"
+	do
+		if ! apt-get install -y "lsphp${v}-redis" > /dev/null 2>&1
+		then
+			echo "WARNING - lsphp${v}-redis could not be installed; continuing without it."
+		fi
+	done
 	gf_restart_webserver
 	echo
 	echo "Redis has been installed. You can run this script again to enable it for a site."
@@ -108,25 +101,22 @@ then
 		echo "If you want to enable Redis, the currently enabled cache system needs to be disabled first."
 	exit
 	fi
-	if [ "$g_webserver_type" = "nginx" ]
+	if ! su - "$user_name" -c "wp --skip-plugins plugin install litespeed-cache && wp --skip-plugins plugin activate litespeed-cache"
 	then
-		su - $user_name -c "wp plugin install --activate redis-cache"
-		su - $user_name -c "cd /var/www/$domain/html/wp-content/; ln -s ./plugins/redis-cache/includes/object-cache.php ./object-cache.php"
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-        then
-		su - $user_name -c "wp plugin list|grep -q litespeed-cache"
-		if [ $? -eq 0 ]
-		then
-			su - $user_name -c "wp plugin is-active litespeed-cache"
-			if [ $? -ne 0 ]
-			then
-				su - $user_name -c "wp plugin activate litespeed-cache"
-			fi
-		else
-			su - "$user_name" -c "wp --skip-plugins plugin install litespeed-cache && wp --skip-plugins plugin activate litespeed-cache && wp litespeed-online init"
-		fi
-		su - $user_name -c "wp --skip-plugins config set WP_CACHE true --raw"		
-		su - "$user_name" -c "wp litespeed-option set object true && wp litespeed-option set object-port 6379 && wp litespeed-option set object-host 127.0.0.1 && wp litespeed-option set object-kind 1 && wp cache flush"
+		echo "Unable to install or activate LiteSpeed Cache for $domain"
+		exit 1
+	fi
+
+	if ! su - "$user_name" -c "wp --skip-plugins config set WP_CACHE true --raw"
+	then
+		echo "Unable to enable WP_CACHE for $domain"
+		exit 1
+	fi
+
+	if ! su - "$user_name" -c "wp litespeed-option set object true && wp litespeed-option set object-port 6379 && wp litespeed-option set object-host 127.0.0.1 && wp litespeed-option set object-kind 1 && wp cache flush"
+	then
+		echo "Unable to configure Redis object caching for $domain"
+		exit 1
 	fi
 	echo
 	echo "Redis has been enabled for $domain"
@@ -152,13 +142,10 @@ then
 	done
 	user_name=$(echo $domain | cut -c1-32)
 
-	if [ "$g_webserver_type" = "nginx" ]
+	if ! su - "$user_name" -c "wp litespeed-option set object false && wp cache flush"
 	then
-		rm -f /var/www/$domain/html/wp-content/object-cache.php
-		su - $user_name -c "wp plugin uninstall --deactivate redis-cache"
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-        then
-		su - "$user_name" -c "wp litespeed-option set object false && wp cache flush"
+		echo "Unable to disable Redis object caching for $domain"
+		exit 1
 	fi
 	echo
 	echo "Redis has been disabled for $domain"
@@ -208,13 +195,7 @@ then
 	fi
 
 	apt-get remove redis-server redis* -y
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		apt-get remove -y php?.?-redis
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		apt-get remove -y lsphp??-redis
-	fi
+	apt-get remove -y lsphp??-redis
 	gf_restart_webserver "true"
 	echo
 	echo "Redis has been removed from the system."

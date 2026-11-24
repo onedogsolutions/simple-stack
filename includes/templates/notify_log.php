@@ -1,6 +1,6 @@
 <style>
 	/*******************************************************************/
-	/* CSS for VPN post meta                                           */
+	/* CSS for notification log post meta                             */
 	/*******************************************************************/
 	.notify_log_meta_field{
 		margin-bottom: 10px;
@@ -19,27 +19,27 @@
 /**
  * Add nonce for security and authentication.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
-wp_nonce_field( 'wpcd_app_nonce_meta_action', 'app_meta' );
+wp_nonce_field( 'sstk_app_nonce_meta_action', 'app_meta' );
 ?>
 <div class="notify_log_meta_field">
-	<label for="command_type"><?php echo esc_html( __( 'Notification Type', 'wpcd' ) ); ?></label>
+	<label for="command_type"><?php echo esc_html( __( 'Notification Type', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notification_type ); ?></p>
 </div>
 <hr />
 <div class="notify_log_meta_field">
-	<label for="command_reference"><?php echo esc_html( __( 'Notification Reference', 'wpcd' ) ); ?></label>
+	<label for="command_reference"><?php echo esc_html( __( 'Notification Reference', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notification_reference ); ?></p>
 </div>
 <hr />
 <div class="notify_log_meta_field">
-	<label for="command_result"><?php echo esc_html( __( 'Notification Message', 'wpcd' ) ); ?></label>
+	<label for="command_result"><?php echo esc_html( __( 'Notification Message', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notification_message ); ?></p>
 </div>
 <hr />
 <div class="notify_log_meta_field">
-	<label for="parent_post_id"><?php echo esc_html( __( 'Notification Owner or Parent ID', 'wpcd' ) ); ?></label>
+	<label for="parent_post_id"><?php echo esc_html( __( 'Notification Owner or Parent ID', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $parent_post_id ); ?></p>
 </div>

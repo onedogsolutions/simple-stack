@@ -24,7 +24,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes SimpleStack’s reusable React UI component library used in the admin interface. It covers props, events, slots, customization options, accessibility, and responsive behavior for each component: Button, Card, Modal, DataTable, Toast, SecretField, TabRenderer, and LogDrawer. Practical usage examples are provided conceptually so you can adapt them to your routes and data models without copying implementation details.
+This document describes Simple Stack’s reusable React UI component library used in the admin interface. It covers props, events, slots, customization options, accessibility, and responsive behavior for each component: Button, Card, Modal, DataTable, Toast, SecretField, TabRenderer, and LogDrawer. Practical usage examples are provided conceptually so you can adapt them to your routes and data models without copying implementation details.
 
 ## Project Structure
 The components live under `src/admin/components` and share a consistent Tailwind-based design system scoped to the admin container. They compose together to build pages such as server and site detail views, tabs, tables, modals, notifications, and log drawers.
@@ -524,6 +524,6 @@ Common issues and resolutions:
 - [LogDrawer.jsx:83-101](file://src/admin/components/LogDrawer.jsx#L83-L101)
 
 ## Conclusion
-SimpleStack’s UI component library provides a cohesive, accessible, and responsive set of building blocks for the admin interface. By composing Button, Card, Modal, DataTable, Toast, SecretField, TabRenderer, and LogDrawer, you can implement robust workflows for configuration, data presentation, user feedback, and operational logging. Follow the documented props, events, and slots to integrate these components consistently across your application.
+Simple Stack’s UI component library provides a cohesive, accessible, and responsive set of building blocks for the admin interface. By composing Button, Card, Modal, DataTable, Toast, SecretField, TabRenderer, and LogDrawer, you can implement robust workflows for configuration, data presentation, user feedback, and operational logging. Follow the documented props, events, and slots to integrate these components consistently across your application.
 
 [No sources needed since this section summarizes without analyzing specific files]

@@ -2,12 +2,12 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [class-simplestack-rest-api.php](file://includes/core/api/class-simplestack-rest-api.php)
-- [class-simplestack-rest-providers.php](file://includes/core/api/class-simplestack-rest-providers.php)
+- [class-sstk-rest-api.php](file://includes/core/api/class-sstk-rest-api.php)
+- [class-sstk-rest-providers.php](file://includes/core/api/class-sstk-rest-providers.php)
 - [class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
 - [class-vultr-v2.php](file://includes/core/providers/class-vultr-v2.php)
 - [class-upcloud.php](file://includes/core/providers/class-upcloud.php)
-- [wp-cloud-deploy.php](file://includes/core/wp-cloud-deploy.php)
+- [simple-stack.php](file://includes/core/simple-stack.php)
 </cite>
 
 ## Table of Contents
@@ -23,15 +23,15 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document describes the cloud provider management endpoints exposed under the SimpleStack REST namespace used by the admin client. It focuses on provider configuration, credential storage, region and size discovery, and connection testing for supported providers Vultr and UpCloud. It also explains the provider abstraction layer, extension mechanisms for custom providers, authentication requirements, credential encryption, error handling, retry behavior, and multi-provider considerations.
+This document describes the cloud provider management endpoints exposed under the Simple Stack REST namespace used by the admin client. It focuses on provider configuration, credential storage, region and size discovery, and connection testing for the supported Vultr and UpCloud providers. It also explains the provider abstraction layer, virtual provider aliases, authentication requirements, credential encryption, error handling, retry behavior, and multi-account considerations. Adding any other provider type is outside the 1.0.0 product scope and requires an explicit scope change.
 
-The public API surface is registered under the shared SimpleStack REST namespace. The controller responsible for provider settings lives at the `settings/providers` route segment. Clients should not expect a separate `simple-stack/v1/providers` path; the actual routes are mounted through the shared SimpleStack REST API loader.
+The admin REST surface is registered under the shared Simple Stack REST namespace. All provider settings routes use `SSTK_REST_Controller_Base` and require `manage_options`. The controller responsible for provider settings lives at the `settings/providers` route segment. Clients should not expect a separate `simple-stack/v1/providers` path; the actual routes are mounted through the shared Simple Stack REST API loader.
 
 ## Project Structure
 The provider-related code is organized into three layers:
 
 - REST routing and request handling:
-  - The SimpleStack REST API loader registers controllers.
+  - The Simple Stack REST API loader registers controllers.
   - The providers controller defines provider listing, saving, and testing endpoints.
 - Provider abstraction:
   - A base class defines shared state, feature flags, caching, credential helpers, and common provider operations.
@@ -41,29 +41,29 @@ The provider-related code is organized into three layers:
 
 ```mermaid
 graph TB
-Client["Admin Client"] --> RESTAPI["SimpleStack_REST_API<br/>Registers namespace and controllers"]
-RESTAPI --> ProvidersController["SimpleStack_REST_Providers<br/>Provider settings endpoints"]
+Client["Admin Client"] --> RESTAPI["SSTK_REST_API<br/>Registers namespace and controllers"]
+RESTAPI --> ProvidersController["SSTK_REST_Providers<br/>Provider settings endpoints"]
 ProvidersController --> BaseProvider["CLOUD_PROVIDER_API<br/>Shared provider contract"]
 BaseProvider --> Vultr["CLOUD_PROVIDER_API_VultrV2<br/>Bearer token provider"]
 BaseProvider --> Upcloud["CLOUD_PROVIDER_API_Upcloud<br/>Basic auth provider"]
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
-- [class-simplestack-rest-api.php:84-99](file://includes/core/api/class-simplestack-rest-api.php#L84-L99)
-- [class-simplestack-rest-providers.php:20-85](file://includes/core/api/class-simplestack-rest-providers.php#L20-L85)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
+- [class-sstk-rest-api.php:84-99](file://includes/core/api/class-sstk-rest-api.php#L84-L99)
+- [class-sstk-rest-providers.php:20-85](file://includes/core/api/class-sstk-rest-providers.php#L20-L85)
 - [class-cloud-provider-api.php:15-167](file://includes/core/providers/class-cloud-provider-api.php#L15-L167)
 - [class-vultr-v2.php:30-127](file://includes/core/providers/class-vultr-v2.php#L30-L127)
 - [class-upcloud.php:33-128](file://includes/core/providers/class-upcloud.php#L33-L128)
 
 **Section sources**
-- [class-simplestack-rest-api.php:15-37](file://includes/core/api/class-simplestack-rest-api.php#L15-L37)
-- [class-simplestack-rest-api.php:84-99](file://includes/core/api/class-simplestack-rest-api.php#L84-L99)
-- [class-simplestack-rest-providers.php:20-85](file://includes/core/api/class-simplestack-rest-providers.php#L20-L85)
+- [class-sstk-rest-api.php:15-37](file://includes/core/api/class-sstk-rest-api.php#L15-L37)
+- [class-sstk-rest-api.php:84-99](file://includes/core/api/class-sstk-rest-api.php#L84-L99)
+- [class-sstk-rest-providers.php:20-85](file://includes/core/api/class-sstk-rest-providers.php#L20-L85)
 
 ## Core Components
-- **SimpleStack_REST_API**: Loads provider-related files and registers the SimpleStack REST namespace. It instantiates each controller and calls its `register_routes()` method.
-- **SimpleStack_REST_Providers**: Defines provider settings endpoints under `settings/providers`. It lists configured providers, saves encrypted credentials, and tests provider connectivity.
+- **SSTK_REST_API**: Loads provider-related files and registers the Simple Stack REST namespace. It instantiates each controller and calls its `register_routes()` method.
+- **SSTK_REST_Providers**: Defines provider settings endpoints under `settings/providers`. It lists configured providers, saves encrypted credentials, and tests provider connectivity.
 - **CLOUD_PROVIDER_API**: Shared base class defining provider identity, feature flags, cache keys, credential helpers, and common operations such as regions, sizes, SSH keys, create, status, power, delete, resize, snapshots, and test connection.
 - **CLOUD_PROVIDER_API_VultrV2**: Implements Vultr v2 using bearer tokens, plan mapping, image resolution, pagination, and rate-limit retry logic.
 - **CLOUD_PROVIDER_API_Upcloud**: Implements UpCloud using HTTP Basic authentication, zone/plan mapping, storage template selection, and backup limitations.
@@ -77,9 +77,9 @@ Key responsibilities:
 - Connection testing through provider-specific `test_connection` methods.
 
 **Section sources**
-- [class-simplestack-rest-api.php:63-75](file://includes/core/api/class-simplestack-rest-api.php#L63-L75)
-- [class-simplestack-rest-api.php:84-99](file://includes/core/api/class-simplestack-rest-api.php#L84-L99)
-- [class-simplestack-rest-providers.php:20-85](file://includes/core/api/class-simplestack-rest-providers.php#L20-L85)
+- [class-sstk-rest-api.php:63-75](file://includes/core/api/class-sstk-rest-api.php#L63-L75)
+- [class-sstk-rest-api.php:84-99](file://includes/core/api/class-sstk-rest-api.php#L84-L99)
+- [class-sstk-rest-providers.php:20-85](file://includes/core/api/class-sstk-rest-providers.php#L20-L85)
 - [class-cloud-provider-api.php:146-167](file://includes/core/providers/class-cloud-provider-api.php#L146-L167)
 - [class-vultr-v2.php:30-127](file://includes/core/providers/class-vultr-v2.php#L30-L127)
 - [class-upcloud.php:33-128](file://includes/core/providers/class-upcloud.php#L33-L128)
@@ -90,8 +90,8 @@ The provider management flow follows this sequence:
 ```mermaid
 sequenceDiagram
 participant Client as "Admin Client"
-participant REST as "SimpleStack_REST_API"
-participant Controller as "SimpleStack_REST_Providers"
+participant REST as "SSTK_REST_API"
+participant Controller as "SSTK_REST_Providers"
 participant Provider as "CLOUD_PROVIDER_API subclass"
 participant Cloud as "Cloud Provider API"
 Client->>REST : Initialize REST namespace
@@ -113,11 +113,11 @@ Controller-->>Client : { connected, message }
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-api.php:84-99](file://includes/core/api/class-simplestack-rest-api.php#L84-L99)
-- [class-simplestack-rest-providers.php:58-85](file://includes/core/api/class-simplestack-rest-providers.php#L58-L85)
-- [class-simplestack-rest-providers.php:96-111](file://includes/core/api/class-simplestack-rest-providers.php#L96-L111)
-- [class-simplestack-rest-providers.php:122-174](file://includes/core/api/class-simplestack-rest-providers.php#L122-L174)
-- [class-simplestack-rest-providers.php:185-217](file://includes/core/api/class-simplestack-rest-providers.php#L185-L217)
+- [class-sstk-rest-api.php:84-99](file://includes/core/api/class-sstk-rest-api.php#L84-L99)
+- [class-sstk-rest-providers.php:58-85](file://includes/core/api/class-sstk-rest-providers.php#L58-L85)
+- [class-sstk-rest-providers.php:96-111](file://includes/core/api/class-sstk-rest-providers.php#L96-L111)
+- [class-sstk-rest-providers.php:122-174](file://includes/core/api/class-sstk-rest-providers.php#L122-L174)
+- [class-sstk-rest-providers.php:185-217](file://includes/core/api/class-sstk-rest-providers.php#L185-L217)
 - [class-vultr-v2.php:813-823](file://includes/core/providers/class-vultr-v2.php#L813-L823)
 - [class-upcloud.php:831-841](file://includes/core/providers/class-upcloud.php#L831-L841)
 
@@ -133,7 +133,7 @@ The provider settings controller exposes three primary operations:
 | POST | `/settings/providers/{slug}/test` | Test provider connectivity | `slug` | `{ slug, connected, message }` |
 
 #### GET `/settings/providers`
-- Lists every provider known to the system.
+- Lists Vultr, UpCloud, and virtual provider aliases of those supported provider types.
 - Returns redacted boolean flags indicating whether credentials exist without exposing secret values.
 - Includes per-provider feature flags such as snapshots, snapshot deletion, snapshot listing, resize, SSH key creation, and connection testing.
 - Includes region and size counts, optionally refreshed from the provider.
@@ -166,11 +166,11 @@ Error conditions:
 - Region and size discovery failures are swallowed so the settings screen remains usable.
 
 **Section sources**
-- [class-simplestack-rest-providers.php:58-85](file://includes/core/api/class-simplestack-rest-providers.php#L58-L85)
-- [class-simplestack-rest-providers.php:96-111](file://includes/core/api/class-simplestack-rest-providers.php#L96-L111)
-- [class-simplestack-rest-providers.php:228-276](file://includes/core/api/class-simplestack-rest-providers.php#L228-L276)
-- [class-simplestack-rest-providers.php:290-336](file://includes/core/api/class-simplestack-rest-providers.php#L290-L336)
-- [class-simplestack-rest-providers.php:343-357](file://includes/core/api/class-simplestack-rest-providers.php#L343-L357)
+- [class-sstk-rest-providers.php:58-85](file://includes/core/api/class-sstk-rest-providers.php#L58-L85)
+- [class-sstk-rest-providers.php:96-111](file://includes/core/api/class-sstk-rest-providers.php#L96-L111)
+- [class-sstk-rest-providers.php:228-276](file://includes/core/api/class-sstk-rest-providers.php#L228-L276)
+- [class-sstk-rest-providers.php:290-336](file://includes/core/api/class-sstk-rest-providers.php#L290-L336)
+- [class-sstk-rest-providers.php:343-357](file://includes/core/api/class-sstk-rest-providers.php#L343-L357)
 
 #### POST `/settings/providers`
 - Validates that the provided slug corresponds to a known provider.
@@ -191,11 +191,11 @@ Request parameters:
 Validation and behavior:
 - Unknown slugs return an invalid-provider error.
 - Empty fields mean “leave existing stored values unchanged.”
-- API-key providers store `vpn_{slug}_apikey`.
-- Username/password providers store `vpn_{slug}_user_name` and `vpn_{slug}_user_password`.
-- Private SSH key is stored under `vpn_{slug}_sshkey`.
-- SSH key ID is stored under `vpn_{slug}_sshkey_id`.
-- Notes are stored under `vpn_{slug}_keynotes`.
+- API-key providers store `sstk_{slug}_apikey`.
+- Username/password providers store `sstk_{slug}_user_name` and `sstk_{slug}_user_password`.
+- Private SSH key is stored under `sstk_{slug}_sshkey`.
+- SSH key ID is stored under `sstk_{slug}_sshkey_id`.
+- Notes are stored under `sstk_{slug}_keynotes`.
 
 Response:
 - Updated provider description including credential presence flags and feature availability.
@@ -205,7 +205,7 @@ Error responses:
 - Missing or malformed provider implementation.
 
 **Section sources**
-- [class-simplestack-rest-providers.php:122-174](file://includes/core/api/class-simplestack-rest-providers.php#L122-L174)
+- [class-sstk-rest-providers.php:122-174](file://includes/core/api/class-sstk-rest-providers.php#L122-L174)
 
 #### POST `/settings/providers/{slug}/test`
 - Retrieves the provider implementation by slug.
@@ -227,14 +227,14 @@ Error conditions:
 - Provider API returns an error.
 
 **Section sources**
-- [class-simplestack-rest-providers.php:185-217](file://includes/core/api/class-simplestack-rest-providers.php#L185-L217)
+- [class-sstk-rest-providers.php:185-217](file://includes/core/api/class-sstk-rest-providers.php#L185-L217)
 
 ### Provider Abstraction Layer
 The base provider class defines the shared contract implemented by Vultr and UpCloud:
 
 - Provider identity:
   - Friendly name and internal slug.
-  - Baseline provider name/slug for custom server actions.
+  - Baseline provider name/slug identifying the supported Vultr or UpCloud type behind a virtual provider alias.
 - Feature flags:
   - Snapshots, snapshot deletion, snapshot listing.
   - Backups and enable-backups-on-create.
@@ -274,7 +274,7 @@ Complexity characteristics:
 Vultr implements the provider contract against the Vultr v2 REST API:
 
 - Authentication:
-  - Bearer token read from the encrypted option `vpn_vultr-v2_apikey`.
+  - Bearer token read from the encrypted option `sstk_vultr-v2_apikey`.
 - Supported features:
   - SSH key creation.
   - Connection testing.
@@ -397,7 +397,7 @@ The provider management stack has clear boundaries:
 
 - REST layer depends only on the controller interface and shared base controller utilities.
 - Provider controller depends on:
-  - WPCD core for provider registry and encryption.
+  - SSTK core for provider registry and encryption.
   - Provider implementations for feature flags, credential checks, and API calls.
 - Provider implementations depend on:
   - Base provider class for shared behavior.
@@ -406,8 +406,8 @@ The provider management stack has clear boundaries:
 
 ```mermaid
 graph LR
-RESTAPI["SimpleStack_REST_API"] --> ProvidersController["SimpleStack_REST_Providers"]
-ProvidersController --> WPCD["WPCD Core"]
+RESTAPI["SSTK_REST_API"] --> ProvidersController["SSTK_REST_Providers"]
+ProvidersController --> SSTK["SSTK Core"]
 ProvidersController --> BaseProvider["CLOUD_PROVIDER_API"]
 BaseProvider --> Vultr["CLOUD_PROVIDER_API_VultrV2"]
 BaseProvider --> Upcloud["CLOUD_PROVIDER_API_Upcloud"]
@@ -416,15 +416,15 @@ Upcloud --> WPHTTP
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
-- [class-simplestack-rest-providers.php:20-85](file://includes/core/api/class-simplestack-rest-providers.php#L20-L85)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
+- [class-sstk-rest-providers.php:20-85](file://includes/core/api/class-sstk-rest-providers.php#L20-L85)
 - [class-cloud-provider-api.php:15-167](file://includes/core/providers/class-cloud-provider-api.php#L15-L167)
 - [class-vultr-v2.php:1167-1255](file://includes/core/providers/class-vultr-v2.php#L1167-L1255)
 - [class-upcloud.php:1204-1222](file://includes/core/providers/class-upcloud.php#L1204-L1222)
 
 **Section sources**
-- [class-simplestack-rest-api.php:63-75](file://includes/core/api/class-simplestack-rest-api.php#L63-L75)
-- [class-simplestack-rest-providers.php:122-174](file://includes/core/api/class-simplestack-rest-providers.php#L122-L174)
+- [class-sstk-rest-api.php:63-75](file://includes/core/api/class-sstk-rest-api.php#L63-L75)
+- [class-sstk-rest-providers.php:122-174](file://includes/core/api/class-sstk-rest-providers.php#L122-L174)
 - [class-vultr-v2.php:1167-1227](file://includes/core/providers/class-vultr-v2.php#L1167-L1227)
 - [class-upcloud.php:1133-1193](file://includes/core/providers/class-upcloud.php#L1133-L1193)
 
@@ -441,30 +441,34 @@ Recommendations:
 - Monitor transient storage and object cache behavior in production environments.
 
 **Section sources**
-- [class-simplestack-rest-providers.php:35-37](file://includes/core/api/class-simplestack-rest-providers.php#L35-L37)
-- [class-simplestack-rest-providers.php:290-336](file://includes/core/api/class-simplestack-rest-providers.php#L290-L336)
+- [class-sstk-rest-providers.php:35-37](file://includes/core/api/class-sstk-rest-providers.php#L35-L37)
+- [class-sstk-rest-providers.php:290-336](file://includes/core/api/class-sstk-rest-providers.php#L290-L336)
 - [class-vultr-v2.php:1176-1194](file://includes/core/providers/class-vultr-v2.php#L1176-L1194)
 - [class-upcloud.php:1142-1160](file://includes/core/providers/class-upcloud.php#L1142-L1160)
 
 ## Troubleshooting Guide
 
-### Adding a New Provider
+### Provider Scope and Registration
+Simple Stack 1.0.0 registers only `vultr-v2` and `upcloud`. Virtual provider records may alias either supported type, but they do not add a new provider implementation.
+
 Common issues:
 - Unknown provider slug during save.
-- Provider implementation not installed.
+- Provider implementation not loaded.
 - Incomplete credentials for connection testing.
 
 Resolution steps:
-- Ensure the provider slug matches a registered provider.
-- Verify the provider class file is loadable.
+- Ensure the provider slug is registered or is a virtual alias of `vultr-v2` or `upcloud`.
+- Verify the underlying provider class file is loadable.
 - Provide the correct credential shape:
   - API key for Vultr.
   - Username and password for UpCloud.
 - Store SSH key material separately where required.
 
+Adding another provider type requires an explicit product-scope change, including registry and UI updates, provisioning compatibility work, tests, and documentation. It is not a configuration-only extension.
+
 **Section sources**
-- [class-simplestack-rest-providers.php:122-174](file://includes/core/api/class-simplestack-rest-providers.php#L122-L174)
-- [class-simplestack-rest-providers.php:185-217](file://includes/core/api/class-simplestack-rest-providers.php#L185-L217)
+- [class-sstk-rest-providers.php:122-174](file://includes/core/api/class-sstk-rest-providers.php#L122-L174)
+- [class-sstk-rest-providers.php:185-217](file://includes/core/api/class-sstk-rest-providers.php#L185-L217)
 
 ### Validating Credentials
 Symptoms:
@@ -480,7 +484,7 @@ Checks:
 - For Vultr, confirm the API key is present.
 
 **Section sources**
-- [class-simplestack-rest-providers.php:185-217](file://includes/core/api/class-simplestack-rest-providers.php#L185-L217)
+- [class-sstk-rest-providers.php:185-217](file://includes/core/api/class-sstk-rest-providers.php#L185-L217)
 - [class-upcloud.php:173-231](file://includes/core/providers/class-upcloud.php#L173-L231)
 
 ### Discovering Regions and Sizes
@@ -495,7 +499,7 @@ Behavior:
 - Use `refresh=1` to force a new count fetch.
 
 **Section sources**
-- [class-simplestack-rest-providers.php:290-336](file://includes/core/api/class-simplestack-rest-providers.php#L290-L336)
+- [class-sstk-rest-providers.php:290-336](file://includes/core/api/class-sstk-rest-providers.php#L290-L336)
 
 ### Handling Provider Failures
 Patterns:
@@ -517,15 +521,15 @@ Best practices:
 Guidance:
 - Each provider slug isolates credentials and caches.
 - Feature flags determine which capabilities are exposed per provider.
-- Virtual providers can override display name, slug, region prefix, and dashboard link.
+- Virtual providers can override display name, slug, region prefix, and dashboard link, but must resolve to the supported `vultr-v2` or `upcloud` provider type.
 
 **Section sources**
 - [class-vultr-v2.php:86-95](file://includes/core/providers/class-vultr-v2.php#L86-L95)
 - [class-upcloud.php:82-91](file://includes/core/providers/class-upcloud.php#L82-L91)
-- [wp-cloud-deploy.php:1282-1317](file://includes/core/wp-cloud-deploy.php#L1282-L1317)
+- [simple-stack.php:1282-1317](file://includes/core/simple-stack.php#L1282-L1317)
 
 ## Conclusion
-The SimpleStack provider management API provides a secure, extensible surface for configuring cloud providers, validating credentials, discovering regions and sizes, and testing connectivity. Vultr and UpCloud are supported out of the box with different authentication models and capability sets. The base provider class standardizes feature reporting, caching, and error handling, while concrete implementations encapsulate provider-specific API details. Extensions support virtual providers and custom provider classes, enabling multi-provider environments with consistent behavior.
+The Simple Stack provider management API provides a secure admin surface for configuring Vultr and UpCloud, validating credentials, discovering regions and sizes, and testing connectivity. The two supported providers have different authentication models and capability sets. The base provider class standardizes feature reporting, caching, and error handling, while concrete implementations encapsulate provider-specific API details. Virtual provider records support multiple accounts under either supported provider type; adding another provider type requires an explicit product-scope change.
 
 ## Appendices
 
@@ -549,7 +553,7 @@ Fields returned by provider listing and save operations:
 - `counts_cached`: boolean
 
 **Section sources**
-- [class-simplestack-rest-providers.php:228-276](file://includes/core/api/class-simplestack-rest-providers.php#L228-L276)
+- [class-sstk-rest-providers.php:228-276](file://includes/core/api/class-sstk-rest-providers.php#L228-L276)
 
 #### Region and Size Count Summary
 Returned under `regions` in the provider list response:
@@ -558,7 +562,7 @@ Returned under `regions` in the provider list response:
 - Contains `sizes`: integer count.
 
 **Section sources**
-- [class-simplestack-rest-providers.php:343-357](file://includes/core/api/class-simplestack-rest-providers.php#L343-L357)
+- [class-sstk-rest-providers.php:343-357](file://includes/core/api/class-sstk-rest-providers.php#L343-L357)
 
 #### Connection Test Result
 Returned by the provider test endpoint:
@@ -567,21 +571,21 @@ Returned by the provider test endpoint:
 - `message`: string
 
 **Section sources**
-- [class-simplestack-rest-providers.php:185-217](file://includes/core/api/class-simplestack-rest-providers.php#L185-L217)
+- [class-sstk-rest-providers.php:185-217](file://includes/core/api/class-sstk-rest-providers.php#L185-L217)
 
 ### Authentication and Secure Storage Practices
 
 - Vultr:
   - Uses a bearer token.
-  - Token is stored encrypted under `vpn_vultr-v2_apikey`.
+  - Token is stored encrypted under `sstk_vultr-v2_apikey`.
   - Never logged in plaintext.
 - UpCloud:
   - Uses HTTP Basic authentication.
-  - Username and password are stored encrypted under `vpn_upcloud_user_name` and `vpn_upcloud_user_password`.
+  - Username and password are stored encrypted under `sstk_upcloud_user_name` and `sstk_upcloud_user_password`.
   - Password travels only in the Authorization header.
 - SSH keys:
-  - Private SSH key stored encrypted under `vpn_{slug}_sshkey`.
-  - Provider-side SSH key ID stored unencrypted under `vpn_{slug}_sshkey_id`.
+  - Private SSH key stored encrypted under `sstk_{slug}_sshkey`.
+  - Provider-side SSH key ID stored unencrypted under `sstk_{slug}_sshkey_id`.
 - General:
   - Sensitive values are redacted in logs.
   - Requests and responses avoid exposing secrets.
@@ -591,23 +595,23 @@ Returned by the provider test endpoint:
 - [class-vultr-v2.php:120-121](file://includes/core/providers/class-vultr-v2.php#L120-L121)
 - [class-upcloud.php:17-32](file://includes/core/providers/class-upcloud.php#L17-L32)
 - [class-upcloud.php:117-120](file://includes/core/providers/class-upcloud.php#L117-L120)
-- [class-simplestack-rest-providers.php:142-171](file://includes/core/api/class-simplestack-rest-providers.php#L142-L171)
+- [class-sstk-rest-providers.php:142-171](file://includes/core/api/class-sstk-rest-providers.php#L142-L171)
 
-### Extension Mechanisms for Custom Providers
+### Virtual Provider Aliases and Provider Scope
 
 - Virtual providers:
   - Defined through a custom post type.
   - Can override provider name, slug, region prefix, and dashboard link.
+  - Must use `vultr-v2` or `upcloud` as the underlying provider type.
 - Provider class loading:
-  - WPCD resolves provider classes dynamically.
-  - Virtual providers trigger class loading based on provider type.
-- Extending capabilities:
-  - Implement a class extending `CLOUD_PROVIDER_API`.
-  - Set provider identity, feature flags, and dashboard link.
-  - Implement required methods such as `call`, `uses_api_key`, `has_credentials`, and `credentials_available`.
+  - SSTK resolves the concrete class from the supported underlying provider type.
+  - Virtual providers reuse that class and its credential, feature, and caching behavior.
+- Provider scope:
+  - No additional provider type is registered in Simple Stack 1.0.0.
+  - A future provider requires an explicit scope change and a new `CLOUD_PROVIDER_API` implementation with its own credential shape, feature flags, lifecycle methods, tests, and documentation.
 
 **Section sources**
-- [wp-cloud-deploy.php:1282-1317](file://includes/core/wp-cloud-deploy.php#L1282-L1317)
+- [simple-stack.php:1282-1317](file://includes/core/simple-stack.php#L1282-L1317)
 - [class-cloud-provider-api.php:146-167](file://includes/core/providers/class-cloud-provider-api.php#L146-L167)
 - [class-vultr-v2.php:86-95](file://includes/core/providers/class-vultr-v2.php#L86-L95)
 - [class-upcloud.php:82-91](file://includes/core/providers/class-upcloud.php#L82-L91)

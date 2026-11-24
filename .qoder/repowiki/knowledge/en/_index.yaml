@@ -6,8 +6,8 @@ nodes_managed: true
 exported_at: "2026-11-23T14:35:35Z"
 modules:
     "":
-        dir_name: SimpleStack WordPress Plugin (WPCD Fork)
-        title: SimpleStack WordPress Plugin (WPCD Fork)
+        dir_name: Simple Stack WordPress Plugin (SSTK Fork)
+        title: Simple Stack WordPress Plugin (SSTK Fork)
         scope:
             - README.md
             - license.txt
@@ -29,7 +29,7 @@ modules:
             - uninstall.php
             - vite.config.js
             - wp-tests-config.php
-            - wpcd.php
+            - simple-stack.php
         source_files: []
         children:
             - admin_react_app
@@ -40,8 +40,8 @@ modules:
         depends_on: []
         related_to: []
     admin_react_app:
-        dir_name: SimpleStack Admin React Dashboard
-        title: SimpleStack Admin React Dashboard
+        dir_name: Simple Stack Admin React Dashboard
+        title: Simple Stack Admin React Dashboard
         scope:
             - src/admin/
         source_files: []
@@ -59,8 +59,8 @@ modules:
         depends_on: []
         related_to: []
     core_engine:
-        dir_name: WPCD Core Engine (SimpleStack Fork)
-        title: WPCD Core Engine (SimpleStack Fork)
+        dir_name: SSTK Core Engine (Simple Stack Fork)
+        title: SSTK Core Engine (Simple Stack Fork)
         scope:
             - includes/core/
         source_files: []
@@ -74,8 +74,8 @@ modules:
         depends_on: []
         related_to: []
     core_engine/app_types:
-        dir_name: WPCD App Type Registry & Base Contracts
-        title: WPCD App Type Registry & Base Contracts
+        dir_name: SSTK App Type Registry & Base Contracts
+        title: SSTK App Type Registry & Base Contracts
         scope:
             - includes/core/apps/
         source_files: []
@@ -88,16 +88,16 @@ modules:
         dir_name: App Base Classes & SSH Abstraction
         title: App Base Classes & SSH Abstraction
         scope:
-            - includes/core/apps/class-wpcd-app.php
-            - includes/core/apps/class-wpcd-app-settings.php
-            - includes/core/apps/class-wpcd-ssh.php
+            - includes/core/apps/class-sstk-app.php
+            - includes/core/apps/class-sstk-app-settings.php
+            - includes/core/apps/class-sstk-ssh.php
         source_files: []
         children: []
         depends_on: []
         related_to: []
     core_engine/app_types/wordpress_app:
-        dir_name: WordPress App Engine (WPCD Fork)
-        title: WordPress App Engine (WPCD Fork)
+        dir_name: WordPress App Engine (SSTK Fork)
+        title: WordPress App Engine (SSTK Fork)
         scope:
             - includes/core/apps/wordpress-app/
         source_files: []
@@ -189,14 +189,14 @@ modules:
         dir_name: Custom Post Type Models for Apps, Servers & Logs
         title: Custom Post Type Models for Apps, Servers & Logs
         scope:
-            - includes/core/class-wpcd-posts-*
+            - includes/core/class-sstk-posts-*
         source_files: []
         children: []
         depends_on: []
         related_to: []
     core_engine/rest_api:
-        dir_name: SimpleStack REST API Layer
-        title: SimpleStack REST API Layer
+        dir_name: Simple Stack REST API Layer
+        title: Simple Stack REST API Layer
         scope:
             - includes/core/api/
         source_files: []
@@ -209,17 +209,17 @@ modules:
         dir_name: Shared Core Base Class, Global Helpers & Application Bootstrap
         title: 'Shared Core: Base Class, Global Helpers & Application Bootstrap'
         scope:
-            - includes/core/class-wpcd-base.php
+            - includes/core/class-sstk-base.php
             - includes/core/functions.php
-            - includes/core/wp-cloud-deploy.php
+            - includes/core/simple-stack.php
         source_files: []
         children: []
         depends_on: []
         related_to:
             - path: static_assets
     static_assets:
-        dir_name: WPCD Static Assets (CSS_JS_Images)
-        title: WPCD Static Assets (CSS/JS/Images)
+        dir_name: SSTK Static Assets (CSS_JS_Images)
+        title: SSTK Static Assets (CSS/JS/Images)
         scope:
             - assets/
         source_files: []

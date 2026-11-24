@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Logs tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,19 +11,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_LOGS
+ * Class SSTK_WORDPRESS_TABS_SERVER_LOGS
  */
-class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_LOGS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
 	}
 
@@ -51,7 +52,7 @@ class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Logs', 'wpcd' ),
+				'label' => __( 'Logs', 'simple-stack' ),
 				'icon'  => 'fad fa-th-list',
 			);
 		}
@@ -66,13 +67,13 @@ class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the SERVER LOGS tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -102,15 +103,15 @@ class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'server-logs-download' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -164,14 +165,14 @@ class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
 		 * Manage Server Logs
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		// Manage server logs heading.
-		$desc = __( 'Download various log files for this site', 'wpcd' );
+		$desc = __( 'Download OpenLiteSpeed and system log files for this server.', 'simple-stack' );
 
 		$actions['server-logs-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_logs_icon( __( '%s Download Logs', 'wpcd' ) ),
+			'label'          => sstk_apply_logs_icon( __( '%s Download Logs', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -180,52 +181,52 @@ class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
 
 		// List of logs for download.
 		$actions['server-logs-log-name-select'] = array(
-			'label'          => __( 'Select Log', 'wpcd' ),
-			// 'id'   => 'wpcd_app_server_log_name',
+			'label'          => __( 'Select Log', 'simple-stack' ),
+			// 'id'   => 'sstk_app_server_log_name',
 			'type'           => 'select',
 			'raw_attributes' => array(
 				'options'        => $this->get_log_list( $id ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'server_log_name',
+				'data-sstk-name' => 'server_log_name',
 			),
 		);
 
 		$actions['server-logs-download'] = array(
-			// 'id'   => 'wpcd_app_action_server_log_download_button',
+			// 'id'   => 'sstk_app_action_server_log_download_button',
 			// 'tab'  => 'server-logs',
 			'label'          => '',
 			'type'           => 'button',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'              => wpcd_apply_download_icon( __( '%s Download', 'wpcd' ) ),
+				'std'              => sstk_apply_download_icon( __( '%s Download', 'simple-stack' ) ),
 				// the _action that will be called in ajax.
-				// 'data-wpcd-action' => 'server-log-download'.
+				// 'data-sstk-action' => 'server-log-download'.
 				// the id.
-				// 'data-wpcd-id' => $id.
+				// 'data-sstk-id' => $id.
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => json_encode( array( '#wpcd_app_action_server-logs-log-name-select' ) ),
+				'data-sstk-fields' => json_encode( array( '#sstk_app_action_server-logs-log-name-select' ) ),
 			),
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Server logs warning.
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		$actions['server-logs-warning-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_warning_icon( __( '%s Warning', 'wpcd' ) ),
+			'label'          => sstk_apply_warning_icon( __( '%s Warning', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Attempting to download very large log files can cause your server memory to be exhausted which will likely cause your server to kill this process or, worse, crash. Use this download tool only if you are sure your logs are of a reasonable size. Otherwise connect via sFTP or ssh to download logs.', 'wpcd' ),
+				'desc' => __( 'Attempting to download very large log files can cause your server memory to be exhausted which will likely cause your server to kill this process or, worse, crash. Use this download tool only if you are sure your logs are of a reasonable size. Otherwise connect via sFTP or ssh to download logs.', 'simple-stack' ),
 			),
 
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		return $actions;
 
@@ -246,25 +247,27 @@ class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Grab the arguments sent from the front-end JS */
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
 
-		/* Make sure the log name has not been tampered with. We will not be escaping the log file name since we can validate it against our own known good list. */
-		if ( ! isset( $this->get_log_list( $id )[ $args['server_log_name'] ] ) ) {
-			return new \WP_Error( __( 'We were unable to validate the log file name - this might be a security concern!.', 'wpcd' ) );
+		/* Validate the log name against the fixed OpenLiteSpeed allowlist. */
+		$log_name = isset( $args['server_log_name'] ) ? $args['server_log_name'] : '';
+		$log_list = $this->get_log_list( $id );
+		if ( ! isset( $log_list[ $log_name ] ) ) {
+			return new \WP_Error( __( 'We were unable to validate the log file name - this might be a security concern!.', 'simple-stack' ) );
 		}
 
 		// Do the download...
-		$result = $this->ssh()->do_file_download( $instance, $args['server_log_name'] );
+		$result = $this->ssh()->do_file_download( $instance, $log_name );
 		if ( is_wp_error( $result ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s. It is possible that the file does not exist or that it is empty. Error message: %2$s. Error code: %3$s', 'wpcd' ), $action, $result->get_error_message(), $result->get_error_code() ) );
+			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s. It is possible that the file does not exist or that it is empty. Error message: %2$s. Error code: %3$s', 'simple-stack' ), $action, $result->get_error_message(), $result->get_error_code() ) );
 		}
 
 		// create log file and store it in temp folder.
-		$log_file = wpcd_get_log_file_without_extension( $args['server_log_name'] ) . '_' . time() . '.txt';
+		$log_file = sstk_get_log_file_without_extension( $log_name ) . '_' . time() . '.txt';
 		$temppath = trailingslashit( $this->get_script_temp_path() );
 
 		/* Put the log file into the temp folder... */
@@ -301,62 +304,24 @@ class WPCD_WORDPRESS_TABS_SERVER_LOGS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_log_list( $id ) {
 
-		// What type of web server are we running?
-		$webserver_type      = $this->get_web_server_type( $id );
-		$webserver_type_name = $this->get_web_server_description_by_id( $id );
-
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				return array(
-					'/usr/local/lsws/logs/access.log' => sprintf( __( '%s Access Log', 'wpcd' ), $webserver_type_name ),
-					'/usr/local/lsws/logs/error.log'  => sprintf( __( '%s Error Log', 'wpcd' ), $webserver_type_name ),
-					'/usr/local/lsws/logs/stderr.log' => sprintf( __( '%s Standard Ouput Error Log', 'wpcd' ), $webserver_type_name ),
-					'/var/log/mysql/error.log'        => __( 'MYSQL Error Log', 'wpcd' ),
-					'/var/log/wp-backup.log'          => __( 'Site WP Backup Logs', 'wpcd' ),
-					'/var/log/wp-full-backup.log'     => __( 'Full Server WP Backup Logs', 'wpcd' ),
-					'/var/log/syslog'                 => __( 'SYSLog', 'wpcd' ),
-					'/var/log/unattended-upgrades/unattended-upgrades.log' => __( 'Unattended Upgrades Summary Log', 'wpcd' ),
-					'/var/log/unattended-upgrades/unattended-upgrades-dpkg.log' => __( 'Unattended Upgrades Detail Log', 'wpcd' ),
-					'/var/log/dpkg.log'               => __( 'Recently installed or removed packages, AKA dpkg.log', 'wpcd' ),
-					'/var/log/redis/redis-server.log' => __( 'REDIS Log', 'wpcd' ),
-					'/var/log/auth.log'               => __( 'Authorization Log', 'wpcd' ),
-					'/var/log/ufw.log'                => __( 'UFW Firewall Log', 'wpcd' ),
-					'/var/log/wp-server-status.log'   => __( 'WPCD Server Status Callback Log', 'wpcd' ),
-				);
-				break;
-
-			case 'nginx':
-			default:
-				return array(
-					'/var/log/nginx/access.log'       => __( 'NGINX Access Log', 'wpcd' ),
-					'/var/log/nginx/error.log'        => __( 'NGINX Error Log', 'wpcd' ),
-					'/var/log/mysql/error.log'        => __( 'MYSQL Error Log', 'wpcd' ),
-					'/var/log/wp-backup.log'          => __( 'Site WP Backup Logs', 'wpcd' ),
-					'/var/log/wp-full-backup.log'     => __( 'Full Server WP Backup Logs', 'wpcd' ),
-					'/var/log/syslog'                 => __( 'SYSLog', 'wpcd' ),
-					'/var/log/unattended-upgrades/unattended-upgrades.log' => __( 'Unattended Upgrades Summary Log', 'wpcd' ),
-					'/var/log/unattended-upgrades/unattended-upgrades-dpkg.log' => __( 'Unattended Upgrades Detail Log', 'wpcd' ),
-					'/var/log/dpkg.log'               => __( 'Recently installed or removed packages, AKA dpkg.log', 'wpcd' ),
-					'/var/log/redis/redis-server.log' => __( 'REDIS Log', 'wpcd' ),
-					'/var/log/php7.1-fpm.log'         => __( 'PHP 7.1 FPM Log', 'wpcd' ),
-					'/var/log/php7.2-fpm.log'         => __( 'PHP 7.2 FPM Log', 'wpcd' ),
-					'/var/log/php7.3-fpm.log'         => __( 'PHP 7.3 FPM Log', 'wpcd' ),
-					'/var/log/php7.4-fpm.log'         => __( 'PHP 7.4 FPM Log', 'wpcd' ),
-					'/var/log/php8.0-fpm.log'         => __( 'PHP 8.0 FPM Log', 'wpcd' ),
-					'/var/log/php8.1-fpm.log'         => __( 'PHP 8.1 FPM Log', 'wpcd' ),
-					'/var/log/php8.2-fpm.log'         => __( 'PHP 8.2 FPM Log', 'wpcd' ),
-					'/var/log/php8.3-fpm.log'         => __( 'PHP 8.3 FPM Log', 'wpcd' ),
-					'/var/log/auth.log'               => __( 'Authorization Log', 'wpcd' ),
-					'/var/log/ufw.log'                => __( 'UFW Firewall Log', 'wpcd' ),
-					'/var/log/wp-server-status.log'   => __( 'WPCD Server Status Callback Log', 'wpcd' ),
-				);
-
-				break;
-
-		}
+		return array(
+			'/usr/local/lsws/logs/access.log' => __( 'OpenLiteSpeed Access Log', 'simple-stack' ),
+			'/usr/local/lsws/logs/error.log'  => __( 'OpenLiteSpeed Error Log', 'simple-stack' ),
+			'/usr/local/lsws/logs/stderr.log' => __( 'OpenLiteSpeed Standard Output Error Log', 'simple-stack' ),
+			'/var/log/mysql/error.log'        => __( 'MariaDB Error Log', 'simple-stack' ),
+			'/var/log/wp-backup.log'          => __( 'Site WordPress Backup Logs', 'simple-stack' ),
+			'/var/log/wp-full-backup.log'     => __( 'Full Server WordPress Backup Logs', 'simple-stack' ),
+			'/var/log/syslog'                 => __( 'System Log', 'simple-stack' ),
+			'/var/log/unattended-upgrades/unattended-upgrades.log' => __( 'Unattended Upgrades Summary Log', 'simple-stack' ),
+			'/var/log/unattended-upgrades/unattended-upgrades-dpkg.log' => __( 'Unattended Upgrades Detail Log', 'simple-stack' ),
+			'/var/log/dpkg.log'               => __( 'Recently Installed or Removed Packages (dpkg.log)', 'simple-stack' ),
+			'/var/log/redis/redis-server.log' => __( 'Redis Log', 'simple-stack' ),
+			'/var/log/auth.log'               => __( 'Authorization Log', 'simple-stack' ),
+			'/var/log/ufw.log'                => __( 'UFW Firewall Log', 'simple-stack' ),
+			'/var/log/wp-server-status.log'   => __( 'Simple Stack Server Status Callback Log', 'simple-stack' ),
+		);
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_LOGS();
+new SSTK_WORDPRESS_TABS_SERVER_LOGS();

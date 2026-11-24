@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * File Manager tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,32 +11,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_FILE_MANAGER.
+ * Class SSTK_WORDPRESS_TABS_FILE_MANAGER.
  */
-class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_FILE_MANAGER extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -107,9 +108,9 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 		}
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -137,7 +138,7 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'File Manager', 'wpcd' ),
+				'label' => __( 'File Manager', 'simple-stack' ),
 				'icon'  => 'fad fa-file',
 			);
 		}
@@ -153,11 +154,11 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -172,15 +173,15 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'install-tinyfilemanager', 'update-tinyfilemanager', 'remove-tinyfilemanager', 'change-auth-tinyfilemanager' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -221,7 +222,7 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action id we're trying to execute. It is usually a string without spaces, not a number. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get params of fields.
@@ -245,7 +246,7 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 
 				// Double-check just in case of errors.
 				if ( empty( $user_name ) || empty( $pass ) ) {
-					return new \WP_Error( __( 'Username & Password require for install file manager', 'wpcd' ) );
+					return new \WP_Error( __( 'Username & Password require for install file manager', 'simple-stack' ) );
 				}
 
 				$run_cmd = $this->turn_script_into_command(
@@ -266,7 +267,7 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 
 				// Double-check just in case of errors.
 				if ( empty( $user_name ) || empty( $pass ) ) {
-					return new \WP_Error( __( 'Username & Password require for update details', 'wpcd' ) );
+					return new \WP_Error( __( 'Username & Password require for update details', 'simple-stack' ) );
 				}
 
 				$run_cmd = $this->turn_script_into_command(
@@ -297,13 +298,13 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
 			/* Translators: %s is the action id we're trying to execute. It is usually a string without spaces, not a number. */
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -345,77 +346,60 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 			$file_manager_status = 'off';
 		}
 
-		// Bail if certain 6G or 7G firewall items are enabled.
-		$fw_6g = get_post_meta( $id, 'wpapp_6g_status', true );
+		// Bail if certain 7G firewall items are enabled.
 		$fw_7g = get_post_meta( $id, 'wpapp_7g_status', true );
-		if ( ! empty( $fw_6g ) && ! empty( $fw_6g['6g_query_string'] ) && 'on' === $fw_6g['6g_query_string'] ) {
-
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
-
-			$fields[] = array(
-				'name'    => __( 'File Manager [Disabled]', 'wpcd' ),
-				'tab'     => 'file-manager',
-				'type'    => 'heading',
-				'desc'    => __( 'You must disable the 6G firewall QUERY STRING rules before File Manager can be used.', 'wpcd' ),
-				'columns' => 12,
-			);
-
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
-
-			return $fields;
-		}
 		if ( ! empty( $fw_7g ) && ! empty( $fw_7g['7g_query_string'] ) && 'on' === $fw_7g['7g_query_string'] ) {
 
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$fields[] = array(
-				'name'    => __( 'File Manager [Disabled]', 'wpcd' ),
+				'name'    => __( 'File Manager [Disabled]', 'simple-stack' ),
 				'tab'     => 'file-manager',
 				'type'    => 'heading',
-				'desc'    => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before File Manager can be used.', 'wpcd' ),
+				'desc'    => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before File Manager can be used.', 'simple-stack' ),
 				'columns' => 12,
 			);
 
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			return $fields;
 		}
 		if ( ! empty( $fw_7g ) && ! empty( $fw_7g['7g_query_string'] ) && 'on' === $fw_7g['7g_request_string'] ) {
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$fields[] = array(
-				'name'    => __( 'File Manager [Disabled]', 'wpcd' ),
+				'name'    => __( 'File Manager [Disabled]', 'simple-stack' ),
 				'tab'     => 'file-manager',
 				'type'    => 'heading',
-				'desc'    => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before File Manager can be used.', 'wpcd' ),
+				'desc'    => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before File Manager can be used.', 'simple-stack' ),
 				'columns' => 12,
 			);
 
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			return $fields;
 		}
-		// End Bail if certain 6G or 7G firewall items are enabled.
+		// End bail if certain 7G firewall items are enabled.
 
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		if ( 'off' === $file_manager_status ) {
-			$desc  = __( 'The File Manager is not installed.', 'wpcd' );
-			$desc .= '<br />' . __( 'To install it please enter a username & password, then click the INSTALL button.', 'wpcd' );
-			$desc .= '<br />' . __( 'A user name and password has been pre-generated. Once installed the password will appear on this screen.', 'wpcd' );
-			$desc .= '<br />' . __( 'However, you are free to enter your own - please restrict to using letters and numbers and do not use special characters.', 'wpcd' );
+			$desc  = __( 'The File Manager is not installed.', 'simple-stack' );
+			$desc .= '<br />' . __( 'To install it please enter a username & password, then click the INSTALL button.', 'simple-stack' );
+			$desc .= '<br />' . __( 'A user name and password has been pre-generated. Once installed the password will appear on this screen.', 'simple-stack' );
+			$desc .= '<br />' . __( 'However, you are free to enter your own - please restrict to using letters and numbers and do not use special characters.', 'simple-stack' );
 		} else {
 			$desc = '';
 		}
 
 		if ( ! empty( $desc ) ) {
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 		}
 
 		$fields['file-manager-main-heading'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_file_manager_icon( __( '%s File Manager', 'wpcd' ) ),
+			'name' => sstk_apply_file_manager_icon( __( '%s File Manager', 'simple-stack' ) ),
 			'tab'  => 'file-manager',
 			'type' => 'heading',
 			'desc' => $desc,
@@ -426,31 +410,31 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 			// File Manager is not installed on this site, so show button & fields to install it.
 			$fields[] = array(
 				'id'         => 'username-for-file-manager',
-				'name'       => __( 'User Name:', 'wpcd' ),
+				'name'       => __( 'User Name:', 'simple-stack' ),
 				'tab'        => 'file-manager',
 				'type'       => 'text',
-				'std'        => wpcd_generate_alpha_numeric_string( 12 ),
+				'std'        => sstk_generate_alpha_numeric_string( 12 ),
 				'attributes' => array(
 					'desc'             => '',
-					'data-wpcd-action' => 'username-for-file-manager',
+					'data-sstk-action' => 'username-for-file-manager',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'username_for_file_manager',
+					'data-sstk-name'   => 'username_for_file_manager',
 					'spellcheck'       => 'false',
 				),
 			);
 
 			$fields[] = array(
 				'id'         => 'password-for-file-manager',
-				'name'       => __( 'Password:', 'wpcd' ),
+				'name'       => __( 'Password:', 'simple-stack' ),
 				'tab'        => 'file-manager',
 				'type'       => 'password',
-				'std'        => wpcd_generate_default_password(),
+				'std'        => sstk_generate_default_password(),
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'password-for-file-manager',
+					'data-sstk-action' => 'password-for-file-manager',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'password_for_file_manager',
+					'data-sstk-name'   => 'password_for_file_manager',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -461,27 +445,27 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 				'tab'        => 'file-manager',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_file_manager_icon( __( '%s Install', 'wpcd' ) ),
+				'std'        => sstk_apply_file_manager_icon( __( '%s Install', 'simple-stack' ) ),
 				'desc'       => '',
 				'attributes' => array(
 					// Get User Name & Password.
-					'data-wpcd-fields'              => json_encode( array( '#username-for-file-manager', '#password-for-file-manager' ) ),
+					'data-sstk-fields'              => json_encode( array( '#username-for-file-manager', '#password-for-file-manager' ) ),
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'install-tinyfilemanager',
+					'data-sstk-action'              => 'install-tinyfilemanager',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to install the File Manager?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to install the File Manager?', 'simple-stack' ),
 					// show log console?
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to install File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to install File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => true,
 			);
 
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		} else {
 
@@ -499,19 +483,19 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 				$file_manager_url = 'http://' . $this->get_domain_name( $id ) . '/' . 'filemanager';
 			}
 
-			$file_manager_details  = '<div class="wpcd_tool_details">';
-			$file_manager_details .= __( 'User Name: ', 'wpcd' ) . wpcd_wrap_clipboard_copy( esc_html( $file_manager_user_id ) );
+			$file_manager_details  = '<div class="sstk_tool_details">';
+			$file_manager_details .= __( 'User Name: ', 'simple-stack' ) . sstk_wrap_clipboard_copy( esc_html( $file_manager_user_id ) );
 			$file_manager_details .= '</div>';
 
-			$file_manager_details .= '<div class="wpcd_tool_details">';
-			$file_manager_details .= __( 'Password: ', 'wpcd' ) . wpcd_wrap_clipboard_copy( esc_html( $file_manager_password ) );
+			$file_manager_details .= '<div class="sstk_tool_details">';
+			$file_manager_details .= __( 'Password: ', 'simple-stack' ) . sstk_wrap_clipboard_copy( esc_html( $file_manager_password ) );
 			$file_manager_details .= '</div>';
 
 			$fields[] = array(
 				'tab'        => 'file-manager',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_run_icon( __( '%s Launch File Manager', 'wpcd' ) ),
+				'std'        => sstk_apply_run_icon( __( '%s Launch File Manager', 'simple-stack' ) ),
 				'attributes' => array(
 					'onclick' => "window.open('" . $file_manager_url . "')",
 				),
@@ -523,48 +507,48 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 				'std'  => $file_manager_details,
 			);
 
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/**
 			 * New fields section for change username & password.
 			 */
 
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_key_icon( __( '%s File Manager- Change Credentials', 'wpcd' ) ),
+				'name' => sstk_apply_key_icon( __( '%s File Manager- Change Credentials', 'simple-stack' ) ),
 				'tab'  => 'file-manager',
 				'type' => 'heading',
-				'desc' => __( 'Set a new username and password for the file manager', 'wpcd' ),
+				'desc' => __( 'Set a new username and password for the file manager', 'simple-stack' ),
 			);
 
 			$fields[] = array(
 				'id'         => 'username-for-file-manager',
-				'name'       => __( 'User Name:', 'wpcd' ),
+				'name'       => __( 'User Name:', 'simple-stack' ),
 				'tab'        => 'file-manager',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
-					'data-wpcd-action' => 'username-for-file-manager',
+					'data-sstk-action' => 'username-for-file-manager',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'username_for_file_manager',
+					'data-sstk-name'   => 'username_for_file_manager',
 				),
 			);
 
 			$fields[] = array(
 				'id'         => 'password-for-file-manager',
-				'name'       => __( 'Password:', 'wpcd' ),
+				'name'       => __( 'Password:', 'simple-stack' ),
 				'tab'        => 'file-manager',
 				'type'       => 'password',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'password-for-file-manager',
+					'data-sstk-action' => 'password-for-file-manager',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'password_for_file_manager',
+					'data-sstk-name'   => 'password_for_file_manager',
 				),
 			);
 
@@ -574,40 +558,40 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 				'tab'        => 'file-manager',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_update_icon( __( '%s Update', 'wpcd' ) ),
+				'std'        => sstk_apply_update_icon( __( '%s Update', 'simple-stack' ) ),
 				'desc'       => '',
 				'attributes' => array(
 					// Get User Name & Password.
-					'data-wpcd-fields'              => json_encode( array( '#username-for-file-manager', '#password-for-file-manager' ) ),
+					'data-sstk-fields'              => json_encode( array( '#username-for-file-manager', '#password-for-file-manager' ) ),
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'change-auth-tinyfilemanager',
+					'data-sstk-action'              => 'change-auth-tinyfilemanager',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to update details?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to update details?', 'simple-stack' ),
 					// show log console?
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to update File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to update File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => true,
 			);
 
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/**
 			 * Fields section for update and remove of File Manager.
 			 */
 
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_upgrade_icon( __( '%s Upgrade File Manager', 'wpcd' ) ),
+				'name' => sstk_apply_upgrade_icon( __( '%s Upgrade File Manager', 'simple-stack' ) ),
 				'tab'  => 'file-manager',
 				'type' => 'heading',
-				'desc' => __( 'Update the File Manager to the latest version.', 'wpcd' ),
+				'desc' => __( 'Update the File Manager to the latest version.', 'simple-stack' ),
 			);
 
 			// Update File Manager.
@@ -617,37 +601,37 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 				'tab'        => 'file-manager',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_update_icon( __( '%s Update File Manager', 'wpcd' ) ),
+				'std'        => sstk_apply_update_icon( __( '%s Update File Manager', 'simple-stack' ) ),
 				'desc'       => '',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'update-tinyfilemanager',
+					'data-sstk-action'              => 'update-tinyfilemanager',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to upgrade the File Manager?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to upgrade the File Manager?', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to upgrade File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to upgrade File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/**
 			 * Remove File Manager
 			 */
 
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_trash_icon( __( '%s Remove File Manager', 'wpcd' ) ),
+				'name' => sstk_apply_trash_icon( __( '%s Remove File Manager', 'simple-stack' ) ),
 				'tab'  => 'file-manager',
 				'type' => 'heading',
-				'desc' => __( 'Remove file manager from this site.', 'wpcd' ),
+				'desc' => __( 'Remove file manager from this site.', 'simple-stack' ),
 			);
 
 			$fields[] = array(
@@ -656,24 +640,24 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 				'tab'        => 'file-manager',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_trash_icon( __( '%s Remove File Manager', 'wpcd' ) ),
+				'std'        => sstk_apply_trash_icon( __( '%s Remove File Manager', 'simple-stack' ) ),
 				'desc'       => '',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'remove-tinyfilemanager',
+					'data-sstk-action'              => 'remove-tinyfilemanager',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to remove the File Manager from this site?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to remove the File Manager from this site?', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to remove File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to remove File Manager.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
-			$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		}
 
@@ -701,4 +685,4 @@ class WPCD_WORDPRESS_TABS_FILE_MANAGER extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_FILE_MANAGER();
+new SSTK_WORDPRESS_TABS_FILE_MANAGER();

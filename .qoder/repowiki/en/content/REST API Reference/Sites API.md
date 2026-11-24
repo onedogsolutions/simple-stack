@@ -2,15 +2,15 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [class-simplestack-rest-api.php](file://includes/core/api/class-simplestack-rest-api.php)
-- [class-simplestack-rest-sites.php](file://includes/core/api/class-simplestack-rest-sites.php)
-- [class-wpcd-rest-api-controller-base.php](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php)
-- [class-wpcd-rest-api-controller-sites.php](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php)
-- [class-wpcd-rest-api-controller-sites-change-domain.php](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php)
-- [class-wpcd-rest-api-controller-sites-clone-site.php](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php)
+- [class-sstk-rest-api.php](file://includes/core/api/class-sstk-rest-api.php)
+- [class-sstk-rest-sites.php](file://includes/core/api/class-sstk-rest-sites.php)
+- [class-sstk-rest-api-controller-base.php](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php)
+- [class-sstk-rest-api-controller-sites.php](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php)
+- [class-sstk-rest-api-controller-sites-change-domain.php](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php)
+- [class-sstk-rest-api-controller-sites-clone-site.php](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php)
 - [ControllerSitesTest.php](file://tests/phpunit/rest-api/ControllerSitesTest.php)
-- [environment variables.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/environment%20variables.txt)
-- [41-wp-backup2.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/41-wp-backup2.txt)
+- [environment variables.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt)
+- [41-wp-backup2.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/41-wp-backup2.txt)
 </cite>
 
 ## Table of Contents
@@ -26,54 +26,56 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document provides comprehensive API documentation for WordPress site management endpoints under the `simple-stack/v1/sites` namespace, as well as related legacy endpoints under `wpcd/v1/sites`. It covers site lifecycle operations including listing, creation, retrieval, deletion, SSL toggling, domain changes, cloning, and maintenance actions. It also documents request/response schemas, authentication and permissions, error handling, debugging approaches, and integration points with the WordPress application engine.
+This document provides comprehensive API documentation for WordPress site management endpoints under the `simple-stack/v1/sites` route prefix. It covers site lifecycle operations including listing, creation, retrieval, deletion, SSL toggling, domain changes, cloning, and maintenance actions. It also documents request/response schemas, authentication and permissions, error handling, debugging approaches, and integration points with the WordPress application engine.
 
-The repository exposes two REST surfaces:
-- A modern SimpleStack surface under `simple-stack/v1`, implemented by `SimpleStack_REST_API` and `SimpleStack_REST_Sites`.
-- A legacy WordPress App surface under `wpcd/v1`, implemented by `WPCD_REST_API_Controller_Base` and its site controllers.
+The repository registers two current controller families under the same `simple-stack/v1` namespace:
+- The admin SPA surface is implemented by `SSTK_REST_API` and `SSTK_REST_Sites`.
+- The WordPress App surface is implemented by `SSTK_REST_API_Controller_Base` and its site controllers, including SSL toggling, domain changes, cloning, and task-oriented site creation.
+
+This is not an upstream compatibility namespace; both controller families are first-party Simple Stack code.
 
 ## Project Structure
 The site-related REST functionality is split between:
-- Core SimpleStack REST infrastructure and controller for sites.
-- Legacy WordPress App REST controllers for sites, domain changes, and cloning.
+- Core Simple Stack REST infrastructure and controller for sites.
+- WordPress App REST controllers for sites, domain changes, and cloning.
 - Background task orchestration via pending logs.
 - Server-side scripts that perform backup, restore, and maintenance operations.
 
 ```mermaid
 graph TB
-Client["Client"] --> SS_API["SimpleStack REST API<br/>Namespace: simple-stack/v1"]
-SS_API --> SS_Sites["SimpleStack_REST_Sites"]
+Client["Client"] --> SS_API["Simple Stack REST API<br/>Namespace: simple-stack/v1"]
+SS_API --> SS_Sites["SSTK_REST_Sites"]
 SS_Sites --> WP_App["WordPress App Engine"]
-Client --> WPCD_API["Legacy REST API<br/>Namespace: wpcd/v1"]
-WPCD_API --> BaseCtrl["WPCD_REST_API_Controller_Base"]
-BaseCtrl --> SitesCtrl["WPCD_REST_API_Controller_Sites"]
-SitesCtrl --> DomainCtrl["WPCD_REST_API_Controller_Sites_Change_Domain"]
-SitesCtrl --> CloneCtrl["WPCD_REST_API_Controller_Sites_Clone_Site"]
+Client --> WP_App_API["WordPress App REST API<br/>Namespace: simple-stack/v1"]
+WP_App_API --> BaseCtrl["SSTK_REST_API_Controller_Base"]
+BaseCtrl --> SitesCtrl["SSTK_REST_API_Controller_Sites"]
+SitesCtrl --> DomainCtrl["SSTK_REST_API_Controller_Sites_Change_Domain"]
+SitesCtrl --> CloneCtrl["SSTK_REST_API_Controller_Sites_Clone_Site"]
 SitesCtrl --> PendingTasks["Pending Tasks Log"]
 PendingTasks --> Scripts["Server Scripts<br/>Backup / Restore / Maintenance"]
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
-- [class-simplestack-rest-sites.php:21-86](file://includes/core/api/class-simplestack-rest-sites.php#L21-L86)
-- [class-wpcd-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php#L17-L52)
-- [class-wpcd-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L17-L56)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L17-L39)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L17-L39)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
+- [class-sstk-rest-sites.php:21-86](file://includes/core/api/class-sstk-rest-sites.php#L21-L86)
+- [class-sstk-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php#L17-L52)
+- [class-sstk-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L17-L56)
+- [class-sstk-rest-api-controller-sites-change-domain.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L17-L39)
+- [class-sstk-rest-api-controller-sites-clone-site.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L17-L39)
 
 **Section sources**
-- [class-simplestack-rest-api.php:21-118](file://includes/core/api/class-simplestack-rest-api.php#L21-L118)
-- [class-simplestack-rest-sites.php:21-86](file://includes/core/api/class-simplestack-rest-sites.php#L21-L86)
-- [class-wpcd-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php#L17-L52)
-- [class-wpcd-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L17-L56)
+- [class-sstk-rest-api.php:21-118](file://includes/core/api/class-sstk-rest-api.php#L21-L118)
+- [class-sstk-rest-sites.php:21-86](file://includes/core/api/class-sstk-rest-sites.php#L21-L86)
+- [class-sstk-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php#L17-L52)
+- [class-sstk-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L17-L56)
 
 ## Core Components
-- SimpleStack REST API entrypoint registers controllers under `simple-stack/v1`.
-- `SimpleStack_REST_Sites` implements site list, deploy, get, delete, and action bridge endpoints.
-- Legacy `WPCD_REST_API_Controller_Sites` implements list, create, get, update (disabled), toggle SSL, delete, and execute-action endpoints.
-- `WPCD_REST_API_Controller_Sites_Change_Domain` adds a change-domain endpoint.
-- `WPCD_REST_API_Controller_Sites_Clone_Site` adds a clone-site endpoint.
-- All legacy endpoints enforce admin-only access through the base controller permission callback.
+- Simple Stack REST API entrypoint registers controllers under `simple-stack/v1`.
+- `SSTK_REST_Sites` implements site list, deploy, get, delete, and action bridge endpoints.
+- `SSTK_REST_API_Controller_Sites` implements list, create, get, update (disabled), toggle SSL, delete, and execute-action endpoints.
+- `SSTK_REST_API_Controller_Sites_Change_Domain` adds a change-domain endpoint.
+- `SSTK_REST_API_Controller_Sites_Clone_Site` adds a clone-site endpoint.
+- Both controller families enforce administrative access: `SSTK_REST_Controller_Base` checks `manage_options`, while the WordPress App base controller uses `sstk_is_admin()` (super admin or `manage_options`).
 
 Key responsibilities:
 - Route registration and HTTP method mapping.
@@ -82,22 +84,22 @@ Key responsibilities:
 - Consistent error wrapping and response formatting.
 
 **Section sources**
-- [class-simplestack-rest-api.php:51-99](file://includes/core/api/class-simplestack-rest-api.php#L51-L99)
-- [class-simplestack-rest-sites.php:35-86](file://includes/core/api/class-simplestack-rest-sites.php#L35-L86)
-- [class-wpcd-rest-api-controller-sites.php:48-56](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L48-L56)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L37-L39)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L37-L39)
+- [class-sstk-rest-api.php:51-99](file://includes/core/api/class-sstk-rest-api.php#L51-L99)
+- [class-sstk-rest-sites.php:35-86](file://includes/core/api/class-sstk-rest-sites.php#L35-L86)
+- [class-sstk-rest-api-controller-sites.php:48-56](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L48-L56)
+- [class-sstk-rest-api-controller-sites-change-domain.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L37-L39)
+- [class-sstk-rest-api-controller-sites-clone-site.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L37-L39)
 
 ## Architecture Overview
-The system uses two REST namespaces:
-- `simple-stack/v1`: Modern client-facing API.
-- `wpcd/v1`: Legacy API used by older integrations and server callbacks.
+The system uses one REST namespace with two controller families:
+- `simple-stack/v1`: The admin SPA controller family provides the standard response envelope, typed argument helpers, and tab-action bridge.
+- `simple-stack/v1`: The WordPress App controller family provides additional site lifecycle endpoints and its existing exception-to-`WP_Error` handling.
 
 ```mermaid
 sequenceDiagram
 participant Client as "Client"
-participant SS_API as "SimpleStack REST API"
-participant SS_Sites as "SimpleStack_REST_Sites"
+participant SS_API as "Simple Stack REST API"
+participant SS_Sites as "SSTK_REST_Sites"
 participant WP_App as "WordPress App Engine"
 participant Pending as "Pending Tasks Log"
 Client->>SS_API : "POST /sites (deploy)"
@@ -109,12 +111,12 @@ Note over SS_Sites,Pending : "Background tasks may be queued by the engine"
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-api.php:84-99](file://includes/core/api/class-simplestack-rest-api.php#L84-L99)
-- [class-simplestack-rest-sites.php:158-205](file://includes/core/api/class-simplestack-rest-sites.php#L158-L205)
+- [class-sstk-rest-api.php:84-99](file://includes/core/api/class-sstk-rest-api.php#L84-L99)
+- [class-sstk-rest-sites.php:158-205](file://includes/core/api/class-sstk-rest-sites.php#L158-L205)
 
 ## Detailed Component Analysis
 
-### SimpleStack Sites Controller (`simple-stack/v1/sites`)
+### Simple Stack Sites Controller (`simple-stack/v1/sites`)
 Endpoints:
 - GET `/sites` — List sites with optional pagination and filters.
 - POST `/sites` — Deploy a new WordPress site on an existing server.
@@ -123,7 +125,7 @@ Endpoints:
 - POST `/sites/{id}/action` — Run a tab action against a site.
 
 Authentication and permissions:
-- Uses the SimpleStack base controller’s permission model; ensure the caller has appropriate SimpleStack permissions.
+- Uses `SSTK_REST_Controller_Base::permissions_check()`, which requires `manage_options`.
 
 Request parameters:
 - List sites:
@@ -171,18 +173,18 @@ Error handling:
 - The action bridge maps tab errors into REST errors.
 
 Operational notes:
-- The action bridge temporarily restores request body into superglobals to match legacy behavior.
+- The action bridge temporarily restores the request body into superglobals to match existing tab-handler expectations.
 
 **Section sources**
-- [class-simplestack-rest-sites.php:35-86](file://includes/core/api/class-simplestack-rest-sites.php#L35-L86)
-- [class-simplestack-rest-sites.php:97-143](file://includes/core/api/class-simplestack-rest-sites.php#L97-L143)
-- [class-simplestack-rest-sites.php:158-205](file://includes/core/api/class-simplestack-rest-sites.php#L158-L205)
-- [class-simplestack-rest-sites.php:217-230](file://includes/core/api/class-simplestack-rest-sites.php#L217-L230)
-- [class-simplestack-rest-sites.php:242-267](file://includes/core/api/class-simplestack-rest-sites.php#L242-L267)
-- [class-simplestack-rest-sites.php:283-311](file://includes/core/api/class-simplestack-rest-sites.php#L283-L311)
-- [class-simplestack-rest-sites.php:343-389](file://includes/core/api/class-simplestack-rest-sites.php#L343-L389)
+- [class-sstk-rest-sites.php:35-86](file://includes/core/api/class-sstk-rest-sites.php#L35-L86)
+- [class-sstk-rest-sites.php:97-143](file://includes/core/api/class-sstk-rest-sites.php#L97-L143)
+- [class-sstk-rest-sites.php:158-205](file://includes/core/api/class-sstk-rest-sites.php#L158-L205)
+- [class-sstk-rest-sites.php:217-230](file://includes/core/api/class-sstk-rest-sites.php#L217-L230)
+- [class-sstk-rest-sites.php:242-267](file://includes/core/api/class-sstk-rest-sites.php#L242-L267)
+- [class-sstk-rest-sites.php:283-311](file://includes/core/api/class-sstk-rest-sites.php#L283-L311)
+- [class-sstk-rest-sites.php:343-389](file://includes/core/api/class-sstk-rest-sites.php#L343-L389)
 
-### Legacy Sites Controller (`wpcd/v1/sites`)
+### WordPress App Sites Controller (`simple-stack/v1/sites`)
 Endpoints:
 - GET `/sites` — List sites with optional filters.
 - POST `/sites` — Create a new site (queues installation task).
@@ -193,7 +195,7 @@ Endpoints:
 - POST `/sites/{id}/execute-action` — Execute a predefined action (marked not used).
 
 Authentication and permissions:
-- All routes require admin access enforced by the base controller’s permission callback.
+- All routes require administrative access through `sstk_is_admin()` in the WordPress App base controller.
 
 Request parameters:
 - List sites:
@@ -228,17 +230,17 @@ Operational notes:
 - Delete triggers full site removal via hooks.
 
 **Section sources**
-- [class-wpcd-rest-api-controller-base.php:78-93](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php#L78-L93)
-- [class-wpcd-rest-api-controller-sites.php:48-56](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L48-L56)
-- [class-wpcd-rest-api-controller-sites.php:69-107](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L69-L107)
-- [class-wpcd-rest-api-controller-sites.php:119-154](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L119-L154)
-- [class-wpcd-rest-api-controller-sites.php:167-170](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L167-L170)
-- [class-wpcd-rest-api-controller-sites.php:182-184](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L182-L184)
-- [class-wpcd-rest-api-controller-sites.php:197-215](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L197-L215)
-- [class-wpcd-rest-api-controller-sites.php:228-240](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L228-L240)
-- [class-wpcd-rest-api-controller-sites.php:292-313](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L292-L313)
+- [class-sstk-rest-api-controller-base.php:78-93](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php#L78-L93)
+- [class-sstk-rest-api-controller-sites.php:48-56](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L48-L56)
+- [class-sstk-rest-api-controller-sites.php:69-107](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L69-L107)
+- [class-sstk-rest-api-controller-sites.php:119-154](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L119-L154)
+- [class-sstk-rest-api-controller-sites.php:167-170](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L167-L170)
+- [class-sstk-rest-api-controller-sites.php:182-184](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L182-L184)
+- [class-sstk-rest-api-controller-sites.php:197-215](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L197-L215)
+- [class-sstk-rest-api-controller-sites.php:228-240](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L228-L240)
+- [class-sstk-rest-api-controller-sites.php:292-313](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L292-L313)
 
-### Change Domain Endpoint (`wpcd/v1/sites/{id}/change-domain`)
+### Change Domain Endpoint (`simple-stack/v1/sites/{id}/change-domain`)
 Purpose:
 - Change the primary domain for a site asynchronously via pending tasks.
 
@@ -261,13 +263,13 @@ Error handling:
 - Updates pending task to failed on domain change failure.
 
 **Section sources**
-- [class-wpcd-rest-api-controller-sites-change-domain.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L37-L39)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:55-81](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L55-L81)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:95-103](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L95-L103)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L119-L157)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:170-205](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L170-L205)
+- [class-sstk-rest-api-controller-sites-change-domain.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L37-L39)
+- [class-sstk-rest-api-controller-sites-change-domain.php:55-81](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L55-L81)
+- [class-sstk-rest-api-controller-sites-change-domain.php:95-103](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L95-L103)
+- [class-sstk-rest-api-controller-sites-change-domain.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L119-L157)
+- [class-sstk-rest-api-controller-sites-change-domain.php:170-205](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L170-L205)
 
-### Clone Site Endpoint (`wpcd/v1/sites/{id}/clone-site`)
+### Clone Site Endpoint (`simple-stack/v1/sites/{id}/clone-site`)
 Purpose:
 - Clone an existing site to a new domain asynchronously via pending tasks.
 
@@ -290,11 +292,11 @@ Error handling:
 - Updates pending task to failed on clone failure.
 
 **Section sources**
-- [class-wpcd-rest-api-controller-sites-clone-site.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L37-L39)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:55-81](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L55-L81)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:95-103](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L95-L103)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L119-L157)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:169-205](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L169-L205)
+- [class-sstk-rest-api-controller-sites-clone-site.php:37-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L37-L39)
+- [class-sstk-rest-api-controller-sites-clone-site.php:55-81](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L55-L81)
+- [class-sstk-rest-api-controller-sites-clone-site.php:95-103](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L95-L103)
+- [class-sstk-rest-api-controller-sites-clone-site.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L119-L157)
+- [class-sstk-rest-api-controller-sites-clone-site.php:169-205](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L169-L205)
 
 ### Backup and Restore Operations
 There are no dedicated REST endpoints for backup and restore in the analyzed files. Instead, backup and restore operations are performed via server-side scripts invoked by the WordPress App engine. These scripts support:
@@ -312,8 +314,8 @@ Operational guidance:
 - For disaster recovery, use the restore script with the correct backup name format and overwrite flag.
 
 **Section sources**
-- [environment variables.txt:113-173](file://includes/core/apps/wordpress-app/scripts/v1/raw/environment%20variables.txt#L113-L173)
-- [41-wp-backup2.txt:822-859](file://includes/core/apps/wordpress-app/scripts/v1/raw/41-wp-backup2.txt#L822-L859)
+- [environment variables.txt:113-173](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L113-L173)
+- [41-wp-backup2.txt:822-859](file://includes/core/apps/wordpress-app/scripts/v2/raw/41-wp-backup2.txt#L822-L859)
 
 ### Multisite Setup and Configuration
 Multisite setup is not exposed as a direct REST endpoint in the analyzed files. However, multisite-related scripts and templates exist within the WordPress App scripts directory, indicating that multisite configuration is handled through the application engine rather than the REST API.
@@ -329,19 +331,19 @@ The following diagram shows how controllers depend on shared base classes and ex
 
 ```mermaid
 classDiagram
-class SimpleStack_REST_API {
+class SSTK_REST_API {
 +register_routes()
 +get_controllers()
 +get_namespace()
 }
-class SimpleStack_REST_Sites {
+class SSTK_REST_Sites {
 +list_sites(request)
 +deploy_site(request)
 +get_site(request)
 +delete_site(request)
 +run_action(request)
 }
-class WPCD_REST_API_Controller_Base {
+class SSTK_REST_API_Controller_Base {
 +register_routes()
 +get_namespace()
 +register_get_route(route, action)
@@ -350,7 +352,7 @@ class WPCD_REST_API_Controller_Base {
 +register_delete_route(route, action)
 +validate_required_parameters(parameters, required)
 }
-class WPCD_REST_API_Controller_Sites {
+class SSTK_REST_API_Controller_Sites {
 +list_sites(request)
 +create_site(request)
 +get_site(request)
@@ -359,49 +361,49 @@ class WPCD_REST_API_Controller_Sites {
 +delete_site(request)
 +execute_site_action(request)
 }
-class WPCD_REST_API_Controller_Sites_Change_Domain {
+class SSTK_REST_API_Controller_Sites_Change_Domain {
 +change_domain(request)
 }
-class WPCD_REST_API_Controller_Sites_Clone_Site {
+class SSTK_REST_API_Controller_Sites_Clone_Site {
 +clone_site(request)
 }
-SimpleStack_REST_API --> SimpleStack_REST_Sites : "registers"
-WPCD_REST_API_Controller_Sites_Change_Domain --|> WPCD_REST_API_Controller_Sites
-WPCD_REST_API_Controller_Sites_Clone_Site --|> WPCD_REST_API_Controller_Sites
-WPCD_REST_API_Controller_Sites --|> WPCD_REST_API_Controller_Base
+SSTK_REST_API --> SSTK_REST_Sites : "registers"
+SSTK_REST_API_Controller_Sites_Change_Domain --|> SSTK_REST_API_Controller_Sites
+SSTK_REST_API_Controller_Sites_Clone_Site --|> SSTK_REST_API_Controller_Sites
+SSTK_REST_API_Controller_Sites --|> SSTK_REST_API_Controller_Base
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
-- [class-simplestack-rest-sites.php:21-86](file://includes/core/api/class-simplestack-rest-sites.php#L21-L86)
-- [class-wpcd-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php#L17-L52)
-- [class-wpcd-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L17-L56)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L17-L39)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L17-L39)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
+- [class-sstk-rest-sites.php:21-86](file://includes/core/api/class-sstk-rest-sites.php#L21-L86)
+- [class-sstk-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php#L17-L52)
+- [class-sstk-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L17-L56)
+- [class-sstk-rest-api-controller-sites-change-domain.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L17-L39)
+- [class-sstk-rest-api-controller-sites-clone-site.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L17-L39)
 
 **Section sources**
-- [class-simplestack-rest-api.php:21-118](file://includes/core/api/class-simplestack-rest-api.php#L21-L118)
-- [class-simplestack-rest-sites.php:21-86](file://includes/core/api/class-simplestack-rest-sites.php#L21-L86)
-- [class-wpcd-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php#L17-L52)
-- [class-wpcd-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L17-L56)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L17-L39)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L17-L39)
+- [class-sstk-rest-api.php:21-118](file://includes/core/api/class-sstk-rest-api.php#L21-L118)
+- [class-sstk-rest-sites.php:21-86](file://includes/core/api/class-sstk-rest-sites.php#L21-L86)
+- [class-sstk-rest-api-controller-base.php:17-52](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php#L17-L52)
+- [class-sstk-rest-api-controller-sites.php:17-56](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L17-L56)
+- [class-sstk-rest-api-controller-sites-change-domain.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L17-L39)
+- [class-sstk-rest-api-controller-sites-clone-site.php:17-39](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L17-L39)
 
 ## Performance Considerations
 - List endpoints:
-  - SimpleStack list supports pagination via base helpers.
-  - Legacy list retrieves all matching posts without pagination; consider filtering by `user_id` or `server_id` to reduce payload size.
+  - Simple Stack list supports pagination via base helpers.
+  - The WordPress App list retrieves all matching posts without pagination; consider filtering by `user_id` or `server_id` to reduce payload size.
 - Background operations:
   - Deployment, domain changes, and cloning queue tasks; avoid polling too frequently.
 - Metadata exposure:
-  - SimpleStack get site returns all `wpapp_*` meta; clients should cache and diff updates.
+  - Simple Stack get site returns all `wpapp_*` meta; clients should cache and diff updates.
 
 [No sources needed since this section provides general guidance]
 
 ## Troubleshooting Guide
 Common issues and resolutions:
 - Authentication failures:
-  - Legacy endpoints require admin access; ensure the caller is authenticated as an administrator.
+  - Both site controller families require admin access; ensure the caller is authenticated as an administrator.
 - Invalid site IDs:
   - Both controllers validate site existence; verify the resource ID and app type.
 - Missing required parameters:
@@ -417,12 +419,12 @@ Debugging approaches:
 - Use the action bridge to run tab actions and capture results.
 
 **Section sources**
-- [class-wpcd-rest-api-controller-base.php:170-173](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php#L170-L173)
-- [class-wpcd-rest-api-controller-sites-change-domain.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L119-L157)
-- [class-wpcd-rest-api-controller-sites-clone-site.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php#L119-L157)
+- [class-sstk-rest-api-controller-base.php:170-173](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php#L170-L173)
+- [class-sstk-rest-api-controller-sites-change-domain.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L119-L157)
+- [class-sstk-rest-api-controller-sites-clone-site.php:119-157](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php#L119-L157)
 
 ## Conclusion
-The `simple-stack/v1/sites` namespace provides a focused set of endpoints for listing, deploying, retrieving, deleting, and acting on WordPress sites, while the legacy `wpcd/v1/sites` namespace offers broader site management capabilities including creation, SSL toggling, domain changes, and cloning. Most long-running operations are orchestrated through background tasks and server-side scripts. Clients should prefer the SimpleStack endpoints for modern usage and rely on the WordPress App engine for complex maintenance tasks such as backups, restores, and multisite configuration.
+The `simple-stack/v1/sites` route prefix provides a focused set of endpoints for listing, deploying, retrieving, deleting, and acting on WordPress sites, while the WordPress App controller family adds site creation, SSL toggling, domain changes, and cloning. Both families are current first-party code under the same namespace. Most long-running operations are orchestrated through background tasks and `scripts/v2/` server-side scripts. Clients should use the admin SPA controller family for standard UI flows and the WordPress App endpoints for their additional lifecycle capabilities.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -430,7 +432,7 @@ The `simple-stack/v1/sites` namespace provides a focused set of endpoints for li
 
 ### Endpoint Summary
 
-#### SimpleStack REST API (`simple-stack/v1/sites`)
+#### Simple Stack REST API (`simple-stack/v1/sites`)
 - GET `/sites`
   - Query params: `server_id`, `search`, pagination.
   - Response: `{ items, total, page, per_page }`.
@@ -445,7 +447,7 @@ The `simple-stack/v1/sites` namespace provides a focused set of endpoints for li
   - Body: `action`, `params`.
   - Response: `{ app_id, server_id, action, result }`.
 
-#### Legacy REST API (`wpcd/v1/sites`)
+#### WordPress App REST API (`simple-stack/v1/sites`)
 - GET `/sites`
   - Query params: `user_id`, `server_id`, `user_email`.
   - Response: Array of site objects.
@@ -464,19 +466,19 @@ The `simple-stack/v1/sites` namespace provides a focused set of endpoints for li
   - Marked not used.
 
 **Section sources**
-- [class-simplestack-rest-sites.php:35-86](file://includes/core/api/class-simplestack-rest-sites.php#L35-L86)
-- [class-simplestack-rest-sites.php:97-143](file://includes/core/api/class-simplestack-rest-sites.php#L97-L143)
-- [class-simplestack-rest-sites.php:158-205](file://includes/core/api/class-simplestack-rest-sites.php#L158-L205)
-- [class-simplestack-rest-sites.php:217-230](file://includes/core/api/class-simplestack-rest-sites.php#L217-L230)
-- [class-simplestack-rest-sites.php:242-267](file://includes/core/api/class-simplestack-rest-sites.php#L242-L267)
-- [class-simplestack-rest-sites.php:283-311](file://includes/core/api/class-simplestack-rest-sites.php#L283-L311)
-- [class-wpcd-rest-api-controller-sites.php:48-56](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L48-L56)
-- [class-wpcd-rest-api-controller-sites.php:69-107](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L69-L107)
-- [class-wpcd-rest-api-controller-sites.php:119-154](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L119-L154)
-- [class-wpcd-rest-api-controller-sites.php:167-170](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L167-L170)
-- [class-wpcd-rest-api-controller-sites.php:182-184](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L182-L184)
-- [class-wpcd-rest-api-controller-sites.php:197-215](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L197-L215)
-- [class-wpcd-rest-api-controller-sites.php:228-240](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php#L228-L240)
+- [class-sstk-rest-sites.php:35-86](file://includes/core/api/class-sstk-rest-sites.php#L35-L86)
+- [class-sstk-rest-sites.php:97-143](file://includes/core/api/class-sstk-rest-sites.php#L97-L143)
+- [class-sstk-rest-sites.php:158-205](file://includes/core/api/class-sstk-rest-sites.php#L158-L205)
+- [class-sstk-rest-sites.php:217-230](file://includes/core/api/class-sstk-rest-sites.php#L217-L230)
+- [class-sstk-rest-sites.php:242-267](file://includes/core/api/class-sstk-rest-sites.php#L242-L267)
+- [class-sstk-rest-sites.php:283-311](file://includes/core/api/class-sstk-rest-sites.php#L283-L311)
+- [class-sstk-rest-api-controller-sites.php:48-56](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L48-L56)
+- [class-sstk-rest-api-controller-sites.php:69-107](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L69-L107)
+- [class-sstk-rest-api-controller-sites.php:119-154](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L119-L154)
+- [class-sstk-rest-api-controller-sites.php:167-170](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L167-L170)
+- [class-sstk-rest-api-controller-sites.php:182-184](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L182-L184)
+- [class-sstk-rest-api-controller-sites.php:197-215](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L197-L215)
+- [class-sstk-rest-api-controller-sites.php:228-240](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php#L228-L240)
 
 ### Example Workflows
 
@@ -491,7 +493,7 @@ The `simple-stack/v1/sites` namespace provides a focused set of endpoints for li
 - Monitor pending task status until completion or failure.
 
 **Section sources**
-- [class-wpcd-rest-api-controller-sites-change-domain.php:55-81](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php#L55-L81)
+- [class-sstk-rest-api-controller-sites-change-domain.php:55-81](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php#L55-L81)
 
 #### Disaster Recovery Procedures
 - Identify the target backup using the backup listing script.
@@ -499,17 +501,17 @@ The `simple-stack/v1/sites` namespace provides a focused set of endpoints for li
 - Verify restoration by checking site availability and database integrity.
 
 **Section sources**
-- [environment variables.txt:113-173](file://includes/core/apps/wordpress-app/scripts/v1/raw/environment%20variables.txt#L113-L173)
-- [41-wp-backup2.txt:822-859](file://includes/core/apps/wordpress-app/scripts/v1/raw/41-wp-backup2.txt#L822-L859)
+- [environment variables.txt:113-173](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L113-L173)
+- [41-wp-backup2.txt:822-859](file://includes/core/apps/wordpress-app/scripts/v2/raw/41-wp-backup2.txt#L822-L859)
 
 ### Error Handling and Status Codes
-- Legacy endpoints wrap exceptions into `WP_Error` with consistent codes and messages.
-- SimpleStack endpoints return structured responses and map tab action errors to REST errors.
-- Use `disable_status_code` query parameter in legacy endpoints to force 200 responses for error payloads when needed.
+- WordPress App endpoints wrap exceptions into `WP_Error` with consistent codes and messages.
+- Admin SPA endpoints return structured responses and map tab action errors to REST errors.
+- The WordPress App controller family supports `disable_status_code` to force 200 responses for error payloads when needed.
 
 **Section sources**
-- [class-wpcd-rest-api-controller-base.php:170-173](file://includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php#L170-L173)
-- [class-simplestack-rest-sites.php:300-301](file://includes/core/api/class-simplestack-rest-sites.php#L300-L301)
+- [class-sstk-rest-api-controller-base.php:170-173](file://includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php#L170-L173)
+- [class-sstk-rest-sites.php:300-301](file://includes/core/api/class-sstk-rest-sites.php#L300-L301)
 
 ### Testing References
 - Tests verify route registration, listing filters, single site retrieval, update denial, and deletion behavior.

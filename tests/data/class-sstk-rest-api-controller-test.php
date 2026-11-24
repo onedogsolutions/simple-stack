@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WordPress App WPCD_REST_API_Controller_Test.
+ * WordPress App SSTK_REST_API_Controller_Test.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,11 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_REST_API_Controller_Test
+ * Class SSTK_REST_API_Controller_Test
  *
  * Controller subclass for testing base class behaviors
  */
-class WPCD_REST_API_Controller_Test extends WPCD_REST_API_Controller_Base {
+class SSTK_REST_API_Controller_Test extends SSTK_REST_API_Controller_Base {
 
     protected $name = 'test';
 

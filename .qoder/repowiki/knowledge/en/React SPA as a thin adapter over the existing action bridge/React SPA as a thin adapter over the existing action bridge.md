@@ -25,7 +25,7 @@ The legacy admin UI is built on Meta Box field arrays and `admin-ajax.php` dispa
 - **Expose GET `/tabs` + POST `/action` that call the existing filters/actions** — pros: No PHP logic changes; React renders controls generically from the same schema; cons: React must understand the Meta Box field-array shape
 
 ## Decision
-Introduce a REST layer under `simple-stack/v1/` whose only job is to translate the existing `wpcd_server_*_get_tabs` / `wpcd_app_*_get_tabs` filter outputs into JSON and forward actions to `WPCD_WORDPRESS_APP()->do_instance_action()` and `apply_filters('wpcd_app_wordpress-app_tab_action', ...)`. The React `TabRenderer` consumes this schema directly.
+Introduce a REST layer under `simple-stack/v1/` whose only job is to translate the existing `sstk_server_*_get_tabs` / `sstk_app_*_get_tabs` filter outputs into JSON and forward actions to `SSTK_WORDPRESS_APP()->do_instance_action()` and `apply_filters('sstk_app_wordpress-app_tab_action', ...)`. The React `TabRenderer` consumes this schema directly.
 
 ## Consequences
 All 51 tabs ship without PHP rewrites; the React app is tightly coupled to the Meta Box field-array contract. Any future change to that contract must update both sides simultaneously.

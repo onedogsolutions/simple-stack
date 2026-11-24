@@ -1,276 +1,253 @@
 #!/bin/bash
-if [[ "$EUID" -ne 0 ]]; then
-	echo "Sorry, you need to run this as root"
-	exit
-fi
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 
-## Get our common functions
-if [[ ! -f 9999-common-functions.sh ]]
-then
-	echo "The file 9999-common-functions.sh is missing"
+if [[ "$EUID" -ne 0 ]]; then
+	echo "Simple Stack Monit setup must run as root." >&2
 	exit 1
 fi
+
+if [[ ! -f 9999-common-functions.sh ]]; then
+	echo "The file 9999-common-functions.sh is missing." >&2
+	exit 1
+fi
+
+# Source the shared helpers before enabling nounset: the inherited helper file
+# intentionally probes optional server capabilities while it is being loaded.
 source 9999-common-functions.sh
+set -Eeuo pipefail
 
-clear
+MONIT_DIR=/etc/monit
+MONIT_MAIN_CONFIG="${MONIT_DIR}/monitrc"
+MONIT_AVAILABLE="${MONIT_DIR}/conf-available"
+MONIT_ENABLED="${MONIT_DIR}/conf-enabled"
+MONIT_SECRETS_DIR="${MONIT_DIR}/conf.d"
+MONIT_HTTPD_CONFIG="${MONIT_SECRETS_DIR}/00-simplestack-httpd"
+MONIT_EMAIL_CONFIG="${MONIT_SECRETS_DIR}/00-simplestack-email"
+MONIT_MMONIT_CONFIG="${MONIT_SECRETS_DIR}/00-simplestack-mmonit"
+MONIT_VHOST_MARKER='# Managed by Simple Stack Monit. Do not edit.'
 
-###################################################################
-#### Add ols monit vhost conf
-###################################################################
-function add_ols_monit_conf() {
-	local olsdomain
-	olsdomain=$1
+STATE_DIR=/etc/simple-stack
+CALLBACK_URL_FILE="${STATE_DIR}/monit-callback-url"
+CALLBACK_OFFSET_FILE="${STATE_DIR}/monit-log-offset"
+CALLBACK_SCRIPT=/usr/local/bin/simplestack-monit-reporting
+CALLBACK_CRON=/etc/cron.d/simplestack-monit-reporting
+CALLBACK_LOCK=/var/lock/simplestack-monit-reporting.lock
 
-	mkdir -p $VHDIR/$olsdomain
-	mkdir -p /var/www/$olsdomain/html/.well-known/acme-challenge
+OLS_ROOT=/usr/local/lsws
+OLS_HTTPD_CONFIG="${WEBCF:-${OLS_ROOT}/conf/httpd_config.conf}"
+OLS_VHOST_DIR="${VHDIR:-${OLS_ROOT}/conf/vhosts}"
+OLS_VHOST_FILE=vhconf.conf
 
-	cat > ${VHDIR}/${olsdomain}/$g_vhost_conf <<- EOF
-	docRoot                   /var/www/$olsdomain/html
+action=${action:-}
+domain=${domain:-}
+email=${email:-}
+monit_user=${monit_user:-}
+monit_password=${monit_password:-}
+email_notifications=${email_notifications:-n}
+monit_smtp_server=${monit_smtp_server:-}
+monit_smtp_port=${monit_smtp_port:-}
+monit_smtp_user=${monit_smtp_user:-}
+monit_smtp_pass=${monit_smtp_pass:-}
+monit_alert_email=${monit_alert_email:-}
+monit_mmonit_server=${monit_mmonit_server:-}
+callback_url=${callback_url:-}
 
-	extprocessor monithttp {
-	type                    proxy
-	address                 127.0.0.1:48756
-	note                    Monit
-	maxConns                1000
-	initTimeout             5
-	retryTimeout            0
-	respBuffer              0
-	}
-	
-	context /.well-known/ {
-	  allowBrowse             1
-
-	  rewrite  {
-
-	  }
-	  addDefaultCharset       off
-
-	  phpIniOverride  {
-
-	  }
-	}
-
-	context / {
-	type                    proxy
-	handler                 monithttp
-	addDefaultCharset       off
-	}
-	
-	rewrite  {
-	  enable                  1
-	  autoLoadHtaccess        1
-	  rules                   <<<END_rules
-	RewriteRule "(^|/)\.(?!well-known\/)" - [F]
-	END_rules
-	}
-	
-	vhssl  {
-	  keyFile                 /usr/local/lsws/conf/example.key
-	  certFile                /usr/local/lsws/conf/example.crt
-	  certChain               1
-	  sslProtocol             24
-	  ciphers                 EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:ECDHE-RSA-AES128-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA128:DHE-RSA-AES128-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA128:ECDHE-RSA-AES128-SHA384:ECDHE-RSA-AES128-SHA128:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA128:DHE-RSA-AES128-SHA128:DHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA384:AES128-GCM-SHA128:AES128-SHA128:AES128-SHA128:AES128-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4
-	  enableECDHE             1
-	  renegProtection         1
-	  sslSessionCache         1
-	  enableSpdy              15
-	  enableQuic              1
-	  enableStapling          1
-	  ocspRespMaxAge          86400
-	}
-	EOF
-	chown -R lsadm:lsadm ${VHDIR}/*
-	gf_add_domain_ols_httpd_conf ${olsdomain}
+f_fail() {
+	printf 'Simple Stack Monit: %s\n' "$*" >&2
+	exit 1
 }
 
-#
-# Add callback function to be used later in the script
-#
-function add_callback {
-	if [[ -z "$callback_url" ]]
-	then
-		read -p "enter callback url to get notification result:  " callback_url
-        fi
-	## Copy monit log file so we can compare it during crons callback
-	cp /var/log/monit.log /var/log/monit_old.log
-	## Compare monit.log with last state of monit log file (monit_old.log) what ever triggeres happen in last 1 minutes and get the difference
-	## Read line by line from difference file and get required string which need to send as notification
-	echo $'#!/bin/bash
-	callback_url='$callback_url'
-	diff /var/log/monit.log /var/log/monit_old.log |grep "<" > monit-notify
-	while read line
-	do
-		monitlog=`echo "$line"|tr -d '\''['\''|tr -d '\'']'\''|tr -d "'\''"|awk -F'\'': '\'' '\''{print $2}'\''`
-		curl -sS "$callback_url?monit_status='\''$monitlog'\''"
-	done < ./monit-notify
-	cp /var/log/monit.log /var/log/monit_old.log' > /usr/local/bin/monit-reporting
-	chmod +x /usr/local/bin/monit-reporting
-	crontab -l | grep -q 'monit-reporting' || (crontab -l 2>/dev/null; echo "* * * * * /usr/local/bin/monit-reporting > /dev/null 2>&1") | crontab -
+f_on_error() {
+	local status=$1
+	local line=$2
+	printf 'Simple Stack Monit failed with status %s near line %s.\n' "$status" "$line" >&2
+	exit "$status"
+}
+trap 'f_on_error "$?" "$LINENO"' ERR
+
+f_require_command() {
+	command -v "$1" >/dev/null 2>&1 || f_fail "Required command not found: $1."
 }
 
+f_validate_no_control_characters() {
+	local value=$1
+	local label=$2
+	[[ ! "$value" =~ [[:cntrl:]] ]] || f_fail "${label} contains invalid control characters."
+}
 
-while [[ -z $action ]]; do
-	clear
-	echo "What do you want to do?"
-	echo "   1) Install Monit"
-	echo "   2) Enable Webserver monitoring"
-	echo "   3) Disable Webserver monitoring"
-	echo "   4) Enable MySQL monitoring"
-	echo "   5) Disable MySQL monitoring"
-	echo "   6) Enable Redis monitoring"
-	echo "   7) Disable Redis monitoring"
-	echo "   8) Enable Memcached monitoring"
-	echo "   9) Disable Memcached monitoring"
-	echo "   10) Enable PHP monitoring"
-	echo "   11) Disable PHP monitoring"
-	echo "   12) Enable filesystem monitoring"
-	echo "   13) Disable filesystem monitoring"
-	echo "   14) Update email alert settings"
-	echo "   15) Enable all monitors"
-	echo "   16) Disable all monitors"
-	echo "   17) Enable HTTPS"
-	echo "   18) Disable HTTPS"
-	echo "   19) Add callback url for notification"
-	echo "   20) Remove callback url for notification"
-	echo "   21) Uninstall/Remove Monit"
-	echo "   22) Deactivate Monit"	
-	echo "   23) Activate Monit"	
-	echo
-	read -p "Action: " action
-	until [[ ! -z "$action" ]]; do
-		echo "$action: invalid selection."
-		read -p "Action: " action
+f_validate_domain() {
+	local value=$1
+	local label
+	local -a labels
+
+	f_validate_no_control_characters "$value" 'Domain'
+	[[ ${#value} -le 253 ]] || f_fail 'Domain is too long.'
+	[[ "$value" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || f_fail 'Domain must be a DNS name without a scheme or path.'
+	[[ "$value" != *..* ]] || f_fail 'Domain contains an empty label.'
+
+	IFS='.' read -r -a labels <<< "$value"
+	for label in "${labels[@]}"; do
+		[[ ${#label} -le 63 ]] || f_fail 'Domain contains an overlong label.'
+		[[ "$label" =~ ^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]] || f_fail 'Domain contains an invalid label.'
 	done
-done
+}
 
+f_validate_email() {
+	local value=$1
+	f_validate_no_control_characters "$value" 'Email address'
+	[[ "$value" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] || f_fail 'A valid email address is required.'
+}
 
+f_validate_url() {
+	local value=$1
+	local label=$2
+	f_validate_no_control_characters "$value" "$label"
+	[[ "$value" =~ ^https?://[^[:space:]]+$ ]] || f_fail "${label} must be a valid HTTP or HTTPS URL."
+}
 
-if [[ $action == "install_monit" || $action == "1" ]]; then
-	clear
+f_validate_port() {
+	local value=$1
+	local port
+	[[ "$value" =~ ^[0-9]+$ ]] || f_fail 'SMTP port must be numeric.'
+	port=$((10#$value))
+	(( port >= 1 && port <= 65535 )) || f_fail 'SMTP port must be between 1 and 65535.'
+}
 
-	if [[ -z $domain ]]; then
-    	clear
-    	echo "Which domain name do you want for Monit?
-Specify just the domain name without www or http://
-Example: monit.myblog.com"
-    	read -p "Domain: " domain
+f_validate_basic_auth() {
+	[[ "$monit_user" =~ ^[A-Za-z0-9._-]+$ ]] || f_fail 'Monit user name contains invalid characters.'
+	f_validate_no_control_characters "$monit_password" 'Monit password'
+	[[ -n "$monit_password" ]] || f_fail 'A Monit password is required.'
+}
+
+f_validate_smtp() {
+	f_validate_no_control_characters "$monit_smtp_server" 'SMTP server'
+	[[ -n "$monit_smtp_server" && "$monit_smtp_server" != *[[:space:]]* ]] || f_fail 'An SMTP server is required.'
+	f_validate_port "$monit_smtp_port"
+	f_validate_no_control_characters "$monit_smtp_user" 'SMTP user'
+	[[ -n "$monit_smtp_user" ]] || f_fail 'An SMTP user name is required.'
+	f_validate_no_control_characters "$monit_smtp_pass" 'SMTP password'
+	[[ -n "$monit_smtp_pass" ]] || f_fail 'An SMTP password is required.'
+	f_validate_email "$monit_alert_email"
+}
+
+f_monit_quote() {
+	local value=$1
+	value=${value//\\/\\\\}
+	value=${value//\"/\\\"}
+	printf '"%s"' "$value"
+}
+
+f_atomic_write() {
+	local path=$1
+	local content=$2
+	local mode=$3
+	local owner=$4
+	local directory
+	local temporary
+
+	directory=$(dirname -- "$path")
+	mkdir -p -- "$directory"
+	temporary=$(mktemp "${directory}/.sstk-$(basename -- "$path").XXXXXX")
+
+	if ! printf '%s\n' "$content" > "$temporary"; then
+		rm -f -- "$temporary"
+		f_fail "Unable to write ${path}."
+	fi
+	if ! chmod "$mode" "$temporary" || ! chown "$owner" "$temporary"; then
+		rm -f -- "$temporary"
+		f_fail "Unable to secure ${path}."
+	fi
+	if ! mv -f -- "$temporary" "$path"; then
+		rm -f -- "$temporary"
+		f_fail "Unable to replace ${path}."
+	fi
+}
+
+f_require_ols() {
+	local version
+	f_require_command systemctl
+	[[ -x "${OLS_ROOT}/bin/lswsctrl" ]] || f_fail 'OpenLiteSpeed is not installed.'
+	[[ -f "$OLS_HTTPD_CONFIG" ]] || f_fail 'OpenLiteSpeed configuration is missing.'
+	version=$("${OLS_ROOT}/bin/lshttpd" -v 2>/dev/null || true)
+	[[ "$version" == *Open* ]] || f_fail 'Simple Stack Monit supports OpenLiteSpeed only.'
+}
+
+f_validate_ols() {
+	[[ -x "${OLS_ROOT}/bin/lswsctrl" ]] || f_fail 'OpenLiteSpeed configuration tester is missing.'
+	if ! "${OLS_ROOT}/bin/lswsctrl" configtest >/dev/null 2>&1; then
+		f_fail 'OpenLiteSpeed configuration validation failed.'
+	fi
+}
+
+f_restart_ols() {
+	f_validate_ols
+	if ! systemctl restart lsws >/dev/null 2>&1; then
+		f_fail 'OpenLiteSpeed could not be restarted.'
+	fi
+	if ! systemctl is-active --quiet lsws; then
+		f_fail 'OpenLiteSpeed is not active after the restart.'
+	fi
+}
+
+f_monit_package_installed() {
+	local status
+	status=$(dpkg-query -W -f='${db:Status-Status}' monit 2>/dev/null || true)
+	[[ "$status" == 'installed' ]]
+}
+
+f_require_monit_installed() {
+	f_require_command dpkg-query
+	f_monit_package_installed || f_fail 'Monit is not installed.'
+	f_require_command monit
+	[[ -f "$MONIT_MAIN_CONFIG" ]] || f_fail 'Monit configuration is missing.'
+}
+
+f_install_monit_package() {
+	if f_monit_package_installed; then
+		return 0
 	fi
 
-	
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		echo "server {
-    
-    listen 80;
-    listen [::]:80;
-
-    server_name $domain www.$domain;
-
-    location / {
-        proxy_pass http://127.0.0.1:48756;
-		sub_filter_once off;
-		sub_filter \"127.0.0.1:48756\" \"$domain\";
-    }
-
-}" > /etc/nginx/sites-enabled/monit
-	systemctl restart nginx
-
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]; then
-	# https://openlitespeed.org/kb/reverse-proxy-basics/#Method_1_Proxy_with_Context
-		add_ols_monit_conf "$domain"
-
+	export DEBIAN_FRONTEND=noninteractive
+	if ! apt-get install -y monit >/dev/null; then
+		f_fail 'Monit package installation failed.'
 	fi
+	f_require_monit_installed
+}
 
-	apt-get install -y monit
-
-	# Save the original monitrc configuration file if this is the first time we're installing it.
-	# It's a great reference to have around.
-	if [ ! -f /opt/monitrc.original ]
-	then
-		cp /etc/monit/monitrc /opt/monitrc.original
-	fi
-
-	if [[ -z $monit_user ]]; then
-		echo
-		echo "Specify a name for the Monit user
-Example: admin"
-		read -p "Monit user name: " monit_user
-	fi
-
-
-	if [[ -z "$monit_password" ]]; then
-		echo
-		echo "Specify a password for the Monit user"
-		read -p "Monit password: " monit_password
-	fi
-
-
-	if [[ -z "$email_notifications" ]]; then
-		echo
-		read -p "Should e-mail notifications be enabled for monit? [y/n]: " email_notifications
-		until [[ "$email_notifications" =~ ^[yYnN]$ ]]; do
-			echo "$email_notifications: invalid selection."
-			read -p "Should e-mail notifications be enabled for monit? [y/n]: " email_notifications
-		done
-	fi
-	if [[ "$email_notifications" =~ ^[yY]$ ]]; then
-
-		if [[ -z $monit_smtp_server ]]; then
-			echo "Specify a SMTP server which Monit should use for email notifications
-
-Specify the SMTP server name only. The SMTP server needs to support TLS.
-Example: smtp.sendgrid.net"
-			read -p "SMTP server: " monit_smtp_server
+f_stop_monit() {
+	if systemctl is-active --quiet monit; then
+		if ! systemctl stop monit >/dev/null 2>&1; then
+			f_fail 'Monit could not be stopped.'
 		fi
+	fi
+	if systemctl is-active --quiet monit; then
+		f_fail 'Monit is still active after the stop request.'
+	fi
+}
 
-		if [[ -z $monit_smtp_port ]]; then
-			echo
-			echo "Specify the SMTP port"
-			read -p "SMTP port: " monit_smtp_port
-		fi
+f_validate_monit() {
+	f_require_command monit
+	[[ -f "$MONIT_MAIN_CONFIG" ]] || f_fail 'Monit configuration is missing.'
+	if ! monit -t -c "$MONIT_MAIN_CONFIG" >/dev/null 2>&1; then
+		f_fail 'Monit configuration validation failed.'
+	fi
+}
 
-		if [[ -z $monit_smtp_user ]]; then
-			echo
-			echo "Specify the SMTP user name for authentication"
-			read -p "SMTP user: " monit_smtp_user
-		fi
+f_restart_monit() {
+	f_validate_monit
+	if ! systemctl restart monit >/dev/null 2>&1; then
+		f_fail 'Monit could not be restarted.'
+	fi
+	if ! systemctl is-active --quiet monit; then
+		f_fail 'Monit is not active after the restart.'
+	fi
+}
 
-		if [[ -z "$monit_smtp_pass" ]]; then
-			echo
-			echo "Specify the SMTP password"
-			read -p "SMTP password: " monit_smtp_pass
-		fi
-
-		if [[ -z $monit_alert_email ]]; then
-			echo
-			echo "Specify an e-mail address for Monit alerts"
-			read -p "Email: " monit_alert_email
-		fi
-
-		echo "set daemon 120
-set log /var/log/monit.log			
-set idfile /var/lib/monit/id
-set statefile /var/lib/monit/state
-
-set mailserver $monit_smtp_server port $monit_smtp_port
-    username \"$monit_smtp_user\" password \"$monit_smtp_pass\"
-    using tls
-
-set alert $monit_alert_email
-
-set eventqueue
-    basedir /var/lib/monit/events
-    slots 100
-
-set httpd port 48756 and
-    allow $monit_user:$monit_password
-
-include /etc/monit/conf.d/*
-include /etc/monit/conf-enabled/*" > /etc/monit/monitrc
-
-	else
-
-		echo "set daemon 120
+f_write_monit_main_config() {
+	local content
+	content=$(cat <<'EOL'
+# Managed by Simple Stack. Credentials live in root-only include files.
+set daemon 120
 set log /var/log/monit.log
 set idfile /var/lib/monit/id
 set statefile /var/lib/monit/state
@@ -279,694 +256,730 @@ set eventqueue
     basedir /var/lib/monit/events
     slots 100
 
-set httpd port 48756 and
-    allow $monit_user:$monit_password
-
 include /etc/monit/conf.d/*
-include /etc/monit/conf-enabled/*" > /etc/monit/monitrc
+include /etc/monit/conf-enabled/*
+EOL
+)
+	f_atomic_write "$MONIT_MAIN_CONFIG" "$content" 0600 root:root
+}
 
+f_write_monit_httpd_config() {
+	local password
+	local content
+	password=$(f_monit_quote "$monit_password")
+	content=$(cat <<EOL
+# Managed by Simple Stack. Root-only Monit HTTP credentials.
+set httpd port 48756 and
+    use address 127.0.0.1
+    allow ${monit_user}:${password}
+EOL
+)
+	f_atomic_write "$MONIT_HTTPD_CONFIG" "$content" 0600 root:root
+}
+
+f_write_monit_email_config() {
+	local server
+	local user
+	local password
+	local alert
+	local content
+
+	server=$(f_monit_quote "$monit_smtp_server")
+	user=$(f_monit_quote "$monit_smtp_user")
+	password=$(f_monit_quote "$monit_smtp_pass")
+	alert=$(f_monit_quote "$monit_alert_email")
+	content=$(cat <<EOL
+# Managed by Simple Stack. Root-only Monit SMTP credentials.
+set mailserver ${server} port ${monit_smtp_port}
+    username ${user} password ${password}
+    using tls
+set alert ${alert}
+EOL
+)
+	f_atomic_write "$MONIT_EMAIL_CONFIG" "$content" 0600 root:root
+}
+
+f_write_monit_mmonit_config() {
+	local server
+	local content
+
+	if [[ -z "$monit_mmonit_server" ]]; then
+		rm -f -- "$MONIT_MMONIT_CONFIG"
+		return 0
 	fi
 
-	# set m-monit registration server if available
-	# $monit_mmonit_server is only available as an optional environment var - we do not prompt the user for it if unavailable.
-	if [[ $monit_mmonit_server ]]; then	
-		echo "set mmonit $monit_mmonit_server" >> /etc/monit/monitrc
-	fi
-	
-	# Add callback if it exists.
-	if [[ "$callback_url" ]]
-	then
-		add_callback
-	fi	
+	f_validate_url "$monit_mmonit_server" 'M/Monit server'
+	server=$(f_monit_quote "$monit_mmonit_server")
+	content=$(cat <<EOL
+# Managed by Simple Stack. Root-only M/Monit registration.
+set mmonit ${server}
+EOL
+)
+	f_atomic_write "$MONIT_MMONIT_CONFIG" "$content" 0600 root:root
+}
 
-	#calculate dynamic limits based on server resources
-	Memory=`free -m|grep Mem|awk '{print $2}'`
-	cpalert=$(echo "`nproc`*70" | bc)
-	cprestart=$(echo "`nproc`*80" | bc)
-	memalert=$(echo "$Memory*.80" | bc)
-	memrestart=$(echo "$Memory*.85" | bc)
-	Alert_cpu=`echo $cpalert| awk '{printf("%d", $1)}'`
-	Restart_cpu=`echo $cprestart| awk '{printf("%d", $1)}'`
-	Alert_memory=`echo $memalert| awk '{printf("%d", $1)}'`
-	Restart_memory=`echo $memrestart| awk '{printf("%d", $1)}'`
+f_write_monitor_configs() {
+	local memory_kb
+	local memory_mb
+	local cpu_count
+	local alert_cpu
+	local restart_cpu
+	local alert_memory
+	local restart_memory
+	local content
 
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		cat > /etc/monit/conf-available/nginx <<- EOF
-		check process nginx with pidfile /var/run/nginx.pid
-			group www
-			group nginx
-			start program = "/usr/bin/systemctl restart nginx"
-			stop program = "/usr/bin/systemctl restart nginx"
-			if failed host 127.0.0.1 port 80 then restart
-			if 5 restarts with 5 cycles then timeout
-			if cpu is greater than $Alert_cpu% for 2 cycles then alert
-			if cpu > $Restart_cpu% for 5 cycles then restart
-			depend nginx_bin
-			depend nginx_rc
+	memory_kb=$(awk '/^MemTotal:/ { print $2; exit }' /proc/meminfo)
+	[[ "$memory_kb" =~ ^[0-9]+$ ]] || f_fail 'Unable to determine server memory.'
+	memory_mb=$((memory_kb / 1024))
+	cpu_count=$(nproc)
+	[[ "$cpu_count" =~ ^[0-9]+$ ]] || f_fail 'Unable to determine CPU count.'
+	(( memory_mb > 0 && cpu_count > 0 )) || f_fail 'Server resource values are invalid.'
 
-			check file nginx_bin with path /usr/sbin/nginx
-			group nginx
-			include /etc/monit/templates/rootbin
+	alert_cpu=$((cpu_count * 70 / 100))
+	restart_cpu=$((cpu_count * 80 / 100))
+	alert_memory=$((memory_mb * 80 / 100))
+	restart_memory=$((memory_mb * 85 / 100))
+	if (( alert_cpu < 1 )); then alert_cpu=1; fi
+	if (( restart_cpu < 1 )); then restart_cpu=1; fi
+	if (( alert_memory < 1 )); then alert_memory=1; fi
+	if (( restart_memory < 1 )); then restart_memory=1; fi
 
-			check file nginx_rc with path /etc/init.d/nginx
-			group nginx
-			include /etc/monit/templates/rootbin
-		EOF
-	elif [ "$g_webserver_type" = "ols" ]; then
-		# Config below works for OLS to monitor service
-		cat > /etc/monit/conf-available/ols <<- EOF
-		check process OpenLiteSpeed with pidfile /tmp/lshttpd/lshttpd.pid
-		    start program = "/usr/bin/systemctl start lshttpd"
-		    stop program = "/usr/bin/systemctl stop lshttpd"
-		    if failed host 127.0.0.1 port 80 protocol http then restart
-		    if 5 restarts with 5 cycles then timeout
-		    if cpu is greater than $Alert_cpu% for 2 cycles then alert
-		    if cpu > $Restart_cpu% for 5 cycles then restart
-		EOF
-	elif [ "$g_webserver_type" = "ols-enterprise" ]; then
-		cat > /etc/monit/conf-available/ols-enterprise <<- EOF
-		check process OpenLiteSpeed with pidfile /tmp/lshttpd/lshttpd.pid
-		    start program = "/usr/bin/systemctl start lshttpd"
-		    stop program = "/usr/bin/systemctl stop lshttpd"
-		    if failed host 127.0.0.1 port 80 protocol http then restart
-		    if 5 restarts with 5 cycles then timeout
-		    if cpu is greater than $Alert_cpu% for 2 cycles then alert
-		    if cpu > $Restart_cpu% for 5 cycles then restart
-		EOF
-	fi
+	content=$(cat <<EOL
+check process OpenLiteSpeed with pidfile /tmp/lshttpd/lshttpd.pid
+    start program = "/usr/bin/systemctl start lsws"
+    stop program = "/usr/bin/systemctl stop lsws"
+    if failed host 127.0.0.1 port 80 protocol http then restart
+    if 5 restarts with 5 cycles then timeout
+    if cpu is greater than ${alert_cpu}% for 2 cycles then alert
+    if cpu > ${restart_cpu}% for 5 cycles then restart
+EOL
+)
+	f_atomic_write "${MONIT_AVAILABLE}/ols" "$content" 0644 root:root
 
-	# Add mysql checks.
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		echo ' check process mysqld with pidfile /var/run/mysqld/mysqld.pid
-		group database
-		group mysql
-		start program = "/bin/systemctl start mariadb"
-		stop  program = "/bin/systemctl stop mariadb"
-		if cpu > '$Alert_cpu'% for 2 cycles then alert
-		if cpu > '$Restart_cpu'% for 5 cycles then restart
-		if mem > '$Restart_memory' MB for 3 cycles then restart
-		if failed host localhost port 3306 protocol mysql with timeout 15 seconds for 3 times within 4 cycles then restart
-		if failed unixsocket /var/run/mysqld/mysqld.sock protocol mysql for 3 times within 4 cycles then restart
-		if 5 restarts with 5 cycles then timeout
-		depend mysql_bin
+	content=$(cat <<EOL
+check process mysqld with pidfile /var/run/mysqld/mysqld.pid
+    group database
+    group mysql
+    start program = "/bin/systemctl start mariadb"
+    stop program = "/bin/systemctl stop mariadb"
+    if cpu > ${alert_cpu}% for 2 cycles then alert
+    if cpu > ${restart_cpu}% for 5 cycles then restart
+    if mem > ${restart_memory} MB for 3 cycles then restart
+    if failed host localhost port 3306 protocol mysql with timeout 15 seconds for 3 times within 4 cycles then restart
+    if failed unixsocket /var/run/mysqld/mysqld.sock protocol mysql for 3 times within 4 cycles then restart
+    if 5 restarts with 5 cycles then timeout
+    depend mysql_bin
 
-		check file mysql_bin with path /usr/sbin/mysqld
-		group mysql
-		include /etc/monit/templates/rootbin
-		' > /etc/monit/conf-available/mysql
-	elif [ "$g_webserver_type" = "ols" ]; then
-		echo ' check process mysqld with pidfile /var/run/mysqld/mysqld.pid
-		group database
-		group mysql
-		start program = "/bin/systemctl start mariadb"
-		stop  program = "/bin/systemctl stop mariadb"
-		if cpu > '$Alert_cpu'% for 2 cycles then alert
-		if cpu > '$Restart_cpu'% for 5 cycles then restart
-		if mem > '$Restart_memory' MB for 3 cycles then restart
-		if failed host localhost port 3306 protocol mysql with timeout 15 seconds for 3 times within 4 cycles then restart
-		if failed unixsocket /var/run/mysqld/mysqld.sock protocol mysql for 3 times within 4 cycles then restart
-		if 5 restarts with 5 cycles then timeout
-		depend mysql_bin
+check file mysql_bin with path /usr/sbin/mysqld
+    group mysql
+    include /etc/monit/templates/rootbin
+EOL
+)
+	f_atomic_write "${MONIT_AVAILABLE}/mysql" "$content" 0644 root:root
 
-		check file mysql_bin with path /usr/sbin/mysqld
-		group mysql
-		include /etc/monit/templates/rootbin
-		' > /etc/monit/conf-available/mysql
-	elif [ "$g_webserver_type" = "ols-enterprise" ]; then
-		echo ' check process mysqld with pidfile /var/run/mysqld/mysqld.pid
-		group database
-		group mysql
-		start program = "/bin/systemctl start mariadb"
-		stop  program = "/bin/systemctl stop mariadb"
-		if cpu > '$Alert_cpu'% for 2 cycles then alert
-		if cpu > '$Restart_cpu'% for 5 cycles then restart
-		if mem > '$Restart_memory' MB for 3 cycles then restart
-		if failed host localhost port 3306 protocol mysql with timeout 15 seconds for 3 times within 4 cycles then restart
-		if failed unixsocket /var/run/mysqld/mysqld.sock protocol mysql for 3 times within 4 cycles then restart
-		if 5 restarts with 5 cycles then timeout
-		depend mysql_bin
-
-		check file mysql_bin with path /usr/sbin/mysqld
-		group mysql
-		include /etc/monit/templates/rootbin
-		' > /etc/monit/conf-available/mysql
-	fi	
-
-# Add redis checks.
-echo 'check process redis-server with pidfile "/var/run/redis/redis-server.pid"
+	content=$(cat <<EOL
+check process redis-server with pidfile "/var/run/redis/redis-server.pid"
     start program = "/bin/systemctl start redis"
     stop program = "/bin/systemctl stop redis"
-    if totalmem > '$Alert_memory' MB then alert
+    if totalmem > ${alert_memory} MB then alert
     if children > 255 for 5 cycles then restart
-	if cpu > '$Alert_cpu'% for 2 cycles then alert
-    if cpu usage > '$Restart_cpu'% for 3 cycles then restart
+    if cpu > ${alert_cpu}% for 2 cycles then alert
+    if cpu usage > ${restart_cpu}% for 3 cycles then restart
     if failed host 127.0.0.1 port 6379 then restart
-'> /etc/monit/conf-available/redis
+EOL
+)
+	f_atomic_write "${MONIT_AVAILABLE}/redis" "$content" 0644 root:root
 
-# Add memcached checks.
-echo 'check process memcached with pidfile "/var/run/memcached/memcached.pid"
+	content=$(cat <<EOL
+check process memcached with pidfile "/var/run/memcached/memcached.pid"
     start program = "/bin/systemctl start memcached"
     stop program = "/bin/systemctl stop memcached"
-    if totalmem > '$Alert_memory' MB then alert
-	if cpu > '$Alert_cpu'% for 2 cycles then alert
-    if cpu usage > '$Restart_cpu'% for 3 cycles then restart
+    if totalmem > ${alert_memory} MB then alert
+    if cpu > ${alert_cpu}% for 2 cycles then alert
+    if cpu usage > ${restart_cpu}% for 3 cycles then restart
     if failed host 127.0.0.1 port 11211 then restart
-'> /etc/monit/conf-available/memcached
+EOL
+)
+	f_atomic_write "${MONIT_AVAILABLE}/memcached" "$content" 0644 root:root
 
-# Add php checks (nginx only)
-if [ "$g_webserver_type" = "nginx" ] ; then
-	echo 'check process php83-fpm with pidfile /var/run/php/php8.3-fpm.pid
-    start program = "/bin/systemctl start php8.3-fpm"
-    stop program  = "/bin/systemctl stop php8.3-fpm"
-    if cpu is greater than '$Alert_cpu'% for 3 cycles then alert
-    if cpu is greater than '$Restart_cpu'% for 5 cycles then restart
-    if totalmem > '$Restart_memory' MB then alert
-' > /etc/monit/conf-available/php83
+	content=$(cat <<'EOL'
+CHECK FILESYSTEM system PATH /
+    if space usage > 80% then alert
+EOL
+)
+	f_atomic_write "${MONIT_AVAILABLE}/filesystem" "$content" 0644 root:root
 
-	echo 'check process php82-fpm with pidfile /var/run/php/php8.2-fpm.pid
-    start program = "/bin/systemctl start php8.2-fpm"
-    stop program  = "/bin/systemctl stop php8.2-fpm"
-    if cpu is greater than '$Alert_cpu'% for 3 cycles then alert
-    if cpu is greater than '$Restart_cpu'% for 5 cycles then restart
-    if totalmem > '$Restart_memory' MB then alert
-' > /etc/monit/conf-available/php82
+	content=$(cat <<EOL
+check system ${domain}
+    if cpu usage > ${alert_cpu}% for 2 cycles then alert
+    if memory usage > ${restart_memory} MB for 3 cycles then alert
+EOL
+)
+	f_atomic_write "${MONIT_AVAILABLE}/coresystem" "$content" 0644 root:root
+}
 
-	echo 'check process php81-fpm with pidfile /var/run/php/php8.1-fpm.pid
-    start program = "/bin/systemctl start php8.1-fpm"
-    stop program  = "/bin/systemctl stop php8.1-fpm"
-    if cpu is greater than '$Alert_cpu'% for 3 cycles then alert
-    if cpu is greater than '$Restart_cpu'% for 5 cycles then restart
-    if totalmem > '$Restart_memory' MB then alert
-' > /etc/monit/conf-available/php81
+f_set_monitor_enabled() {
+	local name=$1
+	local state=$2
+	local available="${MONIT_AVAILABLE}/$1"
+	local enabled="${MONIT_ENABLED}/$1"
 
-	echo 'check process php80-fpm with pidfile /var/run/php/php8.0-fpm.pid
-    start program = "/bin/systemctl start php8.0-fpm"
-    stop program  = "/bin/systemctl stop php8.0-fpm"
-    if cpu is greater than '$Alert_cpu'% for 3 cycles then alert
-    if cpu is greater than '$Restart_cpu'% for 5 cycles then restart
-    if totalmem > '$Restart_memory' MB then alert
-' > /etc/monit/conf-available/php80
+	case "$name" in
+		ols|mysql|redis|memcached|filesystem|coresystem) ;;
+		*) f_fail 'Unknown Monit component.' ;;
+	esac
+	[[ -f "$available" ]] || f_fail "Monit configuration is missing for ${name}."
 
-	echo 'check process php74-fpm with pidfile /var/run/php/php7.4-fpm.pid
-    start program = "/bin/systemctl start php7.4-fpm"
-    stop program  = "/bin/systemctl stop php7.4-fpm"
-    if cpu is greater than '$Alert_cpu'% for 3 cycles then alert
-    if cpu is greater than '$Restart_cpu'% for 5 cycles then restart
-    if totalmem > '$Restart_memory' MB then alert
-' > /etc/monit/conf-available/php74
-
-fi
-
-# Add diskspace checks.
-echo 'CHECK FILESYSTEM system PATH /
-     if space usage > 80% then alert
-' > /etc/monit/conf-available/filesystem
-
-# Add general memory and cpu checks.
-echo 'check system '$domain'
-   if cpu usage > '$Alert_cpu'% for 2 cycles then alert
-   if memory usage > '$Restart_memory' MB for 3 cycles then alert
-   ' > /etc/monit/conf-available/coresystem
-
-	# Enable default checks.
-	chmod 0700 /etc/monit/monitrc
-	ln -s /etc/monit/conf-available/mysql /etc/monit/conf-enabled/mysql
-	ln -s /etc/monit/conf-available/"$g_webserver_type" /etc/monit/conf-enabled/"$g_webserver_type"
-	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.3 ]]; then
-			ln -s /etc/monit/conf-available/php83 /etc/monit/conf-enabled/php83
-		fi	
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.2 ]]; then
-			ln -s /etc/monit/conf-available/php82 /etc/monit/conf-enabled/php82
-		fi
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.1 ]]; then
-			ln -s /etc/monit/conf-available/php81 /etc/monit/conf-enabled/php81
-		fi
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.0 ]]; then	
-			ln -s /etc/monit/conf-available/php80 /etc/monit/conf-enabled/php80
-		fi
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php7.4 ]]; then
-			ln -s /etc/monit/conf-available/php74 /etc/monit/conf-enabled/php74
-		fi
+	if [[ "$state" == 'on' ]]; then
+		ln -sfn -- "$available" "$enabled"
+		[[ -L "$enabled" && "$(readlink -f -- "$enabled")" == "$(readlink -f -- "$available")" ]] || f_fail "Unable to enable ${name} monitoring."
+	else
+		rm -f -- "$enabled"
+		[[ ! -e "$enabled" && ! -L "$enabled" ]] || f_fail "Unable to disable ${name} monitoring."
 	fi
-	
-	ln -s /etc/monit/conf-available/filesystem /etc/monit/conf-enabled/filesystem
-	ln -s /etc/monit/conf-available/coresystem /etc/monit/conf-enabled/coresystem
-	systemctl restart monit
-	echo
-	echo "Monit has been installed."
-	echo "It is available at: http://$domain"
-	exit
-fi
+}
 
+f_require_monit_vhost() {
+	local file="${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}"
+	[[ -f "$file" ]] || f_fail 'The Simple Stack Monit OpenLiteSpeed vhost is missing.'
+	grep -Fq "$MONIT_VHOST_MARKER" "$file" || f_fail 'The selected OpenLiteSpeed vhost is not managed by Simple Stack Monit.'
+}
 
-if [[ $action == "enable_webserver_monit" || $action == "2" ]]; then #  enable_nginx_monit
-	
-	ln -s /etc/monit/conf-available/"$g_webserver_type" /etc/monit/conf-enabled/"$g_webserver_type"
-	systemctl restart monit
-	
-	echo
-	echo "$g_webserver_type monitoring has been enabled "
-	exit
-fi
+f_ols_has_vhost_registration() {
+	awk -v selected="$domain" '
+		$1 == "virtualhost" && $2 == selected && $3 == "{" { found = 1 }
+		END { exit found ? 0 : 1 }
+	' "$OLS_HTTPD_CONFIG"
+}
 
+f_ols_has_domain_map() {
+	awk -v selected="$domain" '
+		$1 == "map" && $2 == selected { found = 1 }
+		END { exit found ? 0 : 1 }
+	' "$OLS_HTTPD_CONFIG"
+}
 
-if [[ $action == "disable_webserver_monit" || $action == "3" ]]; then #  disable_nginx_monit
+f_ensure_domain_available() {
+	local vhost_directory="${OLS_VHOST_DIR}/${domain}"
+	local vhost_file="${vhost_directory}/${OLS_VHOST_FILE}"
 
-	rm -f /etc/monit/conf-enabled/"$g_webserver_type"
-	systemctl restart monit
-
-	echo
-	echo "$g_webserver_type monitoring has been disabled"
-	exit
-fi
-
-
-
-if [[ $action == "enable_mysql_monit" || $action == "4" ]]; then
-
-	ln -s /etc/monit/conf-available/mysql /etc/monit/conf-enabled/mysql
-	systemctl restart monit
-	
-	echo
-	echo "MySQL monitoring has been enabled "
-	exit
-fi
-
-
-if [[ $action == "disable_mysql_monit" || $action == "5" ]]; then
-
-	rm -f /etc/monit/conf-enabled/mysql
-	systemctl restart monit
-
-	echo
-	echo "MySQL monitoring has been disabled"
-	exit
-fi
-
-
-
-if [[ $action == "enable_redis_monit" || $action == "6" ]]; then
-
-	ln -s /etc/monit/conf-available/redis /etc/monit/conf-enabled/redis
-	systemctl restart monit
-	
-	echo
-	echo "Redis monitoring has been enabled "
-	exit
-fi
-
-
-if [[ $action == "disable_redis_monit" || $action == "7" ]]; then
-
-	rm -f /etc/monit/conf-enabled/redis
-	systemctl restart monit
-
-	echo
-	echo "Redis monitoring has been disabled"
-	exit
-fi
-
-
-
-if [[ $action == "enable_memcached_monit" || $action == "8" ]]; then
-
-	ln -s /etc/monit/conf-available/memcached /etc/monit/conf-enabled/memcached
-	systemctl restart monit
-	
-	echo
-	echo "Memcached monitoring has been enabled "
-	exit
-fi
-
-
-if [[ $action == "disable_memcached_monit" || $action == "9" ]]; then
-
-	rm -f /etc/monit/conf-enabled/memcached
-	systemctl restart monit
-
-	echo
-	echo "Memcached monitoring has been disabled"
-	exit
-fi
-
-
-
-if [[ $action == "enable_php_monit" || $action == "10" ]]; then
-	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.2 ]]; then
-			ln -s /etc/monit/conf-available/php82 /etc/monit/conf-enabled/php82
-		fi	
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.1 ]]; then
-			ln -s /etc/monit/conf-available/php81 /etc/monit/conf-enabled/php81
-		fi
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.0 ]]; then	
-			ln -s /etc/monit/conf-available/php80 /etc/monit/conf-enabled/php80
-		fi
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php7.4 ]]; then
-			ln -s /etc/monit/conf-available/php74 /etc/monit/conf-enabled/php74
-		fi
+	if [[ -e "$vhost_file" || -d "$vhost_directory" ]]; then
+		f_require_monit_vhost
+	elif f_ols_has_vhost_registration || f_ols_has_domain_map; then
+		f_fail 'The selected domain is already registered in OpenLiteSpeed.'
 	fi
 
-	systemctl restart monit
-	
-	echo
-	echo "PHP monitoring has been enabled "
-	exit
-fi
-
-
-if [[ $action == "disable_php_monit" || $action == "11" ]]; then
-	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		rm -f /etc/monit/conf-enabled/php81
-		rm -f /etc/monit/conf-enabled/php80
-		rm -f /etc/monit/conf-enabled/php74
-		rm -f /etc/monit/conf-enabled/php73 
-		rm -f /etc/monit/conf-enabled/php72
-		rm -f /etc/monit/conf-enabled/php71
-		rm -f /etc/monit/conf-enabled/php56
+	if [[ ! -f "$vhost_file" && -e "/var/www/${domain}" ]]; then
+		f_fail 'The selected domain already has a document root.'
 	fi
-	systemctl restart monit
+}
 
-	echo
-	echo "PHP monitoring has been disabled"
-	exit
-fi
+f_write_ols_vhost() {
+	local vhost_directory="${OLS_VHOST_DIR}/${domain}"
+	local vhost_file="${vhost_directory}/${OLS_VHOST_FILE}"
+	local document_root="/var/www/${domain}/html"
+	local key_file="${OLS_ROOT}/conf/example.key"
+	local cert_file="${OLS_ROOT}/conf/example.crt"
+	local redirect_rules=''
+	local content
 
-
-
-if [[ $action == "enable_filesystem_monit" || $action == "12" ]]; then
-
-	ln -s /etc/monit/conf-available/filesystem /etc/monit/conf-enabled/filesystem
-	systemctl restart monit
-	
-	echo
-	echo "Filesystem monitoring has been enabled "
-	exit
-fi
-
-
-if [[ $action == "disable_filesystem_monit" || $action == "13" ]]; then
-
-	rm -f /etc/monit/conf-enabled/filesystem
-	systemctl restart monit
-
-	echo
-	echo "Filesystem monitoring has been disabled"
-	exit
-fi
-
-
-
-if [[ $action == "update_email_monit" || $action == "14" ]]; then
-
-	if [[ -z $monit_smtp_server ]]; then
-		echo "Specify a SMTP server which Monit should use for email notifications
-
-Specify the SMTP server name only. The SMTP server needs to support TLS.
-Example: smtp.sendgrid.net"
-		read -p "SMTP server: " monit_smtp_server
+	if [[ -s "/etc/letsencrypt/live/${domain}/privkey.pem" && -s "/etc/letsencrypt/live/${domain}/fullchain.pem" ]]; then
+		key_file="/etc/letsencrypt/live/${domain}/privkey.pem"
+		cert_file="/etc/letsencrypt/live/${domain}/fullchain.pem"
+		redirect_rules=$'RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS\nRewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS'
 	fi
 
-	if [[ -z $monit_smtp_port ]]; then
-		echo
-		echo "Specify the SMTP port"
-		read -p "SMTP port: " monit_smtp_port
-	fi
-	if [[ -z $monit_smtp_user ]]; then
-		echo
-		echo "Specify the SMTP user name for authentication"
-		read -p "SMTP user: " monit_smtp_user
-	fi
-	if [[ -z "$monit_smtp_pass" ]]; then
-		echo
-		echo "Specify the SMTP password"
-		read -p "SMTP password: " monit_smtp_pass
-	fi
-	if [[ -z $monit_alert_email ]]; then
-		echo
-		echo "Specify an e-mail address for Monit alerts"
-		read -p "Email: " monit_alert_email
-	fi
+	install -d -o lsadm -g lsadm -m 0750 "$vhost_directory"
+	install -d -m 0755 "${document_root}/.well-known/acme-challenge"
+	content=$(cat <<EOL
+${MONIT_VHOST_MARKER}
+docRoot                   ${document_root}
 
-	sed -i "/set mailserver/c\set mailserver $monit_smtp_server port $monit_smtp_port" /etc/monit/monitrc
-	sed -i "/    username/c\    username \"$monit_smtp_user\" password \"$monit_smtp_pass\"" /etc/monit/monitrc
-	sed -i "/set alert/c\set alert $monit_alert_email" /etc/monit/monitrc
-	systemctl restart monit
-	echo
-	echo "Monit email settings updated"
-	exit
+extprocessor monithttp {
+    type                    proxy
+    address                 127.0.0.1:48756
+    note                    Monit
+    maxConns                1000
+    initTimeout             5
+    retryTimeout            0
+    respBuffer              0
+}
 
-fi
+context /.well-known/ {
+    allowBrowse             1
+    rewrite  {
+    }
+    addDefaultCharset       off
+    phpIniOverride  {
+    }
+}
 
+context / {
+    type                    proxy
+    handler                 monithttp
+    addDefaultCharset       off
+}
 
+rewrite  {
+    enable                  1
+    autoLoadHtaccess        1
+    rules                   <<<END_rules
+RewriteRule "(^|/)\\.(?!well-known\\/)" - [F]
+${redirect_rules}
+END_rules
+}
 
-if [[ $action == "enable_all_monit" || $action == "15" ]]; then
-	ln -s /etc/monit/conf-available/"$g_webserver_type" /etc/monit/conf-enabled/"$g_webserver_type"
-	ln -s /etc/monit/conf-available/mysql /etc/monit/conf-enabled/mysql
-	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.2 ]]; then
-			ln -s /etc/monit/conf-available/php82 /etc/monit/conf-enabled/php82
-		fi	
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.1 ]]; then
-			ln -s /etc/monit/conf-available/php81 /etc/monit/conf-enabled/php81
-		fi
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php8.0 ]]; then	
-			ln -s /etc/monit/conf-available/php80 /etc/monit/conf-enabled/php80
-		fi
-		if [[ ! -f /etc/wpcd/php-versions-disabled/php7.4 ]]; then
-			ln -s /etc/monit/conf-available/php74 /etc/monit/conf-enabled/php74
-		fi
-	fi
+vhssl  {
+    keyFile                 ${key_file}
+    certFile                ${cert_file}
+    certChain               1
+    sslProtocol             24
+    ciphers                 EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:ECDHE-RSA-AES128-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA128:DHE-RSA-AES128-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-SHA128:ECDHE-RSA-AES128-SHA384:ECDHE-RSA-AES128-SHA128:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA128:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA384:AES128-GCM-SHA128:AES128-SHA128:AES128-SHA128:AES128-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4
+    enableECDHE             1
+    renegProtection         1
+    sslSessionCache         1
+    enableSpdy              15
+    enableQuic              1
+    enableStapling          1
+    ocspRespMaxAge          86400
+}
+EOL
+)
+	f_atomic_write "$vhost_file" "$content" 0640 lsadm:lsadm
+}
 
-	ln -s /etc/monit/conf-available/filesystem /etc/monit/conf-enabled/filesystem
-	ln -s /etc/monit/conf-available/coresystem /etc/monit/conf-enabled/coresystem
-	systemctl restart monit
-	echo
-	echo "All monitors enabled"
-	exit
-fi
+f_update_ols_registration() {
+	local mode=$1
+	local temporary
+	local mapping="  map                     ${domain} www.${domain}, ${domain}"
 
-
-
-if [[ $action == "disable_all_monit" || $action == "16" ]]; then
-	rm -f /etc/monit/conf-enabled/"$g_webserver_type"
-	rm -f /etc/monit/conf-enabled/mysql
-	rm -f /etc/monit/conf-enabled/filesystem
-	rm -f /etc/monit/conf-enabled/coresystem
-	rm -f /etc/monit/conf-enabled/memcached
-	rm -f /etc/monit/conf-enabled/redis
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		rm -f /etc/monit/conf-enabled/php83
-		rm -f /etc/monit/conf-enabled/php82
-		rm -f /etc/monit/conf-enabled/php81
-		rm -f /etc/monit/conf-enabled/php80
-		rm -f /etc/monit/conf-enabled/php74
-	fi
-	
-	systemctl restart monit
-	echo
-	echo "All monitors disabled"
-	exit
-fi
-
-
-
-if [[ $action == "enable_monit_ssl" || $action == "17" ]]; then
-
-    if [[ -z $email ]]; then
-        echo
-        echo "Specify an email for administrative notifications about your certificate
-Example: admin@example.com"
-        read -p "Email address: " email
-    fi
-	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		# For nginx, the config file in sites-enabled is always called 'monit' so no need to ask the user for the domain name.
-		# We can get it by searching the sites-enabled folder for the 'monit' config file.
-		domain=$(grep server_name /etc/nginx/sites-enabled/monit | cut -d "_" -f 2 | cut -d " " -f 2)
-
-		# If for some reason we don't have a domain name we need to quit.
-		while [[ -z $domain ]]; do
-			echo "SSL could not be enabled - unable to locate NGINX config file."
-			exit 1
-		done
-
-		# Enable SSL.
-		certbot --non-interactive --reinstall --expand --nginx --agree-tos -m $email --allow-subset-of-names --redirect -d $domain -d www.$domain
-
-		if ! grep -qs "listen 443" /etc/nginx/sites-enabled/monit; then
-			echo
-			echo "SSL could not be enabled for $domain"
-			exit
-		fi
-
-		sed -i '/sub_filter_once off/a sub_filter "http://"  "https://";' /etc/nginx/sites-enabled/monit
-
-	elif [ "$g_webserver_type" = "ols" ]; then
-
-		# Unlike NGINX, ols needs the actual domain name so we ask the user for it (or get from env.)
-		while [[ -z $domain ]]; do
-			gf_select_domain_nginx_ols
-		done
-
-		# Setup OLS Folders.	
-		DOCHM="/var/www/${domain}/html"
-		mkdir -p ${DOCHM}/.well-known/acme-challenge
-
-		# Enable SSL.
-		certbot certonly --non-interactive --reinstall --agree-tos --agree-tos -m $email --webroot -w ${DOCHM} -d $domain
-
-		if [[ -e /etc/letsencrypt/live/$domain/fullchain.pem ]]; then
-			sed -i "s|/usr/local/lsws/conf/example.key|/etc/letsencrypt/live/$domain/privkey.pem|g" ${VHDIR}/${domain}/$g_vhost_conf > /dev/null 2>&1
-			sed -i "s|/usr/local/lsws/conf/example.crt|/etc/letsencrypt/live/$domain/fullchain.pem|g" ${VHDIR}/${domain}/$g_vhost_conf > /dev/null 2>&1
-			# insert redirect to https inside the rewrite under wellknown rule just under <<<END_rules
-			# RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS
-			# RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS
-			sed -i "${VHDIR}/${domain}/$g_vhost_conf" -re "/<<<END_rules/a RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS\nRewriteRule .* https:\/\/%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS"
-		fi
-	fi
-
-	gf_restart_webserver
-
-    echo
-    echo "SSL has been enabled for $domain"
-	exit
-fi
-
-
-
-if [[ $action == "disable_monit_ssl" || $action == "18" ]]; then
-	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		# For nginx, the config file in sites-enabled is always called 'monit' so no need to ask the user for the domain name.
-		# We can get it by searching the sites-enabled folder for the 'monit' config file.
-		domain=$(grep server_name /etc/nginx/sites-enabled/monit -m 1 | cut -d "_" -f 2 | cut -d " " -f 2)
-
-		if ! grep -qs 'managed by Certbot' /etc/nginx/sites-enabled/monit; then
-			echo
-			echo "SSL is already disabled for $domain"
-			exit
-		fi
-		certbot delete --cert-name $domain --noninteractive
-
-		echo "server {
-		
-		listen 80;
-		listen [::]:80;
-
-		server_name $domain www.$domain;
-
-		location / {
-			proxy_pass http://127.0.0.1:48756;
-			sub_filter_once off;
-			sub_filter \"127.0.0.1:48756\" \"$domain\";
+	temporary=$(mktemp "${OLS_HTTPD_CONFIG}.tmp.XXXXXX")
+	if ! awk -v selected="$domain" -v mode="$mode" -v mapping="$mapping" -v root="/var/www/${domain}" -v config="${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}" '
+		BEGIN { in_listener = 0; skip_vhost = 0 }
+		skip_vhost {
+			if ($1 == "}") skip_vhost = 0
+			next
 		}
-
-	}" > /etc/nginx/sites-enabled/monit
-	
-	elif [ "$g_webserver_type" = "ols" ]; then
-		# Unlike NGINX, ols needs the actual domain name so we ask the user for it (or get from env.)
-		while [[ -z $domain ]]; do
-			gf_select_domain_nginx_ols
-		done	
-
-		# Lets find and delete the two lines with '# Enable HTTPS'
-		# RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS
-		# RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS
-		sed -i "${VHDIR}/${domain}/$g_vhost_conf" -re '/# Enable HTTPS/d'
-		gf_disable_certbot_ols_site "$domain"
+		$1 == "virtualhost" && $2 == selected && $3 == "{" {
+			skip_vhost = 1
+			next
+		}
+		$1 == "map" && $2 == selected { next }
+		$1 == "listener" { in_listener = 1 }
+		{
+			print
+			if (mode == "add" && in_listener && $1 == "address" && $2 ~ /:[0-9]+$/) {
+				print mapping
+			}
+		}
+		$1 == "}" { in_listener = 0 }
+		END {
+			if (mode == "add") {
+				print ""
+				print "virtualhost " selected " {"
+				print "vhRoot                  " root
+				print "configFile              " config
+				print "allowSymbolLink         1"
+				print "enableScript            1"
+				print "restrained              1"
+				print "setUIDMode              2"
+				print "}"
+			}
+		}
+	' "$OLS_HTTPD_CONFIG" > "$temporary"; then
+		rm -f -- "$temporary"
+		f_fail 'Unable to update OpenLiteSpeed virtualhost registration.'
 	fi
 
-    gf_restart_webserver
+	if [[ "$mode" == 'add' ]] && ! grep -Fq "$mapping" "$temporary"; then
+		rm -f -- "$temporary"
+		f_fail 'No OpenLiteSpeed listener accepted the Monit domain mapping.'
+	fi
+	if ! chmod --reference="$OLS_HTTPD_CONFIG" "$temporary" || ! chown --reference="$OLS_HTTPD_CONFIG" "$temporary"; then
+		rm -f -- "$temporary"
+		f_fail 'Unable to secure OpenLiteSpeed configuration.'
+	fi
+	if ! mv -f -- "$temporary" "$OLS_HTTPD_CONFIG"; then
+		rm -f -- "$temporary"
+		f_fail 'Unable to replace OpenLiteSpeed configuration.'
+	fi
+}
 
-    echo
-    echo "SSL has been disabled for $domain"
-	exit
-fi
+f_assert_removable_vhost() {
+	if [[ -e "${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}" ]]; then
+		f_require_monit_vhost
+	elif f_ols_has_vhost_registration || f_ols_has_domain_map; then
+		f_fail 'Refusing to remove an OpenLiteSpeed vhost that is not managed by Simple Stack Monit.'
+	fi
+}
 
-if [[ $action == "add_callback" || $action == "19" ]]; then
+f_remove_ols_vhost() {
+	f_assert_removable_vhost
+	if [[ -f "${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}" ]]; then
+		rm -rf -- "${OLS_VHOST_DIR}/${domain}" "${OLS_ROOT}/conf/vhosts-disabled/${domain}" "/var/www/${domain}"
+		f_update_ols_registration remove
+	fi
+}
 
-	add_callback
-	
-    echo
-    echo "Callbacks have been enabled."
-	exit
-fi
+f_update_vhost_content() {
+	local file="${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}"
+	local content
+	content=$(sed "$@")
+	f_atomic_write "$file" "$content" 0640 lsadm:lsadm
+}
 
-if [[ $action == "remove_callback" || $action == "20" ]]; then
-	(crontab -l 2>/dev/null | sed '/monit-reporting/d' ) | crontab -
-	rm /usr/local/bin/monit-reporting
-	
-    echo
-    echo "Callbacks have been removed."
-	exit	
-fi
+f_enable_monit_ssl() {
+	local file="${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}"
+	local certificate="/etc/letsencrypt/live/${domain}/fullchain.pem"
+	local private_key="/etc/letsencrypt/live/${domain}/privkey.pem"
+	local document_root="/var/www/${domain}/html"
+	local content
 
-if [[ $action == "remove_monit" || $action == "21" ]]; then
+	f_require_monit_vhost
+	f_require_command certbot
+	f_validate_email "$email"
+	install -d -m 0755 "${document_root}/.well-known/acme-challenge"
+	if ! certbot certonly --non-interactive --agree-tos -m "$email" --webroot -w "$document_root" -d "$domain" >/dev/null 2>&1; then
+		f_fail "Certificate issuance failed for ${domain}."
+	fi
+	[[ -s "$certificate" && -s "$private_key" ]] || f_fail 'The issued certificate or private key is missing.'
 
-	# Remove any cron entries related to monit.
-	(crontab -l 2>/dev/null | sed '/monit-reporting/d' ) | crontab -
+	f_update_vhost_content \
+		-e "s|^[[:space:]]*keyFile.*|  keyFile                 ${private_key}|" \
+		-e "s|^[[:space:]]*certFile.*|  certFile                ${certificate}|" "$file"
+	grep -Fq "$private_key" "$file" || f_fail 'Unable to configure the Monit private key.'
+	grep -Fq "$certificate" "$file" || f_fail 'Unable to configure the Monit certificate.'
 
-	# Remove monit executables, forceably if necessary.
-	apt-get remove monit -y
-	apt-get purge monit -y
+	if ! grep -Fq 'RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS' "$file"; then
+		content=$(awk '
+			{ print }
+			$1 == "rules" && $2 == "<<<END_rules" {
+				print "RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS"
+				print "RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS"
+			}
+		' "$file")
+		f_atomic_write "$file" "$content" 0640 lsadm:lsadm
+	fi
 
-	# Remove monit configuration.
-	rm -rf /etc/monit/conf-enabled/"$g_webserver_type"
+	f_restart_ols
+	printf 'SSL has been enabled for %s.\n' "$domain"
+}
 
-	# Remove monit web configuration.
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		### We cannot call the gf_remove_nginx_site() function because it will try to remove 
-		### some files and folders that don't exist (eg: PHP pool files).
-		### So we remove only the two portions required - SSL and the nginx config in sites-enabled.
-		# 1. Remove SSL.
-		domain=$(grep server_name /etc/nginx/sites-enabled/monit -m 1 | cut -d "_" -f 2 | cut -d " " -f 2)
-		if grep -qs "listen 443" /etc/nginx/sites-enabled/monit
-		then
-			certbot delete --cert-name $domain --noninteractive
+f_disable_monit_ssl() {
+	local file="${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}"
+
+	f_require_monit_vhost
+	f_update_vhost_content \
+		-e '/# Enable HTTPS/d' \
+		-e "s|^[[:space:]]*keyFile.*|  keyFile                 ${OLS_ROOT}/conf/example.key|" \
+		-e "s|^[[:space:]]*certFile.*|  certFile                ${OLS_ROOT}/conf/example.crt|" "$file"
+	grep -Fq "${OLS_ROOT}/conf/example.key" "$file" || f_fail 'Unable to restore the default OpenLiteSpeed private key.'
+	grep -Fq "${OLS_ROOT}/conf/example.crt" "$file" || f_fail 'Unable to restore the default OpenLiteSpeed certificate.'
+
+	if [[ -d "/etc/letsencrypt/live/${domain}" ]]; then
+		f_require_command certbot
+		if ! certbot delete --cert-name "$domain" --noninteractive >/dev/null 2>&1; then
+			f_fail "Certificate removal failed for ${domain}."
 		fi
-		# 2. Remove nginx configuration from etc/nginx/sites-enabled.
-		rm -rf /etc/nginx/sites-enabled/monit 
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		# Unlike NGINX, ols needs the actual domain name so we ask the user for it (or get from env.)
-		while [[ -z $domain ]]; do
-			gf_select_domain_nginx_ols
-		done	
-		gf_remove_ols_site $domain
 	fi
 
-	# Remove any other monit files including log files.
-	rm -rf /usr/local/bin/monit-reporting /etc/monit /var/log/monit.log
-	
-	# Finally, restart web server.
-	gf_restart_webserver
-	
-    echo
-    echo "Monit has been removed."
-	exit
+	f_restart_ols
+	printf 'SSL has been disabled for %s.\n' "$domain"
+}
+
+f_remove_legacy_callback() {
+	local current
+	local filtered
+
+	rm -f -- /usr/local/bin/monit-reporting
+	if command -v crontab >/dev/null 2>&1; then
+		current=$(crontab -l 2>/dev/null || true)
+		if grep -Fq '/usr/local/bin/monit-reporting' <<< "$current"; then
+			filtered=$(grep -vF '/usr/local/bin/monit-reporting' <<< "$current" || true)
+			printf '%s\n' "$filtered" | crontab -
+		fi
+	fi
+}
+
+f_install_callback() {
+	local script
+	local cron
+
+	f_validate_url "$callback_url" 'Callback URL'
+	f_require_command curl
+	f_require_command flock
+	f_require_command systemctl
+	systemctl is-active --quiet cron || f_fail 'Cron is not active; Monit callback reporting cannot be scheduled.'
+	install -d -o root -g root -m 0755 "$STATE_DIR"
+	touch /var/log/monit.log
+	chmod 0640 /var/log/monit.log
+	chown root:root /var/log/monit.log
+	f_atomic_write "$CALLBACK_URL_FILE" "$callback_url" 0600 root:root
+
+	script=$(cat <<'EOL'
+#!/bin/bash
+set -u
+umask 077
+
+callback_file=/etc/simple-stack/monit-callback-url
+offset_file=/etc/simple-stack/monit-log-offset
+log_file=/var/log/monit.log
+
+[[ -r "$callback_file" && -f "$log_file" ]] || exit 0
+IFS= read -r callback_url < "$callback_file" || exit 0
+[[ "$callback_url" == http://* || "$callback_url" == https://* ]] || exit 0
+
+exec 9>/var/lock/simplestack-monit-reporting.lock || exit 0
+flock -n 9 || exit 0
+
+current_size=$(stat -c %s "$log_file" 2>/dev/null) || exit 0
+offset=0
+if [[ -r "$offset_file" ]]; then
+	IFS= read -r offset < "$offset_file" || offset=0
+	[[ "$offset" =~ ^[0-9]+$ ]] || offset=0
+fi
+if (( offset > current_size )); then
+	offset=0
 fi
 
-if [[ $action == "deactivate_monit" || $action == "22" ]]; then
-	service monit stop;
-	
-	#@TODO: Need to check status before echoing this message.
-    echo
-    echo "Monit has been temporarily deactivated."
-	exit
-fi
+while IFS= read -r line; do
+	[[ -n "$line" ]] || continue
+	status=${line#*: }
+	status=${status//\"/}
+	status=${status//\'/}
+	curl --get --silent --show-error --output /dev/null --max-time 10 \
+		--data-urlencode "monit_status=${status}" "$callback_url" >/dev/null 2>&1 || true
+done < <(tail -c "+$((offset + 1))" "$log_file" 2>/dev/null)
 
-if [[ $action == "activate_monit" || $action == "23" ]]; then
-	service monit start;
-	
-	#@TODO: Need to check status before echoing this message.
-    echo
-    echo "Monit has been activated."
-	exit
-fi
+temporary="${offset_file}.tmp.$$"
+printf '%s\n' "$current_size" > "$temporary"
+chmod 0600 "$temporary"
+mv -f -- "$temporary" "$offset_file"
+EOL
+)
+	f_atomic_write "$CALLBACK_SCRIPT" "$script" 0700 root:root
+
+	cron=$(cat <<'EOL'
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+* * * * * root /usr/local/bin/simplestack-monit-reporting >/dev/null 2>&1
+EOL
+)
+	f_atomic_write "$CALLBACK_CRON" "$cron" 0644 root:root
+	f_atomic_write "$CALLBACK_OFFSET_FILE" "$(stat -c %s /var/log/monit.log)" 0600 root:root
+	f_remove_legacy_callback
+	bash -n "$CALLBACK_SCRIPT" >/dev/null 2>&1 || f_fail 'Monit callback script validation failed.'
+}
+
+f_remove_callback() {
+	f_remove_legacy_callback
+	rm -f -- "$CALLBACK_SCRIPT" "$CALLBACK_CRON" "$CALLBACK_URL_FILE" "$CALLBACK_OFFSET_FILE" "$CALLBACK_LOCK"
+}
+
+f_install_monit() {
+	local scheme=http
+	f_validate_domain "$domain"
+	domain=${domain,,}
+	f_require_ols
+	f_ensure_domain_available
+	f_validate_basic_auth
+	email_notifications=${email_notifications,,}
+	[[ "$email_notifications" =~ ^[yn]$ ]] || f_fail 'Email notification setting must be y or n.'
+	if [[ "$email_notifications" == 'y' ]]; then
+		f_validate_smtp
+	fi
+	if [[ -n "$callback_url" ]]; then
+		f_validate_url "$callback_url" 'Callback URL'
+	fi
+
+	f_install_monit_package
+	f_stop_monit
+	install -d -o root -g root -m 0750 "$MONIT_AVAILABLE" "$MONIT_ENABLED" "$MONIT_SECRETS_DIR"
+	install -d -o root -g root -m 0750 /var/lib/monit/events
+
+	f_write_monit_main_config
+	f_write_monit_httpd_config
+	if [[ "$email_notifications" == 'y' ]]; then
+		f_write_monit_email_config
+	else
+		rm -f -- "$MONIT_EMAIL_CONFIG"
+	fi
+	f_write_monit_mmonit_config
+	f_write_monitor_configs
+	f_write_ols_vhost
+	f_update_ols_registration add
+
+	f_set_monitor_enabled ols on
+	f_set_monitor_enabled mysql on
+	f_set_monitor_enabled filesystem on
+	f_set_monitor_enabled coresystem on
+	if [[ -n "$callback_url" ]]; then
+		f_install_callback
+	fi
+
+	# Validate every configuration before either service is restarted.
+	f_validate_monit
+	f_validate_ols
+	if ! systemctl enable monit >/dev/null 2>&1; then
+		f_fail 'Monit could not be enabled at boot.'
+	fi
+	f_restart_monit
+	f_restart_ols
+	if grep -Fq '/etc/letsencrypt/live/' "${OLS_VHOST_DIR}/${domain}/${OLS_VHOST_FILE}"; then
+		scheme=https
+	fi
+
+	printf 'Monit has been installed.\n'
+	printf 'It is available at: %s://%s\n' "$scheme" "$domain"
+}
+
+f_toggle_monitor() {
+	local component=$1
+	local label=$2
+	local state=$3
+	f_require_monit_installed
+	f_set_monitor_enabled "$component" "$state"
+	f_restart_monit
+	if [[ "$state" == 'on' ]]; then
+		printf '%s monitoring has been enabled.\n' "$label"
+	else
+		printf '%s monitoring has been disabled.\n' "$label"
+	fi
+}
+
+f_update_email() {
+	f_require_monit_installed
+	f_validate_smtp
+	f_write_monit_email_config
+	f_restart_monit
+	printf 'Monit email settings updated.\n'
+}
+
+f_enable_all_monitors() {
+	local component
+	f_require_monit_installed
+	for component in ols mysql filesystem coresystem; do
+		f_set_monitor_enabled "$component" on
+	done
+	f_restart_monit
+	printf 'Popular monitors enabled.\n'
+}
+
+f_disable_all_monitors() {
+	local component
+	f_require_monit_installed
+	for component in ols mysql filesystem coresystem memcached redis; do
+		f_set_monitor_enabled "$component" off
+	done
+	f_restart_monit
+	printf 'All monitors disabled.\n'
+}
+
+f_activate_monit() {
+	f_require_monit_installed
+	f_validate_monit
+	if ! systemctl start monit >/dev/null 2>&1; then
+		f_fail 'Monit could not be started.'
+	fi
+	if ! systemctl is-active --quiet monit; then
+		f_fail 'Monit is not active after the start request.'
+	fi
+	printf 'Monit has been activated.\n'
+}
+
+f_deactivate_monit() {
+	f_require_monit_installed
+	f_stop_monit
+	printf 'Monit has been temporarily deactivated.\n'
+}
+
+f_remove_monit() {
+	f_validate_domain "$domain"
+	domain=${domain,,}
+	f_require_ols
+	f_assert_removable_vhost
+
+	if f_monit_package_installed; then
+		f_stop_monit
+		export DEBIAN_FRONTEND=noninteractive
+		if ! apt-get purge -y monit >/dev/null; then
+			f_fail 'Monit package removal failed.'
+		fi
+	fi
+	if f_monit_package_installed; then
+		f_fail 'Monit is still installed after the purge request.'
+	fi
+
+	f_remove_callback
+	rm -rf -- "$MONIT_DIR" /var/lib/monit /opt/monitrc.original
+	rm -f -- /var/log/monit.log /var/log/monit_old.log
+	f_remove_ols_vhost
+	f_restart_ols
+	printf 'Monit has been removed.\n'
+}
+
+case "$action" in
+	1) action=install_monit ;;
+	2) action=enable_webserver_monit ;;
+	3) action=disable_webserver_monit ;;
+	4) action=enable_mysql_monit ;;
+	5) action=disable_mysql_monit ;;
+	6) action=enable_redis_monit ;;
+	7) action=disable_redis_monit ;;
+	8) action=enable_memcached_monit ;;
+	9) action=disable_memcached_monit ;;
+	10) action=enable_filesystem_monit ;;
+	11) action=disable_filesystem_monit ;;
+	12) action=update_email_monit ;;
+	13) action=enable_all_monit ;;
+	14) action=disable_all_monit ;;
+	15) action=enable_monit_ssl ;;
+	16) action=disable_monit_ssl ;;
+	17) action=add_callback ;;
+	18) action=remove_callback ;;
+	19) action=remove_monit ;;
+	20) action=deactivate_monit ;;
+	21) action=activate_monit ;;
+esac
+
+case "$action" in
+	install_monit) f_install_monit ;;
+	remove_monit) f_remove_monit ;;
+	enable_webserver_monit) f_toggle_monitor ols OpenLiteSpeed on ;;
+	disable_webserver_monit) f_toggle_monitor ols OpenLiteSpeed off ;;
+	enable_mysql_monit) f_toggle_monitor mysql MySQL on ;;
+	disable_mysql_monit) f_toggle_monitor mysql MySQL off ;;
+	enable_memcached_monit) f_toggle_monitor memcached Memcached on ;;
+	disable_memcached_monit) f_toggle_monitor memcached Memcached off ;;
+	enable_redis_monit) f_toggle_monitor redis Redis on ;;
+	disable_redis_monit) f_toggle_monitor redis Redis off ;;
+	enable_filesystem_monit) f_toggle_monitor filesystem Filesystem on ;;
+	disable_filesystem_monit) f_toggle_monitor filesystem Filesystem off ;;
+	update_email_monit) f_update_email ;;
+	enable_all_monit) f_enable_all_monitors ;;
+	disable_all_monit) f_disable_all_monitors ;;
+	enable_monit_ssl)
+		f_validate_domain "$domain"
+		domain=${domain,,}
+		f_enable_monit_ssl
+		;;
+	disable_monit_ssl)
+		f_validate_domain "$domain"
+		domain=${domain,,}
+		f_disable_monit_ssl
+		;;
+	add_callback)
+		f_require_monit_installed
+		f_install_callback
+		printf 'Callbacks have been enabled.\n'
+		;;
+	remove_callback)
+		f_remove_callback
+		printf 'Callbacks have been removed.\n'
+		;;
+	activate_monit) f_activate_monit ;;
+	deactivate_monit) f_deactivate_monit ;;
+	*) f_fail 'Unsupported or missing Monit action.' ;;
+esac
+
+exit 0

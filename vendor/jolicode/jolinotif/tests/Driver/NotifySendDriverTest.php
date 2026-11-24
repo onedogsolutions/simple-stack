@@ -1,0 +1,88 @@
+<?php
+
+/*
+ * This file is part of the JoliNotif project.
+ *
+ * (c) Loïck Piera <pyrech@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Joli\JoliNotif\tests\Driver;
+
+use Joli\JoliNotif\Driver\DriverInterface;
+use Joli\JoliNotif\Driver\NotifySendDriver;
+use Joli\JoliNotif\Notification;
+use Psr\Log\NullLogger;
+
+class NotifySendDriverTest extends AbstractDriverTestCase
+{
+    use AbstractCliBasedDriverTestTrait;
+
+    private const BINARY = 'notify-send';
+
+    public function testGetBinary(): void
+    {
+        $driver = $this->getDriver();
+
+        $this->assertSame(self::BINARY, $driver->getBinary());
+    }
+
+    public function testGetPriority(): void
+    {
+        $driver = $this->getDriver();
+
+        $this->assertSame(DriverInterface::PRIORITY_MEDIUM, $driver->getPriority());
+    }
+
+    public function testNotificationContentCannotBeParsedAsOptions(): void
+    {
+        $notification = (new Notification())
+            ->setTitle('--version')
+            ->setBody('--wait')
+        ;
+
+        $this->assertSame(
+            ['--', '--version', '--wait'],
+            $this->getCommandLineArguments($this->getDriver(), $notification),
+        );
+    }
+
+    protected function getDriver(): NotifySendDriver
+    {
+        return new NotifySendDriver(new NullLogger());
+    }
+
+    protected static function getExpectedCommandLineForNotification(): string
+    {
+        return <<<'CLI'
+            'notify-send' '--' 'I'\''m the notification body'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithATitle(): string
+    {
+        return <<<'CLI'
+            'notify-send' '--' 'I'\''m the notification title' 'I'\''m the notification body'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithAnIcon(): string
+    {
+        $iconDir = self::getIconDir();
+
+        return <<<CLI
+            'notify-send' '--icon' '{$iconDir}/image.gif' '--' 'I'\\''m the notification body'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithAllOptions(): string
+    {
+        $iconDir = self::getIconDir();
+
+        return <<<CLI
+            'notify-send' '--icon' '{$iconDir}/image.gif' '--' 'I'\\''m the notification title' 'I'\\''m the notification body'
+            CLI;
+    }
+}

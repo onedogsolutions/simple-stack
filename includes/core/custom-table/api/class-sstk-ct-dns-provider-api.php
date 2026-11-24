@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Class DNS Provider API
  */
-class WPCD_CT_DNS_Provider_API extends WPCD_Custom_Table_API {
+class SSTK_CT_DNS_Provider_API extends SSTK_Custom_Table_API {
 	
 	/**
 	 * Model Name

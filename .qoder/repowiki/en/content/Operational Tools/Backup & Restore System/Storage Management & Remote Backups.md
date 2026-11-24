@@ -25,7 +25,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack’s storage management and remote backup capabilities for WordPress sites. It covers:
+This document explains Simple Stack’s storage management and remote backup capabilities for WordPress sites. It covers:
 
 - AWS S3 integration, including credential configuration, bucket requirements, secure uploads with server-side encryption, and S3-compatible endpoints.
 - Local backup organization, retention pruning, and disk space optimization.
@@ -331,7 +331,7 @@ Bash --> LocalFS["Local FS"]
 - [environment variables.txt:110-146](file://includes/core/apps/wordpress-app/scripts/v1/raw/environment%20variables.txt#L110-L146)
 
 ## Conclusion
-SimpleStack’s storage management integrates AWS S3 and S3-compatible services with robust local backup management. The system supports secure uploads with server-side encryption, incremental synchronization, and configurable retention policies. Administrators can manage credentials interactively or via environment variables, monitor backup lifecycles, and optimize disk usage through pruning. Security is addressed through encrypted credential storage and server-side encryption for remote backups.
+Simple Stack’s storage management integrates AWS S3 and S3-compatible services with robust local backup management. The system supports secure uploads with server-side encryption, incremental synchronization, and configurable retention policies. Administrators can manage credentials interactively or via environment variables, monitor backup lifecycles, and optimize disk usage through pruning. Security is addressed through encrypted credential storage and server-side encryption for remote backups.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

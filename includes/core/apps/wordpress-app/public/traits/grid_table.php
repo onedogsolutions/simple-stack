@@ -1,6 +1,7 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
-trait wpcd_grid_table {
+trait sstk_grid_table {
 
 	/**
 	 * Displays the table.
@@ -11,12 +12,12 @@ trait wpcd_grid_table {
 		$singular = $this->_args['singular'];
 
 		// Should we show the filter bar and filter view buttons from the admin?
-		if ( wpcd_is_admin() && ! boolval( wpcd_get_option( 'wordpress_app_fe_hide_filter_bar_from_admin' ) ) ) {
+		if ( sstk_is_admin() && ! boolval( sstk_get_option( 'wordpress_app_fe_hide_filter_bar_from_admin' ) ) ) {
 			$this->display_tablenav( 'top' );
 		}
 
 		// Show the show bar to non-admin users?
-		if ( ! wpcd_is_admin() && boolval( wpcd_get_option( 'wordpress_app_fe_show_filter_bar' ) ) ) {
+		if ( ! sstk_is_admin() && boolval( sstk_get_option( 'wordpress_app_fe_show_filter_bar' ) ) ) {
 			$this->display_tablenav( 'top' );
 		}
 
@@ -33,17 +34,17 @@ trait wpcd_grid_table {
 		$max_width = 999999;
 
 		?>
-			<div class="wpcd-list-table wpcd-grid-table <?php echo implode( ' ', $this->get_table_classes() ); ?> table-hidden" data-max-width="<?php echo $max_width; ?>">
+			<div class="sstk-list-table sstk-grid-table <?php echo implode( ' ', $this->get_table_classes() ); ?> table-hidden" data-max-width="<?php echo $max_width; ?>">
 
-				<div class="wpcd-grid-table-loader"></div>
+				<div class="sstk-grid-table-loader"></div>
 
-				<div class="wpcd-grid-table-columns">
+				<div class="sstk-grid-table-columns">
 					<?php $this->print_column_headers(); ?>
 				</div>
 
 				<?php $this->display_rows_or_placeholder(); ?>
 
-				<div class="wpcd-grid-table-columns">
+				<div class="sstk-grid-table-columns">
 					<?php $this->print_column_headers( false ); ?>
 				</div>
 
@@ -88,7 +89,7 @@ trait wpcd_grid_table {
 		}
 
 		foreach ( $columns as $column_key => $column_display_name ) {
-			$class = array( 'wpcd-grid-table-col', 'manage-column', "column-$column_key" );
+			$class = array( 'sstk-grid-table-col', 'manage-column', "column-$column_key" );
 
 			if ( in_array( $column_key, $hidden, true ) ) {
 				$class[] = 'hidden';
@@ -151,7 +152,7 @@ trait wpcd_grid_table {
 	 */
 	public function display_rows_or_placeholder() {
 		if ( $this->has_items() ) {
-			echo '<div class="wpcd-grid-table-rows">';
+			echo '<div class="sstk-grid-table-rows">';
 			$this->display_rows();
 			echo '</div>';
 		} else {
@@ -167,7 +168,7 @@ trait wpcd_grid_table {
 	 * @param array $item Array of columns to paint for the row.
 	 */
 	public function single_row( $item ) {
-		echo '<div class="wpcd-grid-table-row">';
+		echo '<div class="sstk-grid-table-row">';
 		$this->single_row_columns( $item );
 		echo '</div>';
 	}
@@ -190,7 +191,7 @@ trait wpcd_grid_table {
 
 		foreach ( $columns as $column_name => $column_display_name ) {
 
-			echo '<div class="wpcd-grid-table-cell">';
+			echo '<div class="sstk-grid-table-cell">';
 			$classes = "$column_name column-$column_name";
 			if ( $primary === $column_name ) {
 				$classes .= ' has-row-actions column-primary';
@@ -225,25 +226,25 @@ trait wpcd_grid_table {
 					echo call_user_func( array( $this, 'column_' . $column_name ), $item );
 				} else {
 					echo $this->column_default( $item, $column_name );
-					// Dynamic Action hook: eg: wpcd_public_wpcd_app_server_table_after_row_actions_date.
-					// Dynamic Action hook: eg: wpcd_public_wpcd_app_table_after_row_actions_date.
-					do_action( "wpcd_public_{$this->post_type}_table_after_row_actions_{$column_name}", $item, $column_name );
+					// Dynamic Action hook: eg: sstk_public_sstk_app_server_table_after_row_actions_date.
+					// Dynamic Action hook: eg: sstk_public_sstk_app_table_after_row_actions_date.
+					do_action( "sstk_public_{$this->post_type}_table_after_row_actions_{$column_name}", $item, $column_name );
 
-					// Action hook: wpcd_public_wpcd_app_server_table_after_row_actions.
-					// Action hook: wpcd_public_wpcd_app_table_after_row_actions.
-					do_action( "wpcd_public_{$this->post_type}_table_after_row_actions", $item, $column_name, $primary );
+					// Action hook: sstk_public_sstk_app_server_table_after_row_actions.
+					// Action hook: sstk_public_sstk_app_table_after_row_actions.
+					do_action( "sstk_public_{$this->post_type}_table_after_row_actions", $item, $column_name, $primary );
 				}
 				if ( $column_name === $this->getPrimaryColumn() ) {
 					echo $this->handle_row_actions( $item, $column_name, $primary );
-					// Action hook: wpcd_public_wpcd_app_server_table_after_row_actions.
-					// Action hook: wpcd_public_wpcd_app_table_after_row_actions.
-					do_action( "wpcd_public_{$this->post_type}_table_after_row_actions", $item, $column_name, $primary );
+					// Action hook: sstk_public_sstk_app_server_table_after_row_actions.
+					// Action hook: sstk_public_sstk_app_table_after_row_actions.
+					do_action( "sstk_public_{$this->post_type}_table_after_row_actions", $item, $column_name, $primary );
 				}
 
 				if ( $column_name === 'title' ) {
-					// Action hook: wpcd_public_wpcd_app_server_table_after_row_actions_for_title.
-					// Action hook: wpcd_public_wpcd_app_table_after_row_actions_for_title.
-					do_action( "wpcd_public_{$this->post_type}_table_after_row_actions_for_{$column_name}", $item, $column_name, $primary );
+					// Action hook: sstk_public_sstk_app_server_table_after_row_actions_for_title.
+					// Action hook: sstk_public_sstk_app_table_after_row_actions_for_title.
+					do_action( "sstk_public_{$this->post_type}_table_after_row_actions_for_{$column_name}", $item, $column_name, $primary );
 				}
 
 				echo '</div>';
@@ -287,7 +288,7 @@ trait wpcd_grid_table {
 
 		<style>
 
-			.wpcd-grid-table-columns, .wpcd-grid-table-rows .wpcd-grid-table-row {
+			.sstk-grid-table-columns, .sstk-grid-table-rows .sstk-grid-table-row {
 					grid-template-columns : <?php echo $template_columns; ?>
 			}	
 		</style>
@@ -306,7 +307,7 @@ trait wpcd_grid_table {
 		$grid_template = array();
 
 		foreach ( $columns as $column_key => $column_display_name ) {
-			$class = array( 'wpcd-grid-table-col', 'manage-column', "column-$column_key" );
+			$class = array( 'sstk-grid-table-col', 'manage-column', "column-$column_key" );
 			$width = 'minmax(100px, 1fr)';
 
 			if ( $column_key == $this->getPrimaryColumn() ) {

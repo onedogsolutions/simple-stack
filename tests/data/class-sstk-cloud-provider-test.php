@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WordPress App WPCD_Cloud_Provider_Test.
+ * WordPress App SSTK_Cloud_Provider_Test.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,11 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_Cloud_Provider_Test
+ * Class SSTK_Cloud_Provider_Test
  *
  * Test double to avoid calling a real provider
  */
-class WPCD_Cloud_Provider_Test extends CLOUD_PROVIDER_API {
+class SSTK_Cloud_Provider_Test extends CLOUD_PROVIDER_API {
 
     public function call()
     {

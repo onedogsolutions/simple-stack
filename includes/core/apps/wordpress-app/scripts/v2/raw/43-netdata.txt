@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
@@ -12,6 +13,12 @@ then
 	exit 1
 fi
 source 9999-common-functions.sh
+
+if [[ ! -x /usr/local/lsws/bin/lshttpd ]]
+then
+	echo "OpenLiteSpeed is not installed. Aborting!"
+	exit 1
+fi
 
 clear
 
@@ -98,6 +105,17 @@ function add_ols_netdata_conf() {
 	EOF
 	chown -R lsadm:lsadm ${VHDIR}/*
 	gf_add_domain_ols_httpd_conf "${olsdomain}" "netdata"
+}
+
+function netdata_domain_from_vhost() {
+	local netdata_domain
+	netdata_domain=$(grep -m 1 '^docRoot' "${VHDIR}/netdata/$g_vhost_conf" 2>/dev/null | awk '{print $2}' | grep -Eo '\b[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b')
+	if [[ -z "$netdata_domain" ]]
+	then
+		echo "Unable to determine the Netdata domain from its OpenLiteSpeed vhost." >&2
+		return 1
+	fi
+	printf '%s\n' "$netdata_domain"
 }
 
 OLS_PASS_PROTECT_ROOT='### Enabling Password Protection config start
@@ -187,129 +205,25 @@ function netdata_install
 		read -p "Netdata Cloud Claim Rooms Token: " claim_rooms_token
 	fi		
 
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		echo "server {
-			listen 80;
-			listen [::]:80;
-			server_name $domain www.$domain;
-
-			auth_basic_user_file /etc/nginx/htpasswd/$domain;
-			auth_basic \"Protected\";
-
-			root /var/www/$domain/html;
-
-			location / {
-				proxy_http_version 1.1;
-				proxy_set_header Upgrade \$http_upgrade;
-				proxy_set_header Connection \"Upgrade\";
-				proxy_buffering off;
-				proxy_read_timeout 7d;
-				proxy_pass http://127.0.0.1:19999;
-			}
-		}" > /etc/nginx/sites-enabled/netdata.conf
-
-		# create authentication file
-		mkdir -p /etc/nginx/htpasswd /var/www/$domain/html
-		htpasswd -b -c /etc/nginx/htpasswd/$domain $user $pass
-		
-	elif [ "$g_webserver_type" = "ols" ]; then
-		add_ols_netdata_conf "$domain"
-		htpasswd -b -c ${VHDIR}/netdata/htpasswd $user $pass
-		chown -R lsadm:lsadm ${VHDIR}/netdata/
-	elif [ "$g_webserver_type" = "ols-enterprise" ]; then
-		echo 'Not implemented for ols-enterprise'
-	fi
+	add_ols_netdata_conf "$domain"
+	htpasswd -b -c "${VHDIR}/netdata/htpasswd" "$user" "$pass"
+	chown -R lsadm:lsadm "${VHDIR}/netdata/"
 
 	echo "installing Netdata on server........."
 	apt-get update > /dev/null 2>&1
 	bash <(curl -Ss https://get.netdata.cloud/kickstart.sh) --dont-wait	--non-interactive --stable-channel --disable-telemetry --claim-token $claim_token --claim-url https://app.netdata.cloud --claim-rooms $claim_rooms_token
 	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		nginx -V 2>&1 | grep -o with-http_stub_status_module
-		if [ $? -eq 0 ]
-		then
-			sed -i '$ d' /etc/nginx/sites-enabled/netdata.conf
-			echo "		location /nginx_status {
-				stub_status;
-					}
-			}" >> /etc/nginx/sites-enabled/netdata.conf
-		else
-			echo "Nginx netdata monitoring can't be configured. Need to rebuild nginx with stub_status module"
-		fi
-	fi
-
 	mysql <<QUERY
 	create user 'netdata'@'localhost';
 	grant usage on *.* to 'netdata'@'localhost';
 	flush privileges;
 QUERY
 
-if [ "$g_webserver_type" = "nginx" ] ; then
-	sed -i "s%.*pm.status_path.*%pm.status_path=/status74%g" /etc/php/7.4/fpm/pool.d/www.conf
-	sed -i "s%.*pm.status_path.*%pm.status_path=/status80%g" /etc/php/8.0/fpm/pool.d/www.conf
-	sed -i "s%.*pm.status_path.*%pm.status_path=/status81%g" /etc/php/8.1/fpm/pool.d/www.conf
-	sed -i "s%.*pm.status_path.*%pm.status_path=/status82%g" /etc/php/8.2/fpm/pool.d/www.conf
-	sed -i "s%.*pm.status_path.*%pm.status_path=/status83%g" /etc/php/8.3/fpm/pool.d/www.conf
-
-	echo "Restarting PHP processes..."
-	number_of_php=$(ls /etc/php/ | wc -l)
-	for (( number=1; number <=$number_of_php; number++ ))
-	do
-		version=`ls /etc/php/ | sed -n "$number"p`
-		if [ ! -f /etc/wpcd/php-versions-disabled/php$version ] ; then
-			systemctl restart php$version-fpm > /dev/null 2>&1
-		fi
-	done
-
-	grep status74 /etc/nginx/sites-enabled/default
-	if [ $? -ne 0 ]
-	then
-		sed -i '/server_name _;/a location = /status74 { \n fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n fastcgi_index index.php; \n include fastcgi_params; \n fastcgi_pass   unix:/run/php/php7.4-fpm.sock; \n }' /etc/nginx/sites-enabled/default
-	fi
-
-	grep status80 /etc/nginx/sites-enabled/default
-	if [ $? -ne 0 ]
-	then
-		sed -i '/server_name _;/a location = /status80 { \n fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n fastcgi_index index.php; \n include fastcgi_params; \n fastcgi_pass   unix:/run/php/php8.0-fpm.sock; \n }' /etc/nginx/sites-enabled/default
-	fi
-
-	grep status81 /etc/nginx/sites-enabled/default
-	if [ $? -ne 0 ]
-	then
-		sed -i '/server_name _;/a location = /status81 { \n fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n fastcgi_index index.php; \n include fastcgi_params; \n fastcgi_pass   unix:/run/php/php8.1-fpm.sock; \n }' /etc/nginx/sites-enabled/default
-	fi
-
-	grep status82 /etc/nginx/sites-enabled/default
-	if [ $? -ne 0 ]
-	then
-		sed -i '/server_name _;/a location = /status82 { \n fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n fastcgi_index index.php; \n include fastcgi_params; \n fastcgi_pass   unix:/run/php/php8.2-fpm.sock; \n }' /etc/nginx/sites-enabled/default
-	fi
-	
-	grep status83 /etc/nginx/sites-enabled/default
-	if [ $? -ne 0 ]
-	then
-		sed -i '/server_name _;/a location = /status82 { \n fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n fastcgi_index index.php; \n include fastcgi_params; \n fastcgi_pass   unix:/run/php/php8.3-fpm.sock; \n }' /etc/nginx/sites-enabled/default
-	fi		
-
-	echo "
-	jobs:
-	- name: php74
-		url: http://localhost/status74?full&json
-	- name: php80
-		url: http://localhost/status80?full&json
-	- name: php81
-		url: http://localhost/status81?full&json
-	- name: php82
-		url: http://localhost/status82?full&json
-	- name: php83
-		url: http://localhost/status83?full&json		
-	" > /etc/netdata/go.d/phpfpm.conf
-fi
 	gf_restart_webserver
 	killall -u netdata
 	systemctl restart netdata
 	systemctl enable netdata
-	echo "Netdata has been installed,Can access from http://$domain/"
+	echo "Netdata has been installed, can access from http://$domain/"
 }
 
 ###################################### Netdata Remove Function ##########
@@ -321,7 +235,7 @@ function netdata_remove
 		echo "netdata is Not installed yet!"
 		exit
 	fi
-	domain=$(grep -m 1 server_name /etc/nginx/sites-enabled/netdata.conf 2>&1 > /dev/null|awk '{print $2}')
+	domain=$(netdata_domain_from_vhost) || exit 1
 	netdata_ssl_disable
 	bash <(curl -Ss https://get.netdata.cloud/kickstart.sh) --uninstall --dont-wait --non-interactive
 	if [ $? -ne 0 ]
@@ -330,14 +244,7 @@ function netdata_remove
 		exit
 	fi
 	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		rm -f /etc/nginx/sites-enabled/netdata.conf > /dev/null 2>&1
-	elif [ "$g_webserver_type" = "ols" ] ; then
-		domain=$(grep -m 1 docRoot /usr/local/lsws/conf/vhosts/netdata/vhconf.conf |awk '{print $2}'|grep -E -o "\b[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b")
-		gf_remove_ols_site "$domain" "netdata"
-	elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-		echo 'Not implemented for ols-enterprise'
-	fi
+	gf_remove_ols_site "$domain" "netdata"
 
 	# Before attempting to remove the site from the www folder, make sure we have a value in the $domain var.
 	# This prevents us from accidentally deleting the entire www folder in the delete statement below.
@@ -388,41 +295,26 @@ function netdata_ssl_enable
 			read -p "Email address: " email
 	fi
 	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		if grep -qs "listen 443" /etc/nginx/sites-enabled/netdata.conf;
-		then
-			echo "SSL Already Enabled";
-		else
-			domain=`grep -m 1 server_name /etc/nginx/sites-enabled/netdata.conf |awk '{print $2}'`
-			certbot --non-interactive --reinstall --expand --nginx --agree-tos -m $email --allow-subset-of-names --redirect -d $domain -d www.$domain
-			if ! grep -qs "listen 443" /etc/nginx/sites-enabled/netdata.conf
-			then
-				echo
-				echo "SSL could not be enabled for $domain"
-				exit
-			fi
-		fi
-	elif [ "$g_webserver_type" = "ols" ] ; then
-		domain=$(grep -m 1 docRoot /usr/local/lsws/conf/vhosts/netdata/vhconf.conf |awk '{print $2}'|grep -E -o "\b[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b")
-		# Setup OLS Folders.	
-		DOCHM="/var/www/${domain}/html"
-		mkdir -p ${DOCHM}/.well-known/acme-challenge
-
-		# Enable SSL.
-		certbot certonly --non-interactive --reinstall --agree-tos --agree-tos -m $email --webroot -w ${DOCHM} -d $domain
-
-		if [[ -e /etc/letsencrypt/live/$domain/fullchain.pem ]]; then
-			sed -i "s|/usr/local/lsws/conf/example.key|/etc/letsencrypt/live/$domain/privkey.pem|g" ${VHDIR}/netdata/$g_vhost_conf > /dev/null 2>&1
-			sed -i "s|/usr/local/lsws/conf/example.crt|/etc/letsencrypt/live/$domain/fullchain.pem|g" ${VHDIR}/netdata/$g_vhost_conf > /dev/null 2>&1
-			# insert redirect to https inside the rewrite under wellknown rule just under <<<END_rules
-			# RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS
-			# RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS
-			sed -i "${VHDIR}/netdata/$g_vhost_conf" -re "/<<<END_rules/a RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS\nRewriteRule .* https:\/\/%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS"
-		fi
-		
-	elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-		echo 'Not implemented for ols-enterprise'
+	domain=$(netdata_domain_from_vhost) || exit 1
+	if grep -q "/etc/letsencrypt/live/$domain/privkey.pem" "${VHDIR}/netdata/$g_vhost_conf"
+	then
+		echo "SSL is already enabled for $domain"
+		return
 	fi
+
+	DOCHM="/var/www/${domain}/html"
+	mkdir -p "${DOCHM}/.well-known/acme-challenge"
+	certbot certonly --non-interactive --agree-tos -m "$email" --webroot -w "${DOCHM}" -d "$domain"
+
+	if [[ ! -e /etc/letsencrypt/live/$domain/fullchain.pem ]]
+	then
+		echo "SSL could not be enabled for $domain"
+		return 1
+	fi
+
+	sed -i "s|/usr/local/lsws/conf/example.key|/etc/letsencrypt/live/$domain/privkey.pem|g" "${VHDIR}/netdata/$g_vhost_conf"
+	sed -i "s|/usr/local/lsws/conf/example.crt|/etc/letsencrypt/live/$domain/fullchain.pem|g" "${VHDIR}/netdata/$g_vhost_conf"
+	gf_enable_https_redirect_ols_vhost "$domain" "netdata"
 	gf_restart_webserver
 	echo "SSL has been enabled for $domain"
 	
@@ -438,32 +330,21 @@ function netdata_ssl_disable
 		exit
 	fi
 
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		if grep -qs "managed by Certbot" /etc/nginx/sites-enabled/netdata.conf;
-		then
-			domain=$(grep -m 1 server_name /etc/nginx/sites-enabled/netdata.conf |awk '{print $2}')
-			certbot delete --cert-name $domain --noninteractive
-			sed -i -n '/if ($host/q;p' /etc/nginx/sites-enabled/netdata.conf
-			sed -i '$ d' /etc/nginx/sites-enabled/netdata.conf
-			sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/netdata.conf
-			sed -i '/managed by Certbot/d' /etc/nginx/sites-enabled/netdata.conf
-
-			echo "SSL has been disabled for netdata";
-		else
-			echo "SSL was not enabled for netdata so nothing to disable";
-		fi
-
-	elif [ "$g_webserver_type" = "ols" ] ; then
-		domain=$(grep -m 1 docRoot /usr/local/lsws/conf/vhosts/netdata/vhconf.conf |awk '{print $2}'|grep -E -o "\b[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b")
-
-		# Lets find and delete the two lines with '# Enable HTTPS'
-		# RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS
-		# RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS
-		sed -i "${VHDIR}/netdata/$g_vhost_conf" -re '/# Enable HTTPS/d'
-		gf_disable_certbot_ols_site "$domain"
-	elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-		echo 'Not implemented for ols-enterprise'
+	domain=$(netdata_domain_from_vhost) || exit 1
+	if ! grep -q "/etc/letsencrypt/live/$domain/privkey.pem" "${VHDIR}/netdata/$g_vhost_conf"
+	then
+		echo "SSL was not enabled for netdata so nothing to disable"
+		return
 	fi
+
+	gf_disable_https_redirect_ols_vhost "$domain" "netdata"
+	if [[ -d /etc/letsencrypt/live/$domain ]]
+	then
+		certbot delete --cert-name "$domain" --noninteractive
+	fi
+	sed -i "s|/etc/letsencrypt/live/$domain/privkey.pem|/usr/local/lsws/conf/example.key|g" "${VHDIR}/netdata/$g_vhost_conf"
+	sed -i "s|/etc/letsencrypt/live/$domain/fullchain.pem|/usr/local/lsws/conf/example.crt|g" "${VHDIR}/netdata/$g_vhost_conf"
+	echo "SSL has been disabled for netdata"
 	gf_restart_webserver
 }
 
@@ -477,28 +358,17 @@ function netdata_auth_add
 		exit
 	fi
 	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		grep -wq '#auth_basic' /etc/nginx/sites-enabled/netdata.conf
-		if [ $? -ne 0 ]
-		then
-			echo "Basic Auth already enabled"
-		else
-			sed -i 's/#auth/auth/g' /etc/nginx/sites-enabled/netdata.conf
-			echo "Basic Auth has been enabled"
-		fi
-	elif [ "$g_webserver_type" = "ols" ] ; then
-		grep -wq '### Enabling Password Protection config' ${VHDIR}/netdata/$g_vhost_conf
-		if [ $? -eq 0 ]
-		then
-			echo "Basic Auth already enabled"
-		else
-			sed -i -e "/### Insert context configs below this line/a\\
-			${preprocessed_VAR%?}"  ${VHDIR}/netdata/$g_vhost_conf
-			chown -R lsadm:lsadm ${VHDIR}/netdata/
-		fi
-	elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-		echo 'Not implemented for ols-enterprise'
+	domain=$(netdata_domain_from_vhost) || exit 1
+	if grep -q '### Enabling Password Protection config' "${VHDIR}/netdata/$g_vhost_conf"
+	then
+		echo "Basic Auth already enabled"
+		return
 	fi
+
+	sed -i -e "/### Insert context configs below this line/a\\
+	${preprocessed_VAR%?}" "${VHDIR}/netdata/$g_vhost_conf"
+	chown -R lsadm:lsadm "${VHDIR}/netdata/"
+	echo "Basic Auth has been enabled for $domain"
 	gf_restart_webserver
 }
 
@@ -512,28 +382,16 @@ function netdata_auth_remove
 		exit
 	fi
 	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		grep -wq '#auth_basic' /etc/nginx/sites-enabled/netdata.conf
-		if [ $? -eq 0 ]
-		then
-			echo "Basic Auth already disabled"
-		else
-			sed -i 's/auth/#auth/g' /etc/nginx/sites-enabled/netdata.conf
-			echo "Basic Auth has been disabled"
-		fi
-	elif [ "$g_webserver_type" = "ols" ] ; then
-		grep -wq '### Enabling Password Protection config' ${VHDIR}/netdata/$g_vhost_conf
-		if [ $? -eq 1 ]
-		then
-			echo "Basic Auth already disabled"
-		else
-			# Remove block from vhost config
-			sed -i -re '/### Enabling Password Protection config start/{:a;N;/### Enabling Password Protection config end/!ba};/note             Password Protect document root for domain/d' ${VHDIR}/netdata/$g_vhost_conf
-			chown -R lsadm:lsadm ${VHDIR}/netdata/
-		fi
-	elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-		echo 'Not implemented for ols-enterprise'
+	domain=$(netdata_domain_from_vhost) || exit 1
+	if ! grep -q '### Enabling Password Protection config' "${VHDIR}/netdata/$g_vhost_conf"
+	then
+		echo "Basic Auth already disabled"
+		return
 	fi
+
+	sed -i -re '/### Enabling Password Protection config start/{:a;N;/### Enabling Password Protection config end/!ba};/note             Password Protect document root for domain/d' "${VHDIR}/netdata/$g_vhost_conf"
+	chown -R lsadm:lsadm "${VHDIR}/netdata/"
+	echo "Basic Auth has been disabled for $domain"
 	gf_restart_webserver
 	
 }
@@ -562,17 +420,10 @@ function netdata_auth_change
 		read -p "Password: " pass
 	fi
 	
-	if [ "$g_webserver_type" = "nginx" ] ; then
-		domain=$(grep -m 1 server_name /etc/nginx/sites-enabled/netdata.conf |awk '{print $2}')
-		rm -f /etc/nginx/htpasswd/$domain > /dev/null
-		htpasswd -b -c /etc/nginx/htpasswd/$domain $user $pass
-	elif [ "$g_webserver_type" = "ols" ] ; then
-		rm -f ${VHDIR}/netdata/htpasswd > /dev/null
-		htpasswd -b -c ${VHDIR}/netdata/htpasswd $user $pass
-		chown -R lsadm:lsadm ${VHDIR}/netdata/
-	elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-		echo 'Not implemented for ols-enterprise'
-	fi
+	domain=$(netdata_domain_from_vhost) || exit 1
+	rm -f "${VHDIR}/netdata/htpasswd" > /dev/null
+	htpasswd -b -c "${VHDIR}/netdata/htpasswd" "$user" "$pass"
+	chown -R lsadm:lsadm "${VHDIR}/netdata/"
 	
 	gf_restart_webserver
 	echo "Basic Auth has been updated"
@@ -619,22 +470,10 @@ function netdata_set_registry
 	sed -n "/\[registry\]/,/\[/{=;p;}"  /etc/netdata/netdata.conf |sed '{N;s/\n/ /}'|grep -v '#'|grep announce > /dev/null
 	if [ $? -ne 0 ]
 	then
-		if [ "$g_webserver_type" = "nginx" ] ; then
-			grep -w '#auth_basic' /etc/nginx/sites-enabled/netdata.conf
-			if [ $? -ne 0 ]
-			then
-				echo "Please disable http authentication"
-				exit
-			fi
-		elif [ "$g_webserver_type" = "ols" ] ; then
-			grep -w '### Enabling Password Protection config' ${VHDIR}/netdata/$g_vhost_conf
-			if [ $? -ne 0 ]
-			then
-				echo "Please disable http authentication"
-				exit
-			fi
-		elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-			echo 'Not implemented for ols-enterprise'
+		if grep -q '### Enabling Password Protection config' "${VHDIR}/netdata/$g_vhost_conf"
+		then
+			echo "Please disable http authentication"
+			exit 1
 		fi
 
 		if [[ -z $domain ]]

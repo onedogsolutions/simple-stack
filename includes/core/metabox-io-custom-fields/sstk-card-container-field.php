@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 defined( 'ABSPATH' ) || die;
 
 /**
@@ -11,7 +12,7 @@ defined( 'ABSPATH' ) || die;
  * regular fields that might change markup in the future.
  */
 if ( class_exists( 'RWMB_Field' ) ) {
-	class RWMB_Wpcd_Card_Container_Field extends RWMB_Field {
+	class RWMB_Sstk_Card_Container_Field extends RWMB_Field {
 		/**
 		 * Get field Card Container.
 		 *

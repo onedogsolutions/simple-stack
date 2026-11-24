@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Tools Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,22 +11,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_TOOLS
+ * Class SSTK_WORDPRESS_TABS_SERVER_TOOLS
  */
-class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_TOOLS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
 		// Allow the server_cleanup_metas action to be triggered via an action hook.
-		add_action( 'wpcd_wordpress-app_server_cleanup_metas', array( $this, 'server_cleanup_metas' ), 10, 2 );
+		add_action( 'sstk_wordpress-app_server_cleanup_metas', array( $this, 'server_cleanup_metas' ), 10, 2 );
 
 	}
 
@@ -54,7 +55,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Tools', 'wpcd' ),
+				'label' => __( 'Tools', 'simple-stack' ),
 				'icon'  => 'fad fa-tools',
 			);
 		}
@@ -69,13 +70,13 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the TOOLS tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -105,9 +106,9 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
 			/* Translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -115,7 +116,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* Translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -171,17 +172,17 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to reset the metas for this server?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to reset the metas for this server?', 'simple-stack' );
 
 		$actions['server-cleanup-metas-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_tools_icon( __( '%s Cleanup WordPress Metas', 'wpcd' ) ),
+			'label'          => sstk_apply_tools_icon( __( '%s Cleanup WordPress Metas', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'If the server gets "stuck" for some reason and you don\'t see the button to add a new site, this tool will clean up the metas on the server and give you the ability to try to add sites again.', 'wpcd' ),
+				'desc' => __( 'If the server gets "stuck" for some reason and you don\'t see the button to add a new site, this tool will clean up the metas on the server and give you the ability to try to add sites again.', 'simple-stack' ),
 			),
 		);
 
@@ -189,7 +190,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_run_icon( __( '%s Cleanup Metas', 'wpcd' ) ),
+				'std'                 => sstk_apply_run_icon( __( '%s Cleanup Metas', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 				'desc'                => '',
 			),
@@ -197,57 +198,57 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Run a test REST API callback.
 		 */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$actions['server-cleanup-rest-api-test-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_api_icon( __( '%s Test REST API Access', 'wpcd' ) ),
+			'label'          => sstk_apply_api_icon( __( '%s Test REST API Access', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Run a test to see if this server can talk to the WPCD plugin via REST.  A successful test will show up in the NOTIFICATIONS log.', 'wpcd' ),
+				'desc' => __( 'Run a test to see if this server can talk to the Simple Stack plugin via REST.  A successful test will show up in the NOTIFICATIONS log.', 'simple-stack' ),
 			),
 		);
 		$actions['server-cleanup-rest-api-test']        = array(
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'  => wpcd_apply_run_icon( __( '%s Test Now', 'wpcd' ) ),
+				'std'  => sstk_apply_run_icon( __( '%s Test Now', 'simple-stack' ) ),
 				'desc' => '',
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Renew all ssl certificates on the server that are up for renewal.
 		 */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$confirmation_prompt                                 = __( 'Are you sure you would like to attempt to renew all SSL certificates on this server?', 'wpcd' );
+		$confirmation_prompt                                 = __( 'Are you sure you would like to attempt to renew all SSL certificates on this server?', 'simple-stack' );
 		$actions['server-renew-all-ssl-certificates-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_api_icon( __( '%s Renew All SSL Certificates', 'wpcd' ) ),
+			'label'          => sstk_apply_api_icon( __( '%s Renew All SSL Certificates', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Attempt to renew all SSL certificates that are up for renewal on this server.', 'wpcd' ),
+				'desc' => __( 'Attempt to renew all SSL certificates that are up for renewal on this server.', 'simple-stack' ),
 			),
 		);
 		$actions['server-renew-all-ssl-certificates']        = array(
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_run_icon( __( '%s Renew All Now', 'wpcd' ) ),
+				'std'                 => sstk_apply_run_icon( __( '%s Renew All Now', 'simple-stack' ) ),
 				'desc'                => '',
 				'confirmation_prompt' => $confirmation_prompt,
 			),
@@ -255,28 +256,28 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Set server php default version
 		 */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$confirmation_prompt = __( 'Are you sure you would like to change the PHP CLI version for this server?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to change the PHP CLI version for this server?', 'simple-stack' );
 
-		$default_php_version = get_post_meta( $id, 'wpcd_default_php_version', true );
+		$default_php_version = get_post_meta( $id, 'sstk_default_php_version', true );
 		if ( empty( $default_php_version ) ) {
 			$default_php_version = $this->get_default_php_version_for_server( $id );
 		}
 
 		$actions['reset-server-default-php-version-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_php_icon( __( '%s Set Server PHP CLI Version', 'wpcd' ) ),
+			'label'          => sstk_apply_php_icon( __( '%s Set Server PHP CLI Version', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'This is the PHP version used to run all WP-CLI commands or other server level PHP scripts not running directly inside WordPress. This should be 7.4 or higher - lower versions will likely break things very badly. If your plugins/themes are not compatible with PHP 8.x then this should be set to 7.4.', 'wpcd' ),
+				'desc' => __( 'This is the PHP version used to run all WP-CLI commands and other server-level PHP scripts. Simple Stack supports PHP 8.3, 8.4 and 8.5; PHP 8.4 is the default.', 'simple-stack' ),
 			),
 		);
 
@@ -284,13 +285,13 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		$valid_php_versions = $this->get_php_versions( $id );
 
 		$actions['reset-server-default-php-version-select'] = array(
-			'label'          => __( 'New Server PHP CLI Version', 'wpcd' ),
+			'label'          => __( 'New Server PHP CLI Version', 'simple-stack' ),
 			'type'           => 'select',
 			'raw_attributes' => array(
 				'options'        => $valid_php_versions,
 				'std'            => $default_php_version,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'new_php_version',
+				'data-sstk-name' => 'new_php_version',
 			),
 		);
 
@@ -298,42 +299,42 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_run_icon( __( '%s Reset Server PHP CLI Version', 'wpcd' ) ),
+				'std'                 => sstk_apply_run_icon( __( '%s Reset Server PHP CLI Version', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 				'desc'                => '',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_reset-server-default-php-version-select' ) ),
+				'data-sstk-fields'    => json_encode( array( '#sstk_app_action_reset-server-default-php-version-select' ) ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Update PHP Global Restricted Functions For all PHP Versions
 		 *
 		 * Applies only to OLS Servers and can only be run by admins.
 		 */
-		if ( ( 'ols' === $this->get_web_server_type( $id ) ) && wpcd_is_admin() ) {
+		if ( sstk_is_admin() ) {
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-			$confirmation_prompt = __( 'Are you sure you would like to reset the list of restricted functions? This action applies to all sites and all PHP versions on your OLS server.', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to reset the list of restricted functions? This action applies to all sites and all PHP versions on your OLS server.', 'simple-stack' );
 
 			$actions['reset-server-php-global-restricted-functions-list-header'] = array(
-				'label'          => __( 'PHP Global Restricted Functions List', 'wpcd' ),
+				'label'          => __( 'PHP Global Restricted Functions List', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'To maintain security on a shared WP Server, certain PHP functions cannot be allowed to run in plugins and themes. Use this to make sure the latest list gets applied to all sites for all PHP versions running on your OLS server.', 'wpcd' ),
+					'desc' => __( 'To maintain security on a shared WP Server, certain PHP functions cannot be allowed to run in plugins and themes. Use this to make sure the latest list gets applied to all sites for all PHP versions running on your OLS server.', 'simple-stack' ),
 				),
 			);
 
 			$actions['reset-server-php-global-restricted-functions-list'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Reset', 'wpcd' ),
+					'std'                 => __( 'Reset', 'simple-stack' ),
 					'confirmation_prompt' => $confirmation_prompt,
 					'desc'                => '',
 				),
@@ -341,7 +342,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
@@ -352,7 +353,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Clear out some metas on the server record.
 	 *
-	 * Action Hook: wpcd_wordpress-app_server_cleanup_metas (optional - most times called directly and not via an action hook.)
+	 * Action Hook: sstk_wordpress-app_server_cleanup_metas (optional - most times called directly and not via an action hook.)
 	 *
 	 * @param int    $id         The postID of the server cpt.
 	 * @param string $action     The action to be performed (this matches the string required in the bash scripts if bash scripts are used ).
@@ -365,27 +366,27 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action we are attempting to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
-		delete_post_meta( $id, 'wpcd_server_wordpress-app_action' );
-		delete_post_meta( $id, 'wpcd_server_wordpress-app_action_status' );
-		delete_post_meta( $id, 'wpcd_temp_log_id' );
-		delete_post_meta( $id, 'wpcd_server_action_status' );
-		delete_post_meta( $id, 'wpcd_server_command_mutex' );
+		delete_post_meta( $id, 'sstk_server_wordpress-app_action' );
+		delete_post_meta( $id, 'sstk_server_wordpress-app_action_status' );
+		delete_post_meta( $id, 'sstk_temp_log_id' );
+		delete_post_meta( $id, 'sstk_server_action_status' );
+		delete_post_meta( $id, 'sstk_server_command_mutex' );
 
-		update_post_meta( $id, 'wpcd_server_current_state', 'active' );
+		update_post_meta( $id, 'sstk_server_current_state', 'active' );
 
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );  // Should really only exist on an app.
 
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action_status" );  // Should really only exist on a server and it's a duplicate of the delete a few lines above.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action" );  // Should really only exist on a server and it's a duplicate of the delete a few lines above.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action_args" );  // Should really only exist on a server.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action_status" );  // Should really only exist on a server and it's a duplicate of the delete a few lines above.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action" );  // Should really only exist on a server and it's a duplicate of the delete a few lines above.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action_args" );  // Should really only exist on a server.
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'In-progress server metas have been deleted.', 'wpcd' ) );
+		return new \WP_Error( __( 'In-progress server metas have been deleted.', 'simple-stack' ) );
 
 	}
 
@@ -403,7 +404,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action we are attempting to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$call_back = $this->get_command_url( $id, 'test_rest_api', 'completed' );
@@ -413,7 +414,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $call_back_command ) );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'The test was initiated. You should see a TEST SUCCESSFUL notification in the NOTIFICATIONS log.  If you do not see this entry in the log then it means that the server cannot reliably talk to the WPCD plugin.', 'wpcd' ) );
+		return new \WP_Error( __( 'The test was initiated. You should see a TEST SUCCESSFUL notification in the NOTIFICATIONS log.  If you do not see this entry in the log then it means that the server cannot reliably talk to the Simple Stack plugin.', 'simple-stack' ) );
 
 	}
 
@@ -431,36 +432,32 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 
 		// Bail if certain things are empty...
 		if ( empty( $args['new_php_version'] ) ) {
-			return new \WP_Error( __( 'You must specify a PHP version!', 'wpcd' ) );
+			return new \WP_Error( __( 'You must specify a PHP version!', 'simple-stack' ) );
 		} else {
 			$new_php_version = sanitize_text_field( $args['new_php_version'] );
 		}
 
-		// Check to make sure that the version is a valid version.
-		if ( ! in_array( $new_php_version, array( '7.4', '7.3', '7.2', '7.1', '5.6', '8.0', '8.1', '8.2', '8.3' ) ) ) {
-			return new \WP_Error( __( 'You must specify a VALID PHP version!', 'wpcd' ) );
+		// Check to make sure that the version is supported.
+		if ( ! in_array( $new_php_version, array( '8.3', '8.4', '8.5' ), true ) ) {
+			return new \WP_Error( __( 'You must specify a supported PHP version: 8.3, 8.4 or 8.5.', 'simple-stack' ) );
 		}
-
-		// Create a var with the new version without periods. We're no longer using this but keeping the call in case we need it in the future.
-		$new_php_version_no_periods = str_replace( '.', '', $new_php_version );
 
 		// Get the instance details.
 		$instance = $this->get_server_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action we are attempting to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => 'sudo php --version' ) );
 
 		// Are we already at our desired PHP version?
 		if ( strpos( $result, $new_php_version ) !== false ) {
-			return new \WP_Error( __( 'It looks like your current default PHP version is already at your desired version. No changes were made.', 'wpcd' ) );
+			return new \WP_Error( __( 'It looks like your current default PHP version is already at your desired version. No changes were made.', 'simple-stack' ) );
 		} else {
 			/**
-			 * Not at our desired php version - so change it.
-			 * The change commands depend on the web server type - OLS has a more complex set.
+			 * Not at our desired PHP version - switch the OpenLiteSpeed CLI alternative.
 			 */
 			// Add the new version var to the args array - this is what the bash script will expect in the environment vars.
 			$args['server_php_version'] = $new_php_version;
@@ -469,7 +466,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 			$run_cmd = $this->turn_script_into_command( $instance, 'server_php_version.txt', array_merge( $args, array( 'action' => $action ) ) );
 
 			// Log what we're doing.
-			do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+			do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 			// Run the command.
 			$result2_1 = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -479,7 +476,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 			if ( ! $success ) {
 				$result2 = $result2_1;
 			} else {
-				$result2 = __( 'It looks like the attempt to change the PHP version may have been successful - see SSH logs for the full log of this action.', 'wpcd' );
+				$result2 = __( 'It looks like the attempt to change the PHP version may have been successful - see SSH logs for the full log of this action.', 'simple-stack' );
 			}
 
 			// And check version again.
@@ -487,20 +484,20 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 
 			// Return the data as an error so it can be shown in a dialog box.
 			$preamble1  = '========================' . PHP_EOL;
-			$preamble1 .= __( 'This was your prior default server PHP version.' . PHP_EOL, 'wpcd' );
+			$preamble1 .= __( 'This was your prior default server PHP version.' . PHP_EOL, 'simple-stack' );
 			$preamble1 .= '========================' . PHP_EOL;
 
 			$preamble2  = '========================' . PHP_EOL;
-			$preamble2 .= __( 'This is the result of attempting to change your php version.' . PHP_EOL, 'wpcd' );
+			$preamble2 .= __( 'This is the result of attempting to change your php version.' . PHP_EOL, 'simple-stack' );
 			$preamble2 .= '========================' . PHP_EOL;
 
 			$preamble3  = '========================' . PHP_EOL;
-			$preamble3 .= __( 'This is your new default server PHP version.' . PHP_EOL, 'wpcd' );
+			$preamble3 .= __( 'This is your new default server PHP version.' . PHP_EOL, 'simple-stack' );
 			$preamble3 .= '========================' . PHP_EOL;
 
 			// Set postmeta.  But only update it if the new version matches the requested version.
 			if ( strpos( $result3, $new_php_version ) !== false ) {
-				update_post_meta( $id, 'wpcd_default_php_version', $new_php_version );
+				update_post_meta( $id, 'sstk_default_php_version', $new_php_version );
 			}
 
 			return new \WP_Error( $preamble1 . $result . $preamble2 . $result2 . $preamble3 . $result3 );
@@ -520,32 +517,15 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 	public function reset_global_php_restricted_functions_list( $id, $action ) {
 
 		// Bail if not an admin.
-		if ( ! wpcd_is_admin() && ! wp_doing_cron() && ! wpcd_is_doing_cron() ) {
-			return new \WP_Error( __( 'This action can only be performed by an admin - possible security issue.', 'wpcd' ) );
+		if ( ! sstk_is_admin() && ! wp_doing_cron() && ! sstk_is_doing_cron() ) {
+			return new \WP_Error( __( 'This action can only be performed by an admin - possible security issue.', 'simple-stack' ) );
 		}
 
-		// What type of web server are we running?
-		$webserver_type      = $this->get_web_server_type( $id );
-		$webserver_type_name = $this->get_web_server_description_by_id( $id );
-
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				$bridge_file = 'ols_options.txt';
-				break;
-
-			case 'nginx':
-			default:
-				// NGINX is not being used yet.  Including here in case we do add it in the future.
-				$bridge_file = 'nginx_options.txt';
-				break;
-
+		// Bail if the record does not identify an OpenLiteSpeed server.
+		if ( 'ols' !== $this->get_web_server_type( $id ) ) {
+			return new \WP_Error( __( 'This action can only be performed on an OpenLiteSpeed server.', 'simple-stack' ) );
 		}
-
-		// Bail if not an OLS server.
-		if ( 'ols' !== $webserver_type ) {
-			return new \WP_Error( __( 'This action can only be performed by on an OpenLiteSpeed Server.', 'wpcd' ) );
-		}
+		$bridge_file = 'ols_options.txt';
 
 		// Action to pass to bash script.
 		$action = 'update_global_php_restricted_functions';
@@ -554,7 +534,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_server_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -567,7 +547,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// Run the command.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -575,10 +555,10 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 
 		// Check for success.
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s for server: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			// Return the data as an error so it can be shown in a dialog box.
-			return new \WP_Error( __( 'The global list of PHP restricted functions has been updated for all PHP versions on your OLS server.', 'wpcd' ) );
+			return new \WP_Error( __( 'The global list of PHP restricted functions has been updated for all PHP versions on your OpenLiteSpeed server.', 'simple-stack' ) );
 		}
 
 	}
@@ -595,8 +575,8 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 	public function renew_all_ssl_certificates( $id, $action ) {
 
 		// Bail if not an admin.
-		if ( ! wpcd_is_admin() && ! wp_doing_cron() && ! wpcd_is_doing_cron() ) {
-			return new \WP_Error( __( 'This action can only be performed by an admin - possible security issue.', 'wpcd' ) );
+		if ( ! sstk_is_admin() && ! wp_doing_cron() && ! sstk_is_doing_cron() ) {
+			return new \WP_Error( __( 'This action can only be performed by an admin - possible security issue.', 'simple-stack' ) );
 		}
 
 		// Action to pass to bash script.
@@ -606,7 +586,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_server_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -619,7 +599,7 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// Run the command.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -627,14 +607,14 @@ class WPCD_WORDPRESS_TABS_SERVER_TOOLS extends WPCD_WORDPRESS_TABS {
 
 		// Check for success.
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			// Return the data as an error so it can be shown in a dialog box.
-			return new \WP_Error( __( 'An attempt was issued for all SSL certificates that are valid candidates for renewal. Please see the SSH LOGS screen for the result of this operation.', 'wpcd' ) );
+			return new \WP_Error( __( 'An attempt was issued for all SSL certificates that are valid candidates for renewal. Please see the SSH LOGS screen for the result of this operation.', 'simple-stack' ) );
 		}
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_TOOLS();
+new SSTK_WORDPRESS_TABS_SERVER_TOOLS();

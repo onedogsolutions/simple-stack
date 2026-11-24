@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Tweaks Tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,18 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_TWEAKS
+ * Class SSTK_WORDPRESS_TABS_TWEAKS
  */
-class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_TWEAKS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 	}
 
 	/**
@@ -49,7 +50,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Tweaks', 'wpcd' ),
+				'label' => __( 'Tweaks', 'simple-stack' ),
 				'icon'  => 'fad fa-car-tilt',
 			);
 		}
@@ -65,17 +66,17 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the TWEAKS tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -105,14 +106,14 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'tweaks-toggle-xmlrpc', 'tweaks-toggle-xfo-sameorigin', 'tweaks-toggle-xfo-deny', 'tweaks-toggle-csp-default', 'tweaks-toggle-hsts', 'tweaks-toggle-xss', 'tweaks-toggle-default-referrer-policy', 'tweaks-toggle-default-permission-policy', 'tweaks-toggle-restapi', 'tweaks-toggle-gzip-domain', 'tweaks-toggle-browser-cache', 'tweaks-toggle-fail2ban-domain', 'tweaks-change-file-upload-size-action' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -161,10 +162,6 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_actions( $id ) {
 
-		if ( ! $this->is_460_or_later( $id ) ) {
-			return $this->pre_460_warning_header( $id );
-		}
-
 		// Bail if site is not enabled.
 		if ( ! $this->is_site_enabled( $id ) ) {
 			return $this->get_disabled_header_field();
@@ -194,10 +191,10 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		$actions['tweaks-security-header'] = array(
-			'label'          => __( 'Security Tweaks', 'wpcd' ),
+			'label'          => __( 'Security Tweaks', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Tweaks that could help improve the security of your site.', 'wpcd' ),
+				'desc' => __( 'Tweaks that could help improve the security of your site.', 'simple-stack' ),
 			),
 		);
 
@@ -217,34 +214,10 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		$actions['tweaks-performance-header'] = array(
-			'label'          => __( 'Performance Tweaks', 'wpcd' ),
+			'label'          => __( 'Performance Tweaks', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Tweaks that could help improve the performance of your site.', 'wpcd' ),
-			),
-		);
-
-		return $actions;
-
-	}
-
-	/**
-	 * Returns header fields that warns the user the tweaks screen is not available if the
-	 * server is not a 460 server.
-	 *
-	 * @param int $id the post id of the app cpt record.
-	 *
-	 * @return array Array of actions with key as the action slug and value complying with the structure necessary by metabox.io fields.
-	 */
-	private function pre_460_warning_header( $id ) {
-
-		$actions = array();
-
-		$actions['tweaks-not-available-warning'] = array(
-			'label'          => __( 'Feature Not Available', 'wpcd' ),
-			'type'           => 'heading',
-			'raw_attributes' => array(
-				'desc' => __( 'You must upgrade your server to WPCD 4.6.0 or later before the features on this tab will be available. You can do that under the server UPGRADE tab for the server on which this site is located.', 'wpcd' ),
+				'desc' => __( 'Tweaks that could help improve the performance of your site.', 'simple-stack' ),
 			),
 		);
 
@@ -264,19 +237,19 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		/* XMLRPC */
-		$xmlrpc_status = $this->get_meta_value( $id, 'wpcd_wpapp_xmlrpc_status', 'on', 'on' );
+		$xmlrpc_status = $this->get_meta_value( $id, 'sstk_wpapp_xmlrpc_status', 'on' );
 
 		/* Set the text of the confirmation prompt */
-		$xmlrpc_confirmation_prompt = 'on' === $xmlrpc_status ? __( 'Are you sure you would like to disable XMLRPC for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable XMLRPC for this site?', 'wpcd' );
+		$xmlrpc_confirmation_prompt = 'on' === $xmlrpc_status ? __( 'Are you sure you would like to disable XMLRPC for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable XMLRPC for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-xmlrpc'] = array(
-			'label'          => __( 'XMLRPC', 'wpcd' ),
+			'label'          => __( 'XMLRPC', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $xmlrpc_status === 'on',
 				'confirmation_prompt' => $xmlrpc_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable XMLRPC for this site.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable XMLRPC for this site.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -285,19 +258,19 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * XFRAME OPTIONS - SAMEORIGIN
 		 */
-		$xfo_sameorigin_status = $this->get_meta_value( $id, 'wpcd_wpapp_xfo_sameorigin_status', 'on', 'off' );
+		$xfo_sameorigin_status = $this->get_meta_value( $id, 'sstk_wpapp_xfo_sameorigin_status', 'on' );
 
 		/* Set the text of the confirmation prompt */
-		$xfo_sameorigin_confirmation_prompt = 'on' === $xfo_sameorigin_status ? __( 'Are you sure you would like to disable X-FRAME-OPTIONS: SAME ORIGIN for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable X-FRAME-OPTIONS: SAME ORIGIN for this site?', 'wpcd' );
+		$xfo_sameorigin_confirmation_prompt = 'on' === $xfo_sameorigin_status ? __( 'Are you sure you would like to disable X-FRAME-OPTIONS: SAME ORIGIN for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable X-FRAME-OPTIONS: SAME ORIGIN for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-xfo-sameorigin'] = array(
-			'label'          => __( 'X-Frame-Options: SAMEORIGIN', 'wpcd' ),
+			'label'          => __( 'X-Frame-Options: SAMEORIGIN', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $xfo_sameorigin_status === 'on',
 				'confirmation_prompt' => $xfo_sameorigin_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable X-FRAME-OPTIONS: SAME ORIGIN for this site.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable X-FRAME-OPTIONS: SAME ORIGIN for this site.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -306,21 +279,21 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Default CSP
 		 */
-		$csp_default_status = $this->get_meta_value( $id, 'wpcd_wpapp_csp_default_status', 'off', 'off' );
+		$csp_default_status = $this->get_meta_value( $id, 'sstk_wpapp_csp_default_status', 'off' );
 
 		/* Set the text of the confirmation prompt */
-		$xfo_csp_default_confirmation_prompt = 'on' === $csp_default_status ? __( 'Are you sure you would like to disable the default Content Security Policy for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable the default Content Security Policy for this site?', 'wpcd' );
+		$xfo_csp_default_confirmation_prompt = 'on' === $csp_default_status ? __( 'Are you sure you would like to disable the default Content Security Policy for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable the default Content Security Policy for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-csp-default'] = array(
-			'label'          => __( 'Default Content Security Policy', 'wpcd' ),
+			'label'          => __( 'Default Content Security Policy', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $csp_default_status === 'on',
 				'confirmation_prompt' => $xfo_csp_default_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable the default Content Security Policy for this site.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable the default Content Security Policy for this site.', 'simple-stack' ),
 				'columns'             => 6,
-				'tooltip'             => sprintf( __( 'The default content security policy is: %s', 'wpcd' ), "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self'; img-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data: 'always';" ),
+				'tooltip'             => sprintf( __( 'The default content security policy is: %s', 'simple-stack' ), "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self'; img-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data: 'always';" ),
 			),
 			'type'           => 'switch',
 		);
@@ -328,19 +301,19 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * XFRAME OPTIONS - DENY
 		 */
-		$xfo_deny_status = $this->get_meta_value( $id, 'wpcd_wpapp_xfo_deny_status', 'off', 'off' );
+		$xfo_deny_status = $this->get_meta_value( $id, 'sstk_wpapp_xfo_deny_status', 'off' );
 
 		/* Set the text of the confirmation prompt */
-		$xfo_deny_confirmation_prompt = 'on' === $xfo_deny_status ? __( 'Are you sure you would like to disable X-FRAME-OPTIONS: DENY for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable X-FRAME-OPTIONS: DENY for this site?', 'wpcd' );
+		$xfo_deny_confirmation_prompt = 'on' === $xfo_deny_status ? __( 'Are you sure you would like to disable X-FRAME-OPTIONS: DENY for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable X-FRAME-OPTIONS: DENY for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-xfo-deny'] = array(
-			'label'          => __( 'X-Frame-Options: DENY', 'wpcd' ),
+			'label'          => __( 'X-Frame-Options: DENY', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $xfo_deny_status === 'on',
 				'confirmation_prompt' => $xfo_deny_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable X-FRAME-OPTIONS - DENY for this site.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable X-FRAME-OPTIONS - DENY for this site.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -349,20 +322,20 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * HSTS
 		 */
-		$hsts_status = $this->get_meta_value( $id, 'wpcd_wpapp_hsts_status', 'on', 'off' );
+		$hsts_status = $this->get_meta_value( $id, 'sstk_wpapp_hsts_status', 'on' );
 
 		/* Set the text of the confirmation prompt */
-		$hsts_confirmation_prompt = 'on' === $hsts_status ? __( 'Are you sure you would like to disable HSTS for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable HSTS for this site?', 'wpcd' );
+		$hsts_confirmation_prompt = 'on' === $hsts_status ? __( 'Are you sure you would like to disable HSTS for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable HSTS for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-hsts'] = array(
-			'label'          => __( 'HSTS', 'wpcd' ),
+			'label'          => __( 'HSTS', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $hsts_status === 'on',
 				'confirmation_prompt' => $hsts_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable HSTS for this site.', 'wpcd' ),
-				'tooltip'             => __( 'HSTS = HTTP Strict Transport Security', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable HSTS for this site.', 'simple-stack' ),
+				'tooltip'             => __( 'HSTS = HTTP Strict Transport Security', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -371,20 +344,20 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * XSS
 		 */
-		$xss_status = $this->get_meta_value( $id, 'wpcd_wpapp_xss_status', 'on', 'off' );
+		$xss_status = $this->get_meta_value( $id, 'sstk_wpapp_xss_status', 'on' );
 
 		/* Set the text of the confirmation prompt */
-		$xss_confirmation_prompt = 'on' === $xss_status ? __( 'Are you sure you would like to disable XSS protection for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable XSS protection for this site?', 'wpcd' );
+		$xss_confirmation_prompt = 'on' === $xss_status ? __( 'Are you sure you would like to disable XSS protection for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable XSS protection for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-xss'] = array(
-			'label'          => __( 'XSS', 'wpcd' ),
+			'label'          => __( 'XSS', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $xss_status === 'on',
 				'confirmation_prompt' => $xss_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable XSS protection for this site.', 'wpcd' ),
-				'tooltip'             => __( 'XSS = Cross Site Scripting. Protection is enabled via the X-XSS-Protection header.  It is useful for older browsers or if you have not enabled the appropriate Content Security header directives that would provide similar protection.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable XSS protection for this site.', 'simple-stack' ),
+				'tooltip'             => __( 'XSS = Cross Site Scripting. Protection is enabled via the X-XSS-Protection header.  It is useful for older browsers or if you have not enabled the appropriate Content Security header directives that would provide similar protection.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -393,20 +366,20 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * REFERRER Policy
 		 */
-		$default_referrer_policy_status = $this->get_meta_value( $id, 'wpcd_wpapp_default_referrer_policy_status', 'on', 'off' );
+		$default_referrer_policy_status = $this->get_meta_value( $id, 'sstk_wpapp_default_referrer_policy_status', 'on' );
 
 		/* Set the text of the confirmation prompt */
-		$default_referrer_policy_confirmation_prompt = 'on' === $default_referrer_policy_status ? __( 'Are you sure you would like to disable the default REFERRER Policy protection for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable the default REFERRER Policy protection for this site?', 'wpcd' );
+		$default_referrer_policy_confirmation_prompt = 'on' === $default_referrer_policy_status ? __( 'Are you sure you would like to disable the default REFERRER Policy protection for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable the default REFERRER Policy protection for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-default-referrer-policy'] = array(
-			'label'          => __( 'Default Referrer Policy', 'wpcd' ),
+			'label'          => __( 'Default Referrer Policy', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $default_referrer_policy_status === 'on',
 				'confirmation_prompt' => $default_referrer_policy_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable the default Referrer Policy protection for this site.', 'wpcd' ),
-				'tooltip'             => __( 'Adds the REFERRER POLICY "no-referrer, strict-origin-when-cross-origin" header when enabled.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable the default Referrer Policy protection for this site.', 'simple-stack' ),
+				'tooltip'             => __( 'Adds the REFERRER POLICY "no-referrer, strict-origin-when-cross-origin" header when enabled.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -415,20 +388,20 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Default Permission Policy
 		 */
-		$default_permission_policy_status = $this->get_meta_value( $id, 'wpcd_wpapp_default_permission_policy_status', 'off', 'off' );
+		$default_permission_policy_status = $this->get_meta_value( $id, 'sstk_wpapp_default_permission_policy_status', 'off' );
 
 		/* Set the text of the confirmation prompt */
-		$default_permission_policy_confirmation_prompt = 'on' === $default_permission_policy_status ? __( 'Are you sure you would like to disable the default PERMISSIONS POLICY protection for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable the default PERMISSIONS POLICY protection for this site?', 'wpcd' );
+		$default_permission_policy_confirmation_prompt = 'on' === $default_permission_policy_status ? __( 'Are you sure you would like to disable the default PERMISSIONS POLICY protection for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable the default PERMISSIONS POLICY protection for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-default-permission-policy'] = array(
-			'label'          => __( 'Default Permissions Policy', 'wpcd' ),
+			'label'          => __( 'Default Permissions Policy', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $default_permission_policy_status === 'on',
 				'confirmation_prompt' => $default_permission_policy_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable the default Permissions Policy protection for this site.', 'wpcd' ),
-				'tooltip'             => sprintf( __( 'The default Permissions policy is: %s', 'wpcd' ), 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()' ),
+				'desc'                => __( 'Enable or Disable the default Permissions Policy protection for this site.', 'simple-stack' ),
+				'tooltip'             => sprintf( __( 'The default Permissions policy is: %s', 'simple-stack' ), 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -437,20 +410,20 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * REST API
 		 */
-		$restapi_status = $this->get_meta_value( $id, 'wpcd_wpapp_restapi_status', 'off', 'off' );
+		$restapi_status = $this->get_meta_value( $id, 'sstk_wpapp_restapi_status', 'off' );
 
 		/* Set the text of the confirmation prompt */
-		$restapi_confirmation_prompt = 'on' === $restapi_status ? __( 'Are you sure you would like to disable the WP REST API for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable the WP REST API for this site?', 'wpcd' );
+		$restapi_confirmation_prompt = 'on' === $restapi_status ? __( 'Are you sure you would like to disable the WP REST API for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable the WP REST API for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-restapi'] = array(
-			'label'          => __( 'Rest API', 'wpcd' ),
+			'label'          => __( 'Rest API', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Blocked', 'wpcd' ),
-				'off_label'           => __( 'Not Blocked', 'wpcd' ),
+				'on_label'            => __( 'Blocked', 'simple-stack' ),
+				'off_label'           => __( 'Not Blocked', 'simple-stack' ),
 				'std'                 => $restapi_status === 'on',
 				'confirmation_prompt' => $restapi_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable the REST API for this site. Turning off the RESTAPI can break some things so test your site fully after turning on this option!', 'wpcd' ),
-				'tooltip'             => __( 'We will be installing a 3rd party plugin named DISABLE-JSON-API to enable this feature.  Therefore this is not a fully supported function in WPCD!', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable the REST API for this site. Turning off the RESTAPI can break some things so test your site fully after turning on this option!', 'simple-stack' ),
+				'tooltip'             => __( 'We will be installing a 3rd party plugin named DISABLE-JSON-API to enable this feature.  Therefore this is not a fully supported function in Simple Stack!', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -474,20 +447,20 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * GZIP
 		 */
-		$gzip_status = $this->get_meta_value( $id, 'wpcd_wpapp_gzip_domain_status', 'on', 'off' );
+		$gzip_status = $this->get_meta_value( $id, 'sstk_wpapp_gzip_domain_status', 'on' );
 
 		/* Set the text of the confirmation prompt */
-		$gzip_confirmation_prompt = 'on' === $gzip_status ? __( 'Are you sure you would like to disable GZIP for this site?', 'wpcd' ) : __( 'Are you sure you would like to enable GZIP for this site?', 'wpcd' );
+		$gzip_confirmation_prompt = 'on' === $gzip_status ? __( 'Are you sure you would like to disable GZIP for this site?', 'simple-stack' ) : __( 'Are you sure you would like to enable GZIP for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-gzip-domain'] = array(
-			'label'          => __( 'Gzip', 'wpcd' ),
+			'label'          => __( 'Gzip', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $gzip_status === 'on',
 				'confirmation_prompt' => $gzip_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable Gzip for this site.', 'wpcd' ),
-				'tooltip'             => __( 'When enabled, the list of file types that are compressed is located in the /etc/nginx/common/gzip.conf file on your server.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable Gzip for this site.', 'simple-stack' ),
+				'tooltip'             => __( 'When enabled, compressed file types are controlled by the enableGzipCompress setting in /usr/local/lsws/conf/httpd_config.conf on your server.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -496,20 +469,20 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		/**
 		 * BROWSER CACHING FOR IMAGES, SCRIPTS & STYLES
 		 */
-		$browser_cache_status = $this->get_meta_value( $id, 'wpcd_wpapp_browser_cache_status', 'on', 'off' );
+		$browser_cache_status = $this->get_meta_value( $id, 'sstk_wpapp_browser_cache_status', 'on' );
 
 		/* Set the text of the confirmation prompt */
-		$browser_cache_confirmation_prompt = 'on' === $browser_cache_status ? __( 'Are you sure you would like to disable caching of static resources such as images, scripts & styles in browsers?', 'wpcd' ) : __( 'Are you sure you would like to enable caching of static resources such as images, scripts & styles in browsers?', 'wpcd' );
+		$browser_cache_confirmation_prompt = 'on' === $browser_cache_status ? __( 'Are you sure you would like to disable caching of static resources such as images, scripts & styles in browsers?', 'simple-stack' ) : __( 'Are you sure you would like to enable caching of static resources such as images, scripts & styles in browsers?', 'simple-stack' );
 
 		$actions['tweaks-toggle-browser-cache'] = array(
-			'label'          => __( 'Browser Cache', 'wpcd' ),
+			'label'          => __( 'Browser Cache', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $browser_cache_status === 'on',
 				'confirmation_prompt' => $browser_cache_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable caching static resources such as images, js scripts and css stylesheets in the user browser.', 'wpcd' ),
-				'tooltip'             => __( 'When enabled, the list of file types that are cached in the browser is located in the /etc/nginx/common/browsercache.conf file on your server.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable caching static resources such as images, js scripts and css stylesheets in the user browser.', 'simple-stack' ),
+				'tooltip'             => __( 'When enabled, browser cache rules are stored in the site .htaccess file under /var/www/<domain>/html/.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -536,15 +509,15 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Is fail2ban installed on the server?
-		$f2b_installed = get_post_meta( $server_id, 'wpcd_wpapp_fail2ban_installed', true );
+		$f2b_installed = get_post_meta( $server_id, 'sstk_wpapp_fail2ban_installed', true );
 
 		// Return a single header in the array if fail2ban is not installed on the server.
 		if ( 'yes' !== $f2b_installed ) {
 			$actions['tweaks-fail2ban-header-not-installed'] = array(
-				'label'          => __( 'Fail2Ban', 'wpcd' ),
+				'label'          => __( 'Fail2Ban', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'Fail2ban is not installed on the server so no options are available for it at this time for this site.', 'wpcd' ),
+					'desc' => __( 'Fail2ban is not installed on the server so no options are available for it at this time for this site.', 'simple-stack' ),
 				),
 			);
 			return $actions;
@@ -552,26 +525,26 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 
 		// Fail2ban is installed - ok to show options related to it.
 		$actions['tweaks-fail2ban-header'] = array(
-			'label'          => __( 'Fail2Ban', 'wpcd' ),
+			'label'          => __( 'Fail2Ban', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Add or remove the Fail2ban WP plugin for this site.', 'wpcd' ),
+				'desc' => __( 'Add or remove the Fail2ban WP plugin for this site.', 'simple-stack' ),
 			),
 		);
 
-		$fail2ban_status = $this->get_meta_value( $id, 'wpcd_wpapp_fail2ban_domain_status', 'off', 'off' );
+		$fail2ban_status = $this->get_meta_value( $id, 'sstk_wpapp_fail2ban_domain_status', 'off' );
 
 		/* Set the text of the confirmation prompt */
-		$fail2ban_confirmation_prompt = 'on' === $fail2ban_status ? __( 'Are you sure you would like to remove the fail2ban plugin for this site?', 'wpcd' ) : __( 'Are you sure you would like to install the fail2ban plugin for this site?', 'wpcd' );
+		$fail2ban_confirmation_prompt = 'on' === $fail2ban_status ? __( 'Are you sure you would like to remove the fail2ban plugin for this site?', 'simple-stack' ) : __( 'Are you sure you would like to install the fail2ban plugin for this site?', 'simple-stack' );
 
 		$actions['tweaks-toggle-fail2ban-domain'] = array(
-			'label'          => __( 'Fail2ban', 'wpcd' ),
+			'label'          => __( 'Fail2ban', 'simple-stack' ),
 			'raw_attributes' => array(
-				'on_label'            => __( 'Enabled', 'wpcd' ),
-				'off_label'           => __( 'Disabled', 'wpcd' ),
+				'on_label'            => __( 'Enabled', 'simple-stack' ),
+				'off_label'           => __( 'Disabled', 'simple-stack' ),
 				'std'                 => $fail2ban_status === 'on',
 				'confirmation_prompt' => $fail2ban_confirmation_prompt,
-				'desc'                => __( 'Enable or Disable the Fail2ban plugin for this site.', 'wpcd' ),
+				'desc'                => __( 'Enable or Disable the Fail2ban plugin for this site.', 'simple-stack' ),
 				'columns'             => 6,
 			),
 			'type'           => 'switch',
@@ -598,42 +571,42 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Did we set a size before?
-		$existing_size = get_post_meta( $id, 'wpcd_wpapp_file_upload_size', true );
+		$existing_size = get_post_meta( $id, 'sstk_wpapp_file_upload_size', true );
 		if ( empty( $existing_size ) ) {
 			$existing_size = 25;
 		}
 
 		// Header.
 		$actions['tweaks-change-fileupload-size-header'] = array(
-			'label'          => __( 'File Upload Size', 'wpcd' ),
+			'label'          => __( 'File Upload Size', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Change the maximum allowed size for file uploads in PHP and NGINX configuration files.', 'wpcd' ),
+				'desc' => __( 'Change the maximum allowed size for file uploads in PHP and the OpenLiteSpeed vhost configuration.', 'simple-stack' ),
 			),
 		);
 
 		$actions['tweaks-change-fileupload-size'] = array(
-			'label'          => __( 'Size (MB)', 'wpcd' ),
+			'label'          => __( 'Size (MB)', 'simple-stack' ),
 			'raw_attributes' => array(
-				'placeholder'    => __( 'New Upload Size', 'wpcd' ),
+				'placeholder'    => __( 'New Upload Size', 'simple-stack' ),
 				'std'            => $existing_size,
 				'size'           => 20,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'file_upload_size',
+				'data-sstk-name' => 'file_upload_size',
 			),
 			'type'           => 'number',
 		);
 
 		/* Set the text of the confirmation prompt */
-		$uploadsize_confirmation_prompt = __( 'Are you sure you would like to change the maximum upload size for this site?', 'wpcd' );
+		$uploadsize_confirmation_prompt = __( 'Are you sure you would like to change the maximum upload size for this site?', 'simple-stack' );
 
 		$actions['tweaks-change-file-upload-size-action'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Change', 'wpcd' ),
+				'std'                 => __( 'Change', 'simple-stack' ),
 				'confirmation_prompt' => $uploadsize_confirmation_prompt,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_tweaks-change-fileupload-size' ) ),
+				'data-sstk-fields'    => json_encode( array( '#sstk_app_action_tweaks-change-fileupload-size' ) ),
 
 			),
 			'type'           => 'button',
@@ -643,28 +616,19 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 	}
 
 	/**
-	 * Get the current value of an on/off meta value from the server field.
+	 * Get the current value of an on/off meta value, using the current default when unset.
 	 *
-	 * This is just a get_post_meta but sets a default value if nothing exists.
-	 * The default can be different based on whether the server was installed before
-	 * V 4.6.0 or after.
-	 *
-	 * @param int    $id                     postid of server record.
-	 * @param string $meta_name              name of meta value to get.
-	 * @param string $default_460_value      default value if meta isn't set and current version of app is 4.6.0 or greater.
-	 * @param string $default_pre_460_value  default value if meta isn't set and current version of app is less than 4.6.0.
+	 * @param int    $id        post ID of the site record.
+	 * @param string $meta_name name of the meta value to get.
+	 * @param string $default   default value when the meta value is not set.
 	 *
 	 * @return mixed|string
 	 */
-	private function get_meta_value( $id, $meta_name, $default_460_value, $default_pre_460_value ) {
+	private function get_meta_value( $id, $meta_name, $default ) {
 
 		$status = get_post_meta( $id, $meta_name, true );
 		if ( empty( $status ) ) {
-			if ( true === $this->is_460_or_later( $id ) ) {
-				$status = $default_460_value;
-			} else {
-				$status = $default_pre_460_value;
-			}
+			$status = $default;
 		}
 
 		return $status;
@@ -681,22 +645,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 	 */
 	private function tweaks_toggle_a_thing( $id, $action ) {
 
-		// What type of web server are we running?
-		$webserver_type      = $this->get_web_server_type( $id );
-		$webserver_type_name = $this->get_web_server_description_by_id( $id );
-
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				$bridge_file = 'ols_options.txt';
-				break;
-
-			case 'nginx':
-			default:
-				$bridge_file = 'nginx_options.txt';
-				break;
-
-		}
+		$bridge_file = 'ols_options.txt';
 
 		// Action name that we'll be sending to the server.
 		$server_action = '';
@@ -704,7 +653,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		switch ( $action ) {
 			case 'tweaks-toggle-xmlrpc':
 				// What is the current XMLRPC status?
-				$xmlrpc_status = $this->get_meta_value( $id, 'wpcd_wpapp_xmlrpc_status', 'on', 'on' );
+				$xmlrpc_status = $this->get_meta_value( $id, 'sstk_wpapp_xmlrpc_status', 'on' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $xmlrpc_status ) {
@@ -715,7 +664,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-xfo-sameorigin':
-				$xfo_sameorigin_status = $this->get_meta_value( $id, 'wpcd_wpapp_xfo_sameorigin_status', 'on', 'off' );
+				$xfo_sameorigin_status = $this->get_meta_value( $id, 'sstk_wpapp_xfo_sameorigin_status', 'on' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $xfo_sameorigin_status ) {
@@ -726,7 +675,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-xfo-deny':
-				$xfo_deny_status = $this->get_meta_value( $id, 'wpcd_wpapp_xfo_deny_status', 'off', 'off' );
+				$xfo_deny_status = $this->get_meta_value( $id, 'sstk_wpapp_xfo_deny_status', 'off' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $xfo_deny_status ) {
@@ -737,7 +686,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-csp-default':
-				$csp_default_status = $this->get_meta_value( $id, 'wpcd_wpapp_csp_default_status', 'off', 'off' );
+				$csp_default_status = $this->get_meta_value( $id, 'sstk_wpapp_csp_default_status', 'off' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $csp_default_status ) {
@@ -748,7 +697,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-hsts':
-				$hsts_status = $this->get_meta_value( $id, 'wpcd_wpapp_hsts_status', 'on', 'off' );
+				$hsts_status = $this->get_meta_value( $id, 'sstk_wpapp_hsts_status', 'on' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $hsts_status ) {
@@ -759,7 +708,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-xss':
-				$xss_status = $this->get_meta_value( $id, 'wpcd_wpapp_xss_status', 'on', 'off' );
+				$xss_status = $this->get_meta_value( $id, 'sstk_wpapp_xss_status', 'on' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $xss_status ) {
@@ -770,7 +719,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-default-referrer-policy':
-				$default_referrer_policy_status = $this->get_meta_value( $id, 'wpcd_wpapp_default_referrer_policy_status', 'on', 'off' );
+				$default_referrer_policy_status = $this->get_meta_value( $id, 'sstk_wpapp_default_referrer_policy_status', 'on' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $default_referrer_policy_status ) {
@@ -781,7 +730,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-default-permission-policy':
-				$default_permission_policy_status = $this->get_meta_value( $id, 'wpcd_wpapp_default_permission_policy_status', 'off', 'off' );
+				$default_permission_policy_status = $this->get_meta_value( $id, 'sstk_wpapp_default_permission_policy_status', 'off' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $default_permission_policy_status ) {
@@ -792,7 +741,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-restapi':
-				$restapi_status = $this->get_meta_value( $id, 'wpcd_wpapp_restapi_status', 'off', 'off' );
+				$restapi_status = $this->get_meta_value( $id, 'sstk_wpapp_restapi_status', 'off' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'off' === $restapi_status ) {
@@ -809,7 +758,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 			 */
 
 			case 'tweaks-toggle-gzip-domain':
-				$gzip_status = $this->get_meta_value( $id, 'wpcd_wpapp_gzip_domain_status', 'on', 'off' );
+				$gzip_status = $this->get_meta_value( $id, 'sstk_wpapp_gzip_domain_status', 'on' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $gzip_status ) {
@@ -820,7 +769,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 				}
 				break;
 			case 'tweaks-toggle-browser-cache':
-				$browser_cache_status = $this->get_meta_value( $id, 'wpcd_wpapp_browser_cache_status', 'on', 'off' );
+				$browser_cache_status = $this->get_meta_value( $id, 'sstk_wpapp_browser_cache_status', 'on' );
 
 				// Figure out the proper action to send to the server script.
 				if ( 'on' === $browser_cache_status ) {
@@ -835,7 +784,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -852,7 +801,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// Run the command.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -860,7 +809,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 
 		// Check for success.
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Update metas...
@@ -868,81 +817,81 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 			case 'tweaks-toggle-xmlrpc':
 				if ( 'on' === $xmlrpc_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_xmlrpc_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xmlrpc_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_xmlrpc_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_xmlrpc_status', 'on' );
 				}
 				break;
 			case 'tweaks-toggle-xfo-sameorigin':
 				if ( 'on' === $xfo_sameorigin_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_xfo_sameorigin_status', 'off' );
-					update_post_meta( $id, 'wpcd_wpapp_xfo_deny_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_sameorigin_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_deny_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_xfo_sameorigin_status', 'on' );
-					update_post_meta( $id, 'wpcd_wpapp_xfo_deny_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_sameorigin_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_deny_status', 'off' );
 				}
 				break;
 			case 'tweaks-toggle-xfo-deny':
 				if ( 'on' === $xfo_deny_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_xfo_deny_status', 'off' );
-					update_post_meta( $id, 'wpcd_wpapp_xfo_sameorigin_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_deny_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_sameorigin_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_xfo_deny_status', 'on' );
-					update_post_meta( $id, 'wpcd_wpapp_xfo_sameorigin_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_deny_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_xfo_sameorigin_status', 'off' );
 				}
 				break;
 			case 'tweaks-toggle-csp-default':
 				if ( 'on' === $csp_default_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_csp_default_status', 'off' );
-					update_post_meta( $id, 'wpcd_wpapp_csp_custom_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_csp_default_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_csp_custom_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_csp_default_status', 'on' );
-					update_post_meta( $id, 'wpcd_wpapp_csp_custom_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_csp_default_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_csp_custom_status', 'off' );
 				}
 				break;
 			case 'tweaks-toggle-hsts':
 				if ( 'on' === $hsts_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_hsts_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_hsts_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_hsts_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_hsts_status', 'on' );
 				}
 				break;
 			case 'tweaks-toggle-xss':
 				if ( 'on' === $xss_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_xss_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_xss_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_xss_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_xss_status', 'on' );
 				}
 				break;
 			case 'tweaks-toggle-default-referrer-policy':
 				if ( 'on' === $default_referrer_policy_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_default_referrer_policy_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_default_referrer_policy_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_default_referrer_policy_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_default_referrer_policy_status', 'on' );
 				}
 				break;
 			case 'tweaks-toggle-default-permission-policy':
 				if ( 'on' === $default_permission_policy_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_default_permission_policy_status', 'off' );
-					update_post_meta( $id, 'wpcd_wpapp_custom_permission_policy_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_default_permission_policy_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_custom_permission_policy_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_default_permission_policy_status', 'on' );
-					update_post_meta( $id, 'wpcd_wpapp_custom_permission_policy_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_default_permission_policy_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_custom_permission_policy_status', 'off' );
 				}
 				break;
 			case 'tweaks-toggle-restapi':
 				if ( 'on' === $restapi_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_restapi_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_restapi_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_restapi_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_restapi_status', 'on' );
 				}
 				break;
 
@@ -953,24 +902,24 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 			case 'tweaks-toggle-gzip-domain':
 				if ( 'on' === $gzip_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_gzip_domain_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_gzip_domain_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_gzip_domain_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_gzip_domain_status', 'on' );
 				}
 				break;
 			case 'tweaks-toggle-browser-cache':
 				if ( 'on' === $browser_cache_status ) {
 					// currently on so turn it off.
-					update_post_meta( $id, 'wpcd_wpapp_browser_cache_status', 'off' );
+					update_post_meta( $id, 'sstk_wpapp_browser_cache_status', 'off' );
 				} else {
-					update_post_meta( $id, 'wpcd_wpapp_browser_cache_status', 'on' );
+					update_post_meta( $id, 'sstk_wpapp_browser_cache_status', 'on' );
 				}
 				break;
 
 		}
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'The status for the selected item has been toggled.', 'wpcd' ) );
+		return new \WP_Error( __( 'The status for the selected item has been toggled.', 'simple-stack' ) );
 
 	}
 
@@ -988,7 +937,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		$server_action = '';
 
 		// Figure out if we're adding or removing the plugin.
-		$fail2ban_status = $this->get_meta_value( $id, 'wpcd_wpapp_fail2ban_domain_status', 'off', 'off' );
+		$fail2ban_status = $this->get_meta_value( $id, 'sstk_wpapp_fail2ban_domain_status', 'off' );
 		// Figure out the proper action to send to the server script.
 		if ( 'on' === $fail2ban_status ) {
 			// currently on so turn it off.
@@ -1000,7 +949,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -1017,7 +966,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// Run the command.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -1025,19 +974,19 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 
 		// Check for success.
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Update metas...
 		if ( 'on' === $fail2ban_status ) {
 			// currently on so turn it off.
-			update_post_meta( $id, 'wpcd_wpapp_fail2ban_domain_status', 'off' );
+			update_post_meta( $id, 'sstk_wpapp_fail2ban_domain_status', 'off' );
 		} else {
-			update_post_meta( $id, 'wpcd_wpapp_fail2ban_domain_status', 'on' );
+			update_post_meta( $id, 'sstk_wpapp_fail2ban_domain_status', 'on' );
 		}
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'The status for the selected item has been toggled.', 'wpcd' ) );
+		return new \WP_Error( __( 'The status for the selected item has been toggled.', 'simple-stack' ) );
 	}
 
 	/**
@@ -1058,7 +1007,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the field values from the front-end.
@@ -1066,7 +1015,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 
 		if ( empty( $args['file_upload_size'] ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'The upload file size must not be blank for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'The upload file size must not be blank for action %s', 'simple-stack' ), $action ) );
 		} else {
 			$upload_limit = $args['file_upload_size'];
 		}
@@ -1088,7 +1037,7 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// Run the command.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -1097,16 +1046,16 @@ class WPCD_WORDPRESS_TABS_TWEAKS extends WPCD_WORDPRESS_TABS {
 		// Check for success.
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Update metas...
-		update_post_meta( $id, 'wpcd_wpapp_file_upload_size', $upload_limit );
+		update_post_meta( $id, 'sstk_wpapp_file_upload_size', $upload_limit );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'The maximum allowed file upload size has been updated.', 'wpcd' ) );
+		return new \WP_Error( __( 'The maximum allowed file upload size has been updated.', 'simple-stack' ) );
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_TWEAKS();
+new SSTK_WORDPRESS_TABS_TWEAKS();

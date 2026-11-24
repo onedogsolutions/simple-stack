@@ -1,9 +1,10 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Site detail.
  *
- * Replaces the Meta Box tabbed edit screen for `wpcd_app`. Site actions go through
+ * Replaces the Meta Box tabbed edit screen for `sstk_app`. Site actions go through
  * `POST /sites/{id}/action`, which maps the body onto `$_POST` and then applies the
- * `wpcd_app_{app}_tab_action` filter, so every tab handler sees exactly the payload it
+ * `sstk_app_{app}_tab_action` filter, so every tab handler sees exactly the payload it
  * expects.
  */
 
@@ -175,7 +176,7 @@ export default function SiteDetail( { id } ) {
 			<ConfirmDialog
 				open={ confirmDelete }
 				title="Trash this site?"
-				message="The WordPress record is removed from SimpleStack. Files on the server are left in place until you remove them from the server itself."
+				message="The WordPress record is removed from Simple Stack. Files on the server are left in place until you remove them from the server itself."
 				confirmLabel="Trash site"
 				onConfirm={ remove }
 				onCancel={ () => setConfirmDelete( false ) }

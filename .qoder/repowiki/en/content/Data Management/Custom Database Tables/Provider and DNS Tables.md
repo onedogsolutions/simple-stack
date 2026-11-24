@@ -2,14 +2,14 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-dns-provider.php](file://includes/core/custom-table/class-wpcd-dns-provider.php)
-- [class-wpcd-dns-zone.php](file://includes/core/custom-table/class-wpcd-dns-zone.php)
-- [class-wpcd-dns-zone-record.php](file://includes/core/custom-table/class-wpcd-dns-zone-record.php)
-- [class-wpcd-provider.php](file://includes/core/custom-table/class-wpcd-provider.php)
-- [class-wpcd-ct-dns-provider-api.php](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php)
-- [class-wpcd-ct-dns-zone-api.php](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php)
-- [class-wpcd-ct-dns-zone-record-api.php](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php)
-- [class-wpcd-ct-provider-api.php](file://includes/core/custom-table/api/class-wpcd-ct-provider-api.php)
+- [class-sstk-dns-provider.php](file://includes/core/custom-table/class-sstk-dns-provider.php)
+- [class-sstk-dns-zone.php](file://includes/core/custom-table/class-sstk-dns-zone.php)
+- [class-sstk-dns-zone-record.php](file://includes/core/custom-table/class-sstk-dns-zone-record.php)
+- [class-sstk-provider.php](file://includes/core/custom-table/class-sstk-provider.php)
+- [class-sstk-ct-dns-provider-api.php](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php)
+- [class-sstk-ct-dns-zone-api.php](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php)
+- [class-sstk-ct-dns-zone-record-api.php](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php)
+- [class-sstk-ct-provider-api.php](file://includes/core/custom-table/api/class-sstk-ct-provider-api.php)
 </cite>
 
 ## Table of Contents
@@ -44,16 +44,16 @@ The relevant code is organized under the custom-table module:
 ```mermaid
 graph TB
 subgraph "Custom Table Models"
-P["WPCD_CT_Provider<br/>providers"]
-DP["WPCD_CT_DNS_Provider<br/>dns_providers"]
-DZ["WPCD_CT_DNS_Zone<br/>dns_zones"]
-DR["WPCD_CT_DNS_Zone_Record<br/>dns_zone_records"]
+P["SSTK_CT_Provider<br/>providers"]
+DP["SSTK_CT_DNS_Provider<br/>dns_providers"]
+DZ["SSTK_CT_DNS_Zone<br/>dns_zones"]
+DR["SSTK_CT_DNS_Zone_Record<br/>dns_zone_records"]
 end
 subgraph "API Classes"
-PA["WPCD_CT_Provider_API"]
-DPA["WPCD_CT_DNS_Provider_API"]
-DZA["WPCD_CT_DNS_Zone_API"]
-DRA["WPCD_CT_DNS_Zone_Record_API"]
+PA["SSTK_CT_Provider_API"]
+DPA["SSTK_CT_DNS_Provider_API"]
+DZA["SSTK_CT_DNS_Zone_API"]
+DRA["SSTK_CT_DNS_Zone_Record_API"]
 end
 P --> PA
 DP --> DPA
@@ -64,20 +64,20 @@ DZ --> |"parent_id"| DR
 ```
 
 **Diagram sources**
-- [class-wpcd-provider.php:78-106](file://includes/core/custom-table/class-wpcd-provider.php#L78-L106)
-- [class-wpcd-dns-provider.php:73-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L73-L85)
-- [class-wpcd-dns-zone.php:72-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L72-L80)
-- [class-wpcd-dns-zone-record.php:70-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L70-L82)
-- [class-wpcd-ct-provider-api.php:6-20](file://includes/core/custom-table/api/class-wpcd-ct-provider-api.php#L6-L20)
-- [class-wpcd-ct-dns-provider-api.php:6-20](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php#L6-L20)
-- [class-wpcd-ct-dns-zone-api.php:6-20](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L6-L20)
-- [class-wpcd-ct-dns-zone-record-api.php:6-20](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php#L6-L20)
+- [class-sstk-provider.php:78-106](file://includes/core/custom-table/class-sstk-provider.php#L78-L106)
+- [class-sstk-dns-provider.php:73-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L73-L85)
+- [class-sstk-dns-zone.php:72-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L72-L80)
+- [class-sstk-dns-zone-record.php:70-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L70-L82)
+- [class-sstk-ct-provider-api.php:6-20](file://includes/core/custom-table/api/class-sstk-ct-provider-api.php#L6-L20)
+- [class-sstk-ct-dns-provider-api.php:6-20](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php#L6-L20)
+- [class-sstk-ct-dns-zone-api.php:6-20](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L6-L20)
+- [class-sstk-ct-dns-zone-record-api.php:6-20](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php#L6-L20)
 
 **Section sources**
-- [class-wpcd-provider.php:78-106](file://includes/core/custom-table/class-wpcd-provider.php#L78-L106)
-- [class-wpcd-dns-provider.php:73-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L73-L85)
-- [class-wpcd-dns-zone.php:72-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L72-L80)
-- [class-wpcd-dns-zone-record.php:70-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L70-L82)
+- [class-sstk-provider.php:78-106](file://includes/core/custom-table/class-sstk-provider.php#L78-L106)
+- [class-sstk-dns-provider.php:73-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L73-L85)
+- [class-sstk-dns-zone.php:72-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L72-L80)
+- [class-sstk-dns-zone-record.php:70-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L70-L82)
 
 ## Core Components
 - Providers (cloud infrastructure): stores credentials, SSH keys, region, tags, and configuration flags
@@ -92,10 +92,10 @@ Key responsibilities:
 - Permission-aware listing and child-item queries
 
 **Section sources**
-- [class-wpcd-provider.php:78-106](file://includes/core/custom-table/class-wpcd-provider.php#L78-L106)
-- [class-wpcd-dns-provider.php:73-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L73-L85)
-- [class-wpcd-dns-zone.php:72-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L72-L80)
-- [class-wpcd-dns-zone-record.php:70-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L70-L82)
+- [class-sstk-provider.php:78-106](file://includes/core/custom-table/class-sstk-provider.php#L78-L106)
+- [class-sstk-dns-provider.php:73-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L73-L85)
+- [class-sstk-dns-zone.php:72-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L72-L80)
+- [class-sstk-dns-zone-record.php:70-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L70-L82)
 
 ## Architecture Overview
 The DNS data model is hierarchical:
@@ -134,9 +134,9 @@ dns_zones ||--o{ dns_zone_records : "contains"
 ```
 
 **Diagram sources**
-- [class-wpcd-dns-provider.php:73-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L73-L85)
-- [class-wpcd-dns-zone.php:72-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L72-L80)
-- [class-wpcd-dns-zone-record.php:70-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L70-L82)
+- [class-sstk-dns-provider.php:73-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L73-L85)
+- [class-sstk-dns-zone.php:72-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L72-L80)
+- [class-sstk-dns-zone-record.php:70-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L70-L82)
 
 ## Detailed Component Analysis
 
@@ -161,10 +161,10 @@ Relationships:
 - Not directly referenced by DNS tables; serves as a separate entity for cloud infrastructure provisioning
 
 **Section sources**
-- [class-wpcd-provider.php:78-106](file://includes/core/custom-table/class-wpcd-provider.php#L78-L106)
-- [class-wpcd-provider.php:434-447](file://includes/core/custom-table/class-wpcd-provider.php#L434-L447)
-- [class-wpcd-provider.php:454-481](file://includes/core/custom-table/class-wpcd-provider.php#L454-L481)
-- [class-wpcd-ct-provider-api.php:6-20](file://includes/core/custom-table/api/class-wpcd-ct-provider-api.php#L6-L20)
+- [class-sstk-provider.php:78-106](file://includes/core/custom-table/class-sstk-provider.php#L78-L106)
+- [class-sstk-provider.php:434-447](file://includes/core/custom-table/class-sstk-provider.php#L434-L447)
+- [class-sstk-provider.php:454-481](file://includes/core/custom-table/class-sstk-provider.php#L454-L481)
+- [class-sstk-ct-provider-api.php:6-20](file://includes/core/custom-table/api/class-sstk-ct-provider-api.php#L6-L20)
 
 ### DNS Provider Table
 Purpose:
@@ -185,11 +185,11 @@ UI integration:
 - Provides inline sections to manage zones and zone records from the provider edit screen
 
 **Section sources**
-- [class-wpcd-dns-provider.php:73-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L73-L85)
-- [class-wpcd-dns-provider.php:126-189](file://includes/core/custom-table/class-wpcd-dns-provider.php#L126-L189)
-- [class-wpcd-dns-provider.php:345-372](file://includes/core/custom-table/class-wpcd-dns-provider.php#L345-L372)
-- [class-wpcd-dns-provider.php:317-338](file://includes/core/custom-table/class-wpcd-dns-provider.php#L317-L338)
-- [class-wpcd-ct-dns-provider-api.php:6-20](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php#L6-L20)
+- [class-sstk-dns-provider.php:73-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L73-L85)
+- [class-sstk-dns-provider.php:126-189](file://includes/core/custom-table/class-sstk-dns-provider.php#L126-L189)
+- [class-sstk-dns-provider.php:345-372](file://includes/core/custom-table/class-sstk-dns-provider.php#L345-L372)
+- [class-sstk-dns-provider.php:317-338](file://includes/core/custom-table/class-sstk-dns-provider.php#L317-L338)
+- [class-sstk-ct-dns-provider-api.php:6-20](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php#L6-L20)
 
 ### DNS Zone Table
 Purpose:
@@ -211,11 +211,11 @@ UI integration:
 - Row actions to load zone records
 
 **Section sources**
-- [class-wpcd-dns-zone.php:72-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L72-L80)
-- [class-wpcd-dns-zone.php:193-195](file://includes/core/custom-table/class-wpcd-dns-zone.php#L193-L195)
-- [class-wpcd-dns-zone.php:240-268](file://includes/core/custom-table/class-wpcd-dns-zone.php#L240-L268)
-- [class-wpcd-dns-zone.php:179-186](file://includes/core/custom-table/class-wpcd-dns-zone.php#L179-L186)
-- [class-wpcd-ct-dns-zone-api.php:47-71](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L47-L71)
+- [class-sstk-dns-zone.php:72-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L72-L80)
+- [class-sstk-dns-zone.php:193-195](file://includes/core/custom-table/class-sstk-dns-zone.php#L193-L195)
+- [class-sstk-dns-zone.php:240-268](file://includes/core/custom-table/class-sstk-dns-zone.php#L240-L268)
+- [class-sstk-dns-zone.php:179-186](file://includes/core/custom-table/class-sstk-dns-zone.php#L179-L186)
+- [class-sstk-ct-dns-zone-api.php:47-71](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L47-L71)
 
 ### DNS Zone Record Table
 Purpose:
@@ -241,22 +241,22 @@ UI integration:
 - Dynamic loading of records per zone
 
 **Section sources**
-- [class-wpcd-dns-zone-record.php:70-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L70-L82)
-- [class-wpcd-dns-zone-record.php:212-223](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L212-L223)
-- [class-wpcd-dns-zone-record.php:244-306](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L244-L306)
-- [class-wpcd-dns-zone-record.php:364-402](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L364-L402)
+- [class-sstk-dns-zone-record.php:70-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L70-L82)
+- [class-sstk-dns-zone-record.php:212-223](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L212-L223)
+- [class-sstk-dns-zone-record.php:244-306](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L244-L306)
+- [class-sstk-dns-zone-record.php:364-402](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L364-L402)
 
 ### Class Diagram
 ```mermaid
 classDiagram
-class WPCD_CT_DNS_Provider {
+class SSTK_CT_DNS_Provider {
 +register_model()
 +create_table()
 +metaboxes(meta_boxes)
 +validate_data()
 +ajax_handle_delete_item()
 }
-class WPCD_CT_DNS_Zone {
+class SSTK_CT_DNS_Zone {
 +register_model()
 +create_table()
 +metaboxes(meta_boxes)
@@ -264,7 +264,7 @@ class WPCD_CT_DNS_Zone {
 +after_save_metabox(item_id)
 +ajax_handle_delete_item()
 }
-class WPCD_CT_DNS_Zone_Record {
+class SSTK_CT_DNS_Zone_Record {
 +register_model()
 +create_table()
 +metaboxes(meta_boxes)
@@ -272,22 +272,22 @@ class WPCD_CT_DNS_Zone_Record {
 +types_list()
 +ajax_handle_delete_item()
 }
-class WPCD_CT_Provider {
+class SSTK_CT_Provider {
 +register_model()
 +create_table()
 +metaboxes(meta_boxes)
 +validate_data()
 +ajax_handle_delete_item()
 }
-WPCD_CT_DNS_Zone --> WPCD_CT_DNS_Provider : "parent_id"
-WPCD_CT_DNS_Zone_Record --> WPCD_CT_DNS_Zone : "parent_id"
+SSTK_CT_DNS_Zone --> SSTK_CT_DNS_Provider : "parent_id"
+SSTK_CT_DNS_Zone_Record --> SSTK_CT_DNS_Zone : "parent_id"
 ```
 
 **Diagram sources**
-- [class-wpcd-dns-provider.php:54-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L54-L85)
-- [class-wpcd-dns-zone.php:53-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L53-L80)
-- [class-wpcd-dns-zone-record.php:52-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L52-L82)
-- [class-wpcd-provider.php:57-106](file://includes/core/custom-table/class-wpcd-provider.php#L57-L106)
+- [class-sstk-dns-provider.php:54-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L54-L85)
+- [class-sstk-dns-zone.php:53-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L53-L80)
+- [class-sstk-dns-zone-record.php:52-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L52-L82)
+- [class-sstk-provider.php:57-106](file://includes/core/custom-table/class-sstk-provider.php#L57-L106)
 
 ## Dependency Analysis
 Permission-aware queries join through the DNS provider to ensure that only authorized users can view or modify zones and records.
@@ -295,8 +295,8 @@ Permission-aware queries join through the DNS provider to ensure that only autho
 ```mermaid
 sequenceDiagram
 participant UI as "Admin UI"
-participant ZoneAPI as "WPCD_CT_DNS_Zone_API"
-participant ProviderAPI as "WPCD_CT_DNS_Provider_API"
+participant ZoneAPI as "SSTK_CT_DNS_Zone_API"
+participant ProviderAPI as "SSTK_CT_DNS_Provider_API"
 participant DB as "Database"
 UI->>ZoneAPI : get_items_by_permission(args, user_id)
 ZoneAPI->>ProviderAPI : get('dns_provider')
@@ -306,12 +306,12 @@ ZoneAPI-->>UI : zones[]
 ```
 
 **Diagram sources**
-- [class-wpcd-ct-dns-zone-api.php:99-143](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L99-L143)
-- [class-wpcd-ct-dns-provider-api.php:6-20](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php#L6-L20)
+- [class-sstk-ct-dns-zone-api.php:99-143](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L99-L143)
+- [class-sstk-ct-dns-provider-api.php:6-20](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php#L6-L20)
 
 **Section sources**
-- [class-wpcd-ct-dns-zone-api.php:99-143](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L99-L143)
-- [class-wpcd-ct-dns-zone-record-api.php:51-106](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php#L51-L106)
+- [class-sstk-ct-dns-zone-api.php:99-143](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L99-L143)
+- [class-sstk-ct-dns-zone-record-api.php:51-106](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php#L51-L106)
 
 ## Performance Considerations
 Optimization strategies for large DNS datasets:
@@ -363,12 +363,12 @@ Common issues and resolutions:
   - All mutation endpoints verify nonces; failures indicate stale or missing tokens
 
 **Section sources**
-- [class-wpcd-dns-provider.php:345-372](file://includes/core/custom-table/class-wpcd-dns-provider.php#L345-L372)
-- [class-wpcd-dns-zone.php:240-268](file://includes/core/custom-table/class-wpcd-dns-zone.php#L240-L268)
-- [class-wpcd-dns-zone-record.php:364-402](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L364-L402)
-- [class-wpcd-dns-provider.php:378-415](file://includes/core/custom-table/class-wpcd-dns-provider.php#L378-L415)
-- [class-wpcd-dns-zone.php:391-419](file://includes/core/custom-table/class-wpcd-dns-zone.php#L391-L419)
-- [class-wpcd-dns-zone-record.php:407-431](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L407-L431)
+- [class-sstk-dns-provider.php:345-372](file://includes/core/custom-table/class-sstk-dns-provider.php#L345-L372)
+- [class-sstk-dns-zone.php:240-268](file://includes/core/custom-table/class-sstk-dns-zone.php#L240-L268)
+- [class-sstk-dns-zone-record.php:364-402](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L364-L402)
+- [class-sstk-dns-provider.php:378-415](file://includes/core/custom-table/class-sstk-dns-provider.php#L378-L415)
+- [class-sstk-dns-zone.php:391-419](file://includes/core/custom-table/class-sstk-dns-zone.php#L391-L419)
+- [class-sstk-dns-zone-record.php:407-431](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L407-L431)
 
 ## Conclusion
 The system models DNS infrastructure using three core tables: dns_providers, dns_zones, and dns_zone_records. Relationships are enforced via parent_id columns, and permissions flow from DNS providers down to zones and records. Validation ensures data integrity, while permission-aware APIs secure access. For large-scale deployments, apply targeted indexes, cache hot paths, and use transactions for consistency. External DNS provider synchronization should leverage these tables as the source of truth, with conflict resolution strategies based on timestamps, versioning, or explicit merge policies.

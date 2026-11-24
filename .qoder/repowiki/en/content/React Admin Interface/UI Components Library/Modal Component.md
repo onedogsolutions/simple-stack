@@ -20,7 +20,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the Modal component used across the SimpleStack admin interface. It covers modal lifecycle management, opening and closing behaviors, backdrop interactions, focus behavior, props for sizing and positioning, animation characteristics, content rendering patterns, accessibility requirements, and performance considerations. It also provides usage examples for confirmation dialogs and guidance for building form modals and multi-step workflows using the provided primitives.
+This document explains the Modal component used across the Simple Stack admin interface. It covers modal lifecycle management, opening and closing behaviors, backdrop interactions, focus behavior, props for sizing and positioning, animation characteristics, content rendering patterns, accessibility requirements, and performance considerations. It also provides usage examples for confirmation dialogs and guidance for building form modals and multi-step workflows using the provided primitives.
 
 ## Project Structure
 The Modal component lives under the admin React components directory and is consumed by route-level pages that need to confirm destructive actions or present custom dialog content.
@@ -323,6 +323,6 @@ Accessibility checklist:
 - [Modal.jsx:53-86](file://src/admin/components/Modal.jsx#L53-L86)
 
 ## Conclusion
-The Modal component provides a simple, accessible, and controlled dialog primitive for the SimpleStack admin interface. It supports Escape-to-close, backdrop-to-close, and initial focus management. ConfirmDialog offers a ready-made pattern for destructive actions. While it lacks advanced features like focus trapping, animations, and configurable sizing/positioning, it is sufficient for most confirmation flows and can be extended for form-based and multi-step workflows by composing additional logic in parent components.
+The Modal component provides a simple, accessible, and controlled dialog primitive for the Simple Stack admin interface. It supports Escape-to-close, backdrop-to-close, and initial focus management. ConfirmDialog offers a ready-made pattern for destructive actions. While it lacks advanced features like focus trapping, animations, and configurable sizing/positioning, it is sufficient for most confirmation flows and can be extended for form-based and multi-step workflows by composing additional logic in parent components.
 
 [No sources needed since this section summarizes without analyzing specific files]

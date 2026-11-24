@@ -1,5 +1,6 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
-* This JS file is loaded for cpt wpcd_notify_user details screen only!
+* This JS file is loaded for cpt sstk_notify_user details screen only!
 */
 
 /* global notifyparams */
@@ -13,22 +14,22 @@
 
         // If send to zapier field checked then show the zapier webhook field
         initCheckZapierEnabled(); // show or hide when page load
-        jQuery('body').on('click', '#wpcd_notify_user_zapier_send', function (e) {
+        jQuery('body').on('click', '#sstk_notify_user_zapier_send', function (e) {
             initCheckZapierEnabled();
         });
 
         // Change div position.
-        var zapier_parent = jQuery('#wpcd_notify_user_zapier_webhooks').parent();
-        jQuery('#wpcd-user-zapier-webhook-test').parent().parent().appendTo(zapier_parent);
+        var zapier_parent = jQuery('#sstk_notify_user_zapier_webhooks').parent();
+        jQuery('#sstk-user-zapier-webhook-test').parent().parent().appendTo(zapier_parent);
 
         // Test zapier webhook function.
         initBackendZapierWebhookTest();
 
         // Check the validation rules when click on the button
         jQuery('#submitdiv').on('click', '#publish', function (e) {
-            var email_addresses = jQuery('#wpcd_notify_user_email_addresses').val();
-            var slack_webhooks = jQuery('#wpcd_notify_user_slack_webhooks').val();
-            var zapier_webhooks = jQuery('#wpcd_notify_user_zapier_webhooks').val();
+            var email_addresses = jQuery('#sstk_notify_user_email_addresses').val();
+            var slack_webhooks = jQuery('#sstk_notify_user_slack_webhooks').val();
+            var zapier_webhooks = jQuery('#sstk_notify_user_zapier_webhooks').val();
 
             // Check validation of all the fields
             var validated = initNotifyMetaValidate();
@@ -38,7 +39,7 @@
             } else {
                 // If all notification methods are empty then also return
                 if (email_addresses == '' && slack_webhooks == '' &&
-                    !jQuery('#wpcd_notify_user_zapier_send').is(":checked")) {
+                    !jQuery('#sstk_notify_user_zapier_send').is(":checked")) {
                     alert(notifyparams.i10n.empty_methods);
                     return false;
                 }
@@ -54,10 +55,10 @@
     function initNotifyMetaValidate() {
 
         // Get fields to check for validation
-        var wpcd_notify_email_addresses = $('#wpcd_notify_user_email_addresses').val();
-        var wpcd_notify_slack_webhooks = $('#wpcd_notify_user_slack_webhooks').val();
-        var wpcd_notify_send_to_zapier = $('#wpcd_notify_user_zapier_send').val();
-        var wpcd_notify_zapier_webhooks = $('#wpcd_notify_user_zapier_webhooks').val();
+        var sstk_notify_email_addresses = $('#sstk_notify_user_email_addresses').val();
+        var sstk_notify_slack_webhooks = $('#sstk_notify_user_slack_webhooks').val();
+        var sstk_notify_send_to_zapier = $('#sstk_notify_user_zapier_send').val();
+        var sstk_notify_zapier_webhooks = $('#sstk_notify_user_zapier_webhooks').val();
 
         // SHOW ERROR MESSAGES IF FIELDS ARE NOT SELECTED
 
@@ -68,8 +69,8 @@
         */
 
         // Remove extra spaces from the email string
-        var all_emails = wpcd_notify_email_addresses.replace(/ /g, '');
-        if (wpcd_notify_email_addresses != '') {
+        var all_emails = sstk_notify_email_addresses.replace(/ /g, '');
+        if (sstk_notify_email_addresses != '') {
             var valid_email = true;
 
             /* 
@@ -87,10 +88,10 @@
 
             // Check filtered array is empty or not
             if (filter_emails == '' || filter_emails == undefined) {
-                jQuery('#wpcd_notify_user_email_addresses').val('');
+                jQuery('#sstk_notify_user_email_addresses').val('');
             } else {
                 // Check validation for the each email address
-                jQuery('#wpcd_notify_user_email_addresses').val(filter_emails.join(","));
+                jQuery('#sstk_notify_user_email_addresses').val(filter_emails.join(","));
                 $.each(filter_emails, function (index, value) {
                     if (!regex.test(value)) {
                         valid_email = false;
@@ -111,9 +112,9 @@
         */
 
         // Remove extra spaces from the slack string
-        var all_slack_webhooks = wpcd_notify_slack_webhooks.replace(/ /g, '');
+        var all_slack_webhooks = sstk_notify_slack_webhooks.replace(/ /g, '');
 
-        if (wpcd_notify_slack_webhooks != '') {
+        if (sstk_notify_slack_webhooks != '') {
             var valid_slack = true;
 
             /* 
@@ -132,10 +133,10 @@
 
             // Check filtered array is empty or not
             if (filter_webhooks == '' || filter_webhooks == undefined) {
-                jQuery('#wpcd_notify_user_slack_webhooks').val('');
+                jQuery('#sstk_notify_user_slack_webhooks').val('');
             } else {
                 // Check validation for the each webhook url
-                jQuery('#wpcd_notify_user_slack_webhooks').val(filter_webhooks.join(","));
+                jQuery('#sstk_notify_user_slack_webhooks').val(filter_webhooks.join(","));
                 $.each(filter_webhooks, function (index, value) {
                     var word_count = value.split('://').length - 1;
                     if (!slack_validate.test(value) || word_count > 1) {
@@ -157,7 +158,7 @@
         */
 
         var valid = true;
-        var valid_check = initCheckZapierValidationBackend(wpcd_notify_zapier_webhooks, valid);
+        var valid_check = initCheckZapierValidationBackend(sstk_notify_zapier_webhooks, valid);
 
         if (!valid_check) {
             alert(notifyparams.i10n.invalid_zapier);
@@ -166,7 +167,7 @@
 
 
         // Invalid - if send to zapier is enabled and zapier webhook field is empty
-        if (jQuery('#wpcd_notify_user_zapier_webhooks').val() == '' && jQuery('#wpcd_notify_user_zapier_send').is(":checked")) {
+        if (jQuery('#sstk_notify_user_zapier_webhooks').val() == '' && jQuery('#sstk_notify_user_zapier_send').is(":checked")) {
             alert(notifyparams.i10n.empty_zapier_webhook);
             return false;
         }
@@ -177,17 +178,17 @@
     // For test zapier webhook in backend.
     function initBackendZapierWebhookTest() {
         // For test zapier webhook with dummy test data.
-        $('body').on('click', '#wpcd-user-zapier-webhook-test', function (e) {
+        $('body').on('click', '#sstk-user-zapier-webhook-test', function (e) {
             e.preventDefault();
 
             var enable_btn = jQuery(this);
-            jQuery('.wpcd_error_msg_show').remove();
+            jQuery('.sstk_error_msg_show').remove();
 
-            var zapier_webhooks = jQuery('#wpcd_notify_user_zapier_webhooks').val();
+            var zapier_webhooks = jQuery('#sstk_notify_user_zapier_webhooks').val();
 
             // Check validation for zapier field
             var valid = true;
-            if (zapier_webhooks != '' && jQuery('#wpcd_notify_user_zapier_send').is(":checked")) {
+            if (zapier_webhooks != '' && jQuery('#sstk_notify_user_zapier_send').is(":checked")) {
                 var validated = initCheckZapierValidationBackend(zapier_webhooks, valid);
             } else {
                 alert(notifyparams.i10n.empty_zapier_webhook);
@@ -201,7 +202,7 @@
                 var action = $(this).data('action');
                 var nonce = $(this).data('nonce');
 
-                jQuery('<div class="wpcd_error_msg_show"> ' + notifyparams.i10n.waiting_msg + '</div>').insertAfter(enable_btn);
+                jQuery('<div class="sstk_error_msg_show"> ' + notifyparams.i10n.waiting_msg + '</div>').insertAfter(enable_btn);
                 jQuery(this).attr('disabled', 'disabled');
 
                 $.ajax({
@@ -215,12 +216,12 @@
                     success: function (data) {
                         alert(data.data.msg);
                         enable_btn.removeAttr('disabled');
-                        jQuery(".wpcd_error_msg_show").remove();
+                        jQuery(".sstk_error_msg_show").remove();
                     },
                     error: function (error) {
                         alert(error);
                         enable_btn.removeAttr('disabled');
-                        jQuery(".wpcd_error_msg_show").remove();
+                        jQuery(".sstk_error_msg_show").remove();
                     }
                 });
             }
@@ -229,11 +230,11 @@
     }
 
     // Check zapier validation code.
-    function initCheckZapierValidationBackend(wpcd_notify_zapier_webhooks, valid_zapier) {
+    function initCheckZapierValidationBackend(sstk_notify_zapier_webhooks, valid_zapier) {
         // Remove extra spaces from the zapier string
-        var all_zapier_webhooks = wpcd_notify_zapier_webhooks.replace(/ /g, '');
+        var all_zapier_webhooks = sstk_notify_zapier_webhooks.replace(/ /g, '');
 
-        if (wpcd_notify_zapier_webhooks != '' && jQuery('#wpcd_notify_user_zapier_send').is(":checked")) {
+        if (sstk_notify_zapier_webhooks != '' && jQuery('#sstk_notify_user_zapier_send').is(":checked")) {
             var valid_zapier = true;
 
             /* 
@@ -252,10 +253,10 @@
 
             // Check filtered array is empty or not
             if (filter_webhooks == '' || filter_webhooks == undefined) {
-                jQuery('#wpcd_notify_user_zapier_webhooks').val('');
+                jQuery('#sstk_notify_user_zapier_webhooks').val('');
             } else {
                 // Check validation for the each webhook url
-                jQuery('#wpcd_notify_user_zapier_webhooks').val(filter_webhooks.join(","));
+                jQuery('#sstk_notify_user_zapier_webhooks').val(filter_webhooks.join(","));
                 $.each(filter_webhooks, function (index, value) {
                     var word_count = value.split('://').length - 1;
                     if (!zapier_validate.test(value) || word_count > 1) {
@@ -270,12 +271,12 @@
 
     // For hide or show the zapier webhook option
     function initCheckZapierEnabled() {
-        if (jQuery('#wpcd_notify_user_zapier_send').is(":checked")) {
-            jQuery('#wpcd_notify_user_zapier_webhooks').parent().parent().show();
-            jQuery('#wpcd-user-zapier-webhook-test').parent().parent().show();
+        if (jQuery('#sstk_notify_user_zapier_send').is(":checked")) {
+            jQuery('#sstk_notify_user_zapier_webhooks').parent().parent().show();
+            jQuery('#sstk-user-zapier-webhook-test').parent().parent().show();
         } else {
-            jQuery('#wpcd_notify_user_zapier_webhooks').parent().parent().hide();
-            jQuery('#wpcd-user-zapier-webhook-test').parent().parent().hide();
+            jQuery('#sstk_notify_user_zapier_webhooks').parent().parent().hide();
+            jQuery('#sstk-user-zapier-webhook-test').parent().parent().hide();
         }
     }
 

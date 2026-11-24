@@ -1,8 +1,10 @@
 <?php
 /**
- * WordPress App WPCD_REST_API_Controller_Tasks.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * WordPress App SSTK_REST_API_Controller_Tasks.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,11 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_REST_API_Controller_Tasks
+ * Class SSTK_REST_API_Controller_Tasks
  *
- * Endpoints for interacting with tasks (wpcd_pending_log)
+ * Endpoints for interacting with tasks (sstk_pending_log)
  */
-class WPCD_REST_API_Controller_Tasks extends WPCD_REST_API_Controller_Base {
+class SSTK_REST_API_Controller_Tasks extends SSTK_REST_API_Controller_Base {
 
 	/**
 	 * Controller base path
@@ -41,7 +43,7 @@ class WPCD_REST_API_Controller_Tasks extends WPCD_REST_API_Controller_Base {
 	public function list_tasks(): array {
 		$tasks = get_posts(
 			array(
-				'post_type'      => 'wpcd_pending_log',
+				'post_type'      => 'sstk_pending_log',
 				'post_status'    => 'private',
 				'posts_per_page' => -1,
 			),
@@ -75,7 +77,7 @@ class WPCD_REST_API_Controller_Tasks extends WPCD_REST_API_Controller_Base {
 	 */
 	protected function get_task_post( int $id ): WP_Post {
 		$site = get_post( $id );
-		if ( ! ( $site && 'wpcd_pending_log' === $site->post_type ) ) {
+		if ( ! ( $site && 'sstk_pending_log' === $site->post_type ) ) {
 			throw new Exception( 'Task not found', 400 );
 		}
 		return $site;
@@ -102,12 +104,10 @@ class WPCD_REST_API_Controller_Tasks extends WPCD_REST_API_Controller_Base {
 			'user_id'               => (int) $task->post_author,
 			'parent_id'             => (int) get_post_meta( $task->ID, 'parent_post_id', true ),
 			'parent_type'           => get_post_meta( $task->ID, 'pending_task_parent_post_type', true ),
-			'display_start_date'    => date( 'Y-m-d @ H:i', get_post_meta( $task->ID, 'pending_task_start_date', true ) ),
-			'display_complete_date' => empty( $display_complete_date ) ? null : date( 'Y-m-d @ H:i', get_post_meta( $task->ID, 'pending_task_complete_date', true ) ),
+			'display_start_date'    => gmdate( 'Y-m-d @ H:i', get_post_meta( $task->ID, 'pending_task_start_date', true ) ),
+			'display_complete_date' => empty( $display_complete_date ) ? null : gmdate( 'Y-m-d @ H:i', get_post_meta( $task->ID, 'pending_task_complete_date', true ) ),
 			'unix_start_date'       => get_post_meta( $task->ID, 'pending_task_start_date', true ),
 			'unix_complete_date'    => get_post_meta( $task->ID, 'pending_task_complete_date', true ),
 		);
 	}
-
 }
-

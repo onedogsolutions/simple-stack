@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">Simple Stack</title>
+  <desc id="desc">Simple Stack logo</desc>
+  <g transform="translate(24 38)">
+    <path d="M12 34 52 14l40 20-40 20Z" fill="#E91E63"/>
+    <path d="m12 62 40 20 40-20v18L52 100 12 80Z" fill="#03114A"/>
+    <path d="m12 90 40 20 40-20v18L52 128 12 108Z" fill="#FF5722"/>
+  </g>
+  <text x="150" y="116" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700" fill="#03114A">Simple <tspan fill="#E91E63">Stack</tspan></text>
+</svg>

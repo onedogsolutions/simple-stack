@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Redirect Rules Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,18 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_REDIRECT_RULES
+ * Class SSTK_WORDPRESS_TABS_REDIRECT_RULES
  */
-class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_REDIRECT_RULES extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 	}
 
 	/**
@@ -49,7 +50,7 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Redirect Rules', 'wpcd' ),
+				'label' => __( 'Redirect Rules', 'simple-stack' ),
 				'icon'  => 'fad fa-directions',
 			);
 		}
@@ -65,17 +66,17 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the REDIRECT RULES tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -105,15 +106,15 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'redirect-rules-add', 'redirect-rules-remove', 'redirect-rules-remove-all' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -168,34 +169,34 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$actions[] = wpcd_start_two_thirds_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_two_thirds_card( $this->get_tab_slug() );
 
 		$actions['redirect-rules-header-add'] = array(
-			'label'          => __( 'Add A Redirect Rule', 'wpcd' ),
+			'label'          => __( 'Add A Redirect Rule', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Add a simple server-level redirection rule for this site.', 'wpcd' ),
+				'desc' => __( 'Add a simple site-level redirection rule using the site\'s OpenLiteSpeed .htaccess file.', 'simple-stack' ),
 			),
 		);
 
 		$actions['redirect-rules-from-url'] = array(
-			'label'          => __( 'From Which URL do you need to redirect?', 'wpcd' ),
+			'label'          => __( 'From Which URL do you need to redirect?', 'simple-stack' ),
 			'raw_attributes' => array(
-				'placeholder'    => __( 'Enter a FULL url here including the http:// or https://', 'wpcd' ),
-				'desc'           => __( 'Do not use regex or special characters!', 'wpcd' ),
+				'placeholder'    => __( 'Enter a FULL url here including the http:// or https://', 'simple-stack' ),
+				'desc'           => __( 'Do not use regex or special characters!', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'source_url',
+				'data-sstk-name' => 'source_url',
 			),
 			'type'           => 'text',
 		);
 
 		$actions['redirect-rules-to-url'] = array(
-			'label'          => __( 'What is the destination URL of this redirect rule?', 'wpcd' ),
+			'label'          => __( 'What is the destination URL of this redirect rule?', 'simple-stack' ),
 			'raw_attributes' => array(
-				'placeholder'    => __( 'Enter a FULL url here including the http:// or https://', 'wpcd' ),
-				'desc'           => __( 'Do not use regex or special characters!', 'wpcd' ),
+				'placeholder'    => __( 'Enter a FULL url here including the http:// or https://', 'simple-stack' ),
+				'desc'           => __( 'Do not use regex or special characters!', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'destination_url',
+				'data-sstk-name' => 'destination_url',
 			),
 			'type'           => 'text',
 		);
@@ -207,12 +208,12 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 		);
 
 		$actions['redirect-rules-type'] = array(
-			'label'          => __( 'Redirection Type', 'wpcd' ),
+			'label'          => __( 'Redirection Type', 'simple-stack' ),
 			'raw_attributes' => array(
 				'options'        => $redirect_select_options,
 				'std'            => '1',
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'redirection_number',
+				'data-sstk-name' => 'redirection_number',
 			),
 			'type'           => 'select',
 		);
@@ -220,16 +221,16 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 		$actions['redirect-rules-add'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Add This Rule', 'wpcd' ),
-				'confirmation_prompt' => __( 'Are you sure you would like to add this rule?', 'wpcd' ),
+				'std'                 => __( 'Add This Rule', 'simple-stack' ),
+				'confirmation_prompt' => __( 'Are you sure you would like to add this rule?', 'simple-stack' ),
 				// fields that contribute data for this action.
-				'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_redirect-rules-from-url', '#wpcd_app_action_redirect-rules-to-url', '#wpcd_app_action_redirect-rules-type' ) ),
+				'data-sstk-fields'    => json_encode( array( '#sstk_app_action_redirect-rules-from-url', '#sstk_app_action_redirect-rules-to-url', '#sstk_app_action_redirect-rules-type' ) ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Remove redirect rules.
@@ -237,19 +238,19 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 
 		// Get list of existing rules.
 		// $rules = [$args['keycode']] = array( 'from' => $args['original_source_url'], 'to' =>     $args['original_destination_url'], 'type' => $args['original_redirection_number'] );.
-		$rules = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_redirect_rules', true ) );
+		$rules = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_redirect_rules', true ) );
 
 		// Only show this section if we have some rules that can be removed...
 		if ( ! empty( $rules ) ) {
 
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['redirect-rules-header-remove'] = array(
-				'label'          => __( 'Remove A Redirect Rule', 'wpcd' ),
+				'label'          => __( 'Remove A Redirect Rule', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'Remove an existing redirection rule for this site.', 'wpcd' ),
+					'desc' => __( 'Remove an existing redirection rule for this site.', 'simple-stack' ),
 				),
 			);
 
@@ -264,7 +265,7 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 				'raw_attributes' => array(
 					'options'        => $option_rules,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'key_code',
+					'data-sstk-name' => 'key_code',
 				),
 				'type'           => 'select',
 			);
@@ -272,16 +273,16 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 			$actions['redirect-rules-remove'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Remove This Rule', 'wpcd' ),
-					'confirmation_prompt' => __( 'Are you sure you would like to REMOVE this rule?', 'wpcd' ),
+					'std'                 => __( 'Remove This Rule', 'simple-stack' ),
+					'confirmation_prompt' => __( 'Are you sure you would like to REMOVE this rule?', 'simple-stack' ),
 					// fields that contribute data for this action.
-					'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_redirect-rules-to-remove' ) ),
+					'data-sstk-fields'    => json_encode( array( '#sstk_app_action_redirect-rules-to-remove' ) ),
 				),
 				'type'           => 'button',
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
@@ -290,27 +291,27 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_one_third_card( $this->get_tab_slug() );
 
 		$actions['redirect-rules-header-remove-all'] = array(
-			'label'          => __( 'Remove ALL Redirect Rules', 'wpcd' ),
+			'label'          => __( 'Remove ALL Redirect Rules', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Remove all existing redirection rules from this site.', 'wpcd' ),
+				'desc' => __( 'Remove all existing redirection rules from this site.', 'simple-stack' ),
 			),
 		);
 
 		$actions['redirect-rules-remove-all'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Remove All Rules', 'wpcd' ),
-				'confirmation_prompt' => __( 'Are you sure you would like to REMOVE ALL rules from this site?', 'wpcd' ),
+				'std'                 => __( 'Remove All Rules', 'simple-stack' ),
+				'confirmation_prompt' => __( 'Are you sure you would like to REMOVE ALL rules from this site?', 'simple-stack' ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -328,7 +329,7 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the field values from the front-end.
@@ -338,7 +339,7 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 		$domain = get_post_meta( $id, 'wpapp_domain', true );
 
 		if ( empty( $domain ) ) {
-			return new \WP_Error( __( 'Oops - looks like we are unable to figure out the domain name for this site.', 'wpcd' ) );
+			return new \WP_Error( __( 'Oops - looks like we are unable to figure out the domain name for this site.', 'simple-stack' ) );
 		}
 
 		// Validate based on the type of action.
@@ -350,33 +351,33 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 
 				// Validate required fields...
 				if ( ! $args['source_url'] ) {
-					return new \WP_Error( __( 'Sorry but we need a source URL to perform this action.', 'wpcd' ) );
+					return new \WP_Error( __( 'Sorry but we need a source URL to perform this action.', 'simple-stack' ) );
 				}
 				if ( ! $args['destination_url'] ) {
-					return new \WP_Error( __( 'Sorry but we need a destination URL to perform this action.', 'wpcd' ) );
+					return new \WP_Error( __( 'Sorry but we need a destination URL to perform this action.', 'simple-stack' ) );
 				}
 				if ( ! $args['redirection_number'] ) {
-					return new \WP_Error( __( 'Sorry but we need to know what type of REDIRECT you need.', 'wpcd' ) );
+					return new \WP_Error( __( 'Sorry but we need to know what type of REDIRECT you need.', 'simple-stack' ) );
 				}
 
 				// If we got here make sure that there is an "http://" or "https://" at the start of the "from" url.
 				if ( ( 'http://' <> substr( $args['source_url'], 0, 7 ) ) && ( 'https://' <> substr( $args['source_url'], 0, 8 ) ) ) {
-					return new \WP_Error( __( 'Your source URL needs to start with http:// or https://!', 'wpcd' ) );
+					return new \WP_Error( __( 'Your source URL needs to start with http:// or https://!', 'simple-stack' ) );
 				}
 
 				// If we got here make sure that there is an "http://" or "https://" at the start of the "to" url.
 				if ( ( 'http://' <> substr( $args['destination_url'], 0, 7 ) ) && ( 'https://' <> substr( $args['destination_url'], 0, 8 ) ) ) {
-					return new \WP_Error( __( 'Your destination URL needs to start with http:// or https://!', 'wpcd' ) );
+					return new \WP_Error( __( 'Your destination URL needs to start with http:// or https://!', 'simple-stack' ) );
 				}
 
 				// Make sure that both URLS are different!
 				if ( $args['destination_url'] === $args['source_url'] ) {
-					return new \WP_Error( __( 'Your source & destination URLs cannot be the same!', 'wpcd' ) );
+					return new \WP_Error( __( 'Your source & destination URLs cannot be the same!', 'simple-stack' ) );
 				}
 
 				// Make sure that the domain is in both urls...
 				if ( strpos( $args['source_url'], $domain ) === false || strpos( $args['destination_url'], $domain ) === false ) {
-					return new \WP_Error( __( 'Your source & destination URLs must be for this domain!', 'wpcd' ) );
+					return new \WP_Error( __( 'Your source & destination URLs must be for this domain!', 'simple-stack' ) );
 				}
 
 				// Escape values in the $args array for use on the linux command line!
@@ -389,13 +390,13 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 				$args['redirection_number'] = escapeshellarg( $args['redirection_number'] );
 
 				// Add into the $args array a unique random string to identify the line in the conf files when we're ready to remove it.
-				$args['key_code'] = wpcd_random_str( 12, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
+				$args['key_code'] = sstk_random_str( 12, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
 
 				break;
 			case 'redirect_remove_rule_from_site_by_key_code':
 				// Make sure we get a keycode.
 				if ( ! $args['key_code'] ) {
-					return new \WP_Error( __( 'Sorry but we need an internal keycode to perform this action and one was not provided - probably a system error - contact tech support.', 'wpcd' ) );
+					return new \WP_Error( __( 'Sorry but we need an internal keycode to perform this action and one was not provided - probably a system error - contact tech support.', 'simple-stack' ) );
 				}
 				// Escape values we'll be using...
 				$args['original_key_code'] = $args['key_code'];  // Save the original value before escaping for shell because we'll need it later to update our db.
@@ -419,20 +420,20 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
 		$success = $this->is_ssh_successful( $result, 'server_redirect.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// If we got here, command was a success...
 		switch ( $action ) {
 			case 'redirect_add_rule_to_site':
 				// Add new redirect into a meta...
-				$saved_values = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_redirect_rules', true ) );
+				$saved_values = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_redirect_rules', true ) );
 				if ( empty( $saved_values ) || ( ! is_array( $saved_values ) ) ) {
 					$saved_values = array();
 				}
@@ -445,17 +446,17 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 
 				// Set up return with success message.
 				// Return the message as an error so it can be shown in a dialog box.
-				$success = new \WP_Error( __( 'Successfully added redirect rule.', 'wpcd' ) );
+				$success = new \WP_Error( __( 'Successfully added redirect rule.', 'simple-stack' ) );
 
 				break;
 			case 'redirect_remove_rule_from_site_by_key_code':
-				$saved_values = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_redirect_rules', true ) );
+				$saved_values = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_redirect_rules', true ) );
 				unset( $saved_values[ $args['original_key_code'] ] );
 				update_post_meta( $id, 'wpapp_redirect_rules', $saved_values );
 
 				// Set up return with success message.
 				// Return the message as an error so it can be shown in a dialog box.
-				$success = new \WP_Error( __( 'Successfully removed redirect rule.', 'wpcd' ) );
+				$success = new \WP_Error( __( 'Successfully removed redirect rule.', 'simple-stack' ) );
 
 				break;
 			case 'redirect_remove_all_rules_from_site':
@@ -463,7 +464,7 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 
 				// Set up return with success message.
 				// Return the message as an error so it can be shown in a dialog box.
-				$success = new \WP_Error( __( 'Successfully removed all redirect rules.', 'wpcd' ) );
+				$success = new \WP_Error( __( 'Successfully removed all redirect rules.', 'simple-stack' ) );
 
 				break;
 		}
@@ -474,4 +475,4 @@ class WPCD_WORDPRESS_TABS_REDIRECT_RULES extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_REDIRECT_RULES();
+new SSTK_WORDPRESS_TABS_REDIRECT_RULES();

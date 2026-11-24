@@ -1,6 +1,6 @@
-- Each trait file defines exactly one `trait wpcd_wpapp_*` and begins with a docblock stating it is used only by `class-wordpress.php` which defines `WPCD_WORDPRESS_APP`.
+- Each trait file defines exactly one `trait sstk_wpapp_*` and begins with a docblock stating it is used only by `class-wordpress.php` which defines `SSTK_WORDPRESS_APP`.
 - SSH command success is determined by string-matching the raw stdout against known phrases inside a large `switch ($command)` block in `is_ssh_successful`, with an additional generic failure filter (`dpkg interrupted`, `journalctl -xe`) applied at the end.
 - Script invocation uses a two-phase pattern: `script_placeholders()` returns an array of `SCRIPT_URL`/`SCRIPT_NAME`/`CALLBACK_URL`/`SCRIPT_LOGS` constants per script name, and `is_ssh_successful()` mirrors those names as case keys.
-- User permission checks follow a uniform shape: fetch `post` + `post_author` + `app_type`/`server_type` meta, then return true when `wpcd_user_can($user_id, $capability, $id) || $post_author == $user_id`.
-- Admin column rendering goes through `WPCD_POSTS_APP()->wpcd_column_wrap_string_with_span_and_class(...)` and `wpcd_column_wrap_string_with_div_and_class(...)` so output is consistently wrapped in labeled left/right spans.
-- Feature visibility is toggled via `wpcd_get_option('wordpress_app_*')` booleans checked separately for `is_admin()` and front-end contexts, often using a local `$show_it` flag before adding a column header.
+- User permission checks follow a uniform shape: fetch `post` + `post_author` + `app_type`/`server_type` meta, then return true when `sstk_user_can($user_id, $capability, $id) || $post_author == $user_id`.
+- Admin column rendering goes through `SSTK_POSTS_APP()->sstk_column_wrap_string_with_span_and_class(...)` and `sstk_column_wrap_string_with_div_and_class(...)` so output is consistently wrapped in labeled left/right spans.
+- Feature visibility is toggled via `sstk_get_option('wordpress_app_*')` booleans checked separately for `is_admin()` and front-end contexts, often using a local `$show_it` flag before adding a column header.

@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /* 
  * Handles operations for custom tables such as the DNS and PROVIDER tables.
  */
@@ -11,41 +12,41 @@ $(document).ready(function() {
         /**
          * Close add/edit form window
          */
-        $('body').delegate('.wpcd_mb_inline_edit_form_window .mfp-close-window-button', 'click', function() {
-                $('.wpcd_mb_inline_edit_form_window .mfp-close').trigger('click');
+        $('body').delegate('.sstk_mb_inline_edit_form_window .mfp-close-window-button', 'click', function() {
+                $('.sstk_mb_inline_edit_form_window .mfp-close').trigger('click');
         });
         
         
         /**
          * Handle add/edit window form submit
          */
-        $('body').delegate('.wpcd_mb_inline_edit_form_window form', 'submit', function(e) {
+        $('body').delegate('.sstk_mb_inline_edit_form_window form', 'submit', function(e) {
                 e.preventDefault();
                 
                 var form = $(this);
                 form.find('> .notice').remove();
                 
-                var buttons = form.find('.wpcd_ct_buttons_row button[type=submit], .wpcd_ct_buttons_row button.mfp-close-window-button');
+                var buttons = form.find('.sstk_ct_buttons_row button[type=submit], .sstk_ct_buttons_row button.mfp-close-window-button');
                 buttons.prop('disabled', true);
                 
-                var spinner = form.find('.wpcd_ct_buttons_row .spinner');
-                spinner.addClass('is-active wpcd-loader-public');
+                var spinner = form.find('.sstk_ct_buttons_row .spinner');
+                spinner.addClass('is-active sstk-loader-public');
                 
-                var container = $.magnificPopup.instance.currItem.el.closest('.wpcd_ct_table_container');
+                var container = $.magnificPopup.instance.currItem.el.closest('.sstk_ct_table_container');
                 
                 $.ajax({
                         url: ajaxurl,
                         method: 'POST',
                         data: $(this).serializeArray(),
                         success: function(data) {
-                                spinner.removeClass('is-active wpcd-loader-public');
+                                spinner.removeClass('is-active sstk-loader-public');
                                 buttons.prop('disabled', false );
                                 
                                 if( !data.success ) {
                                         form.prepend('<div class="notice notice-error">'+data.error+'</div>');
                                         return;
                                 }
-                                wpcd_ct_load_child_items_table_view( container );
+                                sstk_ct_load_child_items_table_view( container );
                                 $.magnificPopup.close();
                                 
                                 
@@ -56,23 +57,23 @@ $(document).ready(function() {
         /**
          * Load dns zones
          */
-        if( $('#wpcd_ct_provider_zones_table_container').length === 1 ) {
-                wpcd_ct_load_child_items_table_view( $('#wpcd_ct_provider_zones_table_container') );
+        if( $('#sstk_ct_provider_zones_table_container').length === 1 ) {
+                sstk_ct_load_child_items_table_view( $('#sstk_ct_provider_zones_table_container') );
         }
         
         /**
          * Handle load dns zone records
          */
-        $('body').delegate('.wpcd_ct_load_dns_record_btn', 'click', function(e) {
+        $('body').delegate('.sstk_ct_load_dns_record_btn', 'click', function(e) {
                 e.preventDefault();
                 
-                $('#wpcd_ct_zone_records_table_container').data( 'zone', $(this).data('zone') );
-                $('#wpcd_ct_zone_records_table_container').data( 'parent_id', $(this).data('zone') );
+                $('#sstk_ct_zone_records_table_container').data( 'zone', $(this).data('zone') );
+                $('#sstk_ct_zone_records_table_container').data( 'parent_id', $(this).data('zone') );
                 
                 $(this).closest('tbody').find('>tr').removeClass('active');
                 $(this).closest('tr').addClass('active');
                 
-                var link_el = $('#wpcd_ct_zone_records_table_container > a.mp_edit_inline:first');
+                var link_el = $('#sstk_ct_zone_records_table_container > a.mp_edit_inline:first');
                 
                 var action = $(link_el).data('action');
                 var nonce = $(link_el).data('nonce');
@@ -84,9 +85,9 @@ $(document).ready(function() {
                 var add_item_url = ajaxurl + '?' + $.param({action:action, "parent-id":zone, nonce : nonce, view: view});
                 link_el.attr( 'href', add_item_url );
                 
-                var container = '#wpcd_ct_zone_records_table_container';
-                $(container).find('.wpcd-ct-add-item-link').hide();
-                wpcd_ct_load_child_items_table_view(container);
+                var container = '#sstk_ct_zone_records_table_container';
+                $(container).find('.sstk-ct-add-item-link').hide();
+                sstk_ct_load_child_items_table_view(container);
         });
         
         
@@ -96,9 +97,9 @@ $(document).ready(function() {
          * @param string container
          * @returns void
          */
-        function wpcd_ct_unload_child_items_table_view( container ) {
-                $(container).find('.wpcd_ct_items_table_view_container').html('');
-                $(container).find('.wpcd-ct-add-item-link').hide();
+        function sstk_ct_unload_child_items_table_view( container ) {
+                $(container).find('.sstk_ct_items_table_view_container').html('');
+                $(container).find('.sstk-ct-add-item-link').hide();
         }
         
         /**
@@ -108,8 +109,8 @@ $(document).ready(function() {
          * 
          * @returns void
          */
-        function wpcd_ct_load_child_items_table_view(container) {
-                $(container).find('.wpcd_ct_items_table_view_container').html('<div class="spinner is-active wpcd-loader-public"></div>');
+        function sstk_ct_load_child_items_table_view(container) {
+                $(container).find('.sstk_ct_items_table_view_container').html('<div class="spinner is-active sstk-loader-public"></div>');
                 
                 var data = $(container).data();
                 
@@ -119,17 +120,17 @@ $(document).ready(function() {
                         data: data,
                         success: function(data) {
                                 if( data.can_add_item ) {
-                                        $(container).find('.wpcd-ct-add-item-link').show();
+                                        $(container).find('.sstk-ct-add-item-link').show();
                                 } else {
-                                        $(container).find('.wpcd-ct-add-item-link').hide();
+                                        $(container).find('.sstk-ct-add-item-link').hide();
                                 }
                                 
                                 if( data.error ) {
                                         add_ajax_table_error( container, data.error );
-                                        $(container).find('.wpcd_ct_items_table_view_container').html( '' );
+                                        $(container).find('.sstk_ct_items_table_view_container').html( '' );
                                 } else {
                                         remove_ajax_table_error( container );
-                                        $(container).find('.wpcd_ct_items_table_view_container').html( data.items );
+                                        $(container).find('.sstk_ct_items_table_view_container').html( data.items );
                                 }
                         }
                 });
@@ -145,7 +146,7 @@ $(document).ready(function() {
          * @returns void
          */
         function add_ajax_table_error( container, message ) {
-                $( container ).find('> .wpcd-ct-notices').html( message );
+                $( container ).find('> .sstk-ct-notices').html( message );
         }
         
         /**
@@ -156,14 +157,14 @@ $(document).ready(function() {
          * @returns void
          */
         function remove_ajax_table_error( container ) {
-                $( container ).find('> .wpcd-ct-notices').html('');
+                $( container ).find('> .sstk-ct-notices').html('');
         }
         
         
         /**
          * Handle delete item on page edit screen
          */
-        $('body').delegate('#wpcd-mbct-delete', 'click', function(e) {
+        $('body').delegate('#sstk-mbct-delete', 'click', function(e) {
                 e.preventDefault();
                 
                 if( !confirm( Mbct.confirm ) ) {
@@ -176,7 +177,7 @@ $(document).ready(function() {
         /**
          * Handle delete item on listing page
          */
-        $('body').delegate('.wpcd-ct-delete .wpcd-ct-delete-item', 'click', function(e) {
+        $('body').delegate('.sstk-ct-delete .sstk-ct-delete-item', 'click', function(e) {
                 e.preventDefault();
                 
                 if( !confirm( MbctListTable.confirm ) ) {
@@ -190,14 +191,14 @@ $(document).ready(function() {
         /**
          * Handle delete items on child table view
          */
-        $('body').delegate('.wpcd-ct-delete-child-item', 'click', function(e) {
+        $('body').delegate('.sstk-ct-delete-child-item', 'click', function(e) {
                 e.preventDefault();
                 
                 if( !confirm( Mbct.confirm ) ) {
                         return;
                 }
                 
-                var container = $(this).closest('.wpcd_ct_table_container');
+                var container = $(this).closest('.sstk_ct_table_container');
                 delete_item( $(this), 'child_item', container );
         });
         
@@ -215,7 +216,7 @@ $(document).ready(function() {
                 
                 var data = new Array();
                 var model = $(ele).data('model');
-                var action = 'wpcd_ct_'+model+'_delete_item';
+                var action = 'sstk_ct_'+model+'_delete_item';
                 
                 var item_id = $(ele).data('id');
                 
@@ -280,11 +281,11 @@ $(document).ready(function() {
                 } else {
 
                         if( response.unload_child_table && item_id == $(response.unload_child_table).data('parent_id') ) {
-                                wpcd_ct_unload_child_items_table_view( response.unload_child_table );
+                                sstk_ct_unload_child_items_table_view( response.unload_child_table );
                         }
 
                         remove_ajax_table_error( container );
-                        wpcd_ct_load_child_items_table_view( container );
+                        sstk_ct_load_child_items_table_view( container );
                 }
         }
         

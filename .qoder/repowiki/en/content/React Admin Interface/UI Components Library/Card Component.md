@@ -7,8 +7,8 @@
 - [schema.js](file://src/admin/lib/schema.js)
 - [ServerDetail.jsx](file://src/admin/routes/ServerDetail.jsx)
 - [SiteDetail.jsx](file://src/admin/routes/SiteDetail.jsx)
-- [wpcd-cards.css](file://assets/css/wpcd-cards.css)
-- [wpcd-card-container-field.php](file://includes/core/metabox-io-custom-fields/wpcd-card-container-field.php)
+- [sstk-cards.css](file://assets/css/sstk-cards.css)
+- [sstk-card-container-field.php](file://includes/core/metabox-io-custom-fields/sstk-card-container-field.php)
 </cite>
 
 ## Table of Contents
@@ -41,8 +41,8 @@ SiteDetail["SiteDetail.jsx"]
 Schema["schema.js"]
 end
 subgraph "Legacy Metabox Cards"
-CSS["wpcd-cards.css"]
-ContainerField["wpcd-card-container-field.php"]
+CSS["sstk-cards.css"]
+ContainerField["sstk-card-container-field.php"]
 end
 ServerDetail --> CardJS
 SiteDetail --> CardJS
@@ -57,15 +57,15 @@ CSS --> ContainerField
 - [schema.js:386-423](file://src/admin/lib/schema.js#L386-L423)
 - [ServerDetail.jsx:1-250](file://src/admin/routes/ServerDetail.jsx#L1-L250)
 - [SiteDetail.jsx:1-200](file://src/admin/routes/SiteDetail.jsx#L1-L200)
-- [wpcd-cards.css:1-197](file://assets/css/wpcd-cards.css#L1-L197)
-- [wpcd-card-container-field.php:1-27](file://includes/core/metabox-io-custom-fields/wpcd-card-container-field.php#L1-L27)
+- [sstk-cards.css:1-197](file://assets/css/sstk-cards.css#L1-L197)
+- [sstk-card-container-field.php:1-27](file://includes/core/metabox-io-custom-fields/sstk-card-container-field.php#L1-L27)
 
 **Section sources**
 - [Card.jsx:1-121](file://src/admin/components/Card.jsx#L1-L121)
 - [TabRenderer.jsx:1-403](file://src/admin/components/TabRenderer.jsx#L1-L403)
 - [schema.js:386-423](file://src/admin/lib/schema.js#L386-L423)
-- [wpcd-cards.css:1-197](file://assets/css/wpcd-cards.css#L1-L197)
-- [wpcd-card-container-field.php:1-27](file://includes/core/metabox-io-custom-fields/wpcd-card-container-field.php#L1-L27)
+- [sstk-cards.css:1-197](file://assets/css/sstk-cards.css#L1-L197)
+- [sstk-card-container-field.php:1-27](file://includes/core/metabox-io-custom-fields/sstk-card-container-field.php#L1-L27)
 
 ## Core Components
 The React card system provides a small set of presentational primitives:
@@ -245,7 +245,7 @@ Purpose:
 - Hide pseudo container rows introduced by metabox column add-ons.
 
 Key features:
-- `.wpcd-card-group`: Base card container with background, border, radius, padding, and shadow.
+- `.sstk-card-group`: Base card container with background, border, radius, padding, and shadow.
 - Hover/focus: Enhanced shadow and accent border color.
 - Width utilities: Full, half, third, two-thirds with responsive adjustments.
 - Flex wrappers: Specific tab panels use flex-wrap to arrange cards.
@@ -256,20 +256,20 @@ Responsive behavior:
 - Flex wrapping ensures cards reflow naturally.
 
 Metabox integration:
-- Hides the first pseudo row after `.wpcd-card-group`.
+- Hides the first pseudo row after `.sstk-card-group`.
 - Provides a no-border variant for seamless headings.
 
 Custom container field:
 - A placeholder field that outputs a comment marker to allow metabox column logic to inject wrapper divs around card content.
 
 **Section sources**
-- [wpcd-cards.css:8-28](file://assets/css/wpcd-cards.css#L8-L28)
-- [wpcd-cards.css:30-63](file://assets/css/wpcd-cards.css#L30-L63)
-- [wpcd-cards.css:65-93](file://assets/css/wpcd-cards.css#L65-L93)
-- [wpcd-cards.css:100-103](file://assets/css/wpcd-cards.css#L100-L103)
-- [wpcd-cards.css:105-152](file://assets/css/wpcd-cards.css#L105-L152)
-- [wpcd-cards.css:169-172](file://assets/css/wpcd-cards.css#L169-L172)
-- [wpcd-card-container-field.php:4-27](file://includes/core/metabox-io-custom-fields/wpcd-card-container-field.php#L4-L27)
+- [sstk-cards.css:8-28](file://assets/css/sstk-cards.css#L8-L28)
+- [sstk-cards.css:30-63](file://assets/css/sstk-cards.css#L30-L63)
+- [sstk-cards.css:65-93](file://assets/css/sstk-cards.css#L65-L93)
+- [sstk-cards.css:100-103](file://assets/css/sstk-cards.css#L100-L103)
+- [sstk-cards.css:105-152](file://assets/css/sstk-cards.css#L105-L152)
+- [sstk-cards.css:169-172](file://assets/css/sstk-cards.css#L169-L172)
+- [sstk-card-container-field.php:4-27](file://includes/core/metabox-io-custom-fields/sstk-card-container-field.php#L4-L27)
 
 ### Usage in Detail Pages
 Overview cards:
@@ -306,7 +306,7 @@ ServerDetail["ServerDetail.jsx"] --> CardJS["Card.jsx"]
 SiteDetail["SiteDetail.jsx"] --> CardJS
 TabRenderer["TabRenderer.jsx"] --> CardJS
 TabRenderer --> Schema["schema.js"]
-CSS["wpcd-cards.css"] --> ContainerField["wpcd-card-container-field.php"]
+CSS["sstk-cards.css"] --> ContainerField["sstk-card-container-field.php"]
 ```
 
 **Diagram sources**
@@ -314,8 +314,8 @@ CSS["wpcd-cards.css"] --> ContainerField["wpcd-card-container-field.php"]
 - [SiteDetail.jsx:17](file://src/admin/routes/SiteDetail.jsx#L17)
 - [TabRenderer.jsx:16](file://src/admin/components/TabRenderer.jsx#L16)
 - [schema.js:395-423](file://src/admin/lib/schema.js#L395-L423)
-- [wpcd-cards.css:1-197](file://assets/css/wpcd-cards.css#L1-L197)
-- [wpcd-card-container-field.php:1-27](file://includes/core/metabox-io-custom-fields/wpcd-card-container-field.php#L1-L27)
+- [sstk-cards.css:1-197](file://assets/css/sstk-cards.css#L1-L197)
+- [sstk-card-container-field.php:1-27](file://includes/core/metabox-io-custom-fields/sstk-card-container-field.php#L1-L27)
 
 **Section sources**
 - [ServerDetail.jsx:17](file://src/admin/routes/ServerDetail.jsx#L17)
@@ -336,13 +336,13 @@ Common issues and resolutions:
 - Card header not visible: Ensure either `title` or `action` is provided; otherwise, the header block is intentionally omitted.
 - Borderless layout not applied: Verify `borderless={true}` is passed to Card and that no overriding classes force borders.
 - Row widths not responding: Check schema row definitions and confirm width values match supported presets (`full`, `half`, `third`, `two-thirds`).
-- Metabox card layout broken: Confirm `.wpcd-card-group` is present and that pseudo rows are hidden as expected; verify responsive breakpoints in the stylesheet.
+- Metabox card layout broken: Confirm `.sstk-card-group` is present and that pseudo rows are hidden as expected; verify responsive breakpoints in the stylesheet.
 - Empty or error states not showing: Ensure Skeleton is wrapped in Card during loading and ErrorPanel receives a valid error object with optional retry handler.
 
 **Section sources**
 - [Card.jsx:21-39](file://src/admin/components/Card.jsx#L21-L39)
 - [TabRenderer.jsx:176-207](file://src/admin/components/TabRenderer.jsx#L176-L207)
-- [wpcd-cards.css:100-103](file://assets/css/wpcd-cards.css#L100-L103)
+- [sstk-cards.css:100-103](file://assets/css/sstk-cards.css#L100-L103)
 
 ## Conclusion
 The Card component system provides a flexible foundation for both modern React admin interfaces and legacy metabox-driven screens. The React Card offers a clean, semantic container with optional header and borderless mode, while TabRenderer integrates it into schema-driven forms. The legacy CSS layer ensures consistent card appearance and responsive behavior within metabox contexts. Together, these pieces enable data cards, form cards, and dashboard widgets with clear structure, accessible markup, and predictable styling.

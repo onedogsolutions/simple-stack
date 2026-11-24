@@ -3,15 +3,15 @@
 <cite>
 **Referenced Files in This Document**
 - [class-wordpress-app.php](file://includes/core/apps/wordpress-app/class-wordpress-app.php)
-- [class-wpcd-app.php](file://includes/core/apps/class-wpcd-app.php)
+- [class-sstk-app.php](file://includes/core/apps/class-sstk-app.php)
 - [class-wordpress-app-settings.php](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php)
-- [class-wpcd-app-settings.php](file://includes/core/apps/class-wpcd-app-settings.php)
+- [class-sstk-app-settings.php](file://includes/core/apps/class-sstk-app-settings.php)
 - [commands-and-logs.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php)
 - [after-prepare-server.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php)
 - [theme-and-plugin-updates.php](file://includes/core/apps/wordpress-app/tabs/theme-and-plugin-updates.php)
 - [wp_app_details.php](file://includes/core/apps/wordpress-app/templates/wp_app_details.php)
-- [wpcd-wpapp-server-admin.js](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-admin.js)
-- [class-simplestack-rest-controller-base.php](file://includes/core/api/class-simplestack-rest-controller-base.php)
+- [sstk-wpapp-server-admin.js](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-admin.js)
+- [class-sstk-rest-controller-base.php](file://includes/core/api/class-sstk-rest-controller-base.php)
 </cite>
 
 ## Table of Contents
@@ -26,7 +26,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how SimpleStack manages the complete lifecycle of WordPress applications: from initial provisioning through deployment, configuration, and maintenance. It focuses on the core WPCD_WORDPRESS_APP class architecture, initialization processes, state management, event handling, application settings, configuration validation, environment-specific deployments, and extensibility via hooks. It also covers performance considerations and best practices for large-scale WordPress deployments.
+This document explains how Simple Stack manages the complete lifecycle of WordPress applications: from initial provisioning through deployment, configuration, and maintenance. It focuses on the core SSTK_WORDPRESS_APP class architecture, initialization processes, state management, event handling, application settings, configuration validation, environment-specific deployments, and extensibility via hooks. It also covers performance considerations and best practices for large-scale WordPress deployments.
 
 ## Project Structure
 The WordPress application lifecycle is implemented primarily under includes/core/apps/wordpress-app, with shared base classes under includes/core/apps and REST API controllers under includes/core/api. Key areas include:
@@ -38,21 +38,21 @@ The WordPress application lifecycle is implemented primarily under includes/core
 ```mermaid
 graph TB
 subgraph "WordPress App Core"
-WPAPP["WPCD_WORDPRESS_APP<br/>class-wordpress-app.php"]
-BASEAPP["WPCD_APP<br/>class-wpcd-app.php"]
+WPAPP["SSTK_WORDPRESS_APP<br/>class-wordpress-app.php"]
+BASEAPP["SSTK_APP<br/>class-sstk-app.php"]
 SETTINGS["WORDPRESS_APP_SETTINGS<br/>class-wordpress-app-settings.php"]
-BASESETTINGS["WPCD_APP_SETTINGS<br/>class-wpcd-app-settings.php"]
+BASESETTINGS["SSTK_APP_SETTINGS<br/>class-sstk-app-settings.php"]
 end
 subgraph "Traits"
 CMDLOGS["Commands & Logs<br/>commands-and-logs.php"]
 AFTERPREP["After Prepare Server<br/>after-prepare-server.php"]
 end
 subgraph "UI"
-ADMINJS["Admin JS<br/>wpcd-wpapp-server-admin.js"]
+ADMINJS["Admin JS<br/>sstk-wpapp-server-admin.js"]
 TEMPLATE["App Details Template<br/>wp_app_details.php"]
 end
 subgraph "API"
-RESTBASE["REST Base Controller<br/>class-simplestack-rest-controller-base.php"]
+RESTBASE["REST Base Controller<br/>class-sstk-rest-controller-base.php"]
 end
 WPAPP --> BASEAPP
 SETTINGS --> BASESETTINGS
@@ -65,24 +65,24 @@ RESTBASE --> WPAPP
 
 **Diagram sources**
 - [class-wordpress-app.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L15-L98)
-- [class-wpcd-app.php:15-95](file://includes/core/apps/class-wpcd-app.php#L15-L95)
+- [class-sstk-app.php:15-95](file://includes/core/apps/class-sstk-app.php#L15-L95)
 - [class-wordpress-app-settings.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L15-L98)
-- [class-wpcd-app-settings.php:15-24](file://includes/core/apps/class-wpcd-app-settings.php#L15-L24)
+- [class-sstk-app-settings.php:15-24](file://includes/core/apps/class-sstk-app-settings.php#L15-L24)
 - [commands-and-logs.php:500-700](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L500-L700)
 - [after-prepare-server.php:14-48](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php#L14-L48)
-- [wpcd-wpapp-server-admin.js:294-448](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-admin.js#L294-L448)
+- [sstk-wpapp-server-admin.js:294-448](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-admin.js#L294-L448)
 - [wp_app_details.php:34-51](file://includes/core/apps/wordpress-app/templates/wp_app_details.php#L34-L51)
-- [class-simplestack-rest-controller-base.php:398-398](file://includes/core/api/class-simplestack-rest-controller-base.php#L398-L398)
+- [class-sstk-rest-controller-base.php:398-398](file://includes/core/api/class-sstk-rest-controller-base.php#L398-L398)
 
 **Section sources**
 - [class-wordpress-app.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L15-L98)
-- [class-wpcd-app.php:15-95](file://includes/core/apps/class-wpcd-app.php#L15-L95)
+- [class-sstk-app.php:15-95](file://includes/core/apps/class-sstk-app.php#L15-L95)
 - [class-wordpress-app-settings.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L15-L98)
-- [class-wpcd-app-settings.php:15-24](file://includes/core/apps/class-wpcd-app-settings.php#L15-L24)
+- [class-sstk-app-settings.php:15-24](file://includes/core/apps/class-sstk-app-settings.php#L15-L24)
 
 ## Core Components
-- WPCD_WORDPRESS_APP: The main application controller that initializes settings, SSH, upgrades, and hooks; loads tabs, REST API, and background actions; and coordinates lifecycle events.
-- WPCD_APP: Base class providing script loading, token replacement, provider integration helpers, and common utilities used by all apps.
+- SSTK_WORDPRESS_APP: The main application controller that initializes settings, SSH, upgrades, and hooks; loads tabs, REST API, and background actions; and coordinates lifecycle events.
+- SSTK_APP: Base class providing script loading, token replacement, provider integration helpers, and common utilities used by all apps.
 - WORDPRESS_APP_SETTINGS: Manages WordPress app settings pages, fields, and encryption for sensitive values.
 - Commands & Logs trait: Centralizes deferred action processing, action dispatching, and log retrieval.
 - After Prepare Server trait: Orchestrates post-provisioning tasks like callbacks, backups, and cleanup.
@@ -96,14 +96,14 @@ Key responsibilities:
 
 **Section sources**
 - [class-wordpress-app.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L15-L98)
-- [class-wpcd-app.php:120-170](file://includes/core/apps/class-wpcd-app.php#L120-L170)
+- [class-sstk-app.php:120-170](file://includes/core/apps/class-sstk-app.php#L120-L170)
 - [class-wordpress-app-settings.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L15-L98)
 - [commands-and-logs.php:500-700](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L500-L700)
 - [after-prepare-server.php:14-48](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php#L14-L48)
 
 ## Architecture Overview
 The lifecycle spans several phases:
-- Provisioning: Server creation and preparation scripts are selected, tokens replaced, and executed against the cloud provider.
+- Provisioning: Server creation resolves the fixed `scripts/v2/` set, replaces tokens, and executes it against the cloud provider.
 - Deployment: WordPress installation scripts run, domain and SSL configured, and site metadata persisted.
 - Configuration: Tabs and features (cache, firewall, backups, Git, etc.) are enabled based on settings.
 - Maintenance: Updates, backups, monitoring, and health checks are managed via deferred actions and REST APIs.
@@ -111,12 +111,12 @@ The lifecycle spans several phases:
 ```mermaid
 sequenceDiagram
 participant Admin as "Admin UI"
-participant WPAPP as "WPCD_WORDPRESS_APP"
-participant BASEAPP as "WPCD_APP"
+participant WPAPP as "SSTK_WORDPRESS_APP"
+participant BASEAPP as "SSTK_APP"
 participant Provider as "Cloud Provider API"
 participant Server as "Server Instance"
 Admin->>WPAPP : Trigger install or action
-WPAPP->>BASEAPP : Resolve script version and file
+WPAPP->>BASEAPP : Resolve fixed v2 script file
 BASEAPP->>BASEAPP : Replace tokens and sanitize
 BASEAPP->>Provider : Execute startup/run commands
 Provider-->>Server : Apply provisioning steps
@@ -126,13 +126,13 @@ WPAPP-->>Admin : UI reflects current state
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:1444-1469](file://includes/core/apps/class-wpcd-app.php#L1444-L1469)
+- [class-sstk-app.php:1444-1469](file://includes/core/apps/class-sstk-app.php#L1444-L1469)
 - [class-wordpress-app.php:103-182](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L103-L182)
 - [commands-and-logs.php:500-700](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L500-L700)
 
 ## Detailed Component Analysis
 
-### WPCD_WORDPRESS_APP Class
+### SSTK_WORDPRESS_APP Class
 Responsibilities:
 - Initializes settings, SSH, upgrades, and registers extensive hooks for admin screens, REST API, background tasks, and lifecycle events.
 - Loads site and server tabs conditionally based on feature flags and capabilities.
@@ -166,24 +166,23 @@ RegisterHooks --> End(["Lifecycle ready"])
 - [class-wordpress-app.php:103-182](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L103-L182)
 - [class-wordpress-app.php:800-862](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L800-L862)
 
-### WPCD_APP Base Class
+### SSTK_APP Base Class
 Responsibilities:
 - Provides script resolution logic, token replacement, and provider command execution helpers.
 - Exposes getters/setters for app metadata and utility functions for IP addresses, server lookups, and meta access.
 - Validates and sanitizes inputs when constructing shell commands to prevent injection.
 
 Script resolution and execution:
-- Resolves script version using configured options with fallbacks.
-- Loads script content, injects custom field tokens, applies filters, replaces placeholders, and normalizes line endings.
+- Resolves the fixed `scripts/v2/` directory and loads script content, injects custom field tokens, applies filters, replaces placeholders, and normalizes line endings.
 
 Security validations:
-- get_simplestack_admin_ip validates allowed IPs/CIDRs before use in commands.
+- get_sstk_admin_ip validates allowed IPs/CIDRs before use in commands.
 - get_post_site_install_plugins filters plugin slugs to safe characters.
 
 ```mermaid
 flowchart TD
-A["get_configured_scripts_version()"] --> B["Resolve script version"]
-B --> C["Load script file contents"]
+A["get_configured_scripts_version()"] --> B["Return fixed v2"]
+B --> C["Load scripts/v2 file contents"]
 C --> D["Inject custom field tokens"]
 D --> E["Apply filters for overrides"]
 E --> F["Replace placeholders"]
@@ -192,16 +191,16 @@ G --> H["Return sanitized command"]
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:216-228](file://includes/core/apps/class-wpcd-app.php#L216-L228)
-- [class-wpcd-app.php:242-267](file://includes/core/apps/class-wpcd-app.php#L242-L267)
-- [class-wpcd-app.php:283-314](file://includes/core/apps/class-wpcd-app.php#L283-L314)
-- [class-wpcd-app.php:1444-1469](file://includes/core/apps/class-wpcd-app.php#L1444-L1469)
+- [class-sstk-app.php:216-228](file://includes/core/apps/class-sstk-app.php#L216-L228)
+- [class-sstk-app.php:242-267](file://includes/core/apps/class-sstk-app.php#L242-L267)
+- [class-sstk-app.php:283-314](file://includes/core/apps/class-sstk-app.php#L283-L314)
+- [class-sstk-app.php:1444-1469](file://includes/core/apps/class-sstk-app.php#L1444-L1469)
 
 **Section sources**
-- [class-wpcd-app.php:216-228](file://includes/core/apps/class-wpcd-app.php#L216-L228)
-- [class-wpcd-app.php:242-267](file://includes/core/apps/class-wpcd-app.php#L242-L267)
-- [class-wpcd-app.php:283-314](file://includes/core/apps/class-wpcd-app.php#L283-L314)
-- [class-wpcd-app.php:1444-1469](file://includes/core/apps/class-wpcd-app.php#L1444-L1469)
+- [class-sstk-app.php:216-228](file://includes/core/apps/class-sstk-app.php#L216-L228)
+- [class-sstk-app.php:242-267](file://includes/core/apps/class-sstk-app.php#L242-L267)
+- [class-sstk-app.php:283-314](file://includes/core/apps/class-sstk-app.php#L283-L314)
+- [class-sstk-app.php:1444-1469](file://includes/core/apps/class-sstk-app.php#L1444-L1469)
 
 ### Application Settings System
 Responsibilities:
@@ -215,7 +214,7 @@ Validation and security:
 
 ```mermaid
 classDiagram
-class WPCD_APP_SETTINGS {
+class SSTK_APP_SETTINGS {
 +__construct()
 }
 class WORDPRESS_APP_SETTINGS {
@@ -228,11 +227,11 @@ class WORDPRESS_APP_SETTINGS {
 +encrypt(value) string
 +decrypt(meta) string
 }
-WPCD_APP_SETTINGS <|-- WORDPRESS_APP_SETTINGS
+SSTK_APP_SETTINGS <|-- WORDPRESS_APP_SETTINGS
 ```
 
 **Diagram sources**
-- [class-wpcd-app-settings.php:15-24](file://includes/core/apps/class-wpcd-app-settings.php#L15-L24)
+- [class-sstk-app-settings.php:15-24](file://includes/core/apps/class-sstk-app-settings.php#L15-L24)
 - [class-wordpress-app-settings.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L15-L98)
 - [class-wordpress-app-settings.php:180-236](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L180-L236)
 - [class-wordpress-app-settings.php:370-402](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L370-L402)
@@ -257,12 +256,12 @@ Cleanup:
 ```mermaid
 sequenceDiagram
 participant Queue as "Deferred Action Queue"
-participant WPAPP as "WPCD_WORDPRESS_APP"
+participant WPAPP as "SSTK_WORDPRESS_APP"
 participant Trait as "Commands & Logs"
 participant Hook as "Custom Hook Handlers"
 Queue->>Trait : Process pending actions
 Trait->>Trait : do_app_action(app_id, action)
-Trait->>Hook : do_action("wpcd_app_wordpress-app_action_{$action}")
+Trait->>Hook : do_action("sstk_app_wordpress-app_action_{$action}")
 Hook-->>Trait : Result or error
 Trait->>Queue : Update status and reschedule if needed
 ```
@@ -276,8 +275,9 @@ Trait->>Queue : Update status and reschedule if needed
 - [class-wordpress-app.php:157-182](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L157-L182)
 
 ### Environment-Specific Deployments
-Script versioning:
-- The system selects v1 or v2 script folders based on configuration, with backward compatibility for legacy keys.
+Fixed script directory:
+- `get_configured_scripts_version()` always returns `v2`.
+- All provisioning and management scripts resolve under `scripts/v2/`; there is no legacy key, per-server metadata, selector, or fallback.
 - Provider-specific scripts can be resolved by prefixing filenames.
 
 Environment controls:
@@ -286,7 +286,7 @@ Environment controls:
 
 ```mermaid
 flowchart TD
-EnvStart["Environment Config"] --> Version["Resolve script version"]
+EnvStart["Environment Config"] --> Version["Use fixed scripts/v2 directory"]
 Version --> ProviderScripts["Resolve provider-specific scripts"]
 ProviderScripts --> Defaults["Apply defaults (OS, webserver, WP versions)"]
 Defaults --> PHPState["Check PHP version activation and modules"]
@@ -294,22 +294,22 @@ PHPState --> Ready["Ready for deployment"]
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:216-228](file://includes/core/apps/class-wpcd-app.php#L216-L228)
+- [class-sstk-app.php:216-228](file://includes/core/apps/class-sstk-app.php#L216-L228)
 - [class-wordpress-app.php:738-785](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L738-L785)
 - [class-wordpress-app.php:1259-1335](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L1259-L1335)
 
 **Section sources**
-- [class-wpcd-app.php:216-228](file://includes/core/apps/class-wpcd-app.php#L216-L228)
+- [class-sstk-app.php:216-228](file://includes/core/apps/class-sstk-app.php#L216-L228)
 - [class-wordpress-app.php:738-785](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L738-L785)
 - [class-wordpress-app.php:1259-1335](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L1259-L1335)
 
 ### Extending the Lifecycle with Custom Hooks
 Common extension points:
-- Tab inclusion: wpcd_wpapp_include_app_tabs and wpcd_wpapp_include_server_tabs
-- REST API controllers: wpcd_wpapp_include_rest_api and filter wpcd_app_{app_name}_rest_api_controller_list
-- Deferred actions: wpcd_app_{app_name}_action and wpcd_app_{app_name}_action_{action}
-- Post-installation: wpcd_command_wordpress-app_completed_after_cleanup
-- Cleanup: wpcd_cleanup_app_after and wpcd_cleanup_server_after
+- Tab inclusion: sstk_wpapp_include_app_tabs and sstk_wpapp_include_server_tabs
+- REST API controllers: sstk_wpapp_include_rest_api and filter sstk_app_{app_name}_rest_api_controller_list
+- Deferred actions: sstk_app_{app_name}_action and sstk_app_{app_name}_action_{action}
+- Post-installation: sstk_command_wordpress-app_completed_after_cleanup
+- Cleanup: sstk_cleanup_app_after and sstk_cleanup_server_after
 
 Best practices:
 - Use provided hooks rather than overriding core methods.
@@ -353,15 +353,15 @@ Operational guidance:
 
 ## Dependency Analysis
 High-level dependencies:
-- WPCD_WORDPRESS_APP depends on WPCD_APP for script and provider utilities.
-- WORDPRESS_APP_SETTINGS extends WPCD_APP_SETTINGS for settings management.
+- SSTK_WORDPRESS_APP depends on SSTK_APP for script and provider utilities.
+- WORDPRESS_APP_SETTINGS extends SSTK_APP_SETTINGS for settings management.
 - Traits encapsulate cross-cutting concerns (commands/logs, post-provisioning).
 - REST base controller delegates tab actions to app-specific handlers.
 
 ```mermaid
 graph LR
-WPAPP["WPCD_WORDPRESS_APP"] --> BASEAPP["WPCD_APP"]
-SETTINGS["WORDPRESS_APP_SETTINGS"] --> BASESETTINGS["WPCD_APP_SETTINGS"]
+WPAPP["SSTK_WORDPRESS_APP"] --> BASEAPP["SSTK_APP"]
+SETTINGS["WORDPRESS_APP_SETTINGS"] --> BASESETTINGS["SSTK_APP_SETTINGS"]
 WPAPP --> TRAIT1["Commands & Logs"]
 WPAPP --> TRAIT2["After Prepare Server"]
 RESTBASE["REST Base Controller"] --> WPAPP
@@ -369,21 +369,21 @@ RESTBASE["REST Base Controller"] --> WPAPP
 
 **Diagram sources**
 - [class-wordpress-app.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L15-L98)
-- [class-wpcd-app.php:15-95](file://includes/core/apps/class-wpcd-app.php#L15-L95)
+- [class-sstk-app.php:15-95](file://includes/core/apps/class-sstk-app.php#L15-L95)
 - [class-wordpress-app-settings.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L15-L98)
-- [class-wpcd-app-settings.php:15-24](file://includes/core/apps/class-wpcd-app-settings.php#L15-L24)
+- [class-sstk-app-settings.php:15-24](file://includes/core/apps/class-sstk-app-settings.php#L15-L24)
 - [commands-and-logs.php:500-700](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L500-L700)
 - [after-prepare-server.php:14-48](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php#L14-L48)
-- [class-simplestack-rest-controller-base.php:398-398](file://includes/core/api/class-simplestack-rest-controller-base.php#L398-L398)
+- [class-sstk-rest-controller-base.php:398-398](file://includes/core/api/class-sstk-rest-controller-base.php#L398-L398)
 
 **Section sources**
 - [class-wordpress-app.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L15-L98)
-- [class-wpcd-app.php:15-95](file://includes/core/apps/class-wpcd-app.php#L15-L95)
+- [class-sstk-app.php:15-95](file://includes/core/apps/class-sstk-app.php#L15-L95)
 - [class-wordpress-app-settings.php:15-98](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L15-L98)
-- [class-wpcd-app-settings.php:15-24](file://includes/core/apps/class-wpcd-app-settings.php#L15-L24)
+- [class-sstk-app-settings.php:15-24](file://includes/core/apps/class-sstk-app-settings.php#L15-L24)
 - [commands-and-logs.php:500-700](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L500-L700)
 - [after-prepare-server.php:14-48](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php#L14-L48)
-- [class-simplestack-rest-controller-base.php:398-398](file://includes/core/api/class-simplestack-rest-controller-base.php#L398-L398)
+- [class-sstk-rest-controller-base.php:398-398](file://includes/core/api/class-sstk-rest-controller-base.php#L398-L398)
 
 ## Performance Considerations
 - Defer long-running tasks: Use deferred actions to avoid blocking requests and improve responsiveness.
@@ -403,15 +403,15 @@ Common issues and resolutions:
 
 Operational tips:
 - Use admin notices and deferred action logs to diagnose problems.
-- Validate environment settings (script version, allowed WP versions, PHP activation).
+- Validate environment settings (supported Ubuntu release, OpenLiteSpeed type, allowed WP versions, PHP activation).
 - Review security settings to ensure sensitive fields are properly encrypted.
 
 **Section sources**
-- [wpcd-wpapp-server-admin.js:294-448](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-admin.js#L294-L448)
+- [sstk-wpapp-server-admin.js:294-448](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-admin.js#L294-L448)
 - [commands-and-logs.php:659-665](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L659-L665)
 - [wp_app_details.php:34-51](file://includes/core/apps/wordpress-app/templates/wp_app_details.php#L34-L51)
 
 ## Conclusion
-SimpleStack’s WordPress application lifecycle management centers on a robust WPCD_WORDPRESS_APP class that orchestrates initialization, configuration, deployment, and maintenance through well-defined hooks and traits. The WPCD_APP base class ensures secure and flexible script handling, while the settings system provides comprehensive configuration and security controls. By leveraging deferred actions, environment-specific deployments, and extensible hooks, administrators and developers can manage large-scale WordPress deployments reliably and efficiently.
+Simple Stack’s WordPress application lifecycle management centers on a robust SSTK_WORDPRESS_APP class that orchestrates initialization, configuration, deployment, and maintenance through well-defined hooks and traits. The SSTK_APP base class resolves the fixed `scripts/v2/` payload and provides secure script handling, while the settings system provides comprehensive configuration and security controls. By leveraging deferred actions, environment-specific deployments, and extensible hooks, administrators and developers can manage large-scale WordPress deployments reliably and efficiently.
 
 [No sources needed since this section summarizes without analyzing specific files]

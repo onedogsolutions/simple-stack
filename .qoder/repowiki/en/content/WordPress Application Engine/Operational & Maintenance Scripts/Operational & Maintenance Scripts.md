@@ -1,20 +1,20 @@
 # Operational & Maintenance Scripts
 
 <cite>
-**Referenced Files in This Document**   
+**Referenced Files in This Document**
 - [README.md](file://README.md)
 - [08-backup.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt)
-- [15-6g_firewall.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/15-6g_firewall.txt)
 - [40-7g_firewall.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/40-7g_firewall.txt)
 - [20-monit.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt)
 - [43-netdata.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt)
 - [04-manage_https.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt)
 - [19-logs.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/19-logs.txt)
 - [53-database-operation.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/53-database-operation.txt)
+- [81-origin-site-sync.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/81-origin-site-sync.txt)
+- [82-destination-site-sync.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/82-destination-site-sync.txt)
 - [9999-common-functions.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt)
 - [environment variables.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt)
-- [class-wpcd-posts-pending-tasks-log.php](file://includes/core/class-wpcd-posts-pending-tasks-log.php)
-- [after-prepare-server.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php)
+- [class-sstk-posts-pending-tasks-log.php](file://includes/core/class-sstk-posts-pending-tasks-log.php)
 - [callbacks.php](file://includes/core/apps/wordpress-app/tabs-server/callbacks.php)
 - [upgrade.php](file://includes/core/apps/wordpress-app/tabs-server/upgrade.php)
 </cite>
@@ -32,512 +32,239 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains the operational and maintenance scripts that keep WordPress sites running reliably on SimpleStack servers. It covers backup and restore, security firewall management (6G/7G), monitoring with Monit and Netdata, SSL certificate management, performance optimization tools, scheduled tasks, automated maintenance, health checks, database operations, cache management, log rotation, and system updates. It also provides guidance for creating custom operational scripts, integrating third-party tools, monitoring script execution, troubleshooting issues, tuning performance, and performing disaster recovery.
 
-SimpleStack provisions Ubuntu servers, installs OpenLiteSpeed, PHP, MariaDB, Redis, certbot, firewall rules, and an OLS vhost, driven by Bash scripts executed over SSH from within the WordPress admin dashboard. The operational scripts live under the WordPress app scripts directory and are versioned per stack release.
+Simple Stack executes server operations through Bash templates under `includes/core/apps/wordpress-app/scripts/v2/`. PHP renders a top-level wrapper with validated placeholders, the wrapper downloads shared functions and a raw script, and the raw script performs the remote work over SSH.
 
-**Section sources**
-- [README.md:1-25](file://README.md#L1-L25)
-- [README.md:27-38](file://README.md#L27-L38)
+The supported target is Ubuntu 24.04/26.04 with OpenLiteSpeed, LSPHP 8.3/8.4/8.5, MariaDB, Redis, Memcached, certbot, and UFW. `scripts/v2/` is the only supported script tree. There is no `scripts/v1/` fallback, Nginx/PHP-FPM branch, 6G WAF, or Monitorix workflow.
 
 ## Project Structure
-Operational scripts are organized by feature and version:
-- Versioned script sets under includes/core/apps/wordpress-app/scripts/v2/raw/
-- Shared utilities under 9999-common-functions.txt
-- Environment variable documentation under environment variables.txt
-- WordPress-side orchestration via pending tasks and callbacks
+
+```text
+scripts/v2/
+├── *.txt                 # PHP-rendered command wrappers
+├── raw/
+│   ├── 01-prepare_server.txt
+│   ├── 02-install_wordpress_site.txt
+│   ├── 04-manage_https.txt
+│   ├── 08-backup.txt
+│   ├── 12-redis.txt
+│   ├── 16-memcached.txt
+│   ├── 19-logs.txt
+│   ├── 20-monit.txt
+│   ├── 23-fail2ban.txt
+│   ├── 24-server_status.txt
+│   ├── 29-server_update.txt
+│   ├── 40-7g_firewall.txt
+│   ├── 43-netdata.txt
+│   ├── 53-database-operation.txt
+│   ├── 81-origin-site-sync.txt
+│   ├── 82-destination-site-sync.txt
+│   ├── 9999-common-functions.txt
+│   └── environment variables.txt
+├── multi-tenant-pre-post-samples/
+└── wp-backup2-helper
+```
 
 ```mermaid
 graph TB
-WP["WordPress Admin<br/>Pending Tasks"] --> |executes| Scripts["Bash Scripts<br/>v2/raw/*"]
-Scripts --> Common["Common Functions<br/>9999-common-functions.txt"]
-Scripts --> Env["Environment Variables<br/>environment variables.txt"]
-Scripts --> Webserver["OpenLiteSpeed / Nginx"]
-Scripts --> DB["MariaDB"]
-Scripts --> Cache["Redis / Memcached"]
-Scripts --> Monitor["Monit / Netdata"]
-Scripts --> Cert["Certbot / SSL"]
-Scripts --> S3["AWS S3 / Compatible"]
+    WP["WordPress Admin / Pending Tasks"] --> PHP["Tab or REST Handler"]
+    PHP --> Wrapper["Rendered scripts/v2 Wrapper"]
+    Wrapper --> Common["9999-common-functions.txt"]
+    Wrapper --> Raw["Numbered Raw Script"]
+    Raw --> OLS["OpenLiteSpeed"]
+    Raw --> DB["MariaDB"]
+    Raw --> Cache["Redis / Memcached"]
+    Raw --> Monitor["Monit / Netdata"]
+    Raw --> Cert["certbot"]
+    Raw --> S3["S3-Compatible Storage"]
+    Raw --> Callback["WordPress Callback"]
 ```
 
-**Diagram sources**
-- [README.md:27-38](file://README.md#L27-L38)
-- [9999-common-functions.txt:1-75](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L1-L75)
-- [environment variables.txt:1-10](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L1-L10)
-
-**Section sources**
-- [README.md:27-38](file://README.md#L27-L38)
-- [9999-common-functions.txt:1-75](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L1-L75)
-- [environment variables.txt:1-10](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L1-L10)
-
 ## Core Components
-- Backup and Restore: Full site backups, configuration backups, database dumps, scheduling, pruning, deletion, and S3 uploads.
-- Security Firewall: 6G and 7G rule sets for user agent, referrer, query string, request string, and request method controls.
-- Monitoring: Monit service/process/file/disk checks with optional email notifications; Netdata installation, HTTPS, authentication, registry.
-- SSL Management: Enable/disable HTTPS and HTTP/2 using certbot and OpenLiteSpeed helpers.
-- Database Operations: Switch between local and remote databases, copy data between them.
-- Cache Management: Flush page/object caches across multiple caching plugins and object caches.
-- Logs and Health: View logs for scheduled backups and sync tasks; server status callbacks.
-- System Updates: Count/list/run Linux updates including security-only updates.
 
-**Section sources**
-- [08-backup.txt:1-200](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L1-L200)
-- [15-6g_firewall.txt:1-70](file://includes/core/apps/wordpress-app/scripts/v2/raw/15-6g_firewall.txt#L1-L70)
-- [40-7g_firewall.txt:1-70](file://includes/core/apps/wordpress-app/scripts/v2/raw/40-7g_firewall.txt#L1-L70)
-- [20-monit.txt:1-120](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L1-L120)
-- [43-netdata.txt:1-140](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L1-L140)
-- [04-manage_https.txt:1-80](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt#L1-L80)
-- [53-database-operation.txt:1-110](file://includes/core/apps/wordpress-app/scripts/v2/raw/53-database-operation.txt#L1-L110)
-- [9999-common-functions.txt:125-200](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L125-L200)
-- [19-logs.txt:1-47](file://includes/core/apps/wordpress-app/scripts/v2/raw/19-logs.txt#L1-L47)
+- **Backup and Restore:** Site/full-server backups, scheduling, retention, deletion, restore, and S3-compatible uploads.
+- **7G WAF:** OpenLiteSpeed `.htaccess` rule groups for user agents, referrers, query strings, request URIs, and request methods.
+- **Monit:** Service, process, filesystem, and resource checks with optional SMTP alerts and callback reporting.
+- **Netdata:** Real-time metrics behind an authenticated OpenLiteSpeed reverse proxy.
+- **SSL Management:** certbot-backed HTTPS and HTTP/2 management for OpenLiteSpeed vhosts.
+- **Performance Tools:** Redis, Memcached, LSPHP directives, OPcache-related settings, and cache flushing.
+- **Scheduled Tasks:** Backup cron helpers, status callbacks, pending-task orchestration, and site synchronization.
+- **Database Operations:** Local/remote database switching and copying.
+- **Logs and Updates:** Scheduled-task logs, package updates, security updates, and server update callbacks.
 
 ## Architecture Overview
-The operational flow is orchestrated from WordPress through a pending task queue that executes Bash scripts on target servers. Scripts source shared functions and environment variables to perform actions against the web server, database, cache, monitoring tools, and external services like S3.
 
 ```mermaid
 sequenceDiagram
-participant Admin as "WordPress Admin"
-participant Pending as "Pending Tasks Queue"
-participant Server as "Target Server"
-participant Script as "Bash Script"
-participant Web as "Web Server"
-participant DB as "Database"
-participant Cache as "Cache Layer"
-participant Mon as "Monit/Netdata"
-participant Cert as "Certbot"
-participant S3 as "S3 Storage"
-Admin->>Pending : Create background task
-Pending->>Server : Execute script via SSH
-Server->>Script : Run operational script
-Script->>Web : Configure rules/SSL/restart
-Script->>DB : Dump/restore/switch/copy
-Script->>Cache : Flush caches
-Script->>Mon : Install/configure monitors
-Script->>Cert : Issue/renew certificates
-Script->>S3 : Upload/download backups
-Script-->>Pending : Report completion
-Pending-->>Admin : Update task status
-```
+    participant Admin as "WordPress Admin"
+    participant Queue as "Pending Task Queue"
+    participant SSH as "SSH Executor"
+    participant Wrapper as "v2 Wrapper"
+    participant Raw as "Raw Script"
+    participant Service as "OpenLiteSpeed / DB / Cache"
+    participant Callback as "WordPress Callback"
 
-**Diagram sources**
-- [class-wpcd-posts-pending-tasks-log.php:801-843](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L801-L843)
-- [after-prepare-server.php:208-238](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php#L208-L238)
-- [callbacks.php:1118-1131](file://includes/core/apps/wordpress-app/tabs-server/callbacks.php#L1118-L1131)
-- [08-backup.txt:1-200](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L1-L200)
-- [04-manage_https.txt:1-80](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt#L1-L80)
-- [20-monit.txt:1-120](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L1-L120)
-- [43-netdata.txt:1-140](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L1-L140)
+    Admin->>Queue : Create operation
+    Queue->>SSH : Execute rendered wrapper
+    SSH->>Wrapper : Run as root
+    Wrapper->>Raw : Download and export parameters
+    Raw->>Service : Configure or inspect target
+    Service-->>Raw : Output / status
+    Raw->>Callback : Report progress or completion
+    Raw-->>Queue : Command result
+    Queue-->>Admin : Update task/log state
+```
 
 ## Detailed Component Analysis
 
-### Backup and Restore Procedures
-The backup script supports interactive and non-interactive modes, sourcing common functions and environment variables. It can:
-- Back up files, web server configuration, and database
-- Upload to AWS S3 or compatible endpoints
-- Schedule per-site and full-site backups via cron
-- Prune old backups locally and optionally on S3
-- Delete backups per site or all sites
-- Restore site files, web server config, database, and user accounts
-- Reset caches and attempt SSL certificate issuance during restore
+### Backup and Restore
 
-```mermaid
-flowchart TD
-Start(["Backup Entry"]) --> CheckRoot["Check root privileges"]
-CheckRoot --> SourceCommon["Source common functions"]
-SourceCommon --> Menu["Display action menu"]
-Menu --> Action{"Action selected?"}
-Action --> |backup| SelectDomain["Select domain"]
-SelectDomain --> PrepareDirs["Prepare backup directories"]
-PrepareDirs --> TarFiles["Tar site files + OLS .phpini if applicable"]
-TarFiles --> TarConfig["Tar web server config"]
-TarConfig --> DumpDB["mysqldump database"]
-DumpDB --> ValidateDB["Validate dump header"]
-ValidateDB --> UploadS3["Upload to S3 or compatible endpoint"]
-UploadS3 --> Done(["Backup complete"])
-Action --> |schedule| CreateHelper["Create helper script wp-backup"]
-CreateHelper --> CronEntry["Add crontab entry"]
-CronEntry --> ConfigLine["Write /etc/wp-backup.conf"]
-ConfigLine --> Done
-Action --> |restore| SelectSite["Select site and backup"]
-SelectSite --> PreChecks["Pre-check existing site state"]
-PreChecks --> Cleanup["Drop DB, remove files, remove site config, delete user"]
-Cleanup --> CreateUser["Create system user"]
-CreateUser --> RestoreFiles["Extract files and move to /var/www"]
-RestoreFiles --> RestoreConfig["Restore web server config"]
-RestoreConfig --> RecreateDB["Create DB and import dump"]
-RecreateDB --> FixOwnership["Set ownership and permissions"]
-FixOwnership --> DisableObjectCache["Disable object cache if present"]
-DisableObjectCache --> AttemptSSL["Attempt SSL certificate issuance"]
-AttemptSSL --> RestartWeb["Restart web server"]
-RestartWeb --> Done
-```
+The backup script supports:
 
-**Diagram sources**
-- [08-backup.txt:1-200](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L1-L200)
-- [08-backup.txt:203-423](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L203-L423)
-- [08-backup.txt:426-563](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L426-L563)
-- [08-backup.txt:591-737](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L591-L737)
+- Site file, OpenLiteSpeed configuration, and MariaDB dumps.
+- Full-server backups and per-site backups.
+- AWS S3 or S3-compatible endpoints.
+- Scheduled backup helper scripts and cron entries.
+- Retention-based pruning and optional remote deletion.
+- Restore of files, vhost configuration, databases, and site users.
+- Cache cleanup and certificate issuance attempts during restore.
 
-**Section sources**
-- [08-backup.txt:1-200](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L1-L200)
-- [08-backup.txt:203-423](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L203-L423)
-- [08-backup.txt:426-563](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L426-L563)
-- [08-backup.txt:591-737](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L591-L737)
-- [environment variables.txt:97-183](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L97-L183)
+Database dumps are checked for a valid dump header before the script treats the backup as complete. Restore is destructive: it removes the existing site/database before recreating them.
 
-### Security Firewall Management (6G/7G)
-Both 6G and 7G firewall scripts provide enable/disable menus for:
-- User Agent rules
-- Referrer rules
-- Query String rules
-- Request String rules
-- Request Method rules
+### 7G Firewall
 
-They modify web server configurations and restart the web server after changes. For OpenLiteSpeed, they call helper functions to enable/disable rule categories.
+The 7G integration is the only application firewall in the current script set. The raw script enables or disables named blocks in the site `.htaccess` file and restarts OpenLiteSpeed.
 
-```mermaid
-flowchart TD
-Start(["Firewall Entry"]) --> CheckRoot["Check root privileges"]
-CheckRoot --> SourceCommon["Source common functions"]
-SourceCommon --> SelectDomain["Select domain"]
-SelectDomain --> Menu["Display 6G/7G action menu"]
-Menu --> Action{"Action"}
-Action --> |enable_all| ApplyAll["Apply all rule blocks"]
-Action --> |disable_all| RemoveAll["Remove all rule blocks"]
-Action --> |enable_category| ApplyCategory["Enable specific category"]
-Action --> |disable_category| RemoveCategory["Disable specific category"]
-ApplyAll --> Restart["Restart web server"]
-RemoveAll --> Restart
-ApplyCategory --> Restart
-RemoveCategory --> Restart
-Restart --> Done(["Firewall updated"])
-```
+The all-rules action includes `CORE` plus the five exposed categories. “Request String” maps to the underlying `REQUEST URI` block. The 6G script and tab are retired; there is no downgrade path.
 
-**Diagram sources**
-- [15-6g_firewall.txt:1-70](file://includes/core/apps/wordpress-app/scripts/v2/raw/15-6g_firewall.txt#L1-L70)
-- [40-7g_firewall.txt:1-70](file://includes/core/apps/wordpress-app/scripts/v2/raw/40-7g_firewall.txt#L1-L70)
+### Monit
 
-**Section sources**
-- [15-6g_firewall.txt:1-261](file://includes/core/apps/wordpress-app/scripts/v2/raw/15-6g_firewall.txt#L1-L261)
-- [40-7g_firewall.txt:1-260](file://includes/core/apps/wordpress-app/scripts/v2/raw/40-7g_firewall.txt#L1-L260)
-- [environment variables.txt:346-350](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L346-L350)
+The current Monit script is fail-closed:
 
-### Monitoring Setup with Monit and Netdata
-Monit script:
-- Installs Monit and configures it for web server, MySQL, Redis, Memcached, PHP, filesystem, and system resources
-- Creates reverse proxy entries for OpenLiteSpeed or Nginx
-- Supports enabling/disabling individual monitors and all monitors
-- Configures email notifications and optional callback reporting
-- Enables/disables HTTPS for the Monit UI
+- Validates usernames, passwords, SMTP settings, email addresses, callback URLs, and other inputs.
+- Writes configuration atomically with explicit ownership and modes.
+- Keeps HTTP and SMTP credentials in root-only `0600` include files under `/etc/monit/`.
+- Binds the Monit HTTP daemon to `127.0.0.1:48756`.
+- Exposes Monit through an OpenLiteSpeed proxy to that loopback listener.
+- Runs `monit -t -c /etc/monit/monitrc` before restarting Monit.
+- Runs `/usr/local/lsws/bin/lswsctrl configtest` before restarting OpenLiteSpeed.
+- Verifies both services are active after restart.
+- Stores callback state and the offset file under `/etc/simple-stack/`.
+- Requires both a certificate and private-key file before treating SSL setup as successful.
 
-Netdata script:
-- Installs Netdata and configures reverse proxy for OpenLiteSpeed or Nginx
-- Adds basic HTTP authentication
-- Enables/disables HTTPS using certbot
-- Sets up registry options and targets
-- Configures PHP-FPM status endpoints and Netdata jobs
+Supported controls include webserver, MySQL, Redis, Memcached, filesystem, all-unit toggles, SMTP updates, callback installation/removal, SSL, activation/deactivation, and removal.
 
-```mermaid
-sequenceDiagram
-participant Admin as "Operator"
-participant Script as "Monitoring Script"
-participant Web as "Web Server"
-participant OS as "System Services"
-participant Email as "SMTP"
-participant Cloud as "Netdata Cloud"
-Admin->>Script : Choose install/configure action
-Script->>OS : Install package (monit/netdata)
-Script->>Web : Add reverse proxy context
-Script->>OS : Configure service checks and thresholds
-Script->>Email : Set SMTP credentials and alert address
-Script->>Cloud : Register claim tokens (Netdata)
-Script->>Web : Enable HTTPS via certbot
-Script-->>Admin : Confirm installation and access URL
-```
+### Netdata
 
-**Diagram sources**
-- [20-monit.txt:148-300](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L148-L300)
-- [20-monit.txt:313-516](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L313-L516)
-- [43-netdata.txt:142-313](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L142-L313)
-- [43-netdata.txt:374-428](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L374-L428)
+Netdata is retained as an OpenLiteSpeed-only script bridge:
 
-**Section sources**
-- [20-monit.txt:1-120](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L1-L120)
-- [20-monit.txt:148-300](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L148-L300)
-- [20-monit.txt:313-516](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L313-L516)
-- [43-netdata.txt:1-140](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L1-L140)
-- [43-netdata.txt:142-313](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L142-L313)
-- [43-netdata.txt:374-428](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L374-L428)
-- [environment variables.txt:386-436](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L386-L436)
+- Requires OpenLiteSpeed to be installed.
+- Proxies to `127.0.0.1:19999`.
+- Creates a dedicated vhost and optional HTTP basic authentication.
+- Supports HTTPS enable/disable, registry mode, registry targets, upgrades, and removal.
+- Uses the OpenLiteSpeed certbot helpers.
+
+There is no Nginx reverse-proxy branch or PHP-FPM status integration. Netdata has no dedicated server-tab controller in the current bootstrap; the scripts remain available for script-driven operations.
 
 ### SSL Certificate Management
-The HTTPS management script:
-- Prompts for an admin email when enabling HTTPS
-- Disables any existing HTTPS redirects before issuing certificates
-- Uses certbot with OpenLiteSpeed helpers to issue and manage certificates
-- Updates WordPress home/siteurl options to HTTPS
-- Clears caches and restarts the web server
-- Supports enabling/disabling HTTP/2
 
-```mermaid
-flowchart TD
-Start(["HTTPS Entry"]) --> CheckRoot["Check root privileges"]
-CheckRoot --> SourceCommon["Source common functions"]
-SourceCommon --> SelectDomain["Select domain"]
-SelectDomain --> Menu["Display HTTPS/HTTP2 menu"]
-Menu --> Action{"Action"}
-Action --> |enable| DisableRedirect["Disable existing HTTPS redirect"]
-DisableRedirect --> IssueCert["gf_enable_certbot_ols_site()"]
-IssueCert --> EnableRedirect["Enable HTTPS redirect"]
-EnableRedirect --> UpdateOptions["Update home/siteurl to https"]
-UpdateOptions --> FlushCaches["Flush caches"]
-FlushCaches --> RestartWeb["Restart web server"]
-RestartWeb --> Done(["HTTPS enabled"])
-Action --> |disable| DisableHTTP2["Disable HTTP/2"]
-DisableHTTP2 --> DisableCert["gf_disable_certbot_ols_site()"]
-DisableCert --> CleanCerts["Remove certbot folders"]
-CleanCerts --> UpdateOptionsHTTP["Update home/siteurl to http"]
-UpdateOptionsHTTP --> FlushCaches
-FlushCaches --> Done
-```
+The HTTPS script uses the OpenLiteSpeed certbot helpers to issue and remove certificates, manage HTTPS redirects, update WordPress `home`/`siteurl`, clear caches, and restart OpenLiteSpeed. HTTP/2 is managed through the same OpenLiteSpeed path.
 
-**Diagram sources**
-- [04-manage_https.txt:1-80](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt#L1-L80)
-- [04-manage_https.txt:82-127](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt#L82-L127)
+### Performance Optimization
 
-**Section sources**
-- [04-manage_https.txt:1-130](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt#L1-L130)
-- [environment variables.txt:33-41](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L33-L41)
+Current performance operations include:
 
-### Performance Optimization Tools
-- Cache flushing across multiple plugins and object caches via common functions
-- Redis and Memcached management scripts referenced in environment variables
-- PHP worker and module toggles referenced in environment variables
-- Reliable updates and plugin tweaks scripts referenced in environment variables
+- Redis object caching on `127.0.0.1:6379` with LiteSpeed Cache object kind `1`.
+- Memcached object caching on `127.0.0.1:11211` with object kind `0`.
+- Installation of the matching LSPHP extension for every managed PHP version.
+- Per-site LSPHP directive changes through the vhost and site `.phpini`.
+- OPcache-related directive management and cache flushing through shared helpers.
 
-```mermaid
-flowchart TD
-Start(["Optimization Entry"]) --> FlushPage["Flush page cache"]
-FlushPage --> CheckPlugins["Detect active caching plugins"]
-CheckPlugins --> ClearPluginCaches["Clear plugin-specific caches"]
-ClearPluginCaches --> ObjectCache["Reset object cache (OLS)"]
-ObjectCache --> FinalFlush["Final cache flush"]
-FinalFlush --> Done(["Optimization complete"])
-```
+There is no PHP-FPM worker tuner. Redis and Memcached both refuse to replace an existing `object-cache.php` backend; operators must disable the current backend first.
 
-**Diagram sources**
-- [9999-common-functions.txt:125-200](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L125-L200)
+### Scheduled Tasks and Site Synchronization
 
-**Section sources**
-- [9999-common-functions.txt:125-200](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L125-L200)
-- [environment variables.txt:286-293](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L286-L293)
-- [environment variables.txt:353-358](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L353-L358)
-- [environment variables.txt:546-556](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L546-L556)
+Backup helpers use cron and callback URLs to report start/completion. Server and site status helpers report health and WordPress update posture. Pending-task posts track long-running operations.
 
-### Scheduled Tasks, Automated Maintenance, and Health Checks
-- Backup scheduling uses cron entries and helper scripts for per-site and full-site backups
-- Callback URLs notify WordPress about backup start/end events
-- Pending tasks queue orchestrates background operations and marks tasks complete/failed
-- Server status callbacks trigger update routines and report progress
+Site synchronization remains active through:
 
-```mermaid
-sequenceDiagram
-participant Cron as "System Cron"
-participant Helper as "wp-backup / wp-full-backup"
-participant WPAPI as "WordPress REST API"
-participant Pending as "Pending Tasks"
-participant Updater as "Upgrade Handler"
-Cron->>Helper : Execute scheduled backup
-Helper->>WPAPI : Notify start_domain_backup
-Helper->>Helper : Perform backup steps
-Helper->>WPAPI : Notify end_domain_backup
-Pending->>Updater : Trigger run_updates_cron
-Updater-->>Pending : Mark task complete
-```
+- `81-origin-site-sync.txt`
+- `82-destination-site-sync.txt`
+- `wp-sync`
+- Origin/destination setup and scheduling wrappers
 
-**Diagram sources**
-- [08-backup.txt:426-563](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L426-L563)
-- [08-backup.txt:591-737](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L591-L737)
-- [class-wpcd-posts-pending-tasks-log.php:801-843](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L801-L843)
-- [upgrade.php:2698-2725](file://includes/core/apps/wordpress-app/tabs-server/upgrade.php#L2698-L2725)
+This is distinct from the retired cross-site control-plane data synchronization engine. There is no `class-sstk-sync.php` or `SSTK_SYNC` service in the current tree.
 
-**Section sources**
-- [08-backup.txt:426-563](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L426-L563)
-- [08-backup.txt:591-737](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L591-L737)
-- [class-wpcd-posts-pending-tasks-log.php:801-843](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L801-L843)
-- [upgrade.php:2698-2725](file://includes/core/apps/wordpress-app/tabs-server/upgrade.php#L2698-L2725)
+### Database Operations
 
-### Database Optimization and Operations
-The database operation script allows:
-- Switching a site’s database connection between local and remote hosts
-- Copying database content between local and remote servers
-- Validating connectivity before making changes
+The database script can switch a site between local and remote database hosts and copy database content in either direction. It validates connectivity before changing `wp-config.php` or replacing a database. These operations are destructive and should be rehearsed against a staging copy.
 
-```mermaid
-flowchart TD
-Start(["DB Operation Entry"]) --> CheckRoot["Check root privileges"]
-CheckRoot --> SourceCommon["Source common functions"]
-SourceCommon --> SelectDomain["Select domain"]
-SelectDomain --> Menu["Display DB action menu"]
-Menu --> Action{"Action"}
-Action --> |switch_remote| RemoteAccess["Prompt remote DB details"]
-RemoteAccess --> ValidateRemote["Validate remote connection"]
-ValidateRemote --> UpdateConfig["Update wp-config DB_* constants"]
-UpdateConfig --> Done(["Switched to remote DB"])
-Action --> |copy_to_remote| ExportLocal["Export local DB"]
-ExportLocal --> DropRemote["Drop remote DB"]
-DropRemote --> CreateRemote["Create remote DB"]
-CreateRemote --> ImportRemote["Import into remote DB"]
-ImportRemote --> Done
-Action --> |copy_to_local| ExportRemote["Export remote DB"]
-ExportRemote --> DropLocal["Drop local DB"]
-DropLocal --> CreateLocal["Create local DB"]
-CreateLocal --> ImportLocal["Import into local DB"]
-ImportLocal --> Done
-```
+### Logs
 
-**Diagram sources**
-- [53-database-operation.txt:1-110](file://includes/core/apps/wordpress-app/scripts/v2/raw/53-database-operation.txt#L1-L110)
-- [53-database-operation.txt:137-212](file://includes/core/apps/wordpress-app/scripts/v2/raw/53-database-operation.txt#L137-L212)
+The log viewer tails:
 
-**Section sources**
-- [53-database-operation.txt:1-212](file://includes/core/apps/wordpress-app/scripts/v2/raw/53-database-operation.txt#L1-L212)
-
-### Log Rotation and Viewing
-Log viewing script displays recent entries for:
-- Individual site backups
-- Full-site backups
-- Site synchronization logs
-
-```mermaid
-flowchart TD
-Start(["Logs Entry"]) --> Menu["Display log menu"]
-Menu --> Action{"Action"}
-Action --> |individual| TailIndividual["tail -n 30 /var/log/wp-backup.log"]
-Action --> |full| TailFull["tail -n 30 /var/log/wp-full-backup.log"]
-Action --> |sync| TailSync["tail -n 30 /var/log/wp-sync.log"]
-TailIndividual --> End(["Exit"])
-TailFull --> End
-TailSync --> End
-```
-
-**Diagram sources**
-- [19-logs.txt:1-47](file://includes/core/apps/wordpress-app/scripts/v2/raw/19-logs.txt#L1-L47)
-
-**Section sources**
-- [19-logs.txt:1-47](file://includes/core/apps/wordpress-app/scripts/v2/raw/19-logs.txt#L1-L47)
+- `/var/log/wp-backup.log`
+- `/var/log/wp-full-backup.log`
+- `/var/log/wp-sync.log`
 
 ### System Updates
-System update functionality is exposed via environment variables and hooks:
-- Count/list/run updates
-- Run updates via cron or security-only updates
-- Callbacks to report update status
 
-**Section sources**
-- [environment variables.txt:546-556](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L546-L556)
-- [upgrade.php:2698-2725](file://includes/core/apps/wordpress-app/tabs-server/upgrade.php#L2698-L2725)
+The server update flow counts, lists, and installs package updates, including security-only updates, and reports status through callbacks. Upgrade actions are also coordinated through the pending-task queue.
 
 ## Dependency Analysis
-Scripts depend on:
-- Common functions for utility operations (space checks, cache flushing, web server interactions)
-- Environment variables for non-interactive configuration
-- WordPress pending tasks for orchestration and callbacks
-- External tools: mysqldump, tar, gzip, aws CLI, certbot, systemctl, htpasswd
 
-```mermaid
-graph TB
-Scripts["Operational Scripts"] --> Common["Common Functions"]
-Scripts --> Env["Environment Variables"]
-Scripts --> WPQueue["WordPress Pending Tasks"]
-Scripts --> Tools["External Tools<br/>mysqldump, tar, gzip, aws, certbot, systemctl, htpasswd"]
-WPQueue --> Handlers["Handlers and Callbacks"]
-```
+Operational scripts depend on:
 
-**Diagram sources**
-- [9999-common-functions.txt:1-75](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L1-L75)
-- [environment variables.txt:1-10](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L1-L10)
-- [class-wpcd-posts-pending-tasks-log.php:801-843](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L801-L843)
-
-**Section sources**
-- [9999-common-functions.txt:1-75](file://includes/core/apps/wordpress-app/scripts/v2/raw/9999-common-functions.txt#L1-L75)
-- [environment variables.txt:1-10](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L1-L10)
-- [class-wpcd-posts-pending-tasks-log.php:801-843](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L801-L843)
+- `9999-common-functions.txt` for shared helpers.
+- `environment variables.txt` for action and parameter contracts.
+- WordPress pending tasks and callbacks for orchestration.
+- SSH/root access on the target server.
+- External tools including `mysqldump`, `tar`, `gzip`, AWS CLI, certbot, `systemctl`, `htpasswd`, `dos2unix`, and `fail2ban-client` where applicable.
 
 ## Performance Considerations
-- Use object cache and page cache appropriately; ensure cache flushes after configuration changes.
-- Tune Monit thresholds based on CPU cores and memory to avoid unnecessary restarts.
-- Limit backup retention days to control disk usage; prune regularly.
-- Enable HTTP/2 only when beneficial and supported by clients.
-- Avoid excessive logging; rotate logs and monitor disk space.
 
-[No sources needed since this section provides general guidance]
+- Limit backup retention and prune remote copies deliberately.
+- Avoid frequent OpenLiteSpeed restarts; batch configuration changes where possible.
+- Tune Monit thresholds to the actual CPU, memory, and filesystem layout.
+- Use object caching and page caching appropriately, and flush caches after relevant changes.
+- Keep logs bounded and monitor free disk space.
+- Prefer the vhost LSPHP handler over CLI PHP when determining a site’s effective PHP version.
 
 ## Troubleshooting Guide
-- Verify scripts run as root; most scripts exit early if not.
-- Ensure common functions file exists and is sourced successfully.
-- Check AWS credentials and S3 bucket availability for backups.
-- Validate database connectivity before switching or copying databases.
-- Inspect logs for backup and sync tasks to diagnose failures.
-- Confirm certbot and web server configurations when enabling/disabling HTTPS.
-- Review Monit and Netdata configurations for correct reverse proxy and authentication settings.
 
-**Section sources**
-- [08-backup.txt:1-20](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L1-L20)
-- [08-backup.txt:51-87](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L51-L87)
-- [53-database-operation.txt:16-41](file://includes/core/apps/wordpress-app/scripts/v2/raw/53-database-operation.txt#L16-L41)
-- [19-logs.txt:1-47](file://includes/core/apps/wordpress-app/scripts/v2/raw/19-logs.txt#L1-L47)
-- [04-manage_https.txt:44-79](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt#L44-L79)
-- [20-monit.txt:148-300](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L148-L300)
-- [43-netdata.txt:142-313](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L142-L313)
+- Confirm the script runs as root and that `9999-common-functions.txt` was downloaded.
+- Validate S3 credentials and endpoint settings for backup failures.
+- Test database connectivity before switch/copy operations.
+- Inspect backup and site-sync logs before retrying destructive tasks.
+- For Monit, run both configuration validators before restarting either service.
+- For Netdata, verify the loopback listener and OpenLiteSpeed proxy.
+- For 7G, inspect `.htaccess` markers and site ownership.
+- For HTTPS, verify DNS, certbot state, and the OpenLiteSpeed vhost configuration.
+
+### Script Download Security
+
+Many current `scripts/v2` wrappers still use `wget --no-check-certificate`, including first-party provisioning assets. This disables TLS certificate verification and must be removed from first-party downloads before release. Operator-supplied post-processing and Git hook URLs require a separate policy decision rather than a blind replacement.
 
 ## Conclusion
-The operational and maintenance scripts provide a comprehensive toolkit for managing WordPress sites on SimpleStack servers. They cover backups, security firewalls, monitoring, SSL, performance optimization, scheduled tasks, database operations, logs, and system updates. By leveraging shared functions, environment variables, and WordPress orchestration, operators can automate routine tasks, maintain security posture, and ensure high availability. Proper configuration, monitoring, and troubleshooting practices are essential for reliable operations.
 
-[No sources needed since this section summarizes without analyzing specific files]
+The operational script library provides backups, 7G filtering, Monit, Netdata, SSL, caching, site synchronization, database operations, logs, and updates for the fixed OpenLiteSpeed stack. All supported execution flows use `scripts/v2/`; retired Nginx, PHP-FPM, 6G, Monitorix, and cross-site control-plane synchronization paths are not part of the current architecture.
 
 ## Appendices
 
-### Creating Custom Operational Scripts
-- Follow naming conventions and place scripts under includes/core/apps/wordpress-app/scripts/v2/raw/
-- Source common functions at the top of your script
-- Support both interactive and non-interactive modes using environment variables documented in environment variables.txt
-- Integrate with WordPress pending tasks by triggering appropriate action hooks and callbacks
-- Test scripts with bash syntax checks and guard scripts as described in development instructions
+### Adding a Custom Operation
 
-**Section sources**
-- [environment variables.txt:1-10](file://includes/core/apps/wordpress-app/scripts/v2/raw/environment%20variables.txt#L1-L10)
-- [README.md:79-90](file://README.md#L79-L90)
+1. Add the raw numbered script under `scripts/v2/raw/`.
+2. Document its `$action` and parameters in `environment variables.txt`.
+3. Add or update the top-level wrapper using `##PLACEHOLDER##` tokens.
+4. Wire the tab or REST handler through the shared script-handling pipeline.
+5. Validate input in PHP and again in Bash when values reach a shell command.
+6. Require TLS verification for first-party downloads.
+7. Run `bash bin/lint-sh.sh`, `bash bin/lint-php.sh`, and the relevant focused harness.
 
-### Integrating Third-Party Tools
-- Use existing patterns for installing and configuring tools (e.g., Monit, Netdata)
-- Provide reverse proxy configurations for OpenLiteSpeed or Nginx
-- Secure tool interfaces with basic auth or HTTPS where appropriate
-- Expose configuration via environment variables and support non-interactive setup
+### Third-Party Integrations
 
-**Section sources**
-- [20-monit.txt:148-300](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L148-L300)
-- [43-netdata.txt:142-313](file://includes/core/apps/wordpress-app/scripts/v2/raw/43-netdata.txt#L142-L313)
+Use OpenLiteSpeed vhosts and loopback proxy targets. Protect administrative interfaces with authentication and TLS, keep credentials out of logs, and expose configuration through validated wrapper parameters. Do not add Nginx or PHP-FPM branches.
 
-### Monitoring Script Execution
-- Use WordPress pending tasks to track background operations
-- Implement callbacks to report start/completion of long-running tasks
-- Review logs for scheduled tasks and system updates
-- Configure Monit alerts for critical services and resource thresholds
+### Monitoring Execution
 
-**Section sources**
-- [class-wpcd-posts-pending-tasks-log.php:801-843](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L801-L843)
-- [08-backup.txt:426-563](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L426-L563)
-- [19-logs.txt:1-47](file://includes/core/apps/wordpress-app/scripts/v2/raw/19-logs.txt#L1-L47)
-- [20-monit.txt:313-516](file://includes/core/apps/wordpress-app/scripts/v2/raw/20-monit.txt#L313-L516)
-
-### Disaster Recovery Procedures
-- Ensure regular backups to S3 or compatible storage
-- Validate backup integrity by checking database dump headers
-- Practice restores in staging environments
-- Maintain separate web server configuration backups
-- Keep SSL certificates and DNS records updated and backed up
-
-**Section sources**
-- [08-backup.txt:174-198](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L174-L198)
-- [08-backup.txt:203-423](file://includes/core/apps/wordpress-app/scripts/v2/raw/08-backup.txt#L203-L423)
-- [04-manage_https.txt:82-127](file://includes/core/apps/wordpress-app/scripts/v2/raw/04-manage_https.txt#L82-L127)
+Use pending-task posts, command/SSH logs, callbacks, and Monit alerts together. Long-running scripts should write bounded intermediate logs and report an explicit terminal status so one operation’s output cannot validate another operation.

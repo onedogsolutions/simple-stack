@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
  * This JS file is loaded for the wp-admin app screen.
  */
@@ -17,7 +18,7 @@
         var search_owner_placeholder = app_owner_params.i10n.search_owner_placeholder;
 
         // Server owners dropdown with search box.
-        $(".wpcd_search_owner_filter#filter-by-wpcd_server_owner").select2({
+        $(".sstk_search_owner_filter#filter-by-sstk_server_owner").select2({
             language: {
                 noResults: function(app_owner_params) {
                     return no_owners_found_msg;
@@ -50,7 +51,7 @@
         });
 
         // App owners dropdown with search box.
-        $(".wpcd_search_owner_filter#filter-by-wpcd_app_owner").select2({
+        $(".sstk_search_owner_filter#filter-by-sstk_app_owner").select2({
             language: {
                 noResults: function(app_owner_params) {
                     return no_owners_found_msg;
@@ -83,7 +84,7 @@
         });
 
         // Set placeholder for search box.
-        $('.wpcd_search_owner_filter#filter-by-wpcd_server_owner, .wpcd_search_owner_filter#filter-by-wpcd_app_owner').one('select2:open', function(e) {
+        $('.sstk_search_owner_filter#filter-by-sstk_server_owner, .sstk_search_owner_filter#filter-by-sstk_app_owner').one('select2:open', function(e) {
             $('input.select2-search__field').prop('placeholder', search_owner_placeholder);
         });
 

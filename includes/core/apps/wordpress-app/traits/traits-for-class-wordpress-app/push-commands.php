@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains functions related to running commands that
@@ -8,20 +9,20 @@
  * server status notices and more.
  *
  * Used only by the class-wordpress.php file which defines the
- * WPCD_WORDPRESS_APP class.
+ * SSTK_WORDPRESS_APP class.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_wpapp_push_commands
+ * Trait sstk_wpapp_push_commands
  */
-trait wpcd_wpapp_push_commands {
+trait sstk_wpapp_push_commands {
 
 	/**
 	 * Handles server status pushes from bash script #24 - part 1 - server status.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_server_status_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_server_status_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id server post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -42,7 +43,7 @@ trait wpcd_wpapp_push_commands {
 		$apt_already_running_warning = sanitize_text_field( filter_input( INPUT_GET, 'apt_already_running_warning', FILTER_UNSAFE_RAW ) );
 		if ( 'yes' === $apt_already_running_warning ) {
 			// Later we can probably call a new function so we can throw hooks and filters and such but for now, just a warning in the error log will suffice.
-			do_action( 'wpcd_log_error', __( 'An update request was made while another instance of APT was alrady running.  The request was ignored.', 'wpcd' ), 'warning', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', __( 'An update request was made while another instance of APT was alrady running.  The request was ignored.', 'simple-stack' ), 'warning', __FILE__, __LINE__ );
 			return;
 		}
 
@@ -111,13 +112,13 @@ trait wpcd_wpapp_push_commands {
 		$server_status_items['reporting_time_human'] = date( 'Y-m-d H:i:s', time() );
 
 		// Stamp the server record with the array.
-		if ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		if ( 'sstk_app_server' === get_post_type( $id ) ) {
 
 			// update the meta that holds the current data..
-			update_post_meta( $id, 'wpcd_server_status_push', $server_status_items );
+			update_post_meta( $id, 'sstk_server_status_push', $server_status_items );
 
 			// add to history meta as well.
-			$history = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_server_status_push_history', true ) );
+			$history = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_server_status_push_history', true ) );
 			if ( empty( $history ) ) {
 				$history = array();
 			}
@@ -129,56 +130,56 @@ trait wpcd_wpapp_push_commands {
 				$removed = array_shift( $history );
 			}
 
-			update_post_meta( $id, 'wpcd_server_status_push_history', $history );
+			update_post_meta( $id, 'sstk_server_status_push_history', $history );
 
 			// Add a special meta to indicate that the server might need to be restarted.  We'll use this to allow the server list to be filtered to show only servers needing to be restarted.
 			if ( 'yes' === $server_status_items['restart'] ) {
-				update_post_meta( $id, 'wpcd_server_restart_needed', 'yes' );
+				update_post_meta( $id, 'sstk_server_restart_needed', 'yes' );
 			} else {
-				delete_post_meta( $id, 'wpcd_server_restart_needed' );
+				delete_post_meta( $id, 'sstk_server_restart_needed' );
 			}
 
 			// Add a user friendly notification record for certain things...
 			if ( 'yes' === $server_status_items['restart'] ) {
-				do_action( 'wpcd_log_notification', $id, 'alert', __( 'This server needs to be restarted for security updates to take effect.', 'wpcd' ), 'updates', null );
+				do_action( 'sstk_log_notification', $id, 'alert', __( 'This server needs to be restarted for security updates to take effect.', 'simple-stack' ), 'updates', null );
 			}
 			if ( ! in_array( $server_status_items['default_php_version'], array( '7.4', '8.0', '8.1' ) ) ) {
 				/* Translators: %s is the incorrect PHP version. */
-				do_action( 'wpcd_log_notification', $id, 'alert', sprintf( __( 'The default PHP version on this server is incorrect - it should be 7.4, 8.0 or 8.1 but is currently set to %s.', 'wpcd' ), $server_status_items['default_php_version'] ), 'server-config', null );
+				do_action( 'sstk_log_notification', $id, 'alert', sprintf( __( 'The default PHP version on this server is incorrect - it should be 7.4, 8.0 or 8.1 but is currently set to %s.', 'simple-stack' ), $server_status_items['default_php_version'] ), 'server-config', null );
 			}
 			if ( empty( $server_status_items['default_php_version'] ) ) {
 				/* Translators: %s is the incorrect PHP version. */
-				do_action( 'wpcd_log_notification', $id, 'notice', __( 'The default PHP version on this server is being reported as an empty string - it is likely that you need to update the callbacks on it.', 'wpcd' ), 'server-config', null );
+				do_action( 'sstk_log_notification', $id, 'notice', __( 'The default PHP version on this server is being reported as an empty string - it is likely that you need to update the callbacks on it.', 'simple-stack' ), 'server-config', null );
 			}
 
-			$disk_space_limit_alert = (int) wpcd_get_option( 'wordpress_app_low_diskspace_notification_threshold' );
+			$disk_space_limit_alert = (int) sstk_get_option( 'wordpress_app_low_diskspace_notification_threshold' );
 			$disk_space_limit_alert = empty( $disk_space_limit_alert ) ? 15 : $disk_space_limit_alert;
 			if ( (int) $server_status_items['free_disk_space_percent'] < $disk_space_limit_alert ) {
 				/* Translators: %s is the incorrect PHP version. */
-				do_action( 'wpcd_log_notification', $id, 'alert', __( 'You are almost out of disk space on this server.', 'wpcd' ), 'disk-space', null );
+				do_action( 'sstk_log_notification', $id, 'alert', __( 'You are almost out of disk space on this server.', 'simple-stack' ), 'disk-space', null );
 			}
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $server_status_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $server_status_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $server_status_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $server_status_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $server_status_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $server_status_items, $id );
 
 	}
 
 	/**
 	 * Handles server status pushes from bash script #24 - part 2 - sites status.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_sites_status_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_sites_status_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id server post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -224,7 +225,7 @@ trait wpcd_wpapp_push_commands {
 		$app_id = $this->get_app_id_by_server_id_and_domain( $id, $sites_status_items['domain'] );
 
 		// Stamp the site/app record with the array.
-		if ( 'wpcd_app' === get_post_type( $app_id ) ) {
+		if ( 'sstk_app' === get_post_type( $app_id ) ) {
 
 			// update wp version meta.
 			if ( ! empty( $sites_status_items['wp_version'] ) ) {
@@ -239,10 +240,10 @@ trait wpcd_wpapp_push_commands {
 			}
 
 			// update the meta that holds the current data..
-			update_post_meta( $app_id, 'wpcd_site_status_push', $sites_status_items );
+			update_post_meta( $app_id, 'sstk_site_status_push', $sites_status_items );
 
 			// add to history meta as well.
-			$history = wpcd_maybe_unserialize( get_post_meta( $app_id, 'wpcd_site_status_push_history', true ) );
+			$history = sstk_maybe_unserialize( get_post_meta( $app_id, 'sstk_site_status_push_history', true ) );
 			if ( empty( $history ) ) {
 				$history = array();
 			}
@@ -254,7 +255,7 @@ trait wpcd_wpapp_push_commands {
 				$removed = array_shift( $history );
 			}
 
-			update_post_meta( $app_id, 'wpcd_site_status_push_history', $history );
+			update_post_meta( $app_id, 'sstk_site_status_push_history', $history );
 
 			// Set the flag to yes if site needs any of the updates.
 			$update_needed = 'no';
@@ -263,38 +264,35 @@ trait wpcd_wpapp_push_commands {
 			if ( $sites_status_items['plugin_updates_count'] > 0 ) {
 				$update_needed = 'yes';
 				/* translators: %s is replaced with the number of plugin updates pending for the site. */
-				do_action( 'wpcd_log_notification', $app_id, 'alert', sprintf( __( 'This site has %s plugin updates pending.', 'wpcd' ), $sites_status_items['plugin_updates_count'] ), 'site-updates', null );
+				do_action( 'sstk_log_notification', $app_id, 'alert', sprintf( __( 'This site has %s plugin updates pending.', 'simple-stack' ), $sites_status_items['plugin_updates_count'] ), 'site-updates', null );
 			}
 			if ( $sites_status_items['theme_updates_count'] > 0 ) {
 				$update_needed = 'yes';
 				/* translators: %s is replaced with the number of theme updates pending for the site. */
-				do_action( 'wpcd_log_notification', $app_id, 'alert', sprintf( __( 'This site has %s theme updates pending.', 'wpcd' ), $sites_status_items['theme_updates_count'] ), 'site-updates', null );
+				do_action( 'sstk_log_notification', $app_id, 'alert', sprintf( __( 'This site has %s theme updates pending.', 'simple-stack' ), $sites_status_items['theme_updates_count'] ), 'site-updates', null );
 			}
 			if ( 'yes' === $sites_status_items['wp_update_needed'] ) {
 				$update_needed = 'yes';
-				do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site has a core WordPress update pending.', 'wpcd' ), 'site-updates', null );
+				do_action( 'sstk_log_notification', $app_id, 'alert', __( 'This site has a core WordPress update pending.', 'simple-stack' ), 'site-updates', null );
 			}
 
 			// update the meta that holds the sites needs update check.
-			update_post_meta( $app_id, 'wpcd_site_needs_updates', $update_needed );
-
-			// Check disk quotas for site.
-			$this->check_site_disk_quotas( $app_id );
+			update_post_meta( $app_id, 'sstk_site_needs_updates', $update_needed );
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $sites_status_items, $app_id, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $sites_status_items, $app_id, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $sites_status_items, $app_id, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $sites_status_items, $app_id, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $sites_status_items, $app_id, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $sites_status_items, $app_id, $id );
 
 	}
 
@@ -304,10 +302,10 @@ trait wpcd_wpapp_push_commands {
 	 * ************************************************************************************************************
 	 * Note that this function is accepting 6 params instead of 4 like the others.
 	 * This is because as of v5.7, the rest api endpoint function is calling the action with the new 5th parameter.
-	 * See /includes/core/apps/class-wpcd-app.php, function perform_command around line 935 or so.
+	 * See /includes/core/apps/class-sstk-app.php, function perform_command around line 935 or so.
 	 * *************************************************************************************************************
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_posttypes_status_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_posttypes_status_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int          $id server post id.
 	 * @param int          $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -349,13 +347,13 @@ trait wpcd_wpapp_push_commands {
 		$app_id = $this->get_app_id_by_server_id_and_domain( $id, $domain );
 
 		// Stamp the site/app record with the array.
-		if ( 'wpcd_app' === get_post_type( $app_id ) ) {
+		if ( 'sstk_app' === get_post_type( $app_id ) ) {
 
 			// update the meta that holds the current data..
-			update_post_meta( $app_id, 'wpcd_site_posttypes_push', $posttypes_items );
+			update_post_meta( $app_id, 'sstk_site_posttypes_push', $posttypes_items );
 
 			// add to history meta as well.
-			$history = wpcd_maybe_unserialize( get_post_meta( $app_id, 'wpcd_site_posttypes_push_history', true ) );
+			$history = sstk_maybe_unserialize( get_post_meta( $app_id, 'sstk_site_posttypes_push_history', true ) );
 			if ( empty( $history ) ) {
 				$history = array();
 			}
@@ -367,34 +365,29 @@ trait wpcd_wpapp_push_commands {
 				$removed = array_shift( $history );
 			}
 
-			update_post_meta( $app_id, 'wpcd_site_posttypes_push_history', $history );
-
-			// Check site quotas.
-			if ( boolval( wpcd_get_option( 'wordpress_app_sites_enable_quota' ) ) ) {
-				WPCD_POSTS_QUOTA_LIMITS()->create_pending_log_quota_limit_actions_for_site( $app_id );
-			}
+			update_post_meta( $app_id, 'sstk_site_posttypes_push_history', $history );
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $posttypes_items, $app_id, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $posttypes_items, $app_id, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $posttypes_items, $app_id, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $posttypes_items, $app_id, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $posttypes_items, $app_id, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $posttypes_items, $app_id, $id );
 
 	}
 
 	/**
 	 * Handles server status pushes from bash script #24 - aptget status.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_aptget_status_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_aptget_status_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id server post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -425,13 +418,13 @@ trait wpcd_wpapp_push_commands {
 		$aptget_status_items['reporting_time_human'] = date( 'Y-m-d H:i:s', time() );
 
 		// Stamp the server record with the array.
-		if ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		if ( 'sstk_app_server' === get_post_type( $id ) ) {
 
 			// update the meta that holds the current data..
-			update_post_meta( $id, 'wpcd_server_aptget_status_push', $aptget_status_items );
+			update_post_meta( $id, 'sstk_server_aptget_status_push', $aptget_status_items );
 
 			// add to history meta as well.
-			$history = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_server_aptget_status_push_history', true ) );
+			$history = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_server_aptget_status_push_history', true ) );
 			if ( empty( $history ) ) {
 				$history = array();
 			}
@@ -443,93 +436,37 @@ trait wpcd_wpapp_push_commands {
 				$removed = array_shift( $history );
 			}
 
-			update_post_meta( $id, 'wpcd_server_aptget_status_push_history', $history );
+			update_post_meta( $id, 'sstk_server_aptget_status_push_history', $history );
 
 			// Now, set transient with server id that tags this server as having aptget running.
 			// Transient should expire after 3 minutes.
 			if ( 'running' === $aptget_status_items['aptget_status'] ) {
-				$transient_name = $id . 'wpcd_server_aptget_status';
+				$transient_name = 'sstk_server_aptget_status_' . $id;
 				set_transient( $transient_name, 'running', 180 );
 			}
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $aptget_status_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $aptget_status_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $aptget_status_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $aptget_status_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $aptget_status_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $aptget_status_items, $id );
 
 	}
 
-
-	/**
-	 * Checks the limits defined for the site against the newly received data.
-	 *
-	 * Currently only checks disk space limits since that is all that we can do right now.
-	 * There's no way to measure bandwidth or cpu usage.
-	 *
-	 * @param int $app_id The post id of the app we're working with.
-	 *
-	 * @return void.
-	 */
-	public function check_site_disk_quotas( $app_id ) {
-
-		// How much diskspace is allowed?
-		$disk_space_quota = $this->get_site_disk_quota( $app_id );
-
-		// How much disk space was used?
-		$used_disk = $this->get_total_disk_used( $app_id );
-
-		// if disk limit is exceeded add notification and maybe disable and lock site.
-		if ( $used_disk > $disk_space_quota && $disk_space_quota > 0 ) {
-			/* translators: %1$d is replaced with the quota for the disk space. %2$d is replaced with the amount of diskspace used on the site. */
-			do_action( 'wpcd_log_notification', $app_id, 'alert', sprintf( __( 'This site has exceeded its disk quota: Allowed quota: %1$d MB, Currently used: %2$d MB.', 'wpcd' ), $disk_space_quota, $used_disk ), 'quotas', null );
-
-			// Maybe disable the site. But only do it if the site has not already in that state.
-			if ( boolval( wpcd_get_option( 'wordpress_app_sites_disk_quota_disable_site' ) ) ) {
-				if ( 'on' === $this->site_status( $app_id ) ) {
-					do_action( 'wpcd_wordpress-app_do_toggle_site_status', $app_id, 'site-status', 'off' );
-					do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site is being disabled because the disk quota has been exceeded.', 'wpcd' ), 'quotas', null );
-				}
-			}
-
-			// Maybe apply http authentication to the site. But only do it if the site is enabled - this way we don't try to apply config settings to a file that might not exist.
-			if ( boolval( wpcd_get_option( 'wordpress_app_sites_disk_quota_enable_http_auth' ) ) ) {
-				if ( 'on' === $this->site_status( $app_id ) ) {
-					do_action( 'wpcd_wordpress-app_do_site_enable_http_auth', $app_id );
-					do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site is being password protected because the disk quota has been exceeded.', 'wpcd' ), 'quotas', null );
-				}
-			}
-
-			// Maybe apply an admin lock to the site. But only do it if the site has not already in that state.
-			if ( boolval( wpcd_get_option( 'wordpress_app_sites_disk_quota_admin_lock_site' ) ) ) {
-				if ( ! $this->get_admin_lock_status( $app_id ) ) {
-					WPCD_WORDPRESS_APP()->set_admin_lock_status( $app_id, 'on' );
-					do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site has had its admin lock applied because the disk quota has been exceeded.', 'wpcd' ), 'quotas', null );
-				}
-			}
-
-			// Maybe expire the site.
-			if ( (int) wpcd_get_option( 'wordpress_app_sites_disk_quota_expire_site' ) > 0 ) {
-				WPCD_APP_EXPIRATION()->set_expiration( $app_id, (int) wpcd_get_option( 'wordpress_app_sites_disk_quota_expire_site' ) );
-				do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site has had expiration date set because the disk quota has been exceeded.', 'wpcd' ), 'quotas', null );
-			}
-		}
-
-	}
 
 	/**
 	 * Handles the results of the callback when a malware scan completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_maldet_scan_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_maldet_scan_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id server post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -559,13 +496,13 @@ trait wpcd_wpapp_push_commands {
 		$maldet_scan_items['reporting_time_human'] = date( 'Y-m-d H:i:s', time() );
 
 		// Stamp the server record with the array.
-		if ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		if ( 'sstk_app_server' === get_post_type( $id ) ) {
 
 			// update the meta that holds the current data..
-			update_post_meta( $id, 'wpcd_maldet_scan_push', $maldet_scan_items );
+			update_post_meta( $id, 'sstk_maldet_scan_push', $maldet_scan_items );
 
 			// add to history meta as well.
-			$history = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_maldet_scan_push_history', true ) );
+			$history = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_maldet_scan_push_history', true ) );
 
 			if ( count( $history ) >= 10 ) {
 				// take the last element off to prevent history from getting too big.
@@ -576,36 +513,36 @@ trait wpcd_wpapp_push_commands {
 				$history = array();
 			}
 			$history[ ' ' . (string) time() ] = $maldet_scan_items; // we have to force the time element to be a string by putting a space in front of it otherwise manipulating the array as a key-value pair is a big problem if we want to purge just part of the array later.
-			update_post_meta( $id, 'wpcd_maldet_scan_push_history', $history );
+			update_post_meta( $id, 'sstk_maldet_scan_push_history', $history );
 
 			// Add a user friendly notification record.
 			if ( (int) $maldet_scan_items['total_hits'] > 0 ) {
-				do_action( 'wpcd_log_notification', $id, 'alert', __( 'Last malware scan detected one or more malicious items.', 'wpcd' ), 'malware', null );
+				do_action( 'sstk_log_notification', $id, 'alert', __( 'Last malware scan detected one or more malicious items.', 'simple-stack' ), 'malware', null );
 			} else {
-				do_action( 'wpcd_log_notification', $id, 'notice', __( 'Last malware scan detected no malicious items.', 'wpcd' ), 'malware', null );
+				do_action( 'sstk_log_notification', $id, 'notice', __( 'Last malware scan detected no malicious items.', 'simple-stack' ), 'malware', null );
 			}
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $maldet_scan_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $maldet_scan_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $maldet_scan_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $maldet_scan_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $maldet_scan_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $maldet_scan_items, $id );
 
 	}
 
 	/**
 	 * Handles the results of the callback when a server starts up or shutsdown gracefully
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_server_restart_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_server_restart_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id server post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -632,57 +569,57 @@ trait wpcd_wpapp_push_commands {
 		$server_restart_items['reporting_time'] = time();
 
 		// Stamp the server record with the array.
-		if ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		if ( 'sstk_app_server' === get_post_type( $id ) ) {
 
 			// Get server instance details that the action history function needs.
 			$instance_attributes = $this->get_server_instance_details( $id );
 
-			WPCD_SERVER()->add_action_to_history( $server_restart_items['event'], $instance_attributes );
+			SSTK_SERVER()->add_action_to_history( $server_restart_items['event'], $instance_attributes );
 
 			// Stamp the server remote status meta based on whether we're starting up or shutting down.
 			if ( 'shutting_down' === $server_restart_items['event'] ) {
-				update_post_meta( $id, 'wpcd_server_current_state', 'off' );  // @TODO: 'off' should be a constant from the main PROVIDER ancestor class.
+				update_post_meta( $id, 'sstk_server_current_state', 'off' );  // @TODO: 'off' should be a constant from the main PROVIDER ancestor class.
 
 				// Add a user friendly notification record.
-				do_action( 'wpcd_log_notification', $id, 'warning', __( 'The server is shutting down.', 'wpcd' ), 'power', null );
+				do_action( 'sstk_log_notification', $id, 'warning', __( 'The server is shutting down.', 'simple-stack' ), 'power', null );
 			}
 			if ( 'started_up' === $server_restart_items['event'] ) {
-				update_post_meta( $id, 'wpcd_server_current_state', 'active' );  // @TODO: 'active' should be a constant from the main PROVIDER ancestor class.
+				update_post_meta( $id, 'sstk_server_current_state', 'active' );  // @TODO: 'active' should be a constant from the main PROVIDER ancestor class.
 
 				// Add a user friendly notification record.
-				do_action( 'wpcd_log_notification', $id, 'warning', __( 'The server started up.', 'wpcd' ), 'power', null );
+				do_action( 'sstk_log_notification', $id, 'warning', __( 'The server started up.', 'simple-stack' ), 'power', null );
 
 				// Update some meta item that indicates if a power restart is needed.
-				$server_status_items = get_post_meta( $id, 'wpcd_server_status_push', true );
+				$server_status_items = get_post_meta( $id, 'sstk_server_status_push', true );
 				if ( ! empty( $server_status_items ) ) {
 					if ( isset( $server_status_items['restart'] ) ) {
 						$server_status_items['restart'] = 'no';
-						update_post_meta( $id, 'wpcd_server_status_push', $server_status_items );
+						update_post_meta( $id, 'sstk_server_status_push', $server_status_items );
 					}
 				}
 			}
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $server_restart_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $server_restart_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $server_restart_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $server_restart_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $server_restart_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $server_restart_items, $id );
 
 	}
 
 	/**
 	 * Handles the results of the callback when a monit triggers
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_monit_log_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_monit_log_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id server post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -710,13 +647,13 @@ trait wpcd_wpapp_push_commands {
 		$monit_log_items['reporting_time_human'] = date( 'Y-m-d H:i:s', time() );
 
 		// Stamp the server record with the array.
-		if ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		if ( 'sstk_app_server' === get_post_type( $id ) ) {
 
 			// update the meta that holds the current data..
-			update_post_meta( $id, 'wpcd_monit_log_push', $monit_log_items );
+			update_post_meta( $id, 'sstk_monit_log_push', $monit_log_items );
 
 			// add to history meta as well.
-			$history = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_monit_log_push_history', true ) );
+			$history = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_monit_log_push_history', true ) );
 
 			if ( empty( $history ) ) {
 				$history = array();
@@ -728,32 +665,32 @@ trait wpcd_wpapp_push_commands {
 			}
 
 			$history[ ' ' . (string) time() ] = $monit_log_items; // we have to force the time element to be a string by putting a space in front of it otherwise manipulating the array as a key-value pair is a big problem if we want to purge just part of the array later.
-			update_post_meta( $id, 'wpcd_monit_log_push_history', $history );
+			update_post_meta( $id, 'sstk_monit_log_push_history', $history );
 
 			// Add a user friendly notification record.
-			do_action( 'wpcd_log_notification', $id, 'notice', $monit_log_items['monit_status'], 'monit', null );
+			do_action( 'sstk_log_notification', $id, 'notice', $monit_log_items['monit_status'], 'monit', null );
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $monit_log_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $monit_log_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server that does not exist - received server id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $monit_log_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $monit_log_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $monit_log_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $monit_log_items, $id );
 
 	}
 
 	/**
 	 * Handles the results of the callback when a backup for a domain has started
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_start_domain_backup_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_start_domain_backup_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id app post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -789,29 +726,29 @@ trait wpcd_wpapp_push_commands {
 		if ( ! empty( $backup_items['domain'] ) ) {
 
 			// Add a user friendly notification record.
-			do_action( 'wpcd_log_notification', $id, 'notice', sprintf( __( 'An attempt to backup domain %s has started.', 'wpcd' ), $backup_items['domain'] ), 'backup', null );
+			do_action( 'sstk_log_notification', $id, 'notice', sprintf( __( 'An attempt to backup domain %s has started.', 'simple-stack' ), $backup_items['domain'] ), 'backup', null );
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $backup_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $backup_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $backup_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $backup_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $backup_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $backup_items, $id );
 
 	}
 
 	/**
 	 * Handles the results of the callback when a backup for a domain has ended
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_end_domain_backup_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_end_domain_backup_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id app post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -847,29 +784,29 @@ trait wpcd_wpapp_push_commands {
 		if ( ! empty( $backup_items['domain'] ) ) {
 
 			// Add a user friendly notification record.
-			do_action( 'wpcd_log_notification', $id, 'notice', sprintf( __( 'The attempt to backup domain %s has ended.', 'wpcd' ), $backup_items['domain'] ), 'backup', null );
+			do_action( 'sstk_log_notification', $id, 'notice', sprintf( __( 'The attempt to backup domain %s has ended.', 'simple-stack' ), $backup_items['domain'] ), 'backup', null );
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $backup_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $backup_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $backup_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $backup_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $backup_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $backup_items, $id );
 
 	}
 
 	/**
 	 * Handles the results of the callback when a backup for server configuration has started or ended.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_server_config_backup_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_server_config_backup_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id app post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -895,46 +832,46 @@ trait wpcd_wpapp_push_commands {
 		// Add the time reported to the array.
 		$backup_items['reporting_time'] = time();
 
-		if ( 'wpcd_app_server' === get_post_type( $id ) && in_array( $backup_items['backup'], array( 'started', 'successful', 'failed' ) ) ) {
+		if ( 'sstk_app_server' === get_post_type( $id ) && in_array( $backup_items['backup'], array( 'started', 'successful', 'failed' ) ) ) {
 
 			// Add a user friendly notification record.
 			switch ( $backup_items['backup'] ) {
 
 				case 'started':
-					do_action( 'wpcd_log_notification', $id, 'notice', __( 'Configuration backup has started.', 'wpcd' ), 'backup-config', null );
+					do_action( 'sstk_log_notification', $id, 'notice', __( 'Configuration backup has started.', 'simple-stack' ), 'backup-config', null );
 					break;
 
 				case 'successful':
-					do_action( 'wpcd_log_notification', $id, 'notice', __( 'Configuration backup has completed successfully.', 'wpcd' ), 'backup-config', null );
+					do_action( 'sstk_log_notification', $id, 'notice', __( 'Configuration backup has completed successfully.', 'simple-stack' ), 'backup-config', null );
 					break;
 
 				case 'failed':
-					do_action( 'wpcd_log_notification', $id, 'error', __( 'Configuration backup has failed.', 'wpcd' ), 'backup-config', null );
+					do_action( 'sstk_log_notification', $id, 'error', __( 'Configuration backup has failed.', 'simple-stack' ), 'backup-config', null );
 					break;
 
 			}
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $backup_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $backup_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $backup_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $backup_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $backup_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $backup_items, $id );
 
 	}
 
 	/**
 	 * Handles the results of the callback when a scheduled site sync has started or ended.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_schedule_site_sync_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_schedule_site_sync_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id app post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -960,108 +897,46 @@ trait wpcd_wpapp_push_commands {
 		// Add the time reported to the array.
 		$sync_items['reporting_time'] = time();
 
-		if ( 'wpcd_app' === get_post_type( $id ) && in_array( $sync_items['status'], array( 'start', 'end', 'failed' ) ) ) {
+		if ( 'sstk_app' === get_post_type( $id ) && in_array( $sync_items['status'], array( 'start', 'end', 'failed' ) ) ) {
 
 			// Add a user friendly notification record.
 			switch ( $sync_items['status'] ) {
 
 				case 'start':
-					do_action( 'wpcd_log_notification', $id, 'notice', __( 'A sitesync has started.', 'wpcd' ), 'site-sync', null );
+					do_action( 'sstk_log_notification', $id, 'notice', __( 'A sitesync has started.', 'simple-stack' ), 'site-sync', null );
 					break;
 
 				case 'end':
-					do_action( 'wpcd_log_notification', $id, 'notice', __( 'A sitesync has ended.', 'wpcd' ), 'site-sync', null );
+					do_action( 'sstk_log_notification', $id, 'notice', __( 'A sitesync has ended.', 'simple-stack' ), 'site-sync', null );
 					break;
 
 				case 'failed':
-					do_action( 'wpcd_log_notification', $id, 'error', __( 'A sitesync has failed.', 'wpcd' ), 'site-sync', null );
+					do_action( 'sstk_log_notification', $id, 'error', __( 'A sitesync has failed.', 'simple-stack' ), 'site-sync', null );
 					break;
 
 			}
 
 			// Let other plugins react to the new good data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $sync_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $sync_items, $id );
 
 		} else {
 
-			do_action( 'wpcd_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
 
 			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $sync_items, $id );
+			do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $sync_items, $id );
 
 		}
 
 		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $sync_items, $id );
-
-	}
-
-	/**
-	 * Handles the results of the callback when logtivity has been installed on a site.
-	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_install_logtivity_status_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
-	 *
-	 * @param int    $id app post id.
-	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
-	 * @param string $name name.
-	 * @param string $status status.
-	 *
-	 * @return void.
-	 */
-	public function push_command_install_logtivity_completed( $id, $command_id, $name, $status ) {
-
-		// Set variable to status, in this case it is always "completed" - will be used in action hooks later.
-		$status = 'completed';
-
-		// set variable to name, in this case it is always "install_logtivity_status" - will be used in action hooks later.
-		$name = 'install_logtivity_status';
-
-		// Create an array to hold items taken from the $_request object.
-		$logtivity_items = array();
-
-		// Get domain from request object...
-		$logtivity_items['api_key'] = wp_kses( filter_input( INPUT_GET, 'logtivity_api_key', FILTER_UNSAFE_RAW ), array(), array() );
-
-		if ( 'wpcd_app' === get_post_type( $id ) ) {
-
-			// We should only update the API key if we were expecting it - the function that triggered the plugin to be activated and licensed should have set this flag.
-			if ( true === WPCD_WORDPRESS_APP_LOGTIVITY()->get_waiting_status( $id ) ) {
-
-				// Update post record with the api key.
-				WPCD_WORDPRESS_APP_LOGTIVITY()->set_api_key( $id, $logtivity_items['api_key'] );
-
-				// Make sure we clear the waiting status...
-				WPCD_WORDPRESS_APP_LOGTIVITY()->set_waiting_status( $id, false );
-
-				do_action( 'wpcd_log_notification', $id, 'notice', __( 'A logtivity API Key was received.', 'wpcd' ), 'misc', null );
-
-				// Let other plugins react to the new good data with an action hook.
-				do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_good", $logtivity_items, $id );
-			} else {
-				do_action( 'wpcd_log_error', 'Data received for logtivity install but we are not expecting one. ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
-
-				// Let other plugins react to the new bad data with an action hook.
-				do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $logtivity_items, $id );
-
-			}
-		} else {
-
-			do_action( 'wpcd_log_error', 'Data received for server or app that does not exist - received server or app id ' . (string) $id . '<br /> The first 5000 characters of the received data is shown below after being sanitized with WP_KSES:<br /> ' . substr( wp_kses( print_r( $_REQUEST, true ), array() ), 0, 5000 ), 'security', __FILE__, __LINE__ );
-
-			// Let other plugins react to the new bad data with an action hook.
-			do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed_bad", $logtivity_items, $id );
-
-		}
-
-		// Let other plugins react to the new data (regardless of it's good or bad) with an action hook.
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}_processed", $logtivity_items, $id );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}_processed", $sync_items, $id );
 
 	}
 
 	/**
 	 * Handles the results of the a test rest api call.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_command_test_rest_api_completed || wpcd_{$this->get_app_name()}_command_{$name}_{$status}
+	 * Action Hook: sstk_command_{$this->get_app_name()}_command_test_rest_api_completed || sstk_{$this->get_app_name()}_command_{$name}_{$status}
 	 *
 	 * @param int    $id app post id.
 	 * @param int    $command_id an id that is given to the bash script at the time it's first run. Doesn't do anything for us in this context so it's not used here.
@@ -1072,7 +947,7 @@ trait wpcd_wpapp_push_commands {
 	 */
 	public function push_command_test_rest_api_completed( $id, $command_id, $name, $status ) {
 
-		do_action( 'wpcd_log_notification', $id, 'notice', __( 'The test rest api call has succeeded.', 'wpcd' ), 'misc', null );
+		do_action( 'sstk_log_notification', $id, 'notice', __( 'The test rest api call has succeeded.', 'simple-stack' ), 'misc', null );
 
 	}
 

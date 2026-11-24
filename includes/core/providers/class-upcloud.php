@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * UpCloud provider (API 1.3).
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,11 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Implements the CLOUD_PROVIDER_API contract against the UpCloud 1.3 REST API.
  *
- * Differences from DigitalOcean and Vultr that shape everything in this file:
+ * Differences from Vultr that shape everything in this file:
  *
  * - Authentication is HTTP Basic using an account user name and password, not a
- *   bearer token.  The settings screen therefore stores `vpn_upcloud_user_name` and
- *   `vpn_upcloud_user_password` instead of an api key, and both are encrypted at
+ *   bearer token.  The settings screen therefore stores `sstk_upcloud_user_name` and
+ *   `sstk_upcloud_user_password` instead of an api key, and both are encrypted at
  *   rest.  uses_api_key() answers false so the settings screen stops looking for an
  *   api key that will never exist.
  * - The password travels inside the Authorization header on every request.  Nothing
@@ -65,7 +66,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	 * CLOUD_PROVIDER_API_Upcloud constructor.
 	 *
 	 * @param array $args Optional overrides, used when this class is instantiated for a
-	 *                    virtual provider defined in the wpcd_cloud_provider post type.
+	 *                    virtual provider defined in the sstk_cloud_provider post type.
 	 */
 	public function __construct( $args = array() ) {
 
@@ -75,7 +76,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		$this->set_provider( 'UpCloud' );
 		$this->set_provider_slug( 'upcloud' );
 
-		/* Set baseline provider name and slug - these stay put even on custom servers. */
+		/* Set the underlying provider type name and slug for virtual provider aliases. */
 		$this->set_base_provider_name( 'UpCloud' );
 		$this->set_base_provider_slug( 'upcloud' );
 
@@ -116,14 +117,14 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 
 		/* Pull the credentials from settings - both are stored encrypted. */
 		$slug                = $this->get_provider_slug();
-		$this->user_name     = WPCD()->decrypt( wpcd_get_early_option( 'vpn_' . $slug . '_user_name' ) );
-		$this->user_password = WPCD()->decrypt( wpcd_get_early_option( 'vpn_' . $slug . '_user_password' ) );
+		$this->user_name     = SSTK()->decrypt( sstk_get_early_option( 'sstk_' . $slug . '_user_name' ) );
+		$this->user_password = SSTK()->decrypt( sstk_get_early_option( 'sstk_' . $slug . '_user_password' ) );
 
 		/* Add the link to the UpCloud dashboard next to the credential fields. */
-		add_filter( "wpcd_cloud_provider_settings_api_key_label_desc_{$slug}", array( $this, 'set_link_to_provider_dashboard' ) );
+		add_filter( "sstk_cloud_provider_settings_api_key_label_desc_{$slug}", array( $this, 'set_link_to_provider_dashboard' ) );
 
 		/* UpCloud adds its own credential fields to the settings screen. */
-		add_filter( "wpcd_cloud_provider_settings_{$slug}", array( $this, 'settings' ), 10, 2 );
+		add_filter( "sstk_cloud_provider_settings_{$slug}", array( $this, 'settings' ), 10, 2 );
 
 	}
 
@@ -205,7 +206,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	 *
 	 * UpCloud installs SSH keys from the create payload rather than from a key
 	 * registry, so what matters here is that a public key exists to send and a private
-	 * key exists for WPCD to connect with.  `vpn_upcloud_sshkey_id` is only a local
+	 * key exists for SSTK to connect with.  `sstk_upcloud_sshkey_id` is only a local
 	 * bookkeeping marker and is deliberately not part of this test.
 	 *
 	 * @return bool
@@ -218,11 +219,11 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 
 		$slug = $this->get_provider_slug();
 
-		if ( empty( wpcd_get_early_option( 'vpn_' . $slug . '_public_sshkey' ) ) ) {
+		if ( empty( sstk_get_early_option( 'sstk_' . $slug . '_public_sshkey' ) ) ) {
 			return false;
 		}
 
-		if ( empty( wpcd_get_early_option( 'vpn_' . $slug . '_sshkey' ) ) ) {
+		if ( empty( sstk_get_early_option( 'sstk_' . $slug . '_sshkey' ) ) ) {
 			return false;
 		}
 
@@ -233,7 +234,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	/**
 	 * Add the UpCloud account credential fields to the settings screen.
 	 *
-	 * Filter hook: wpcd_cloud_provider_settings_upcloud
+	 * Filter hook: sstk_cloud_provider_settings_upcloud
 	 *
 	 * The api key and notes fields are removed rather than relabelled.  A visible field
 	 * that nothing reads is an invitation to paste the account password into it, where
@@ -253,28 +254,28 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 
 		$fields = array(
 			array(
-				'id'   => "vpn_{$provider}_user_name",
+				'id'   => "sstk_{$provider}_user_name",
 				'type' => 'text',
-				'name' => __( 'Account User Name', 'wpcd' ),
+				'name' => __( 'Account User Name', 'simple-stack' ),
 				'size' => '60',
-				'desc' => __( 'UpCloud authenticates with the user name and password of your UpCloud account, or of an API-only sub-account, instead of an api key. Both values are encrypted before they are stored. Use a sub-account with API access so that the root account credentials never sit on this site.', 'wpcd' ),
+				'desc' => __( 'UpCloud authenticates with the user name and password of your UpCloud account, or of an API-only sub-account, instead of an api key. Both values are encrypted before they are stored. Use a sub-account with API access so that the root account credentials never sit on this site.', 'simple-stack' ),
 				'tab'  => $tab_id,
 			),
 			array(
-				'id'         => "vpn_{$provider}_user_password",
+				'id'         => "sstk_{$provider}_user_password",
 				'type'       => 'text',
-				'name'       => __( 'Account Password', 'wpcd' ),
+				'name'       => __( 'Account Password', 'simple-stack' ),
 				'size'       => '60',
-				'class'      => 'wpcd_settings_pass_toggle',
+				'class'      => 'sstk_settings_pass_toggle',
 				'attributes' => array(
 					'spellcheck' => 'false',
 				),
-				'desc'       => __( 'It is encrypted before being stored in the database and is only ever sent to api.upcloud.com.', 'wpcd' ),
+				'desc'       => __( 'It is encrypted before being stored in the database and is only ever sent to api.upcloud.com.', 'simple-stack' ),
 				'tab'        => $tab_id,
 			),
 		);
 
-		$removed = array( "vpn_{$provider}_apikey", "vpn_{$provider}_keynotes" );
+		$removed = array( "sstk_{$provider}_apikey", "sstk_{$provider}_keynotes" );
 
 		$kept = array();
 		foreach ( $provider_fields as $field ) {
@@ -297,10 +298,10 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	 * Recognised attributes:
 	 *  [id] / [provider_instance_id] - the UpCloud server uuid.
 	 *  [region]                      - zone id, eg: fi-hel1.
-	 *  [size]                        - WPCD size key; mapped through settings.
+	 *  [size]                        - SSTK size key; mapped through settings.
 	 *  [size_raw]                    - UpCloud plan name, eg: 2xCPU-4GB.
 	 *  [name]                        - title and hostname of the new server.
-	 *  [initial_os]                  - WPCD OS key, eg: ubuntu2404lts.
+	 *  [initial_os]                  - SSTK OS key, eg: ubuntu2404lts.
 	 *  [post_id]                     - server post id; used to read the pending action.
 	 *  [new_size]                    - UpCloud plan name for a resize.
 	 *  [public_key] / [public_key_name] - key material for ssh_create.
@@ -331,7 +332,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		$needs_id = array( 'details', 'status', 'reboot', 'off', 'on', 'delete', 'resize' );
 
 		if ( in_array( $method, $needs_id, true ) && '' === $id ) {
-			return new WP_Error( 'upcloud-missing-id', __( 'A provider instance id is required for this operation.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-missing-id', __( 'A provider instance id is required for this operation.', 'simple-stack' ) );
 		}
 
 		switch ( $method ) {
@@ -364,9 +365,9 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 			case 'list_snapshots':
 			case 'list_all_snapshots':
 			case 'pending_snapshot_status':
-				return new WP_Error( 'not-supported', __( 'UpCloud does not expose snapshots through this control panel. Use the UpCloud control panel to manage server backups.', 'wpcd' ) );
+				return new WP_Error( 'not-supported', __( 'UpCloud does not expose snapshots through this control panel. Use the UpCloud control panel to manage server backups.', 'simple-stack' ) );
 			default:
-				return new WP_Error( 'not-supported', __( 'This operation is not supported by the UpCloud provider.', 'wpcd' ) );
+				return new WP_Error( 'not-supported', __( 'This operation is not supported by the UpCloud provider.', 'simple-stack' ) );
 		}
 
 	}
@@ -439,7 +440,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 			$storage_tier = isset( $plan->storage_tier ) ? (string) $plan->storage_tier : '';
 
 			/* translators: %1$s is the UpCloud plan name; the remaining replacements describe the plan. */
-			$return[ $plan->name ] = sprintf( __( '%1$s (%2$d CPUs, %3$d MB RAM, %4$d GB %5$s, %6$d GB traffic/month)', 'wpcd' ), $plan->name, $cores, $memory, $storage, $storage_tier, $traffic );
+			$return[ $plan->name ] = sprintf( __( '%1$s (%2$d CPUs, %3$d MB RAM, %4$d GB %5$s, %6$d GB traffic/month)', 'simple-stack' ), $plan->name, $cores, $memory, $storage, $storage_tier, $traffic );
 		}
 
 		ksort( $return );
@@ -492,24 +493,24 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 
 		$zone = isset( $attributes['region'] ) ? trim( (string) $attributes['region'] ) : '';
 		if ( '' === $zone ) {
-			return new WP_Error( 'upcloud-missing-region', __( 'A zone is required to create an UpCloud server.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-missing-region', __( 'A zone is required to create an UpCloud server.', 'simple-stack' ) );
 		}
 
 		$provider = $this->get_provider_slug();
 
 		/*
-		 * WPCD maps a size key (small, medium, ...) onto the provider's own plan name in
+		 * SSTK maps a size key (small, medium, ...) onto the provider's own plan name in
 		 * settings so that products can be re-pointed without touching this class.
 		 */
 		$plan = '';
 		if ( ! empty( $attributes['size'] ) ) {
-			$plan = (string) wpcd_get_option( 'vpn_' . $provider . '_' . $attributes['size'] );
+			$plan = (string) sstk_get_option( 'sstk_' . $provider . '_' . $attributes['size'] );
 		}
 		if ( empty( $plan ) && ! empty( $attributes['size_raw'] ) ) {
 			$plan = trim( (string) $attributes['size_raw'] );
 		}
 		if ( '' === $plan ) {
-			return new WP_Error( 'upcloud-missing-size', __( 'A plan is required to create an UpCloud server.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-missing-size', __( 'A plan is required to create an UpCloud server.', 'simple-stack' ) );
 		}
 
 		$template = $this->resolve_storage_template( $attributes );
@@ -518,14 +519,14 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		}
 
 		/* UpCloud installs keys from the payload, so the public key is required up front. */
-		$public_key = trim( (string) wpcd_get_early_option( 'vpn_' . $provider . '_public_sshkey' ) );
+		$public_key = trim( (string) sstk_get_early_option( 'sstk_' . $provider . '_public_sshkey' ) );
 		if ( '' === $public_key ) {
-			return new WP_Error( 'upcloud-missing-ssh-key', __( 'A public ssh key is required to create an UpCloud server, otherwise there would be no way to log into it.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-missing-ssh-key', __( 'A public ssh key is required to create an UpCloud server, otherwise there would be no way to log into it.', 'simple-stack' ) );
 		}
 
 		/* Startup commands are supplied by the application layer. */
-		$run_cmd = apply_filters( 'wpcd_cloud_provider_run_cmd', '', $attributes );
-		$run_cmd = apply_filters( 'wpcd_cloud_provider_run_cmd_' . $provider, $run_cmd, $attributes );
+		$run_cmd = apply_filters( 'sstk_cloud_provider_run_cmd', '', $attributes );
+		$run_cmd = apply_filters( 'sstk_cloud_provider_run_cmd_' . $provider, $run_cmd, $attributes );
 
 		$name     = isset( $attributes['name'] ) ? (string) $attributes['name'] : '';
 		$hostname = $this->normalise_hostname( $name );
@@ -586,7 +587,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		}
 
 		if ( empty( $payload->server->uuid ) ) {
-			return new WP_Error( 'upcloud-create-failed', __( 'UpCloud accepted the request but did not return a server uuid.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-create-failed', __( 'UpCloud accepted the request but did not return a server uuid.', 'simple-stack' ) );
 		}
 
 		$server = $payload->server;
@@ -629,7 +630,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	/**
 	 * Report on the operation that an async action started.
 	 *
-	 * Only ever called by WPCD_SERVER::handle_async_action() on the second pass.
+	 * Only ever called by SSTK_SERVER::handle_async_action() on the second pass.
 	 * UpCloud acknowledges power changes asynchronously but hands back no operation id,
 	 * so completion is inferred from the server state, with the elapsed time as a
 	 * backstop so a lost signal cannot wedge the server in "performing ...".
@@ -655,7 +656,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 
 		$pending = '';
 		if ( ! empty( $attributes['post_id'] ) ) {
-			$pending = (string) get_post_meta( (int) $attributes['post_id'], 'wpcd_server_action', true );
+			$pending = (string) get_post_meta( (int) $attributes['post_id'], 'sstk_server_action', true );
 		}
 
 		switch ( $pending ) {
@@ -703,7 +704,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		);
 
 		if ( ! isset( $endpoints[ $method ] ) ) {
-			return new WP_Error( 'not-supported', __( 'This power operation is not supported by the UpCloud provider.', 'wpcd' ) );
+			return new WP_Error( 'not-supported', __( 'This power operation is not supported by the UpCloud provider.', 'simple-stack' ) );
 		}
 
 		$payload = $this->execute( 'server/' . rawurlencode( $id ) . '/' . $endpoints[ $method ], 'POST' );
@@ -755,7 +756,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 
 		$new_size = isset( $attributes['new_size'] ) ? trim( (string) $attributes['new_size'] ) : '';
 		if ( '' === $new_size ) {
-			return new WP_Error( 'upcloud-missing-size', __( 'A new plan is required to resize an UpCloud server.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-missing-size', __( 'A new plan is required to resize an UpCloud server.', 'simple-stack' ) );
 		}
 
 		$payload = $this->execute(
@@ -778,9 +779,9 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	/**
 	 * Register a new ssh key with UpCloud.
 	 *
-	 * Note what this does and does not do.  The key pair is generated locally by WPCD
+	 * Note what this does and does not do.  The key pair is generated locally by SSTK
 	 * before this is called, and the settings screen then stores the public key in
-	 * `vpn_upcloud_public_sshkey` and the private key in `vpn_upcloud_sshkey`.  The
+	 * `sstk_upcloud_public_sshkey` and the private key in `sstk_upcloud_sshkey`.  The
 	 * public key is what gets installed into every new server, because UpCloud takes
 	 * key material inline on the create call rather than referencing a key registry.
 	 *
@@ -788,7 +789,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	 * It exists so the settings screen can complete its flow and save the key pair.
 	 * Registering the key in the UpCloud account as well is best effort: it makes the
 	 * key visible in the UpCloud control panel, but a failure there must not discard a
-	 * key pair that WPCD has already generated.
+	 * key pair that SSTK has already generated.
 	 *
 	 * @param array $attributes Attributes; expects [public_key] and [public_key_name].
 	 *
@@ -800,7 +801,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		$key_name   = isset( $attributes['public_key_name'] ) ? trim( (string) $attributes['public_key_name'] ) : '';
 
 		if ( '' === $public_key ) {
-			return new WP_Error( 'upcloud-missing-public-key', __( 'A public key is required to register an ssh key.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-missing-public-key', __( 'A public key is required to register an ssh key.', 'simple-stack' ) );
 		}
 
 		if ( '' === $key_name ) {
@@ -881,7 +882,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		}
 
 		if ( empty( $payload->server ) ) {
-			return new WP_Error( 'upcloud-no-server', __( 'UpCloud did not return a server record.', 'wpcd' ) );
+			return new WP_Error( 'upcloud-no-server', __( 'UpCloud did not return a server record.', 'simple-stack' ) );
 		}
 
 		return $payload->server;
@@ -910,7 +911,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 			}
 
 			if ( empty( $payload->storage_templates->storage_template ) ) {
-				return new WP_Error( 'upcloud-no-templates', __( 'UpCloud returned no storage templates.', 'wpcd' ) );
+				return new WP_Error( 'upcloud-no-templates', __( 'UpCloud returned no storage templates.', 'simple-stack' ) );
 			}
 
 			$templates = $payload->storage_templates->storage_template;
@@ -947,7 +948,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 
 		if ( null === $match ) {
 			/* translators: %s is the Ubuntu release we tried to find, eg: 24.04. */
-			return new WP_Error( 'upcloud-no-template', sprintf( __( 'UpCloud does not offer an Ubuntu %s storage template.', 'wpcd' ), $version ) );
+			return new WP_Error( 'upcloud-no-template', sprintf( __( 'UpCloud does not offer an Ubuntu %s storage template.', 'simple-stack' ), $version ) );
 		}
 
 		$size = isset( $match->size ) ? (int) $match->size : 25;
@@ -964,7 +965,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	}
 
 	/**
-	 * Map a WPCD OS key to the Ubuntu release UpCloud labels its templates with.
+	 * Map a SSTK OS key to the Ubuntu release UpCloud labels its templates with.
 	 *
 	 * @param array $attributes Attributes; expects [initial_os].
 	 *
@@ -973,9 +974,6 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	private function get_os_version( $attributes ) {
 
 		$versions = array(
-			'ubuntu1804lts' => '18.04',
-			'ubuntu2004lts' => '20.04',
-			'ubuntu2204lts' => '22.04',
 			'ubuntu2404lts' => '24.04',
 			'ubuntu2604lts' => '26.04',
 		);
@@ -1012,7 +1010,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 			return (string) $address->address;
 		}
 
-		/* Mirrors the DigitalOcean provider so callers only have one sentinel to know. */
+		/* Use the shared missing-address sentinel. */
 		return 'error-no-ip-found';
 
 	}
@@ -1094,7 +1092,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 	 * @return string
 	 */
 	private function power_action_transient( $id ) {
-		return 'wpcd_upcloud_power_started_' . md5( (string) $id );
+		return 'sstk_upcloud_power_started_' . md5( (string) $id );
 	}
 
 	/**
@@ -1164,7 +1162,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		 * the account password and the request body holds the cloud-init payload;
 		 * neither belongs in a log file or a support bundle.
 		 */
-		do_action( 'wpcd_log_error', "UpCloud API $action $endpoint failed with status $code", 'error', __FILE__, __LINE__ );
+		do_action( 'sstk_log_error', "UpCloud API $action $endpoint failed with status $code", 'error', __FILE__, __LINE__ );
 
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error( 'upcloud-transport-error', $response->get_error_message() );
@@ -1173,7 +1171,7 @@ class CLOUD_PROVIDER_API_Upcloud extends CLOUD_PROVIDER_API {
 		$error_code    = 'upcloud-error';
 		$error_message = sprintf(
 			/* translators: %d is the HTTP status code returned by UpCloud. */
-			__( 'The UpCloud API request failed with HTTP status %d.', 'wpcd' ),
+			__( 'The UpCloud API request failed with HTTP status %d.', 'simple-stack' ),
 			$code
 		);
 

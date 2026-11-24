@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_ROLES_CAPABILITIES class for user roles capabilities.
+ * SSTK_ROLES_CAPABILITIES class for user roles capabilities.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_ROLES_CAPABILITIES
+ * Class SSTK_ROLES_CAPABILITIES
  */
-class WPCD_ROLES_CAPABILITIES {
+class SSTK_ROLES_CAPABILITIES {
 
 	/**
-	 * WPCD_ROLES_CAPABILITIES instance.
+	 * SSTK_ROLES_CAPABILITIES instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -25,7 +26,7 @@ class WPCD_ROLES_CAPABILITIES {
 	}
 
 	/**
-	 * WPCD_ROLES_CAPABILITIES constructor.
+	 * SSTK_ROLES_CAPABILITIES constructor.
 	 *
 	 * @return void
 	 */
@@ -40,7 +41,7 @@ class WPCD_ROLES_CAPABILITIES {
 	 */
 	private function hooks() {
 		// Action hook to create roles and capabilities when a new site is created.
-		add_action( 'wp_initialize_site', array( $this, 'wpcd_roles_capabilities_new_site' ), 10, 2 );
+		add_action( 'wp_initialize_site', array( $this, 'sstk_roles_capabilities_new_site' ), 10, 2 );
 
 	}
 
@@ -57,11 +58,11 @@ class WPCD_ROLES_CAPABILITIES {
 			$blog_ids = get_sites( array( 'fields' => 'ids' ) );
 			foreach ( $blog_ids as $blog_id ) {
 				switch_to_blog( $blog_id );
-				self::wpcd_create_roles_capabilities();
+				self::sstk_create_roles_capabilities();
 				restore_current_blog();
 			}
 		} else {
-			self::wpcd_create_roles_capabilities();
+			self::sstk_create_roles_capabilities();
 		}
 	}
 
@@ -70,78 +71,78 @@ class WPCD_ROLES_CAPABILITIES {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_create_roles_capabilities() {
+	public static function sstk_create_roles_capabilities() {
 
 		// get author role and capabilities.
 		$author      = get_role( 'author' );
 		$author_caps = $author->capabilities;
 
-		// 1. WPCDAdmin Role.
-		// list of custom capabilities for WPCDAdmin role.
-		$wpcd_admin_caps = array(
-			'wpcd_provision_servers' => true,
-			'wpcd_manage_servers'    => true,
-			'wpcd_manage_apps'       => true,
-			'wpcd_manage_logs'       => true,
-			'wpcd_manage_settings'   => true,
-			'wpcd_manage_groups'     => true,
-			'wpcd_manage_teams'      => true,
-			'wpcd_manage_all'        => true,
+		// 1. Simple Stack Admin Role.
+		// list of custom capabilities for Simple Stack Admin role.
+		$sstk_admin_caps = array(
+			'sstk_provision_servers' => true,
+			'sstk_manage_servers'    => true,
+			'sstk_manage_apps'       => true,
+			'sstk_manage_logs'       => true,
+			'sstk_manage_settings'   => true,
+			'sstk_manage_groups'     => true,
+			'sstk_manage_teams'      => true,
+			'sstk_manage_all'        => true,
 		);
 
-		$all_wpcd_admin_caps = array_merge( $author_caps, $wpcd_admin_caps );
-		add_role( 'wpcdadmin', __( 'WPCDAdmin', 'wpcd' ), $all_wpcd_admin_caps );
+		$all_sstk_admin_caps = array_merge( $author_caps, $sstk_admin_caps );
+		add_role( 'sstkadmin', __( 'Simple Stack Admin', 'simple-stack' ), $all_sstk_admin_caps );
 
-		// 2. WPCDManager Role.
-		// list of custom capabilities for WPCDManager role.
-		$wpcd_manager_caps = array(
-			'wpcd_provision_servers' => true,
-			'wpcd_manage_servers'    => true,
-			'wpcd_manage_apps'       => true,
-			'wpcd_manage_logs'       => true,
-			'wpcd_manage_settings'   => true,
-			'wpcd_manage_groups'     => true,
+		// 2. Simple Stack Manager Role.
+		// list of custom capabilities for Simple Stack Manager role.
+		$sstk_manager_caps = array(
+			'sstk_provision_servers' => true,
+			'sstk_manage_servers'    => true,
+			'sstk_manage_apps'       => true,
+			'sstk_manage_logs'       => true,
+			'sstk_manage_settings'   => true,
+			'sstk_manage_groups'     => true,
 		);
 
-		$all_wpcd_manager_caps = array_merge( $author_caps, $wpcd_manager_caps );
-		add_role( 'wpcdmanager', __( 'WPCDManager', 'wpcd' ), $all_wpcd_manager_caps );
+		$all_sstk_manager_caps = array_merge( $author_caps, $sstk_manager_caps );
+		add_role( 'sstkmanager', __( 'Simple Stack Manager', 'simple-stack' ), $all_sstk_manager_caps );
 
 		// get subscriber role and capabilities.
 		$subscriber      = get_role( 'subscriber' );
 		$subscriber_caps = $subscriber->capabilities;
 
-		// 3. WPCDSysAdmin Role.
-		// list of custom capabilities for WPCDSysAdmin role.
-		$wpcd_sys_admin_caps = array(
-			'wpcd_manage_servers' => true,
-			'wpcd_manage_apps'    => true,
+		// 3. Simple Stack System Admin Role.
+		// list of custom capabilities for Simple Stack System Admin role.
+		$sstk_sys_admin_caps = array(
+			'sstk_manage_servers' => true,
+			'sstk_manage_apps'    => true,
 		);
 
-		$all_wpcd_sys_admin_caps = array_merge( $subscriber_caps, $wpcd_sys_admin_caps );
-		add_role( 'wpcdsysadmin', __( 'WPCDSysAdmin', 'wpcd' ), $all_wpcd_sys_admin_caps );
+		$all_sstk_sys_admin_caps = array_merge( $subscriber_caps, $sstk_sys_admin_caps );
+		add_role( 'sstksysadmin', __( 'Simple Stack System Admin', 'simple-stack' ), $all_sstk_sys_admin_caps );
 
-		// 4. WPCDAppManager Role.
-		// list of custom capabilities for WPCDAppManager role.
-		$wpcd_app_manager_caps = array(
-			'wpcd_manage_apps' => true,
+		// 4. Simple Stack App Manager Role.
+		// list of custom capabilities for Simple Stack App Manager role.
+		$sstk_app_manager_caps = array(
+			'sstk_manage_apps' => true,
 		);
 
-		$all_wpcd_app_manager_caps = array_merge( $subscriber_caps, $wpcd_app_manager_caps );
-		add_role( 'wpcdappmanager', __( 'WPCDAppManager', 'wpcd' ), $all_wpcd_app_manager_caps );
+		$all_sstk_app_manager_caps = array_merge( $subscriber_caps, $sstk_app_manager_caps );
+		add_role( 'sstkappmanager', __( 'Simple Stack App Manager', 'simple-stack' ), $all_sstk_app_manager_caps );
 
 		// 5. Administrator Role.
 		$administrator = get_role( 'administrator' );
 
 		// list of custom capabilities for administrator role.
 		$admin_caps = array(
-			'wpcd_provision_servers' => true,
-			'wpcd_manage_servers'    => true,
-			'wpcd_manage_apps'       => true,
-			'wpcd_manage_logs'       => true,
-			'wpcd_manage_settings'   => true,
-			'wpcd_manage_groups'     => true,
-			'wpcd_manage_teams'      => true,
-			'wpcd_manage_all'        => true,
+			'sstk_provision_servers' => true,
+			'sstk_manage_servers'    => true,
+			'sstk_manage_apps'       => true,
+			'sstk_manage_logs'       => true,
+			'sstk_manage_settings'   => true,
+			'sstk_manage_groups'     => true,
+			'sstk_manage_teams'      => true,
+			'sstk_manage_all'        => true,
 		);
 
 		foreach ( $admin_caps as $key => $cap ) {
@@ -159,15 +160,15 @@ class WPCD_ROLES_CAPABILITIES {
 	 * @param  array  $args args.
 	 * @return void
 	 */
-	public function wpcd_roles_capabilities_new_site( $new_site, $args ) {
-		$plugin_name = wpcd_plugin;
+	public function sstk_roles_capabilities_new_site( $new_site, $args ) {
+		$plugin_name = SSTK_PLUGIN;
 
 		// To check the plugin is active network-wide.
 		if ( is_plugin_active_for_network( $plugin_name ) ) {
 			$blog_id = $new_site->blog_id;
 
 			switch_to_blog( $blog_id );
-			self::wpcd_create_roles_capabilities();
+			self::sstk_create_roles_capabilities();
 			restore_current_blog();
 		}
 	}
@@ -178,34 +179,55 @@ class WPCD_ROLES_CAPABILITIES {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_delete_roles_capabilities() {
+	public static function sstk_delete_roles_capabilities() {
 		$roles_to_remove = array(
-			'wpcdadmin',
-			'wpcdmanager',
-			'wpcdsysadmin',
-			'wpcdappmanager',
+			'sstkadmin',
+			'sstkmanager',
+			'sstksysadmin',
+			'sstkappmanager',
 		);
 
-		// Removing the custom roles.
+		// Remove the custom roles and their assignments from every user.
 		foreach ( $roles_to_remove as $role ) {
 			remove_role( $role );
 		}
 
-		$admin_caps = array(
-			'wpcd_provision_servers',
-			'wpcd_manage_servers',
-			'wpcd_manage_apps',
-			'wpcd_manage_logs',
-			'wpcd_manage_settings',
-			'wpcd_manage_groups',
-			'wpcd_manage_teams',
-			'wpcd_manage_all',
+		$user_ids = get_users(
+			array(
+				'fields' => 'IDs',
+				'number' => 0,
+			)
 		);
 
-		$administrator = get_role( 'administrator' );
-		// Removing the custom capabilities assigned to administrator role.
-		foreach ( $admin_caps as $cap ) {
-			$administrator->remove_cap( $cap );
+		foreach ( (array) $user_ids as $user_id ) {
+			$user = get_user_by( 'id', $user_id );
+			if ( ! $user ) {
+				continue;
+			}
+
+			foreach ( $roles_to_remove as $role ) {
+				$user->remove_role( $role );
+			}
+
+			foreach ( array_keys( $user->caps ) as $capability ) {
+				if ( str_starts_with( $capability, 'sstk_' ) ) {
+					$user->remove_cap( $capability );
+				}
+			}
+		}
+
+		// Remove every reserved capability from every remaining role, including custom roles.
+		foreach ( array_keys( wp_roles()->roles ) as $role_name ) {
+			$role = get_role( $role_name );
+			if ( ! $role ) {
+				continue;
+			}
+
+			foreach ( array_keys( $role->capabilities ) as $capability ) {
+				if ( str_starts_with( $capability, 'sstk_' ) ) {
+					$role->remove_cap( $capability );
+				}
+			}
 		}
 	}
 }

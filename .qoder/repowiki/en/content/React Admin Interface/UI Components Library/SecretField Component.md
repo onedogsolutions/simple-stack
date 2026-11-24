@@ -6,9 +6,9 @@
 - [Card.jsx](file://src/admin/components/Card.jsx)
 - [DeploySite.jsx](file://src/admin/routes/DeploySite.jsx)
 - [ProviderSettings.jsx](file://src/admin/routes/ProviderSettings.jsx)
-- [class-simplestack-secret-redactor.php](file://includes/core/api/class-simplestack-secret-redactor.php)
-- [class-simplestack-rest-api.php](file://includes/core/api/class-simplestack-rest-api.php)
-- [class-simplestack-rest-providers.php](file://includes/core/api/class-simplestack-rest-providers.php)
+- [class-sstk-secret-redactor.php](file://includes/core/api/class-sstk-secret-redactor.php)
+- [class-sstk-rest-api.php](file://includes/core/api/class-sstk-rest-api.php)
+- [class-sstk-rest-providers.php](file://includes/core/api/class-sstk-rest-providers.php)
 </cite>
 
 ## Table of Contents
@@ -23,7 +23,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-The SecretField component is a secure credential input control used across the SimpleStack admin interface. It is designed for password masking, optional visibility toggling, and safe handling of sensitive values such as API keys, account passwords, and private SSH keys. The component intentionally starts empty so that secrets are never round-tripped through the browser; instead, it shows whether a value is already stored on the server using a status badge.
+The SecretField component is a secure credential input control used across the Simple Stack admin interface. It is designed for password masking, optional visibility toggling, and safe handling of sensitive values such as API keys, account passwords, and private SSH keys. The component intentionally starts empty so that secrets are never round-tripped through the browser; instead, it shows whether a value is already stored on the server using a status badge.
 
 This document explains:
 - Password masking and visibility toggle behavior
@@ -37,9 +37,9 @@ SecretField lives in the React admin components directory and is consumed by rou
 - `src/admin/components/SecretField.jsx` defines the component
 - `src/admin/routes/DeploySite.jsx` uses it for WordPress admin password entry
 - `src/admin/routes/ProviderSettings.jsx` uses it for provider credentials such as API keys, account passwords, and SSH keys
-- `includes/core/api/class-simplestack-secret-redactor.php` provides server-side secret redaction
-- `includes/core/api/class-simplestack-rest-api.php` registers the REST namespace and controllers
-- `includes/core/api/class-simplestack-rest-providers.php` handles provider credential storage and redacted listing
+- `includes/core/api/class-sstk-secret-redactor.php` provides server-side secret redaction
+- `includes/core/api/class-sstk-rest-api.php` registers the REST namespace and controllers
+- `includes/core/api/class-sstk-rest-providers.php` handles provider credential storage and redacted listing
 
 ```mermaid
 graph TB
@@ -49,7 +49,7 @@ Deploy --> SecretField["SecretField.jsx"]
 Providers --> SecretField
 SecretField --> CardBadge["Card.jsx Badge"]
 Providers --> REST["REST API Layer"]
-REST --> Redactor["SimpleStack_Secret_Redactor"]
+REST --> Redactor["SSTK_Secret_Redactor"]
 REST --> Storage["Encrypted Options Storage"]
 ```
 
@@ -57,15 +57,15 @@ REST --> Storage["Encrypted Options Storage"]
 - [SecretField.jsx:10-12](file://src/admin/components/SecretField.jsx#L10-L12)
 - [DeploySite.jsx:13](file://src/admin/routes/DeploySite.jsx#L13)
 - [ProviderSettings.jsx:18](file://src/admin/routes/ProviderSettings.jsx#L18)
-- [class-simplestack-secret-redactor.php:12-23](file://includes/core/api/class-simplestack-secret-redactor.php#L12-L23)
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
+- [class-sstk-secret-redactor.php:12-23](file://includes/core/api/class-sstk-secret-redactor.php#L12-L23)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
 
 **Section sources**
 - [SecretField.jsx:1-73](file://src/admin/components/SecretField.jsx#L1-L73)
 - [DeploySite.jsx:1-263](file://src/admin/routes/DeploySite.jsx#L1-L263)
 - [ProviderSettings.jsx:1-372](file://src/admin/routes/ProviderSettings.jsx#L1-L372)
-- [class-simplestack-secret-redactor.php:1-142](file://includes/core/api/class-simplestack-secret-redactor.php#L1-L142)
-- [class-simplestack-rest-api.php:1-136](file://includes/core/api/class-simplestack-rest-api.php#L1-L136)
+- [class-sstk-secret-redactor.php:1-142](file://includes/core/api/class-sstk-secret-redactor.php#L1-L142)
+- [class-sstk-rest-api.php:1-136](file://includes/core/api/class-sstk-rest-api.php#L1-L136)
 
 ## Core Components
 - SecretField: A controlled input that renders a masked password field with an optional Show/Hide button. It displays a “Stored” or “Not set” badge based on server state and supports help text, placeholders, disabled state, and standard change events.
@@ -87,7 +87,7 @@ Key responsibilities:
 ## Architecture Overview
 The SecretField component integrates into a broader security model:
 - Frontend: Inputs are masked by default; users can reveal values temporarily. Values are sent only when explicitly provided.
-- Backend: All responses pass through a secret redactor that masks known credential keys and scrubs embedded secrets from free text.
+- Backend: Responses returned through `SSTK_REST_Controller_Base::respond()` pass through a secret redactor that masks known credential keys and scrubs embedded secrets from free text. Other REST families do not inherit that automatic boundary.
 - Storage: Sensitive values are encrypted before being persisted.
 - State signaling: The API returns boolean flags indicating whether credentials are present rather than returning the values themselves.
 
@@ -118,8 +118,8 @@ API-->>Route : Redacted provider state
 **Diagram sources**
 - [ProviderSettings.jsx:53-83](file://src/admin/routes/ProviderSettings.jsx#L53-L83)
 - [ProviderSettings.jsx:149-358](file://src/admin/routes/ProviderSettings.jsx#L149-L358)
-- [class-simplestack-rest-providers.php:66-173](file://includes/core/api/class-simplestack-rest-providers.php#L66-L173)
-- [class-simplestack-secret-redactor.php:51-95](file://includes/core/api/class-simplestack-secret-redactor.php#L51-L95)
+- [class-sstk-rest-providers.php:66-173](file://includes/core/api/class-sstk-rest-providers.php#L66-L173)
+- [class-sstk-secret-redactor.php:51-95](file://includes/core/api/class-sstk-secret-redactor.php#L51-L95)
 
 ## Detailed Component Analysis
 
@@ -268,24 +268,24 @@ graph LR
 SecretField["SecretField.jsx"] --> CardBadge["Card.jsx Badge"]
 DeploySite["DeploySite.jsx"] --> SecretField
 ProviderSettings["ProviderSettings.jsx"] --> SecretField
-ProviderSettings --> ProvidersController["class-simplestack-rest-providers.php"]
-ProvidersController --> SecretRedactor["class-simplestack-secret-redactor.php"]
-RestApi["class-simplestack-rest-api.php"] --> ProvidersController
+ProviderSettings --> ProvidersController["class-sstk-rest-providers.php"]
+ProvidersController --> SecretRedactor["class-sstk-secret-redactor.php"]
+RestApi["class-sstk-rest-api.php"] --> ProvidersController
 ```
 
 **Diagram sources**
 - [SecretField.jsx:10-12](file://src/admin/components/SecretField.jsx#L10-L12)
 - [DeploySite.jsx:13](file://src/admin/routes/DeploySite.jsx#L13)
 - [ProviderSettings.jsx:18](file://src/admin/routes/ProviderSettings.jsx#L18)
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
-- [class-simplestack-rest-providers.php:66-173](file://includes/core/api/class-simplestack-rest-providers.php#L66-L173)
-- [class-simplestack-secret-redactor.php:12-23](file://includes/core/api/class-simplestack-secret-redactor.php#L12-L23)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
+- [class-sstk-rest-providers.php:66-173](file://includes/core/api/class-sstk-rest-providers.php#L66-L173)
+- [class-sstk-secret-redactor.php:12-23](file://includes/core/api/class-sstk-secret-redactor.php#L12-L23)
 
 **Section sources**
 - [SecretField.jsx:10-12](file://src/admin/components/SecretField.jsx#L10-L12)
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
-- [class-simplestack-rest-providers.php:66-173](file://includes/core/api/class-simplestack-rest-providers.php#L66-L173)
-- [class-simplestack-secret-redactor.php:12-23](file://includes/core/api/class-simplestack-secret-redactor.php#L12-L23)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
+- [class-sstk-rest-providers.php:66-173](file://includes/core/api/class-sstk-rest-providers.php#L66-L173)
+- [class-sstk-secret-redactor.php:12-23](file://includes/core/api/class-sstk-secret-redactor.php#L12-L23)
 
 ## Performance Considerations
 - SecretField is lightweight and uses minimal state (visibility toggle).
@@ -296,7 +296,7 @@ RestApi["class-simplestack-rest-api.php"] --> ProvidersController
 
 ## Troubleshooting Guide
 Common issues and resolutions:
-- Secret appears in logs or responses: Ensure all responses pass through the secret redactor and avoid logging raw credentials.
+- Secret appears in logs or responses: Ensure SPA responses use `SSTK_REST_Controller_Base::respond()`, review any custom response path separately, and avoid logging raw credentials.
 - Credentials not saved: Verify that the field is not left blank when intending to update; blank means “keep existing.”
 - Visibility toggle not working: Confirm that the button is not disabled and that the parent does not override the local state unexpectedly.
 - Accessibility concerns: Ensure labels are properly associated with inputs and that focus management is preserved when toggling visibility.
@@ -307,12 +307,12 @@ Security best practices reinforced by the codebase:
 - Redact known credential keys and scrub embedded secrets from free text.
 
 **Section sources**
-- [class-simplestack-secret-redactor.php:12-23](file://includes/core/api/class-simplestack-secret-redactor.php#L12-L23)
-- [class-simplestack-secret-redactor.php:51-95](file://includes/core/api/class-simplestack-secret-redactor.php#L51-L95)
-- [class-simplestack-secret-redactor.php:115-126](file://includes/core/api/class-simplestack-secret-redactor.php#L115-L126)
+- [class-sstk-secret-redactor.php:12-23](file://includes/core/api/class-sstk-secret-redactor.php#L12-L23)
+- [class-sstk-secret-redactor.php:51-95](file://includes/core/api/class-sstk-secret-redactor.php#L51-L95)
+- [class-sstk-secret-redactor.php:115-126](file://includes/core/api/class-sstk-secret-redactor.php#L115-L126)
 - [ProviderSettings.jsx:159-163](file://src/admin/routes/ProviderSettings.jsx#L159-L163)
 
 ## Conclusion
-SecretField provides a secure, accessible, and user-friendly way to handle sensitive inputs in the SimpleStack admin interface. By combining client-side masking with server-side redaction and encrypted storage, it ensures that secrets remain protected throughout the workflow. Its design encourages clear operator intent: blank inputs preserve existing secrets, while explicit entries trigger updates. The component integrates cleanly with provider settings and deployment flows, supporting robust credential management and compliance with security best practices.
+SecretField provides a secure, accessible, and user-friendly way to handle sensitive inputs in the Simple Stack admin interface. By combining client-side masking with server-side redaction and encrypted storage, it ensures that secrets remain protected throughout the workflow. Its design encourages clear operator intent: blank inputs preserve existing secrets, while explicit entries trigger updates. The component integrates cleanly with provider settings and deployment flows, supporting robust credential management and compliance with security best practices.
 
 [No sources needed since this section summarizes without analyzing specific files]

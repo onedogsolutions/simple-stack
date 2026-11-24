@@ -1,17 +1,18 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains old functions that are likely unused.
  * Used only by the class-wordpress.php file which defines the
- * WPCD_WORDPRESS_APP class.
+ * SSTK_WORDPRESS_APP class.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_wpapp_unused_functions
+ * Trait sstk_wpapp_unused_functions
  */
-trait wpcd_wpapp_unused_functions {
+trait sstk_wpapp_unused_functions {
 
 	/**
 	 * *** NOT USED ***
@@ -24,14 +25,14 @@ trait wpcd_wpapp_unused_functions {
 			(
 				[post_id] => 4978
 				[initial_app_name] => wordpress-app
-				[scripts_version] => v1
-				[region] => us-central
-				[size_raw] => g6-nanode-1
-				[name] => spinupvpnwpadmin-test-ema_CX0x
-				[provider] => linode
+				[scripts_version] => v2
+				[region] => ewr
+				[size_raw] => vc2-1c-1gb
+				[name] => simple-stack-example
+				[provider] => vultr-v2
 				[server-type] => wordpress-app
 				[provider_instance_id] => 19823428
-				[server_name] => spinupvpnwpadmin-test-ema_CX0x
+				[server_name] => simple-stack-example
 				[created] => 2020-03-20 00:58:36
 				[actions] => a:1:{s:7:"created";i:1584683916;}
 				[wordpress-app_action] => email
@@ -46,7 +47,7 @@ trait wpcd_wpapp_unused_functions {
 			).
 	 */
 	private function send_email( $instance ) {
-		do_action( 'wpcd_log_error', 'sending email for ' . print_r( $instance, true ), 'debug', __FILE__, __LINE__ );
+		do_action( 'sstk_log_error', 'sending email for ' . print_r( $instance, true ), 'debug', __FILE__, __LINE__ );
 
 		// Get the email body.
 		$email_body = $this->get_app_instance_summary( $instance['post_id'], 'email-admin' );
@@ -54,7 +55,7 @@ trait wpcd_wpapp_unused_functions {
 		if ( ! empty( $email_body ) ) {
 			wp_mail(
 				get_option( 'admin_email' ),
-				__( 'Your New WordPress Server Is Ready', 'wpcd' ),
+				__( 'Your New WordPress Server Is Ready', 'simple-stack' ),
 				$email_body,
 				array( 'Content-Type: text/html; charset=UTF-8' )
 			);
@@ -77,15 +78,15 @@ trait wpcd_wpapp_unused_functions {
 		$server_post = get_post( $server_id );
 
 		// Get provider from server record.
-		$provider    = get_post_meta( $server_post->ID, 'wpcd_server_provider', true );
-		$instance_id = get_post_meta( $server_post->ID, 'wpcd_server_provider_instance_id', true );
-		$details     = WPCD()->get_provider_api( $provider )->call( 'details', array( 'id' => $instance_id ) );
+		$provider    = get_post_meta( $server_post->ID, 'sstk_server_provider', true );
+		$instance_id = get_post_meta( $server_post->ID, 'sstk_server_provider_instance_id', true );
+		$details     = SSTK()->get_provider_api( $provider )->call( 'details', array( 'id' => $instance_id ) );
 
 		// Get server size from server record.
-		$size     = get_post_meta( $server_post->ID, 'wpcd_server_size', true );
-		$raw_size = get_post_meta( $server_post->ID, 'wpcd_server_raw_size', true );
-		$region   = get_post_meta( $server_post->ID, 'wpcd_server_region', true );
-		$provider = get_post_meta( $server_post->ID, 'wpcd_server_provider', true );
+		$size     = get_post_meta( $server_post->ID, 'sstk_server_size', true );
+		$raw_size = get_post_meta( $server_post->ID, 'sstk_server_raw_size', true );
+		$region   = get_post_meta( $server_post->ID, 'sstk_server_region', true );
+		$provider = get_post_meta( $server_post->ID, 'sstk_server_provider', true );
 
 		$template_suffix = 'email-admin';
 		switch ( $type ) {
@@ -104,7 +105,7 @@ trait wpcd_wpapp_unused_functions {
 		return str_replace(
 			array( '$NAME', '$PROVIDER', '$IP', '$SIZE', '$URL' ),
 			array(
-				get_post_meta( $server_post->ID, 'wpcd_server_name', true ),
+				get_post_meta( $server_post->ID, 'sstk_server_name', true ),
 				$this->get_providers()[ $provider ],
 				$details['ip'],
 				$size,

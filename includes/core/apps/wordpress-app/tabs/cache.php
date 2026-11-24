@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Cache tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,34 +11,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_CACHE
+ * Class SSTK_WORDPRESS_TABS_CACHE
  */
-class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_CACHE extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		/* add_filter( 'wpcd_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		/* add_filter( 'sstk_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 		/* Pending Logs Background Task: Toggle the page cache on a site */
-		add_action( 'wpcd_wordpress-app_pending_log_toggle_page_cache', array( $this, 'pending_log_toggle_page_cache' ), 10, 3 );
+		add_action( 'sstk_wordpress-app_pending_log_toggle_page_cache', array( $this, 'pending_log_toggle_page_cache' ), 10, 3 );
 
 		/* Pending Logs Background Task: Toggle the redis object cache on a site */
-		add_action( 'wpcd_wordpress-app_pending_log_toggle_redis_object_cache', array( $this, 'pending_log_toggle_redis_object_cache' ), 10, 3 );
+		add_action( 'sstk_wordpress-app_pending_log_toggle_redis_object_cache', array( $this, 'pending_log_toggle_redis_object_cache' ), 10, 3 );
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
@@ -45,9 +46,9 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	public function command_completed( $id, $name ) {
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -76,7 +77,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Cache', 'wpcd' ),
+				'label' => __( 'Cache', 'simple-stack' ),
 				'icon'  => 'fad fa-bookmark',
 			);
 		}
@@ -92,11 +93,11 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -111,16 +112,16 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'site-toggle-redis', 'site-toggle-redis-local-value', 'site-toggle-memcached', 'site-toggle-memcached-local-value', 'site-toggle-pagecache', 'site-clear-pagecache' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 		if ( $this->get_tab_security( $id ) ) {
@@ -169,7 +170,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	}
 
 	/**
-	 * Enable/Disable the NGINX based page cache
+	 * Enable/Disable LiteSpeed Cache for a site.
 	 *
 	 * @param string $action The action key to send to the bash script.  This is actually the key of the drop-down select.
 	 * @param int    $id the id of the app post being handled.
@@ -184,7 +185,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the domain we're working on.
@@ -201,7 +202,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Get the full command to be executed by ssh.
 		$run_cmd = $this->turn_script_into_command(
 			$instance,
-			'manage_nginx_pagecache.txt',
+			'manage_pagecache.txt',
 			array(
 				'action' => $action,
 				'domain' => $domain,
@@ -210,14 +211,14 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
-		$success = $this->is_ssh_successful( $result, 'manage_nginx_pagecache.txt' );
+		$success = $this->is_ssh_successful( $result, 'manage_pagecache.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Now that we know we're successful, lets update a meta indicating the status of page cache on the site.
@@ -230,9 +231,9 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Success message and force refresh.
 		if ( ! is_wp_error( $result ) ) {
 			if ( 'enable_page_cache' === $action ) {
-				$success_msg = __( 'The page cache has been enabled for this site.', 'wpcd' );
+				$success_msg = __( 'The page cache has been enabled for this site.', 'simple-stack' );
 			} else {
-				$success_msg = __( 'The page cache has been disabled for this site.', 'wpcd' );
+				$success_msg = __( 'The page cache has been disabled for this site.', 'simple-stack' );
 			}
 			$result = array(
 				'msg'     => $success_msg,
@@ -245,7 +246,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	}
 
 	/**
-	 * Clear the NGINX based page cache
+	 * Clear the LiteSpeed Cache for a site.
 	 *
 	 * @param string $action The action key to send to the bash script.  This is actually the key of the drop-down select.
 	 * @param int    $id the id of the app post being handled.
@@ -260,11 +261,10 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
-		// What type of web server are we running?
-		$webserver_type      = $this->get_web_server_type( $id );
+		// Get the web server name for the success message.
 		$webserver_type_name = $this->get_web_server_description_by_id( $id );
 
 		// Get the domain we're working on.
@@ -276,7 +276,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Get the full command to be executed by ssh.
 		$run_cmd = $this->turn_script_into_command(
 			$instance,
-			'manage_nginx_pagecache.txt',
+			'manage_pagecache.txt',
 			array(
 				'action' => $action,
 				'domain' => $domain,
@@ -285,19 +285,19 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
-		$success = $this->is_ssh_successful( $result, 'manage_nginx_pagecache.txt' );
+		$success = $this->is_ssh_successful( $result, 'manage_pagecache.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Success message and force refresh.
 		if ( ! is_wp_error( $result ) ) {
-			$success_msg = sprintf( __( 'The %s pagecache has been cleared for this site.', 'wpcd' ), $webserver_type_name );
+			$success_msg = sprintf( __( 'The %s pagecache has been cleared for this site.', 'simple-stack' ), $webserver_type_name );
 			$result      = array(
 				'msg'     => $success_msg,
 				'refresh' => 'yes',
@@ -324,7 +324,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the domain we're working on.
@@ -335,22 +335,21 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 			$instance,
 			'manage_redis.txt',
 			array(
-				'command' => $command,
-				'action'  => $action,
-				'domain'  => $domain,
+				'action' => $action,
+				'domain' => $domain,
 			)
 		);
 
 		// log.
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'debug', __FILE__, __LINE__, $instance, true );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'debug', __FILE__, __LINE__, $instance, true );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'manage_redis.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Now that we know we're successful, lets update a meta indicating the status of memcached on the site.
@@ -363,9 +362,9 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Success message and force refresh.
 		if ( ! is_wp_error( $result ) ) {
 			if ( 'enable' === $action ) {
-				$success_msg = __( 'REDIS has been enabled for this site.', 'wpcd' );
+				$success_msg = __( 'REDIS has been enabled for this site.', 'simple-stack' );
 			} else {
-				$success_msg = __( 'REDIS has been disabled for this site.', 'wpcd' );
+				$success_msg = __( 'REDIS has been disabled for this site.', 'simple-stack' );
 			}
 			$result = array(
 				'msg'     => $success_msg,
@@ -401,20 +400,13 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 			$new_redis_status = 'on';
 		}
 
-		// update it.
+		// Update the local status without changing anything on the server.
 		$this->set_app_redis_installed_status( $id, $new_redis_status );
 
-		// Force refresh?
-		if ( ! is_wp_error( $result ) ) {
-			$result = array(
-				'msg'     => __( 'The local REDIS status has been toggled.', 'wpcd' ),
-				'refresh' => 'yes',
-			);
-		} else {
-			$result = false;
-		}
-
-		return $result;
+		return array(
+			'msg'     => __( 'The local Redis status has been toggled.', 'simple-stack' ),
+			'refresh' => 'yes',
+		);
 
 	}
 
@@ -434,7 +426,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the domain we're working on.
@@ -452,14 +444,14 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'manage_memcached.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Now that we know we're successful, lets update a meta indicating the status of memcached on the site.
@@ -472,9 +464,9 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		// Success message and force refresh.
 		if ( ! is_wp_error( $result ) ) {
 			if ( 'enable' === $action ) {
-				$success_msg = __( 'Memcached has been enabled for this site.', 'wpcd' );
+				$success_msg = __( 'Memcached has been enabled for this site.', 'simple-stack' );
 			} else {
-				$success_msg = __( 'Memcached has been disabled for this site.', 'wpcd' );
+				$success_msg = __( 'Memcached has been disabled for this site.', 'simple-stack' );
 			}
 			$result = array(
 				'msg'     => $success_msg,
@@ -510,20 +502,13 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 			$new_mc_status = 'on';
 		}
 
-		// update it.
+		// Update the local status without changing anything on the server.
 		$this->set_app_memcached_installed_status( $id, $new_mc_status );
 
-		// Force refresh?
-		if ( ! is_wp_error( $result ) ) {
-			$result = array(
-				'msg'     => __( 'The local Memcached status has been toggled.', 'wpcd' ),
-				'refresh' => 'yes',
-			);
-		} else {
-			$result = false;
-		}
-
-		return $result;
+		return array(
+			'msg'     => __( 'The local Memcached status has been toggled.', 'simple-stack' ),
+			'refresh' => 'yes',
+		);
 
 	}
 
@@ -552,8 +537,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 			return array_merge( $fields, $this->get_disabled_header_field( 'cache' ) );
 		}
 
-		// What type of web server are we running?
-		$webserver_type      = $this->get_web_server_type( $id );
+		// Get the web server name for confirmation prompts.
 		$webserver_type_name = $this->get_web_server_description_by_id( $id );
 
 		// Pick up server id for this app - we'll need it later.
@@ -561,11 +545,11 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		$server_edit_post_link = get_edit_post_link( $server_id );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* PAGE CACHE */
 		$fields[] = array(
-			'name' => __( 'Page Cache Status', 'wpcd' ),
+			'name' => __( 'Page Cache Status', 'simple-stack' ),
 			'tab'  => 'cache',
 			'type' => 'heading',
 		);
@@ -579,11 +563,11 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $pc_status ) {
-			/* Translators: %s is the webserver type name - eg: NGINX or OPENLITESPEED */
-			$confirmation_prompt = sprintf( __( 'Are you sure you would like to disable the %s page cache for this site?', 'wpcd' ), $webserver_type_name );
+			/* Translators: %s is the web server name. */
+			$confirmation_prompt = sprintf( __( 'Are you sure you would like to disable the %s page cache for this site?', 'simple-stack' ), $webserver_type_name );
 		} else {
-			/* Translators: %s is the webserver type name - eg: NGINX or OPENLITESPEED */
-			$confirmation_prompt = sprintf( __( 'Are you sure you would like to enable %s page cache for this site?', 'wpcd' ), $webserver_type_name );
+			/* Translators: %s is the web server name. */
+			$confirmation_prompt = sprintf( __( 'Are you sure you would like to enable %s page cache for this site?', 'simple-stack' ), $webserver_type_name );
 		}
 
 		$fields[] = array(
@@ -591,34 +575,34 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 			'name'       => '',
 			'tab'        => 'cache',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => 'on' === $pc_status,
 			'desc'       => '',
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'site-toggle-pagecache',
+				'data-sstk-action'              => 'site-toggle-pagecache',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/**
 		 * Clear the page cache
 		 */
 		if ( 'on' === $pc_status ) {
 			$fields[] = array(
-				'name' => __( 'Clear Page Cache', 'wpcd' ),
+				'name' => __( 'Clear Page Cache', 'simple-stack' ),
 				'tab'  => 'cache',
 				'type' => 'heading',
 			);
@@ -627,43 +611,43 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'cache',
 				'type'       => 'button',
-				'std'        => __( 'Clear', 'wpcd' ),
+				'std'        => __( 'Clear', 'simple-stack' ),
 				'desc'       => '',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'site-clear-pagecache',
+					'data-sstk-action'              => 'site-clear-pagecache',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					/* Translators: %s is the webserver type name - eg: NGINX or OPENLITESPEED */
-					'data-wpcd-confirmation-prompt' => sprintf( __( 'Are you sure you would like to clear the %s page cache for this site?', 'wpcd' ), $webserver_type_name ),
+					/* Translators: %s is the web server name. */
+					'data-sstk-confirmation-prompt' => sprintf( __( 'Are you sure you would like to clear the %s page cache for this site?', 'simple-stack' ), $webserver_type_name ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 		} else {
 			$fields[] = array(
-				'name' => __( 'Clear Page Cache', 'wpcd' ),
+				'name' => __( 'Clear Page Cache', 'simple-stack' ),
 				'tab'  => 'cache',
 				'type' => 'heading',
-				'desc' => __( 'No Page Cache is enabled.', 'wpcd' ),
+				'desc' => __( 'No Page Cache is enabled.', 'simple-stack' ),
 			);
 		}
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* REDIS */
 		if ( false === $this->get_app_is_memcached_installed( $id ) ) {
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$fields[] = array(
-				'name' => __( 'REDIS', 'wpcd' ),
+				'name' => __( 'REDIS', 'simple-stack' ),
 				'tab'  => 'cache',
 				'type' => 'heading',
-				'desc' => __( 'Enable or disable Redis on your site.', 'wpcd' ),
+				'desc' => __( 'Enable or disable Redis on your site.', 'simple-stack' ),
 			);
 
 			if ( true === $this->is_redis_installed( $id ) ) {
@@ -678,9 +662,9 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 				/* Set the confirmation prompt based on the the current status of this flag */
 				$confirmation_prompt = '';
 				if ( 'on' === $redis_status ) {
-					$confirmation_prompt = __( 'Are you sure you would like to disable REDIS for this site?', 'wpcd' );
+					$confirmation_prompt = __( 'Are you sure you would like to disable REDIS for this site?', 'simple-stack' );
 				} else {
-					$confirmation_prompt = __( 'Are you sure you would like to enable REDIS for this site?', 'wpcd' );
+					$confirmation_prompt = __( 'Are you sure you would like to enable REDIS for this site?', 'simple-stack' );
 				}
 
 				$fields[] = array(
@@ -688,37 +672,37 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 					'name'       => '',
 					'tab'        => 'cache',
 					'type'       => 'switch',
-					'on_label'   => __( 'Enabled', 'wpcd' ),
-					'off_label'  => __( 'Disabled', 'wpcd' ),
+					'on_label'   => __( 'Enabled', 'simple-stack' ),
+					'off_label'  => __( 'Disabled', 'simple-stack' ),
 					'std'        => 'on' === $redis_status,
-					'desc'       => __( 'Enable or disable REDIS for this site.', 'wpcd' ),
+					'desc'       => __( 'Enable or disable REDIS for this site.', 'simple-stack' ),
 					'attributes' => array(
 						// the _action that will be called in ajax.
-						'data-wpcd-action'              => 'site-toggle-redis',
+						'data-sstk-action'              => 'site-toggle-redis',
 						// the id.
-						'data-wpcd-id'                  => $id,
+						'data-sstk-id'                  => $id,
 						// make sure we give the user a confirmation prompt.
-						'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+						'data-sstk-confirmation-prompt' => $confirmation_prompt,
 					),
-					'class'      => 'wpcd_app_action',
+					'class'      => 'sstk_app_action',
 					'save_field' => false,
 					'columns'    => 6,
 				);
 
 				// Close up prior card.
-				$fields[] = wpcd_end_card( $this->get_tab_slug() );
+				$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 				// Start new card.
-				$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+				$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-				$desc  = __( 'If the REDIS status toggle is not correct, click this button to correct it. This situation can occur if there is an error on the server or you or another admin manually toggle the REDIS service on the server outside of this plugin.', 'wcpcd' );
+				$desc  = __( 'If the REDIS status toggle is not correct, click this button to correct it. This situation can occur if there is an error on the server or you or another admin manually toggle the REDIS service on the server outside of this plugin.', 'simple-stack' );
 				$desc .= '<br/>';
 				$desc .= '<br/>';
-				$desc .= __( 'Please note that no code will be executed on the server to disable or enable REDIS. Only the status shown on this dashboard will be flipped.', 'wpcd' );
-				$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+				$desc .= __( 'Please note that no code will be executed on the server to disable or enable REDIS. Only the status shown on this dashboard will be flipped.', 'simple-stack' );
+				$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 				$fields[] = array(
-					'name' => __( 'Advanced - Cleanup REDIS Status', 'wpcd' ),
+					'name' => __( 'Advanced - Cleanup REDIS Status', 'simple-stack' ),
 					'tab'  => 'cache',
 					'type' => 'heading',
 					'desc' => $desc,
@@ -729,32 +713,32 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 					'name'       => '',
 					'tab'        => 'cache',
 					'type'       => 'button',
-					'std'        => __( 'Toggle Local Value for REDIS', 'wcpcd' ),
+					'std'        => __( 'Toggle Local Value for REDIS', 'simple-stack' ),
 					'attributes' => array(
 						// the _action that will be called in ajax.
-						'data-wpcd-action'              => 'site-toggle-redis-local-value',
+						'data-sstk-action'              => 'site-toggle-redis-local-value',
 						// the id.
-						'data-wpcd-id'                  => $id,
+						'data-sstk-id'                  => $id,
 						// make sure we give the user a confirmation prompt.
-						'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to toggle the local value for REDIS? This will have no effect on the server status', 'wpcd' ),
+						'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to toggle the local value for REDIS? This will have no effect on the server status', 'simple-stack' ),
 					),
-					'class'      => 'wpcd_app_action',
+					'class'      => 'sstk_app_action',
 					'save_field' => false,
 					'columns'    => 6,
 				);
 
 				// Close up prior card.
-				$fields[] = wpcd_end_card( $this->get_tab_slug() );
+				$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			} else {
 
 				// Construct a nice message showing more resources and a link to the server page.
-				$server_edit_link = '<a href=' . '"' . $server_edit_post_link . '"' . '>' . __( 'server', 'wpcd' ) . '</a>';
+				$server_edit_link = '<a href=' . '"' . $server_edit_post_link . '"' . '>' . __( 'server', 'simple-stack' ) . '</a>';
 				$redis_read_url   = 'https://scalegrid.io/blog/redis-vs-memcached-2021-comparison/';
-				$redis_read_url   = wpcd_get_documentation_link( 'wordpress-app-doc-link-memcached-info', apply_filters( 'wpcd_documentation_links', $redis_read_url ) );
-				$redis_read_link  = '<a href="' . $redis_read_url . '">' . __( 'Memcached and Redis Object Caches', 'wpcd' ) . '</a>';
+				$redis_read_url   = sstk_get_documentation_link( 'wordpress-app-doc-link-memcached-info', apply_filters( 'sstk_documentation_links', $redis_read_url ) );
+				$redis_read_link  = '<a href="' . $redis_read_url . '">' . __( 'Memcached and Redis Object Caches', 'simple-stack' ) . '</a>';
 				/* Translators: %1$s is a link to read more about redis caches. %2$s is a link to the server where this site is installed. */
-				$redis_not_enabled = sprintf( __( 'REDIS is not enabled on this server. Learn more about %1$s. Go to %2$s.', 'wpcd' ), $redis_read_link, $server_edit_link );
+				$redis_not_enabled = sprintf( __( 'REDIS is not enabled on this server. Learn more about %1$s. Go to %2$s.', 'simple-stack' ), $redis_read_link, $server_edit_link );
 				$fields[]          = array(
 					'tab'  => 'cache',
 					'type' => 'custom_html',
@@ -762,7 +746,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 				);
 
 				// Close up prior card.
-				$fields[] = wpcd_end_card( $this->get_tab_slug() );
+				$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			}
 		}
@@ -770,13 +754,13 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 		/* MEMCACHED */
 		if ( false === $this->get_app_is_redis_installed( $id ) ) {
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-			$desc = __( 'Enable or disable Memcached for this site. <br /> Note that all transients will be deleted when this cache is enabled - your plugins and themes should automatically re-add them as needed.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = __( 'Enable or disable Memcached for this site. <br /> Note that all transients will be deleted when this cache is enabled - your plugins and themes should automatically re-add them as needed.', 'simple-stack' );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$fields[] = array(
-				'name' => __( 'Memcached', 'wpcd' ),
+				'name' => __( 'Memcached', 'simple-stack' ),
 				'tab'  => 'cache',
 				'type' => 'heading',
 				'desc' => $desc,
@@ -794,9 +778,9 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 				/* Set the confirmation prompt based on the the current status of this flag */
 				$confirmation_prompt = '';
 				if ( 'on' === $mc_status ) {
-					$confirmation_prompt = __( 'Are you sure you would like to disable Memcached for this site?', 'wpcd' );
+					$confirmation_prompt = __( 'Are you sure you would like to disable Memcached for this site?', 'simple-stack' );
 				} else {
-					$confirmation_prompt = __( 'Are you sure you would like to enable Memcached for this site?', 'wpcd' );
+					$confirmation_prompt = __( 'Are you sure you would like to enable Memcached for this site?', 'simple-stack' );
 				}
 
 				$fields[] = array(
@@ -804,36 +788,36 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 					'name'       => '',
 					'tab'        => 'cache',
 					'type'       => 'switch',
-					'on_label'   => __( 'Enabled', 'wpcd' ),
-					'off_label'  => __( 'Disabled', 'wpcd' ),
+					'on_label'   => __( 'Enabled', 'simple-stack' ),
+					'off_label'  => __( 'Disabled', 'simple-stack' ),
 					'std'        => 'on' === $mc_status,
 					'attributes' => array(
 						// the _action that will be called in ajax.
-						'data-wpcd-action'              => 'site-toggle-memcached',
+						'data-sstk-action'              => 'site-toggle-memcached',
 						// the id.
-						'data-wpcd-id'                  => $id,
+						'data-sstk-id'                  => $id,
 						// make sure we give the user a confirmation prompt.
-						'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+						'data-sstk-confirmation-prompt' => $confirmation_prompt,
 					),
-					'class'      => 'wpcd_app_action',
+					'class'      => 'sstk_app_action',
 					'save_field' => false,
 					'columns'    => 6,
 				);
 
 				// Close up prior card.
-				$fields[] = wpcd_end_card( $this->get_tab_slug() );
+				$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 				// Start new card.
-				$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+				$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-				$desc  = __( 'If the Memcached status toggle is not correct, click this button to correct it. This situation can occur if there is an error on the server or you or another admin manually toggle the Memcached service on the server outside of this plugin.', 'wcpcd' );
+				$desc  = __( 'If the Memcached status toggle is not correct, click this button to correct it. This situation can occur if there is an error on the server or you or another admin manually toggle the Memcached service on the server outside of this plugin.', 'simple-stack' );
 				$desc .= '<br/>';
 				$desc .= '<br/>';
-				$desc .= __( 'Please note that no code will be executed on the server to disable or enable Memcached. Only the status shown on this dashboard will be flipped.', 'wpcd' );
-				$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+				$desc .= __( 'Please note that no code will be executed on the server to disable or enable Memcached. Only the status shown on this dashboard will be flipped.', 'simple-stack' );
+				$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 				$fields[] = array(
-					'name' => __( 'Advanced - Cleanup Memcached Status', 'wpcd' ),
+					'name' => __( 'Advanced - Cleanup Memcached Status', 'simple-stack' ),
 					'tab'  => 'cache',
 					'type' => 'heading',
 					'desc' => $desc,
@@ -844,32 +828,32 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 					'name'       => '',
 					'tab'        => 'cache',
 					'type'       => 'button',
-					'std'        => __( 'Toggle Local Value for Memcached', 'wpcd' ),
+					'std'        => __( 'Toggle Local Value for Memcached', 'simple-stack' ),
 					'attributes' => array(
 						// the _action that will be called in ajax.
-						'data-wpcd-action'              => 'site-toggle-memcached-local-value',
+						'data-sstk-action'              => 'site-toggle-memcached-local-value',
 						// the id.
-						'data-wpcd-id'                  => $id,
+						'data-sstk-id'                  => $id,
 						// make sure we give the user a confirmation prompt.
-						'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to toggle the local value for Memcached? This will have no effect on the server status', 'wpcd' ),
+						'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to toggle the local value for Memcached? This will have no effect on the server status', 'simple-stack' ),
 					),
-					'class'      => 'wpcd_app_action',
+					'class'      => 'sstk_app_action',
 					'save_field' => false,
 					'columns'    => 6,
 				);
 
 				// Close up prior card.
-				$fields[] = wpcd_end_card( $this->get_tab_slug() );
+				$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			} else {
 
 				// Construct a nice message showing more resources and a link to the server page.
-				$server_edit_link    = '<a href=' . '"' . $server_edit_post_link . '"' . '>' . __( 'server', 'wpcd' ) . '</a>';
+				$server_edit_link    = '<a href=' . '"' . $server_edit_post_link . '"' . '>' . __( 'server', 'simple-stack' ) . '</a>';
 				$memcached_read_url  = 'https://scalegrid.io/blog/redis-vs-memcached-2021-comparison/';
-				$memcached_read_url  = wpcd_get_documentation_link( 'wordpress-app-doc-link-memcached-info', apply_filters( 'wpcd_documentation_links', $memcached_read_url ) );
-				$memcached_read_link = '<a href="' . $memcached_read_url . '">' . __( 'Memcached and Redis Object Caches', 'wpcd' ) . '</a>';
+				$memcached_read_url  = sstk_get_documentation_link( 'wordpress-app-doc-link-memcached-info', apply_filters( 'sstk_documentation_links', $memcached_read_url ) );
+				$memcached_read_link = '<a href="' . $memcached_read_url . '">' . __( 'Memcached and Redis Object Caches', 'simple-stack' ) . '</a>';
 				/* Translators: %1$s is a readmore link for memcached. %2$s is a link to the server where memcached is installed. */
-				$mc_not_enabled = sprintf( __( 'Memcached is not enabled on this server. Learn more about %1$s. Go to %2$s.', 'wpcd' ), $memcached_read_link, $server_edit_link );
+				$mc_not_enabled = sprintf( __( 'Memcached is not enabled on this server. Learn more about %1$s. Go to %2$s.', 'simple-stack' ), $memcached_read_link, $server_edit_link );
 				$fields[]       = array(
 					'tab'  => 'cache',
 					'type' => 'custom_html',
@@ -877,93 +861,93 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 				);
 
 				// Close up prior card.
-				$fields[] = wpcd_end_card( $this->get_tab_slug() );
+				$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			}
 		}
 
 		// Allow plugins and addons to hook into the field definitions just before adding notes.
-		$fields = apply_filters( "wpcd_app_{$this->get_app_name()}_tabs_cache_before_notes", $fields, $id );
+		$fields = apply_filters( "sstk_app_{$this->get_app_name()}_tabs_cache_before_notes", $fields, $id );
 
-		if ( ! (bool) wpcd_get_early_option( 'wordpress_app_hide_about_caches_text' ) ) {
+		if ( ! (bool) sstk_get_early_option( 'wordpress_app_hide_about_caches_text' ) ) {
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			/* About caches and caching */
-			$desc  = __( 'On a WordPress system there are FIVE possible levels of caching.', 'wpcd' );
+			$desc  = __( 'On a WordPress system there are FIVE possible levels of caching.', 'simple-stack' );
 			$desc .= '<br />';
 			$desc .= '<br />';
-			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;1. CDN Caching such as that done by Cloudflare', 'wpcd' );
+			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;1. CDN Caching such as that done by Cloudflare', 'simple-stack' );
 			$desc .= '<br />';
-			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;2. OpCode Caching which stores compiled PHP code so it does not have to be compiled every time a page executes', 'wpcd' );
+			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;2. OpCode Caching which stores compiled PHP code so it does not have to be compiled every time a page executes', 'simple-stack' );
 			$desc .= '<br />';
-			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;3. Object caching which caches database queries', 'wpcd' );
+			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;3. Object caching which caches database queries', 'simple-stack' );
 			$desc .= '<br />';
-			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;4. Page caching which caches full web pages after they have been generated by WordPress and', 'wpcd' );
+			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;4. Page caching which caches full web pages after they have been generated by WordPress and', 'simple-stack' );
 			$desc .= '<br />';
-			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;5. Browser caching', 'wpcd' );
-			$desc .= '<br />';
-			$desc .= '<br />';
-			$desc .= __( 'This page will help you manage caching at levels 3 and 4 - object caching and page caching.', 'wpcd' );
+			$desc .= __( '&nbsp;&nbsp;&nbsp;&nbsp;5. Browser caching', 'simple-stack' );
 			$desc .= '<br />';
 			$desc .= '<br />';
-			$desc .= __( 'For object caching you can use Memcached or Redis along with a WordPress plugin to manage the cache.', 'wpcd' );
+			$desc .= __( 'This page will help you manage caching at levels 3 and 4 - object caching and page caching.', 'simple-stack' );
 			$desc .= '<br />';
 			$desc .= '<br />';
-			$desc .= __( 'For page caching you can use an NGINX cache in combination with a WordPress plugin to manage the cache.', 'wpcd' );
+			$desc .= __( 'For object caching you can use Memcached or Redis along with a WordPress plugin to manage the cache.', 'simple-stack' );
+			$desc .= '<br />';
+			$desc .= '<br />';
+			$desc .= __( 'For page caching, Simple Stack uses LiteSpeed Cache with OpenLiteSpeed.', 'simple-stack' );
 
 			$fields[] = array(
-				'name' => __( 'About Caches and Caching', 'wpcd' ),
+				'name' => __( 'About Caches and Caching', 'simple-stack' ),
 				'tab'  => 'cache',
 				'type' => 'heading',
 				'desc' => $desc,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			/* About clearing caches */
-			$desc     = __( 'When you are clearing caches, you must make sure that all five caching levels are cleared/purged.', 'wpcd' );
+			$desc     = __( 'When you are clearing caches, you must make sure that all five caching levels are cleared/purged.', 'simple-stack' );
 			$desc    .= '<br />';
 			$desc    .= '<br />';
-			$desc    .= __( 'When troubleshooting an issue, it is very easy to forget about one of the levels which might make a problem seem unsolved  - when the real issue is that an old page or data is stuck in a cache somewhere along the route.', 'wpcd' );
+			$desc    .= __( 'When troubleshooting an issue, it is very easy to forget about one of the levels which might make a problem seem unsolved  - when the real issue is that an old page or data is stuck in a cache somewhere along the route.', 'simple-stack' );
 			$desc    .= '<br />';
 			$desc    .= '<br />';
-			$desc    .= __( 'When technical support of any kind - plugin author, theme authors etc. ask you to purge your cache, they are really asking about purging all five cache leves - if you have them all enabled.', 'wpcd' );
+			$desc    .= __( 'When technical support of any kind - plugin author, theme authors etc. ask you to purge your cache, they are really asking about purging all five cache leves - if you have them all enabled.', 'simple-stack' );
 			$fields[] = array(
-				'name' => __( 'About Clearing Caches', 'wpcd' ),
+				'name' => __( 'About Clearing Caches', 'simple-stack' ),
 				'tab'  => 'cache',
 				'type' => 'heading',
 				'desc' => $desc,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 		}
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		// Cache Documentation Link to WPCloudDeploy Site.
-		$doc_link = 'https://wpclouddeploy.com/documentation/wpcloud-deploy-user-guide/page-cache/';
-		$desc     = __( 'Read more about caching in our documentation.', 'wpcd' );
+		// Cache Documentation Link to Simple Stack Site.
+		$doc_link = 'https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#5-ols-vhost-hardening';
+		$desc     = __( 'Read more about caching in our documentation.', 'simple-stack' );
 		$desc    .= '<br />';
 		$desc    .= '<br />';
-		$desc    .= sprintf( '<a href="%s">%s</a>', wpcd_get_documentation_link( 'wordpress-app-doc-link-page-cache', apply_filters( 'wpcd_documentation_links', $doc_link ) ), __( 'View Cache Documentation', 'wpcd' ) );
+		$desc    .= sprintf( '<a href="%s">%s</a>', sstk_get_documentation_link( 'wordpress-app-doc-link-page-cache', apply_filters( 'sstk_documentation_links', $doc_link ) ), __( 'View Cache Documentation', 'simple-stack' ) );
 
 		$fields[] = array(
-			'name' => __( 'Cache Documentation', 'wpcd' ),
+			'name' => __( 'Cache Documentation', 'simple-stack' ),
 			'tab'  => 'cache',
 			'type' => 'heading',
 			'desc' => $desc,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $fields;
 
@@ -972,9 +956,9 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Toggle the page cache.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_wordpress-app_pending_log_toggle_page_cache
+	 * Action Hook: sstk_wordpress-app_pending_log_toggle_page_cache
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site involved in this action.
@@ -983,7 +967,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	public function pending_log_toggle_page_cache( $task_id, $site_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		/* Toggle The Page Cache */
 		$result = $this->enable_disable_pagecache( 'site-toggle-pagecache', $site_id );
@@ -998,16 +982,16 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 				$task_status = 'failed';
 			}
 		}
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
 
 	}
 
 	/**
 	 * Toggle the redis cache.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_wordpress-app_pending_log_toggle_redis_object_cache
+	 * Action Hook: sstk_wordpress-app_pending_log_toggle_redis_object_cache
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site involved in this action.
@@ -1016,7 +1000,7 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 	public function pending_log_toggle_redis_object_cache( $task_id, $site_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		$redis_status = $this->get_app_is_redis_installed( $site_id );
 
@@ -1039,11 +1023,11 @@ class WPCD_WORDPRESS_TABS_CACHE extends WPCD_WORDPRESS_TABS {
 				$task_status = 'failed';
 			}
 		}
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
 
 	}
 
 }
 
 
-new WPCD_WORDPRESS_TABS_CACHE();
+new SSTK_WORDPRESS_TABS_CACHE();

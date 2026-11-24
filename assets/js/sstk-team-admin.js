@@ -1,5 +1,6 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
- * This JS file is loaded for cpt wpcd_team details screen only!
+ * This JS file is loaded for cpt sstk_team details screen only!
 */
 /* global params */
 (function ($, params) {
@@ -16,7 +17,7 @@
 	 * @return {Void} 
 	 */
 	function init() {
-		$(document).on('click', '.wpcd_team-manager-checkbox input[type="checkbox"]', function (e) {
+		$(document).on('click', '.sstk_team-manager-checkbox input[type="checkbox"]', function (e) {
 			var $this = $(this);
 
 			if ($this.prop('checked') == true) {
@@ -25,13 +26,13 @@
 				team_manager_selected = false;
 			}
 
-			var $server_permissions = $this.closest('.wpcd_team-manager-checkbox').siblings('.wpcd_server-permissions');
+			var $server_permissions = $this.closest('.sstk_team-manager-checkbox').siblings('.sstk_server-permissions');
 			// to assign all server permissions to a user when user is set as a team manager
 			$server_permissions.find('input[type="checkbox"]').each(function () {
 				$(this).prop('checked', $this.prop('checked'));
 			});
 
-			var $app_permissions = $this.closest('.wpcd_team-manager-checkbox').siblings('.wpcd_app-permissions');
+			var $app_permissions = $this.closest('.sstk_team-manager-checkbox').siblings('.sstk_app-permissions');
 			// to assign all app permissions to a user when user is set as a team manager	
 			$app_permissions.find('input[type="checkbox"]').each(function () {
 				$(this).prop('checked', $this.prop('checked'));
@@ -40,18 +41,18 @@
 		});
 
 		// If any server permission is removed, then deselect team manager checkbox
-		$(document).on('click', '.wpcd_server-permissions input[type="checkbox"]', function (e) {
+		$(document).on('click', '.sstk_server-permissions input[type="checkbox"]', function (e) {
 			var $this = $(this);
-			var $context = $this.closest('.wpcd_server-permissions');
-			var $otherContext = $this.closest('.wpcd_server-permissions').siblings('.wpcd_app-permissions');
+			var $context = $this.closest('.sstk_server-permissions');
+			var $otherContext = $this.closest('.sstk_server-permissions').siblings('.sstk_app-permissions');
 			changeTeamManagerCheckbox($this, $context, $otherContext);
 		});
 
 		// If any app permission is removed, then deselect team manager checkbox
-		$(document).on('click', '.wpcd_app-permissions input[type="checkbox"]', function (e) {
+		$(document).on('click', '.sstk_app-permissions input[type="checkbox"]', function (e) {
 			var $this = $(this);
-			var $context = $this.closest('.wpcd_app-permissions');
-			var $otherContext = $this.closest('.wpcd_app-permissions').siblings('.wpcd_server-permissions');
+			var $context = $this.closest('.sstk_app-permissions');
+			var $otherContext = $this.closest('.sstk_app-permissions').siblings('.sstk_server-permissions');
 			changeTeamManagerCheckbox($this, $context, $otherContext);
 		});
 
@@ -65,11 +66,11 @@
 
 			var error = false;
 
-			$('.wpcd_permission-rule .rwmb-group-clone').each(function (index) {
+			$('.sstk_permission-rule .rwmb-group-clone').each(function (index) {
 				var $this = $(this);
 
 				// Team Member select box value
-				var team_member = $this.find('.wpcd_team-member select').val();
+				var team_member = $this.find('.sstk_team-member select').val();
 				if (team_member == '') {
 					alert(params.i10n.no_team_member);
 					error = true;
@@ -77,10 +78,10 @@
 				}
 
 				// Server Permissions checked checkbox
-				var serverChecked = $('input:checkbox:checked', $this.find('.wpcd_server-permissions')).length;
+				var serverChecked = $('input:checkbox:checked', $this.find('.sstk_server-permissions')).length;
 
 				// App Permissions checked checkbox
-				var appChecked = $('input:checkbox:checked', $this.find('.wpcd_app-permissions')).length;
+				var appChecked = $('input:checkbox:checked', $this.find('.sstk_app-permissions')).length;
 
 				var totalChecked = serverChecked + appChecked;
 
@@ -115,10 +116,10 @@
 		var numberNotChecked = numberNotChecked1 + numberNotChecked2;
 
 		if (numberNotChecked > 0) {
-			$context.siblings('.wpcd_team-manager-checkbox').find('input[type="checkbox"]').prop('checked', false);
+			$context.siblings('.sstk_team-manager-checkbox').find('input[type="checkbox"]').prop('checked', false);
 			team_manager_selected = false;
 		} else if (numberNotChecked == 0 && !team_manager_selected) {
-			$context.siblings('.wpcd_team-manager-checkbox').find('input[type="checkbox"]').prop('checked', true);
+			$context.siblings('.sstk_team-manager-checkbox').find('input[type="checkbox"]').prop('checked', true);
 			team_manager_selected = true;
 		}
 	}

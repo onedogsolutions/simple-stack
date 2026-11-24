@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * Build-time guard: prove the SimpleStack stylesheet cannot leak into wp-admin.
+ * Build-time guard: prove the Simple Stack stylesheet cannot leak into wp-admin.
  *
  * wp-admin's own styles are unlayered author styles. Tailwind v4 emits real CSS
  * cascade layers, and an unlayered rule beats a layered rule regardless of

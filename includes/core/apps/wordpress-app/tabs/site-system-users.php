@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Site system users.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,18 +18,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 /**
- * Class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS
+ * Class SSTK_WORDPRESS_TABS_SITE_SYSTEM_USERS
  */
-class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SITE_SYSTEM_USERS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS constructor.
+	 * SSTK_WORDPRESS_TABS_SITE_SYSTEM_USERS constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 	}
 
 	/**
@@ -56,7 +57,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'System Users', 'wpcd' ),
+				'label' => __( 'System Users', 'simple-stack' ),
 				'icon'  => 'fad fa-users-friends',
 			);
 		}
@@ -72,11 +73,11 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -98,18 +99,18 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
 		$server_post = $this->get_server_by_app_id( $id );
-		if ( ! $this->wpcd_user_can_view_wp_server( $server_post->ID ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_server( $server_post->ID ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Verify that the tab is enabled */
-		if ( ( ! defined( 'WPCD_SHOW_SITE_USERS_TAB' ) ) || ( defined( 'WPCD_SHOW_SITE_USERS_TAB' ) && ! WPCD_SHOW_SITE_USERS_TAB ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ( ! defined( 'SSTK_SHOW_SITE_USERS_TAB' ) ) || ( defined( 'SSTK_SHOW_SITE_USERS_TAB' ) && ! SSTK_SHOW_SITE_USERS_TAB ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/**
@@ -118,7 +119,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 		 */
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -182,11 +183,11 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 
 		/* Only show fields to users who can view servers */
 		$server_post = $this->get_server_by_app_id( $id );
-		if ( ! $this->wpcd_user_can_view_wp_server( $server_post->ID ) ) {
+		if ( ! $this->sstk_user_can_view_wp_server( $server_post->ID ) ) {
 
 			$fields[] = array(
-				'name' => __( 'Manage The Site User', 'wpcd' ),
-				'desc' => __( 'You are not allowed to manage site users - only admins with full access to the server hosting this site can manage these users', 'wpcd' ),
+				'name' => __( 'Manage The Site User', 'simple-stack' ),
+				'desc' => __( 'You are not allowed to manage site users - only admins with full access to the server hosting this site can manage these users', 'simple-stack' ),
 				'tab'  => 'site-system-users',
 				'type' => 'heading',
 			);
@@ -204,9 +205,9 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 		}
 
 		// manage site user heading.
-		$desc  = __( 'Site users are special users under which the website is run.  They normally have no password, are run in a chroot jail and cannot be used to log into the server.  The options in this section allow you to override this default behavior. Once a password or publickey is assigned, these users can log in with both sftp and ssh.', 'wpcd' );
-		$desc .= '<br />' . sprintf( __( 'Your site user username is %s', 'wpcd' ), '<em><b>' . get_post_meta( $id, 'wpapp_domain', true ) . '</b></em>' );
-		$desc .= '<br />' . __( 'Warning: Site users with passwords or public keys will have been released from their jails and have privileged access to your server resources so please be VERY careful if you assign a password or publickey to this user!', 'wpcd' );
+		$desc  = __( 'Site users are special users under which the website is run.  They normally have no password, are run in a chroot jail and cannot be used to log into the server.  The options in this section allow you to override this default behavior. Once a password or publickey is assigned, these users can log in with both sftp and ssh.', 'simple-stack' );
+		$desc .= '<br />' . sprintf( __( 'Your site user username is %s', 'simple-stack' ), '<em><b>' . get_post_meta( $id, 'wpapp_domain', true ) . '</b></em>' );
+		$desc .= '<br />' . __( 'Warning: Site users with passwords or public keys will have been released from their jails and have privileged access to your server resources so please be VERY careful if you assign a password or publickey to this user!', 'simple-stack' );
 
 		/*
 		$fields[] = array(
@@ -217,7 +218,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 		*/
 
 		$fields[] = array(
-			'name' => __( 'Manage The Site User', 'wpcd' ),
+			'name' => __( 'Manage The Site User', 'simple-stack' ),
 			'desc' => $desc,
 			'tab'  => 'site-system-users',
 			'type' => 'heading',
@@ -225,99 +226,99 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 
 		// change site user password.
 		$fields[] = array(
-			'name'       => __( 'Password', 'wpcd' ),
-			'id'         => 'wpcd_app_site_user_pass',
+			'name'       => __( 'Password', 'simple-stack' ),
+			'id'         => 'sstk_app_site_user_pass',
 			'tab'        => 'site-system-users',
 			'type'       => 'password',
 			'save_field' => false,
 			'std'        => $pass,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'site_user_pass',
+				'data-sstk-name' => 'site_user_pass',
 			),
-			'class'      => 'wpcd_app_pass_toggle',
+			'class'      => 'sstk_app_pass_toggle',
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_site_user_changepass_button',
+			'id'         => 'sstk_app_action_site_user_changepass_button',
 			'tab'        => 'site-system-users',
 			'type'       => 'button',
-			'std'        => __( 'Change Password', 'wpcd' ),
+			'std'        => __( 'Change Password', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action' => 'site-user-change-password',
+				'data-sstk-action' => 'site-user-change-password',
 				// the id.
-				'data-wpcd-id'     => $id,
+				'data-sstk-id'     => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => json_encode( array( '#wpcd_app_site_user_pass' ) ),
+				'data-sstk-fields' => json_encode( array( '#sstk_app_site_user_pass' ) ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// remove site user password.
 		if ( ! empty( $pass ) ) {
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_site_user_removepass_button',
+				'id'         => 'sstk_app_action_site_user_removepass_button',
 				'tab'        => 'site-system-users',
 				'type'       => 'button',
-				'std'        => __( 'Remove Password', 'wpcd' ),
+				'std'        => __( 'Remove Password', 'simple-stack' ),
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'site-user-remove-password',
+					'data-sstk-action' => 'site-user-remove-password',
 					// the id.
-					'data-wpcd-id'     => $id,
+					'data-sstk-id'     => $id,
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 		}
 
 		// set public key for site user.
 		$fields[] = array(
-			'name'             => __( 'Public Key File', 'wpcd' ),
-			'id'               => 'wpcd_app_site_user_public_key_file',
+			'name'             => __( 'Public Key File', 'simple-stack' ),
+			'id'               => 'sstk_app_site_user_public_key_file',
 			'tab'              => 'site-system-users',
 			'type'             => 'file',
 			'max_file_uploads' => 1,
-			'placeholder'      => __( 'Select a key', 'wpcd' ),
+			'placeholder'      => __( 'Select a key', 'simple-stack' ),
 			'save_field'       => false,
-			'class'            => 'wpcd_app_setkey wpcd_app_site_user_setkey',
+			'class'            => 'sstk_app_setkey sstk_app_site_user_setkey',
 			'attributes'       => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'site_user_public_key_file',
+				'data-sstk-name' => 'site_user_public_key_file',
 			),
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_site_user_setkey_button',
+			'id'         => 'sstk_app_action_site_user_setkey_button',
 			'tab'        => 'site-system-users',
 			'type'       => 'button',
-			'std'        => __( 'Set Public Key', 'wpcd' ),
+			'std'        => __( 'Set Public Key', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action' => 'site-user-set-key',
+				'data-sstk-action' => 'site-user-set-key',
 				// the id.
-				'data-wpcd-id'     => $id,
+				'data-sstk-id'     => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => json_encode( array( '#wpcd_app_site_user_public_key_file' ) ),
+				'data-sstk-fields' => json_encode( array( '#sstk_app_site_user_public_key_file' ) ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Remove public key for site user...
 		if ( ! empty( get_post_meta( $id, 'wpapp_site_user_public_key_flag', true ) ) ) {
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_site_user_removekey_button',
+				'id'         => 'sstk_app_action_site_user_removekey_button',
 				'tab'        => 'site-system-users',
 				'type'       => 'button',
-				'std'        => __( 'Remove Public Key', 'wpcd' ),
+				'std'        => __( 'Remove Public Key', 'simple-stack' ),
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'site-user-remove-key',
+					'data-sstk-action' => 'site-user-remove-key',
 					// the id.
-					'data-wpcd-id'     => $id,
+					'data-sstk-id'     => $id,
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 		}
@@ -336,7 +337,7 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Grab the arguments sent from the front-end JS */
@@ -454,13 +455,13 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 				break;
 		}
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
 		$success = $this->is_ssh_successful( $result, 'manage_site_users.txt', $action );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		switch ( $action ) {
@@ -484,4 +485,4 @@ class WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_SITE_SYSTEM_USERS();
+new SSTK_WORDPRESS_TABS_SITE_SYSTEM_USERS();

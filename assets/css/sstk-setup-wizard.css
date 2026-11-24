@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 body {
 	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 	background: #f9f9f9;
@@ -37,25 +38,25 @@ textarea:focus {
 	outline: none;
 }
 
-#wpcd-logo {
+#sstk-logo {
 	color: #444;
 	margin: 0;
 	text-align: center;
 }
 
-.wpcd-setup-wizard {
+.sstk-setup-wizard {
 	padding: 80px 20px;
 	margin: 0 auto;
 	max-width: 900px;
 }
 
-.wpcd-setup-steps {
+.sstk-setup-steps {
 	padding: 0;
 	margin: 1em 0 2em;
 	text-align: center;
 }
 
-.wpcd-setup-steps li {
+.sstk-setup-steps li {
 	display: inline-block;
 	padding: 12px;
 	font-weight: 500;
@@ -68,14 +69,14 @@ textarea:focus {
 	width: 100%;
 }
 
-.wpcd-setup-steps li .hint {
+.sstk-setup-steps li .hint {
 	margin-bottom: 12px;
 	font-weight: 300;
 	font-size: 16px;
 	color: #999;
 }
 
-.wpcd-setup-steps li:before {
+.sstk-setup-steps li:before {
 	border-bottom: 4px solid transparent;
 	position: absolute;
 	bottom: 18px;
@@ -92,7 +93,7 @@ textarea:focus {
 	background-repeat: no-repeat;
 }
 
-.wpcd-setup-steps li:after {
+.sstk-setup-steps li:after {
     content: counter(step-counter);
     margin-right: 5px;
     font-size: 80%;
@@ -103,20 +104,20 @@ textarea:focus {
     border-radius: 3px;
 }
 
-.wpcd-setup-steps li.done:after {
+.sstk-setup-steps li.done:after {
 	background-color: #6aa463;
 	content: '\2713';
 }
 
-.wpcd-setup-steps li.done:before {
+.sstk-setup-steps li.done:before {
 	background-image: linear-gradient(to right, #6aa463 0%, #6aa463 100%);
 }
 
-.wpcd-setup-steps li.active .hint {
+.sstk-setup-steps li.active .hint {
 	color: #333;
 }
 
-.wpcd-setup-steps li.active:before {
+.sstk-setup-steps li.active:before {
 	border-bottom: 4px solid transparent;
 	background-image: linear-gradient(to right, #6aa463 0%,#6aa463 50%,#e5e5e5 51%,#e5e5e5 100%);
 	background-origin: border-box;
@@ -124,11 +125,11 @@ textarea:focus {
 	background-repeat: no-repeat;
 }
 
-.wpcd-setup-steps li.active:after {
+.sstk-setup-steps li.active:after {
 	background-color: #a6c7a2;
 }
 
-.wpcd-setup-content {
+.sstk-setup-content {
 	background: #fff;
 	padding: 40px 60px;
 	color: #666;

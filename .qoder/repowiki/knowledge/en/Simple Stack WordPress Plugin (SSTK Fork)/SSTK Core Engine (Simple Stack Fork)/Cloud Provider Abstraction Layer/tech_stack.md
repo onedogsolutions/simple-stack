@@ -1,1 +1,1 @@
-PHP classes inside WordPress; REST calls made via `wp_remote_request` against DigitalOcean v2, Vultr v2, and UpCloud 1.3 APIs; secrets encrypted at rest through `WPCD()->decrypt()`; caching via WordPress transients keyed on `sha256` of the decrypted secret.
+PHP classes inside WordPress; REST calls made via `wp_remote_request` against the Vultr API v2 and UpCloud API 1.3; credentials encrypted at rest and read through `SSTK()->decrypt()`; WordPress transient caching keyed by provider, site/version and a SHA-256 credential fingerprint plus the API method.

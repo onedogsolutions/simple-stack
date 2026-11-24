@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Parent class for all app settings class
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * WPCD_APP_SETTINGS Parent class for all app settings classes
+ * SSTK_APP_SETTINGS Parent class for all app settings classes
  */
-class WPCD_APP_SETTINGS {
+class SSTK_APP_SETTINGS {
 
 	/**
-	 * WPCD_APP_SETTINGS constructor.
+	 * SSTK_APP_SETTINGS constructor.
 	 */
 	public function __construct() {
 		// empty.

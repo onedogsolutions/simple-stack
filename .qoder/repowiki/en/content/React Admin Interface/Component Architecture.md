@@ -29,7 +29,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s React component architecture inside the WordPress admin area. It covers the entry point, root application component, shell wrapper, routing strategy, state management approach, and how components compose together to render servers, sites, providers, and activity screens. It also documents the REST API integration with the WordPress backend, error handling patterns, testing strategies, and debugging techniques.
+This document explains Simple Stack’s React component architecture inside the WordPress admin area. It covers the entry point, root application component, shell wrapper, routing strategy, state management approach, and how components compose together to render servers, sites, providers, and activity screens. It also documents the REST API integration with the WordPress backend, error handling patterns, testing strategies, and debugging techniques.
 
 ## Project Structure
 The React code lives under `src/admin`. The main entry mounts the app into a container provided by PHP, seeds the initial hash route, and renders the root `App` component. Routes are resolved from the URL hash because wp-admin owns the real URL bar.
@@ -99,7 +99,7 @@ Key responsibilities:
 - [router.js:16-83](file://src/admin/lib/router.js#L16-L83)
 
 ## Architecture Overview
-SimpleStack uses a small, explicit routing layer on top of React. The root `App` component maps URL hashes to route components. Each route composes `AppShell` for chrome and uses shared primitives for layout and interaction. Data flows from routes to `api.js`, which normalizes responses and throws typed errors.
+Simple Stack uses a small, explicit routing layer on top of React. The root `App` component maps URL hashes to route components. Each route composes `AppShell` for chrome and uses shared primitives for layout and interaction. Data flows from routes to `api.js`, which normalizes responses and throws typed errors.
 
 ```mermaid
 sequenceDiagram
@@ -281,7 +281,7 @@ Design notes:
 
 ### REST Integration: api.js
 Responsibilities:
-- Build absolute URLs relative to the SimpleStack namespace.
+- Build absolute URLs relative to the Simple Stack namespace.
 - Attach nonce header when available.
 - Normalize JSON bodies and FormData uploads.
 - Throw typed `ApiError` with code and status.
@@ -367,6 +367,6 @@ Debugging tips:
 - [Modal.jsx:23-47](file://src/admin/components/Modal.jsx#L23-L47)
 
 ## Conclusion
-SimpleStack’s React architecture emphasizes simplicity and composability. A minimal hash router drives clear route components that share a thin shell and robust UI primitives. State is kept local, data access is centralized through a typed REST client, and error handling is consistent. The design makes it straightforward to add new routes, extend tab schemas, and integrate additional backend endpoints while maintaining predictable behavior and performance.
+Simple Stack’s React architecture emphasizes simplicity and composability. A minimal hash router drives clear route components that share a thin shell and robust UI primitives. State is kept local, data access is centralized through a typed REST client, and error handling is consistent. The design makes it straightforward to add new routes, extend tab schemas, and integrate additional backend endpoints while maintaining predictable behavior and performance.
 
 [No sources needed since this section summarizes without analyzing specific files]

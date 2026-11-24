@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Misc tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,40 +11,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_MISC
+ * Class SSTK_WORDPRESS_TABS_MISC
  */
-class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_MISC extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_MISC constructor.
+	 * SSTK_WORDPRESS_TABS_MISC constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
-		// Allow the disable site action to be triggered via an action hook.  Will primarily be used by the woocommerce add-on and REST API.
-		add_action( 'wpcd_wordpress-app_do_toggle_site_status', array( $this, 'toggle_site_status_action' ), 10, 3 );
+		// Allow the site status action to be triggered via an action hook.
+		add_action( 'sstk_wordpress-app_do_toggle_site_status', array( $this, 'toggle_site_status_action' ), 10, 3 );
 
 		// Allow the enable http auth action to be triggered via an action hook.
-		add_action( 'wpcd_wordpress-app_do_site_enable_http_auth', array( $this, 'enable_http_auth_action' ), 10, 1 );
+		add_action( 'sstk_wordpress-app_do_site_enable_http_auth', array( $this, 'enable_http_auth_action' ), 10, 1 );
 
 		// Allow the disable http auth action to be triggered via an action hook.
-		add_action( 'wpcd_wordpress-app_do_site_disable_http_auth', array( $this, 'disable_http_auth_action' ), 10, 1 );
+		add_action( 'sstk_wordpress-app_do_site_disable_http_auth', array( $this, 'disable_http_auth_action' ), 10, 1 );
 
 		// Add bulk action option to the site list to bulk delete sites.
-		add_filter( 'bulk_actions-edit-wpcd_app', array( $this, 'wpcd_add_new_bulk_actions_site' ) );
+		add_filter( 'bulk_actions-edit-sstk_app', array( $this, 'sstk_add_new_bulk_actions_site' ) );
 
 		// Action hook to handle bulk actions for site.
-		add_filter( 'handle_bulk_actions-edit-wpcd_app', array( $this, 'wpcd_bulk_action_handler_sites' ), 10, 3 );
+		add_filter( 'handle_bulk_actions-edit-sstk_app', array( $this, 'sstk_bulk_action_handler_sites' ), 10, 3 );
 
-		// This action hook is only used by the WooCommerce sell wp sites functionality to trigger deletion of a site.
-		add_action( 'wpcd_app_delete_wp_site', array( $this, 'remove_site_via_action_hook' ), 10, 2 );
+		// Allow site deletion through an action hook.
+		add_action( 'sstk_app_delete_wp_site', array( $this, 'remove_site_via_action_hook' ), 10, 2 );
 
 		/* Pending Logs Background Task: Delete site */
-		add_action( 'wpcd_pending_log_delete_wp_site', array( $this, 'pending_log_remove_site_and_leave_backups' ), 10, 3 );
-		add_action( 'wpcd_pending_log_delete_wp_site_and_backups', array( $this, 'pending_log_remove_site_and_backups' ), 10, 3 );
+		add_action( 'sstk_pending_log_delete_wp_site', array( $this, 'pending_log_remove_site_and_leave_backups' ), 10, 3 );
+		add_action( 'sstk_pending_log_delete_wp_site_and_backups', array( $this, 'pending_log_remove_site_and_backups' ), 10, 3 );
 	}
 
 	/**
@@ -71,7 +72,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Misc', 'wpcd' ),
+				'label' => __( 'Misc', 'simple-stack' ),
 				'icon'  => 'fad fa-random',
 			);
 		}
@@ -87,17 +88,17 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the MISC tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -127,9 +128,9 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
 			/* Translators: %1: String representing action; %2: Filename where code is being executed; %3: Post id for site or server; %4: WordPress User id */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -137,7 +138,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* Translators: %1: String representing action; %2: Filename where code is being executed; %3: Post id for site or server; %4: WordPress User id */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -146,12 +147,12 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 				case 'remove':
 				case 'remove_full':
 					// remove site - check if user has permission - note that there are TWO checks here - a general one for an app and one for the site itself.
-					if ( ! wpcd_can_current_user_delete_app( $id ) ) {
-						$result = new \WP_Error( __( 'You don\'t have permission To remove an App.', 'wpcd' ) );
+					if ( ! sstk_can_current_user_delete_app( $id ) ) {
+						$result = new \WP_Error( __( 'You don\'t have permission To remove an App.', 'simple-stack' ) );
 						break;
 					}
-					if ( ! $this->wpcd_user_can_remove_wp_site( $id ) ) {
-						$result = new \WP_Error( __( 'You don\'t have permission To remove a WordPress Site. If you are seeing this message, it probably means you have the ability to remove an app but not delete a site. Plese check with your admin to enable the permissions needed to delete a WordPress site.', 'wpcd' ) );
+					if ( ! $this->sstk_user_can_remove_wp_site( $id ) ) {
+						$result = new \WP_Error( __( 'You don\'t have permission To remove a WordPress Site. If you are seeing this message, it probably means you have the ability to remove an app but not delete a site. Plese check with your admin to enable the permissions needed to delete a WordPress site.', 'simple-stack' ) );
 						break;
 					}
 					// remove site.
@@ -252,13 +253,13 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$desc = __( 'Temporarily enable or disable your site.  All files and data remain when the site is disabled.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Temporarily enable or disable your site.  All files and data remain when the site is disabled.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['site-status-header'] = array(
-			'label'          => __( 'Enable/Disable Site', 'wpcd' ),
+			'label'          => __( 'Enable/Disable Site', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -271,9 +272,9 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of the site */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable this site?', 'simple-stack' );
 		}
 
 		// Option to activate or deactivate site.
@@ -284,10 +285,10 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 					'label'          => '',
 					'std'            => 'on' === $status,
 					'raw_attributes' => array(
-						'on_label'            => __( 'Enabled', 'wpcd' ),
-						'off_label'           => __( 'Disabled', 'wpcd' ),
+						'on_label'            => __( 'Enabled', 'simple-stack' ),
+						'off_label'           => __( 'Disabled', 'simple-stack' ),
 						'std'                 => 'on' === $status,
-						'desc'                => 'on' === $status ? __( 'Click to deactivate the site without removing data', 'wpcd' ) : __( 'Click to reactivate the site', 'wpcd' ),
+						'desc'                => 'on' === $status ? __( 'Click to deactivate the site without removing data', 'simple-stack' ) : __( 'Click to reactivate the site', 'simple-stack' ),
 						'confirmation_prompt' => $confirmation_prompt,
 					),
 					'type'           => 'switch',
@@ -296,7 +297,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -312,20 +313,20 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	private function get_admin_lock_action_fields( $id ) {
 
 		// This section can only be see by an admin.
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 			return array();
 		}
 
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$actions['site-admin-lock-header'] = array(
-			'label'          => __( 'Admin Lock', 'wpcd' ),
+			'label'          => __( 'Admin Lock', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Lock all tabs on this site so that only admins can perform actions on them.', 'wpcd' ),
+				'desc' => __( 'Lock all tabs on this site so that only admins can perform actions on them.', 'simple-stack' ),
 			),
 		);
 
@@ -335,9 +336,9 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of the site */
 		$confirmation_prompt = '';
 		if ( true === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable the admin lock for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable the admin lock for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable the admin lock for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable the admin lock for this site?', 'simple-stack' );
 		}
 
 		// Option to activate or deactivate site.
@@ -348,10 +349,10 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 					'label'          => '',
 					'std'            => 'on' === $status,
 					'raw_attributes' => array(
-						'on_label'            => __( 'Enabled', 'wpcd' ),
-						'off_label'           => __( 'Disabled', 'wpcd' ),
+						'on_label'            => __( 'Enabled', 'simple-stack' ),
+						'off_label'           => __( 'Disabled', 'simple-stack' ),
 						'std'                 => true === $status,
-						'desc'                => true === $status ? __( 'Click to enable tabs for non-admins', 'wpcd' ) : __( 'Click to disable tabs for non-admins', 'wpcd' ),
+						'desc'                => true === $status ? __( 'Click to enable tabs for non-admins', 'simple-stack' ) : __( 'Click to disable tabs for non-admins', 'simple-stack' ),
 						'confirmation_prompt' => $confirmation_prompt,
 					),
 					'type'           => 'switch',
@@ -360,7 +361,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -378,25 +379,25 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// Option to delete site.
 		$actions['remove-site-header'] = array(
-			'label'          => __( 'DANGER ZONE: Remove Site', 'wpcd' ),
+			'label'          => __( 'DANGER ZONE: Remove Site', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Permanently remove your site from the server - all data on the server is deleted.  Offsite backups that you might have made to AWS S3 are not deleted.', 'wpcd' ),
+				'desc' => __( 'Permanently remove your site from the server - all data on the server is deleted.  Offsite backups that you might have made to AWS S3 are not deleted.', 'simple-stack' ),
 			),
 		);
 
-		if ( wpcd_is_app_delete_protected( $id ) ) {
+		if ( sstk_is_app_delete_protected( $id ) ) {
 			// Show message indicating that user cannot delete site.
 
 			if ( is_admin() ) {
 				// Message that is shown in wp-admin needs to be different than the front-end.
-				$no_del_msg = '<h4>' . __( '***You cannot remove this site because deletion protection is turned on. If you would really like to delete this site you can turn off deletion protection in the APP DELETE PROTECTION metabox on the right. ***', 'wpcd' ) . '</h4>';
+				$no_del_msg = '<h4>' . __( '***You cannot remove this site because deletion protection is turned on. If you would really like to delete this site you can turn off deletion protection in the APP DELETE PROTECTION metabox on the right. ***', 'simple-stack' ) . '</h4>';
 			} else {
-				$no_del_msg = '<h4>' . __( '***You cannot remove this site because deletion protection is turned on. If you would really like to delete this site please ask your system admin to turn off deletion protection in the APP DELETE PROTECTION metabox. ***', 'wpcd' ) . '</h4>';
+				$no_del_msg = '<h4>' . __( '***You cannot remove this site because deletion protection is turned on. If you would really like to delete this site please ask your system admin to turn off deletion protection in the APP DELETE PROTECTION metabox. ***', 'simple-stack' ) . '</h4>';
 			}
 
 			$actions['remove'] = array(
@@ -405,13 +406,13 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 					'std' => $no_del_msg,
 				),
 			);
-		} elseif ( ! wpcd_can_current_user_delete_app( $id ) ) {
+		} elseif ( ! sstk_can_current_user_delete_app( $id ) ) {
 
 			// Show message indicating that user cannot delete site.
 			$actions['remove'] = array(
 				'type'           => 'custom_html',
 				'raw_attributes' => array(
-					'std' => '<h4>' . __( '***You do not have permissions to delete a site***', 'wpcd' ) . '</h4>',
+					'std' => '<h4>' . __( '***You do not have permissions to delete a site***', 'simple-stack' ) . '</h4>',
 				),
 			);
 
@@ -421,9 +422,9 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'type'           => 'button',
 				'raw_attributes' => array(
-					'std'                 => __( 'Remove', 'wpcd' ),
-					'desc'                => __( 'Delete site and data - this action is not reversible!', 'wpcd' ),
-					'confirmation_prompt' => __( 'Are you sure you would like to delete this site and data? This action is NOT reversible!', 'wpcd' ),
+					'std'                 => __( 'Remove', 'simple-stack' ),
+					'desc'                => __( 'Delete site and data - this action is not reversible!', 'simple-stack' ),
+					'confirmation_prompt' => __( 'Are you sure you would like to delete this site and data? This action is NOT reversible!', 'simple-stack' ),
 				),
 			);
 
@@ -431,16 +432,16 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'type'           => 'button',
 				'raw_attributes' => array(
-					'std'                 => __( 'Remove Site & Backups', 'wpcd' ),
-					'desc'                => __( 'Delete site,  data & local backups - remote backups will not be removed.  This action is not reversible!', 'wpcd' ),
-					'confirmation_prompt' => __( 'Are you sure you would like to delete this site, data and local backups? This action is NOT reversible!', 'wpcd' ),
+					'std'                 => __( 'Remove Site & Backups', 'simple-stack' ),
+					'desc'                => __( 'Delete site,  data & local backups - remote backups will not be removed.  This action is not reversible!', 'simple-stack' ),
+					'confirmation_prompt' => __( 'Are you sure you would like to delete this site, data and local backups? This action is NOT reversible!', 'simple-stack' ),
 				),
 			);
 
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -458,7 +459,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* What is the current basic authentication status of the site? */
 		$basic_auth_status = $this->get_site_http_auth_status( $id );
@@ -468,11 +469,11 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		/* If basic authentication is enabled for the login page, we can't enable it for the whole site. */
 		if ( 'on' === $wplogin_basic_auth_status ) {
-			$desc = __( 'Basic authentication is already turned on for the wp-login page.  You will need to turn that off before you are able to use this option to protect the entire site.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = __( 'Basic authentication is already turned on for the wp-login page.  You will need to turn that off before you are able to use this option to protect the entire site.', 'simple-stack' );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$actions['pw-auth-header'] = array(
-				'label'          => __( 'Password Protect All Pages With HTTP Basic Authentication', 'wpcd' ),
+				'label'          => __( 'Password Protect All Pages With HTTP Basic Authentication', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $desc,
@@ -480,7 +481,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 			return $actions;
 		}
@@ -488,16 +489,16 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		/* Set the text of the confirmation prompt based on the current basic authentication status of the site */
 		$confirmation_prompt = '';
 		if ( 'on' === $basic_auth_status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable password protection for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable password protection for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable password protection for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable password protection for this site?', 'simple-stack' );
 		}
 
-		$desc = __( 'Basic authentication places an http password popup in front of your site.  This is useful for staging sites and sites you are not ready to make public yet.<br /> If this is already turned on and you have forgotten your password, turn it off, fill in the user and password fields with data you know and turn it back on.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Basic authentication places an http password popup in front of your site.  This is useful for staging sites and sites you are not ready to make public yet.<br /> If this is already turned on and you have forgotten your password, turn it off, fill in the user and password fields with data you know and turn it back on.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['pw-auth-header'] = array(
-			'label'          => __( 'Password Protect All Pages With HTTP Basic Authentication', 'wpcd' ),
+			'label'          => __( 'Password Protect All Pages With HTTP Basic Authentication', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -506,28 +507,28 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		if ( 'off' === $basic_auth_status ) {
 			$actions['basic-auth-user'] = array(
-				'label'          => __( 'User', 'wpcd' ),
-				'desc'           => __( 'User name to use when basic authentication is turned on', 'wpcd' ),
+				'label'          => __( 'User', 'simple-stack' ),
+				'desc'           => __( 'User name to use when basic authentication is turned on', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
-					'std'            => wpcd_generate_alpha_numeric_string( 12 ),
+					'std'            => sstk_generate_alpha_numeric_string( 12 ),
 					'disabled'       => 'off' === $basic_auth_status ? false : true,
 					'size'           => 60,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'basic_auth_user',
+					'data-sstk-name' => 'basic_auth_user',
 				),
 			);
 
 			$actions['basic-auth-pw'] = array(
-				'label'          => __( 'Password', 'wpcd' ),
-				'desc'           => __( 'Password to use when basic authentication is turned on', 'wpcd' ),
+				'label'          => __( 'Password', 'simple-stack' ),
+				'desc'           => __( 'Password to use when basic authentication is turned on', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
-					'std'            => wpcd_generate_default_password(),
+					'std'            => sstk_generate_default_password(),
 					'disabled'       => 'off' === $basic_auth_status ? false : true,
 					'size'           => 60,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'basic_auth_pass',
+					'data-sstk-name' => 'basic_auth_pass',
 				),
 			);
 		}
@@ -538,12 +539,12 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 				$actions['basic-auth-status'] = array(
 					'label'          => '',
 					'raw_attributes' => array(
-						'on_label'            => __( 'Enabled', 'wpcd' ),
-						'off_label'           => __( 'Disabled', 'wpcd' ),
+						'on_label'            => __( 'Enabled', 'simple-stack' ),
+						'off_label'           => __( 'Disabled', 'simple-stack' ),
 						'std'                 => 'on' === $basic_auth_status,
-						'desc'                => 'off' === $basic_auth_status ? __( 'Click to enable password protection on your site', 'wpcd' ) : __( 'Click to remove password protection from your site', 'wpcd' ),
+						'desc'                => 'off' === $basic_auth_status ? __( 'Click to enable password protection on your site', 'simple-stack' ) : __( 'Click to remove password protection from your site', 'simple-stack' ),
 						'confirmation_prompt' => $confirmation_prompt,                      // fields that contribute data for this action.
-						'data-wpcd-fields'    => 'off' === $basic_auth_status ? wp_json_encode( array( '#wpcd_app_action_basic-auth-user', '#wpcd_app_action_basic-auth-pw' ) ) : '',
+						'data-sstk-fields'    => 'off' === $basic_auth_status ? wp_json_encode( array( '#sstk_app_action_basic-auth-user', '#sstk_app_action_basic-auth-pw' ) ) : '',
 					),
 					'type'           => 'switch',
 				);
@@ -551,7 +552,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -569,7 +570,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* What is the current basic authentication status of the wplogin page? */
 		$wplogin_basic_auth_status = $this->get_wplogin_http_auth_status( $id );
@@ -579,11 +580,11 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		/* If basic authentication is turned on for the whole site, disable this option and return right away. */
 		if ( 'on' === $basic_auth_status ) {
-			$desc = __( 'All pages on this site are already fully password protected with a site-wide HTTP Authentication directive.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = __( 'All pages on this site are already fully password protected with a site-wide HTTP Authentication directive.', 'simple-stack' );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$actions['wplogin-pw-auth-header'] = array(
-				'label'          => __( 'Password Protect WPLOGIN With HTTP Basic Authentication', 'wpcd' ),
+				'label'          => __( 'Password Protect WPLOGIN With HTTP Basic Authentication', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $desc,
@@ -591,25 +592,25 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 			return $actions;
 		}
 
 		/* Set the text of the confirmation prompt based on the current basic authentication status of the site */
 		$confirmation_prompt = '';
 		if ( 'on' === $wplogin_basic_auth_status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable password protection for the wp-login page for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable password protection for the wp-login page for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable password protection for the wp-login page for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable password protection for the wp-login page for this site?', 'simple-stack' );
 		}
 
-		$desc  = __( 'This action places an http password popup in front of your WPLOGIN page.  This is useful because it stops bad login attempts at the webserver, before it hits WordPress.', 'wpcd' );
-		$desc .= '<br/>' . '<br/>' . __( 'If this is already turned on and you have forgotten your password, turn it off, fill in the user and password fields with data you know and turn it back on.', 'wpcd' );
-		$desc .= '<br/>' . '<br/>' . __( 'Important Note: Turn this off before COPYING, CLONING, STAGING or MOVING the site!', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc  = __( 'This action places an http password popup in front of your WPLOGIN page.  This is useful because it stops bad login attempts at the webserver, before it hits WordPress.', 'simple-stack' );
+		$desc .= '<br/>' . '<br/>' . __( 'If this is already turned on and you have forgotten your password, turn it off, fill in the user and password fields with data you know and turn it back on.', 'simple-stack' );
+		$desc .= '<br/>' . '<br/>' . __( 'Important Note: Turn this off before COPYING, CLONING, STAGING or MOVING the site!', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['wplogin-pw-auth-header'] = array(
-			'label'          => __( 'Password Protect WPLOGIN With HTTP Basic Authentication', 'wpcd' ),
+			'label'          => __( 'Password Protect WPLOGIN With HTTP Basic Authentication', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -618,29 +619,29 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		if ( 'off' === $wplogin_basic_auth_status ) {
 			$actions['wplogin-basic-auth-user'] = array(
-				'label'          => __( 'User', 'wpcd' ),
-				'desc'           => __( 'User name to use when basic authentication is turned on', 'wpcd' ),
+				'label'          => __( 'User', 'simple-stack' ),
+				'desc'           => __( 'User name to use when basic authentication is turned on', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
-					'std'            => wpcd_generate_alpha_numeric_string( 12 ),
+					'std'            => sstk_generate_alpha_numeric_string( 12 ),
 					'disabled'       => 'off' === $wplogin_basic_auth_status ? false : true,
 					'size'           => 60,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'wplogin_basic_auth_user',
+					'data-sstk-name' => 'wplogin_basic_auth_user',
 				),
 
 			);
 
 			$actions['wplogin-basic-auth-pw'] = array(
-				'label'          => __( 'Password', 'wpcd' ),
-				'desc'           => __( 'Password to use when basic authentication is turned on', 'wpcd' ),
+				'label'          => __( 'Password', 'simple-stack' ),
+				'desc'           => __( 'Password to use when basic authentication is turned on', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
-					'std'            => wpcd_generate_default_password(),
+					'std'            => sstk_generate_default_password(),
 					'disabled'       => 'off' === $wplogin_basic_auth_status ? false : true,
 					'size'           => 60,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'wplogin_basic_auth_pass',
+					'data-sstk-name' => 'wplogin_basic_auth_pass',
 				),
 			);
 		}
@@ -651,12 +652,12 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 				$actions['wplogin-basic-auth-status'] = array(
 					'label'          => '',
 					'raw_attributes' => array(
-						'on_label'            => __( 'Enabled', 'wpcd' ),
-						'off_label'           => __( 'Disabled', 'wpcd' ),
+						'on_label'            => __( 'Enabled', 'simple-stack' ),
+						'off_label'           => __( 'Disabled', 'simple-stack' ),
 						'std'                 => 'on' === $wplogin_basic_auth_status,
-						'desc'                => 'off' === $wplogin_basic_auth_status ? __( 'Click to add password protection to the wp-login page', 'wpcd' ) : __( 'Click to remove password protection from the wp-login page', 'wpcd' ),
+						'desc'                => 'off' === $wplogin_basic_auth_status ? __( 'Click to add password protection to the wp-login page', 'simple-stack' ) : __( 'Click to remove password protection from the wp-login page', 'simple-stack' ),
 						'confirmation_prompt' => $confirmation_prompt,                      // fields that contribute data for this action.
-						'data-wpcd-fields'    => 'off' === $wplogin_basic_auth_status ? wp_json_encode( array( '#wpcd_app_action_wplogin-basic-auth-user', '#wpcd_app_action_wplogin-basic-auth-pw' ) ) : '',
+						'data-sstk-fields'    => 'off' === $wplogin_basic_auth_status ? wp_json_encode( array( '#sstk_app_action_wplogin-basic-auth-user', '#sstk_app_action_wplogin-basic-auth-pw' ) ) : '',
 					),
 					'type'           => 'switch',
 				);
@@ -664,7 +665,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -682,37 +683,37 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$uid = get_post_meta( $id, 'wpapp_user', true );
 		$pw  = $this->decrypt( get_post_meta( $id, 'wpapp_password', true ) );
 
 		$actions['initial-credentials-header'] = array(
-			'label'          => __( 'Initial WordPress Credentials', 'wpcd' ),
+			'label'          => __( 'Initial WordPress Credentials', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Here are the credentials that were initially set up for this site. You can use them to log into the site for the first time.  We strongly recommend that you change them after you login.', 'wpcd' ),
+				'desc' => __( 'Here are the credentials that were initially set up for this site. You can use them to log into the site for the first time.  We strongly recommend that you change them after you login.', 'simple-stack' ),
 			),
 		);
 
 		$actions['initial-credentials-uid'] = array(
-			'label'          => __( 'User Id', 'wpcd' ),
+			'label'          => __( 'User Id', 'simple-stack' ),
 			'type'           => 'custom_html',
 			'raw_attributes' => array(
-				'std' => wpcd_wrap_clipboard_copy( $uid ),
+				'std' => sstk_wrap_clipboard_copy( $uid ),
 			),
 		);
 
 		$actions['initial-credentials-pw'] = array(
-			'label'          => __( 'Password', 'wpcd' ),
+			'label'          => __( 'Password', 'simple-stack' ),
 			'type'           => 'custom_html',
 			'raw_attributes' => array(
-				'std' => wpcd_wrap_clipboard_copy( $pw ),
+				'std' => sstk_wrap_clipboard_copy( $pw ),
 			),
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -730,13 +731,13 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$actions['https-redirection-header'] = array(
-			'label'          => __( 'Enable/Disable https', 'wpcd' ),
+			'label'          => __( 'Enable/Disable https', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Under normal circumstances you should not need to use this option. Instead, use the actions on the SSL tab. <br /> But, if for some reason you need to manually force https or disable https you can use this option.', 'wpcd' ),
+				'desc' => __( 'Under normal circumstances you should not need to use this option. Instead, use the actions on the SSL tab. <br /> But, if for some reason you need to manually force https or disable https you can use this option.', 'simple-stack' ),
 			),
 		);
 
@@ -749,22 +750,22 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable https redirect?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable https redirect?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable https?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable https?', 'simple-stack' );
 		}
 
 		switch ( $status ) {
 			case 'on':
 			case 'off':
 				$actions['https-redirect-misc'] = array(
-					'label'          => __( 'Redirect Site to HTTPS', 'wpcd' ),
+					'label'          => __( 'Redirect Site to HTTPS', 'simple-stack' ),
 					'std'            => 'off' === $status,
 					'raw_attributes' => array(
-						'on_label'            => __( 'Enabled', 'wpcd' ),
-						'off_label'           => __( 'Disabled', 'wpcd' ),
+						'on_label'            => __( 'Enabled', 'simple-stack' ),
+						'off_label'           => __( 'Disabled', 'simple-stack' ),
 						'std'                 => 'on' === $status,
-						'desc'                => __( 'Enable or disable https redirect. This option does NOT automatically issue or revoke SSL certificates! <br />It will, however, reinstall an existing LetsEncrypt certificate if one exists. <br />If you want to automatically create SSL certificates use the actions available on the SSL tab instead.', 'wpcd' ),
+						'desc'                => __( 'Enable or disable https redirect. This option does NOT automatically issue or revoke SSL certificates! <br />It will, however, reinstall an existing LetsEncrypt certificate if one exists. <br />If you want to automatically create SSL certificates use the actions available on the SSL tab instead.', 'simple-stack' ),
 						'confirmation_prompt' => $confirmation_prompt,
 					),
 					'type'           => 'switch',
@@ -773,7 +774,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -784,7 +785,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_toggle_site_status (Optional).
+	 * Action hook: sstk_wordpress-app_do_toggle_site_status (Optional).
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed  - always 'site-status'.
@@ -841,7 +842,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is a string representing the action we're trying to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -860,13 +861,13 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		);
 
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'disable_remove_site.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		return $success;
@@ -877,7 +878,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Remove site via an action hook.
 	 *
-	 * Action Hook: wpcd_app_delete_wp_site
+	 * Action Hook: sstk_app_delete_wp_site
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed 'remove' or 'remove_full' (this matches the string required in the bash scripts).
@@ -889,9 +890,9 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Remove site and associated backups on disk via an action hook call from pending logs.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_pending_log_delete_wp_site
+	 * Action Hook: sstk_pending_log_delete_wp_site
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site involved in this action.
@@ -904,9 +905,9 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Remove site via an action hook call from pending logs.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_pending_log_delete_wp_site_and_backups
+	 * Action Hook: sstk_pending_log_delete_wp_site_and_backups
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site involved in this action.
@@ -928,7 +929,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	public function pending_log_remove_site( $task_id, $site_id, $args, $action ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		/* Attempt to remove the site */
 		$result = $this->remove_site( $site_id, $action );
@@ -945,7 +946,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 			}
 		}
 
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
 
 	}
 
@@ -961,17 +962,17 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	private function remove_site( $id, $action ) {
 
 		/* Fire action hook so that other tasks can be completed before site is removed. */
-		do_action( 'wpcd_before_remove_site_action_precheck', $id, $action );
+		do_action( 'sstk_before_remove_site_action_precheck', $id, $action );
 
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is a string representing the action we're trying to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Fire yet another action hook so that other tasks can be completed before site is removed. Eg: prepare the list of sFTP users to be removed by adding it to pending logs. */
-		do_action( 'wpcd_before_remove_site_action', $id, $action );
+		do_action( 'sstk_before_remove_site_action', $id, $action );
 
 		// Get the full command to be executed by ssh.
 		$run_cmd = $this->turn_script_into_command(
@@ -989,17 +990,17 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		);
 
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'disable_remove_site.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			// Attempt to delete DNS for the domain...
-			WPCD_DNS()->delete_dns_for_domain( get_post_meta( $id, 'wpapp_original_domain', true ) );
-			WPCD_DNS()->delete_dns_for_domain( get_post_meta( $id, 'wpapp_domain', true ) );
+			SSTK_DNS()->delete_dns_for_domain( get_post_meta( $id, 'wpapp_original_domain', true ) );
+			SSTK_DNS()->delete_dns_for_domain( get_post_meta( $id, 'wpapp_domain', true ) );
 
 			// If it's a staging site then lets remove the companion metas from the original site.
 			if ( ! empty( $this->get_live_id_for_staging_site( $id ) ) ) {
@@ -1009,10 +1010,9 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 			}
 
 			/**
-			 * Fire action hook so that other tasks can be completed after a site is removed.
-			 * One example where this hook is used is in the WPCD_WORDPRESS_APP_LOGTIVITY class.
+			 * Fire an action hook so other tasks can complete after a site is removed.
 			 */
-			do_action( 'wpcd_wordpress-app_after_remove_site_action_before_record_delete', $id, $action );
+			do_action( 'sstk_wordpress-app_after_remove_site_action_before_record_delete', $id, $action );
 		}
 
 		// now force delete the post.
@@ -1025,7 +1025,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Helper function disable HTTP Authentication.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_site_enable_http_auth.
+	 * Action hook: sstk_wordpress-app_do_site_enable_http_auth.
 	 *
 	 * @param int $id     The postID of the app cpt.
 	 *
@@ -1033,8 +1033,8 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	 */
 	public function enable_http_auth_action( $id ) {
 
-		$args['basic_auth_user'] = wpcd_generate_alpha_numeric_string( 12 );
-		$args['basic_auth_pass'] = wpcd_generate_default_password();
+		$args['basic_auth_user'] = sstk_generate_alpha_numeric_string( 12 );
+		$args['basic_auth_pass'] = sstk_generate_default_password();
 
 		$result = $this->toggle_basic_auth( $id, 'enable_auth', $args );
 
@@ -1045,7 +1045,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Helper function disable HTTP Authentication.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_site_disable_http_auth.
+	 * Action hook: sstk_wordpress-app_do_site_disable_http_auth.
 	 *
 	 * @param int $id     The postID of the app cpt.
 	 *
@@ -1073,7 +1073,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is a string representing the action we're trying to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		if ( empty( $in_args ) ) {
@@ -1086,10 +1086,10 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		// Check to make sure that both a user id and password is offered if the action is to turn on authentication.
 		if ( 'enable_auth' === $action ) {
 			if ( ! $args['basic_auth_user'] ) {
-				return new \WP_Error( __( 'The user cannot be blank if you would like to turn on basic authentication for this site.', 'wpcd' ) );
+				return new \WP_Error( __( 'The user cannot be blank if you would like to turn on basic authentication for this site.', 'simple-stack' ) );
 			}
 			if ( ! $args['basic_auth_pass'] ) {
-				return new \WP_Error( __( 'The password cannot be blank if you would like to turn on basic authentication for this site.', 'wpcd' ) );
+				return new \WP_Error( __( 'The password cannot be blank if you would like to turn on basic authentication for this site.', 'simple-stack' ) );
 			}
 		}
 
@@ -1120,13 +1120,13 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		);
 
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'basic_auth_misc.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		return $success;
@@ -1147,7 +1147,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is a string representing the action we're trying to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -1155,10 +1155,10 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		// Check to make sure that both a user id and password is offered if the action is to turn on authentication.
 		if ( 'wpadmin_enable_auth' === $action ) {
 			if ( ! $args['wplogin_basic_auth_user'] ) {
-				return new \WP_Error( __( 'The user cannot be blank if you would like to turn on basic authentication for this site.', 'wpcd' ) );
+				return new \WP_Error( __( 'The user cannot be blank if you would like to turn on basic authentication for this site.', 'simple-stack' ) );
 			}
 			if ( ! $args['wplogin_basic_auth_pass'] ) {
-				return new \WP_Error( __( 'The password cannot be blank if you would like to turn on basic authentication for this site.', 'wpcd' ) );
+				return new \WP_Error( __( 'The password cannot be blank if you would like to turn on basic authentication for this site.', 'simple-stack' ) );
 			}
 		}
 
@@ -1189,13 +1189,13 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		);
 
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'basic_auth_wplogin_misc.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		return $success;
@@ -1216,7 +1216,7 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is a string representing the action we're trying to perform. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -1235,14 +1235,14 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 		);
 
 		// @codingStandardsIgnoreLine - added to ignore the print_r in the line below when linting with PHPcs.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
 		$success = $this->is_ssh_successful( $result, 'toggle_https_misc.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s is an internal action name. %2$s is an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		return $success;
@@ -1254,16 +1254,16 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	 *
 	 * @param array $bulk_array bulk array.
 	 */
-	public function wpcd_add_new_bulk_actions_site( $bulk_array ) {
+	public function sstk_add_new_bulk_actions_site( $bulk_array ) {
 
 		// Bail if option isn't enabled.
-		if ( ! ( (bool) wpcd_get_option( 'wordpress_app_enable_bulk_site_delete_on_full_app_list' ) ) ) {
+		if ( ! ( (bool) sstk_get_option( 'wordpress_app_enable_bulk_site_delete_on_full_app_list' ) ) ) {
 			return $bulk_array;
 		}
 
-		if ( wpcd_is_admin() ) {
-			$bulk_array['wpcd_sites_bulk_delete_sites']             = __( 'Delete Sites From Server', 'wpcd' );
-			$bulk_array['wpcd_sites_bulk_delete_sites_and_backups'] = __( 'Delete Sites and Backups From Server', 'wpcd' );
+		if ( sstk_is_admin() ) {
+			$bulk_array['sstk_sites_bulk_delete_sites']             = __( 'Delete Sites From Server', 'simple-stack' );
+			$bulk_array['sstk_sites_bulk_delete_sites_and_backups'] = __( 'Delete Sites and Backups From Server', 'simple-stack' );
 			return $bulk_array;
 		}
 
@@ -1272,29 +1272,29 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Returns an array of actions that is valid for the bulk actions menu.
 	 * It's basically the same as the get_valid_actions() function above but
-	 * with the actions prefixed by "wpcd_sites_".
+	 * with the actions prefixed by "sstk_sites_".
 	 */
 	public function get_valid_bulk_actions() {
-		return array( 'wpcd_sites_bulk_delete_sites', 'wpcd_sites_bulk_delete_sites_and_backups' );
+		return array( 'sstk_sites_bulk_delete_sites', 'sstk_sites_bulk_delete_sites_and_backups' );
 	}
 
 	/**
 	 * Handle bulk actions for sites.
 	 *
 	 * @param string $redirect_url  redirect url.
-	 * @param string $action        bulk action slug/id - this is not the WPCD action key.
+	 * @param string $action        bulk action slug/id - this is not the SSTK action key.
 	 * @param array  $post_ids      all post ids.
 	 */
-	public function wpcd_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
+	public function sstk_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
 		// Let's remove query args first for redirect url.
-		$redirect_url = remove_query_arg( array( 'wpcd_update_themes_and_plugins' ), $redirect_url );
+		$redirect_url = remove_query_arg( array( 'sstk_update_themes_and_plugins' ), $redirect_url );
 
 		// Lets make sure we're an admin otherwise return an error.
-		if ( ! wpcd_is_admin() ) {
-			do_action( 'wpcd_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
+		if ( ! sstk_is_admin() ) {
+			do_action( 'sstk_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
 
 			// Show error message to user at the top of the admin list as a dismissible notice.
-			wpcd_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'wpcd' ), 'error' );
+			sstk_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'simple-stack' ), 'error' );
 
 			return $redirect_url;
 		}
@@ -1308,30 +1308,30 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 					$task_name = '';
 					$task_desc = '';
 					switch ( $action ) {
-						case 'wpcd_sites_bulk_delete_sites':
-							$args['action_hook'] = 'wpcd_pending_log_delete_wp_site';
+						case 'sstk_sites_bulk_delete_sites':
+							$args['action_hook'] = 'sstk_pending_log_delete_wp_site';
 							$args['action']      = 'remove';
 							$task_name           = 'delete-site';
-							$task_desc           = __( 'Bulk Action: Waiting to delete site.', 'wpcd' );
+							$task_desc           = __( 'Bulk Action: Waiting to delete site.', 'simple-stack' );
 							break;
-						case 'wpcd_sites_bulk_delete_sites_and_backups':
-							$args['action_hook'] = 'wpcd_pending_log_delete_wp_site_and_backups';
+						case 'sstk_sites_bulk_delete_sites_and_backups':
+							$args['action_hook'] = 'sstk_pending_log_delete_wp_site_and_backups';
 							$args['action']      = 'remove_full';
 							$task_name           = 'delete-site-and-backups';
-							$task_desc           = __( 'Bulk Action: Waiting to delete site and associated backups.', 'wpcd' );
+							$task_desc           = __( 'Bulk Action: Waiting to delete site and associated backups.', 'simple-stack' );
 							break;
 
 					}
-					WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, $task_name, $app_id, $args, 'ready', $app_id, $task_desc );
+					SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, $task_name, $app_id, $args, 'ready', $app_id, $task_desc );
 				}
 
 				// Add message to be displayed in admin header.
 				if ( 1 === count( $post_ids ) ) {
 					/* Translators: %s is the number of sites that have been scheduled for deletion. */
-					wpcd_global_add_admin_notice( sprintf( __( '%s site has been scheduled for deletion. You can view the progress in the PENDING TASKS screen.', 'wpcd' ), count( $post_ids ) ), 'success' );
+					sstk_global_add_admin_notice( sprintf( __( '%s site has been scheduled for deletion. You can view the progress in the PENDING TASKS screen.', 'simple-stack' ), count( $post_ids ) ), 'success' );
 				} else {
 					/* Translators: %s is the number of sites that have been scheduled for deletion. */
-					wpcd_global_add_admin_notice( sprintf( __( '%s sites have been scheduled for deletion. You can view the progress in the PENDING TASKS screen.', 'wpcd' ), count( $post_ids ) ), 'success' );
+					sstk_global_add_admin_notice( sprintf( __( '%s sites have been scheduled for deletion. You can view the progress in the PENDING TASKS screen.', 'simple-stack' ), count( $post_ids ) ), 'success' );
 				}
 			}
 		}
@@ -1340,4 +1340,4 @@ class WPCD_WORDPRESS_TABS_MISC extends WPCD_WORDPRESS_TABS {
 	}
 }
 
-new WPCD_WORDPRESS_TABS_MISC();
+new SSTK_WORDPRESS_TABS_MISC();

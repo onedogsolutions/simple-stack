@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /* global ajaxurl */
 /* global params */
 (function ($, params) {
@@ -8,18 +9,18 @@
 
 	function init() {
 
-		$('.wp-heading-inline').append($('<a href="" class="wpcd-purge-log page-title-action">' + params.l10n.purge_title + '</a>'));
+		$('.wp-heading-inline').append($('<a href="" class="sstk-purge-log page-title-action">' + params.l10n.purge_title + '</a>'));
 
-		if (params.post_type == 'wpcd_notify_log') {
-			$('.wp-heading-inline').append($('<a href="" class="wpcd-purge-unsent-log page-title-action">' + params.l10n.purge_unsent_title + '</a>'));
+		if (params.post_type == 'sstk_notify_log') {
+			$('.wp-heading-inline').append($('<a href="" class="sstk-purge-unsent-log page-title-action">' + params.l10n.purge_unsent_title + '</a>'));
 		}
 
-		if (params.post_type == 'wpcd_pending_log') {
-			$('.wp-heading-inline').append($('<a href="" class="wpcd-cleanup-pending-logs page-title-action">' + params.l10n.clean_up_title + '</a>'));
+		if (params.post_type == 'sstk_pending_log') {
+			$('.wp-heading-inline').append($('<a href="" class="sstk-cleanup-pending-logs page-title-action">' + params.l10n.clean_up_title + '</a>'));
 		}
 
 		// Purge logs button clicked.
-		$('body').on('click', '.wpcd-purge-log', function (e) {
+		$('body').on('click', '.sstk-purge-log', function (e) {
 			e.preventDefault();
 			var r = confirm(params.l10n.prompt);
 
@@ -55,7 +56,7 @@
 		});
 
 		// Purge all sent notification logs.
-		$('body').on('click', '.wpcd-purge-unsent-log', function (e) {
+		$('body').on('click', '.sstk-purge-unsent-log', function (e) {
 			e.preventDefault();
 			var r = confirm(params.l10n.unsent_prompt);
 
@@ -91,7 +92,7 @@
 		});
 
 		// Clean up pending logs.
-		$('body').on('click', '.wpcd-cleanup-pending-logs', function (e) {
+		$('body').on('click', '.sstk-cleanup-pending-logs', function (e) {
 			e.preventDefault();
 			var r = confirm(params.l10n.clean_up_prompt);
 

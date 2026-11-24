@@ -5,8 +5,8 @@
 - [backup.php](file://includes/core/apps/wordpress-app/tabs/backup.php)
 - [backup.php](file://includes/core/apps/wordpress-app/tabs-server/backup.php)
 - [backup.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/backup.php)
-- [class-simplestack-rest-api.php](file://includes/core/api/class-simplestack-rest-api.php)
-- [class-simplestack-rest-sites.php](file://includes/core/api/class-simplestack-rest-sites.php)
+- [class-sstk-rest-api.php](file://includes/core/api/class-sstk-rest-api.php)
+- [class-sstk-rest-sites.php](file://includes/core/api/class-sstk-rest-sites.php)
 </cite>
 
 ## Table of Contents
@@ -21,7 +21,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains backup and restore operations in SimpleStack for WordPress sites. It covers:
+This document explains backup and restore operations in Simple Stack for WordPress sites. It covers:
 - Site-level backups and restores
 - Server-wide automatic backups
 - Server configuration backups
@@ -190,7 +190,7 @@ Key behaviors:
 
 ```mermaid
 classDiagram
-class WPCD_WORDPRESS_TABS_SERVER_BACKUP {
+class SSTK_WORDPRESS_TABS_SERVER_BACKUP {
 +get_tab_slug() string
 +get_fields(fields, id) array
 +tab_action(result, action, id) mixed
@@ -202,7 +202,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP {
 +delete_server_configuration_backups(id) mixed
 +take_a_snapshot(id) mixed
 }
-class WPCD_WORDPRESS_TABS_BACKUP {
+class SSTK_WORDPRESS_TABS_BACKUP {
 +get_tab_slug() string
 +get_fields(fields, id) array
 +tab_action(result, action, id) mixed
@@ -210,11 +210,11 @@ class WPCD_WORDPRESS_TABS_BACKUP {
 +auto_backup_action(id) mixed
 +refresh_backup_list(id) mixed
 }
-class wpcd_wpapp_backup_functions {
+class sstk_wpapp_backup_functions {
 +get_s3_credentials_for_backup(id) array
 }
-WPCD_WORDPRESS_TABS_SERVER_BACKUP --> wpcd_wpapp_backup_functions : "uses"
-WPCD_WORDPRESS_TABS_BACKUP --> wpcd_wpapp_backup_functions : "uses"
+SSTK_WORDPRESS_TABS_SERVER_BACKUP --> sstk_wpapp_backup_functions : "uses"
+SSTK_WORDPRESS_TABS_BACKUP --> sstk_wpapp_backup_functions : "uses"
 ```
 
 **Diagram sources**
@@ -333,7 +333,7 @@ Backup components depend on:
 - WordPress post meta for storing status, bucket names, and retention policies.
 - SSH execution layer for running remote scripts.
 - Provider APIs for snapshots when supported.
-- REST API registration for SimpleStack admin routes (though backup tabs use legacy tab actions).
+- REST API registration for Simple Stack admin routes (though backup tabs use legacy tab actions).
 
 ```mermaid
 graph LR
@@ -349,12 +349,12 @@ ServerTab --> Logs
 **Diagram sources**
 - [backup.php:192-401](file://includes/core/apps/wordpress-app/tabs/backup.php#L192-L401)
 - [backup.php:812-947](file://includes/core/apps/wordpress-app/tabs-server/backup.php#L812-L947)
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
 
 **Section sources**
 - [backup.php:192-401](file://includes/core/apps/wordpress-app/tabs/backup.php#L192-L401)
 - [backup.php:812-947](file://includes/core/apps/wordpress-app/tabs-server/backup.php#L812-L947)
-- [class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
+- [class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
 
 ## Performance Considerations
 - Prefer remote object storage for large backups to reduce local disk pressure.
@@ -385,6 +385,6 @@ Operational checks:
 - [backup.php:939-1042](file://includes/core/apps/wordpress-app/tabs/backup.php#L939-L1042)
 
 ## Conclusion
-SimpleStack’s backup and restore system provides flexible controls at both site and server levels. Administrators can configure S3-compatible storage, schedule automatic backups, manage retention, and perform full or selective restores. Server configuration backups and provider snapshots add layers of resilience. Proper credential setup, retention policies, and monitoring are essential for reliable disaster recovery.
+Simple Stack’s backup and restore system provides flexible controls at both site and server levels. Administrators can configure S3-compatible storage, schedule automatic backups, manage retention, and perform full or selective restores. Server configuration backups and provider snapshots add layers of resilience. Proper credential setup, retention policies, and monitoring are essential for reliable disaster recovery.
 
 [No sources needed since this section summarizes without analyzing specific files]

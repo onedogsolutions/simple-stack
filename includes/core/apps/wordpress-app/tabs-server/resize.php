@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Resize Server Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,19 +11,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_RESIZE.
+ * Class SSTK_WORDPRESS_TABS_SERVER_RESIZE.
  */
-class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_RESIZE extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 	}
 
 	/**
@@ -50,7 +51,7 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Resize', 'wpcd' ),
+				'label' => __( 'Resize', 'simple-stack' ),
 				'icon'  => 'fad fa-expand-alt',
 			);
 		}
@@ -65,13 +66,13 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -101,16 +102,16 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'server-resize' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -150,37 +151,37 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		/* Get provider and bail if invalid. */
-		$provider = WPCD_SERVER()->get_server_provider( $id );
+		$provider = SSTK_SERVER()->get_server_provider( $id );
 		if ( empty( $provider ) || is_wp_error( $provider ) ) {
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['server-resize-provider-header'] = array(
-				'label'          => __( 'Resize', 'wpcd' ),
+				'label'          => __( 'Resize', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'We are unable to acquire provider details. This is not typical and you should seek out support to resolve it.', 'wpcd' ),
+					'desc' => __( 'We are unable to acquire provider details. This is not typical and you should seek out support to resolve it.', 'simple-stack' ),
 				),
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			return $actions;
 		}
 
 		// Provider api.
-		$provider_api = WPCD()->get_provider_api( $provider );
+		$provider_api = SSTK()->get_provider_api( $provider );
 		if ( empty( $provider_api ) || is_wp_error( $provider_api ) ) {
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['server-resize-provider-header'] = array(
-				'label'          => __( 'Resize', 'wpcd' ),
+				'label'          => __( 'Resize', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'We are unable to acquire provider details. This is not typical and you should seek out support to resolve it.', 'wpcd' ),
+					'desc' => __( 'We are unable to acquire provider details. This is not typical and you should seek out support to resolve it.', 'simple-stack' ),
 				),
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			return $actions;
 		}
@@ -190,81 +191,81 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 
 		/* Bail out if resize isn't supported. */
 		if ( ! (bool) $provider_api->get_feature_flag( 'resize' ) ) {
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['server-resize-provider-header'] = array(
-				'label'          => __( 'Resize', 'wpcd' ),
+				'label'          => __( 'Resize', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'This provider does not support resize operations at this time.  If you would like this provider to support resize operations please contact our support team for a customized quote.', 'wpcd' ),
+					'desc' => __( 'This provider does not support resize operations at this time.  If you would like this provider to support resize operations please contact our support team for a customized quote.', 'simple-stack' ),
 				),
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			return $actions;
 		}
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to resize this server?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to resize this server?', 'simple-stack' );
 
 		/**
 		 * Provider Resize.
 		 */
-		$actions[] = wpcd_start_two_thirds_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_two_thirds_card( $this->get_tab_slug() ); // Start new card.
 
 		$actions['server-resize-provider-header'] = array(
-			'label'          => __( 'Resize', 'wpcd' ),
+			'label'          => __( 'Resize', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Initiate a resize operation.', 'wpcd' ),
+				'desc' => __( 'Initiate a resize operation.', 'simple-stack' ),
 			),
 		);
 
 		$actions['server-resize-new-size'] = array(
-			'label'          => __( 'New Size', 'wpcd' ),
+			'label'          => __( 'New Size', 'simple-stack' ),
 			'type'           => 'select',
 			'raw_attributes' => array(
 				'options'        => $sizes,
-				'std'            => WPCD_SERVER()->get_server_size( $id ),
-				'desc'           => __( 'Not all resize operations are supported - make sure you select a new size that is supported by your provider by checking their website!', 'wpcd' ),
+				'std'            => SSTK_SERVER()->get_server_size( $id ),
+				'desc'           => __( 'Not all resize operations are supported - make sure you select a new size that is supported by your provider by checking their website!', 'simple-stack' ),
 				'size'           => 120,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'new_size',
+				'data-sstk-name' => 'new_size',
 			),
 		);
 
 		$actions['server-resize'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Resize', 'wpcd' ),
+				'std'                 => __( 'Resize', 'simple-stack' ),
 				'confirmation_prompt' => $confirmation_prompt,
-				'data-wpcd-fields'    => wp_json_encode( array( '#wpcd_app_action_server-resize-new-size' ) ),
+				'data-sstk-fields'    => wp_json_encode( array( '#sstk_app_action_server-resize-new-size' ) ),
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * After Resize instructions.
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-		$instructions  = __( 'If CALLBACKS are installed, the server status should update automatically when the server is restarted.', 'wpcd' );
-		$instructions .= '<br /><br />' . __( 'However, you will need to monitor the status of the resize operation and restart the server when the operation is complete.', 'wpcd' );
-		$instructions .= '<br /><br />' . __( 'If, for some reason, callbacks are not installed you can check the status of the reboot by going to the ALL CLOUD SERVERS list and clicking on the UPDATE REMOTE STATE link for the server. In this case the server will be unavailable for further operations until you click that link to update the server status.', 'wpcd' );
+		$instructions  = __( 'If CALLBACKS are installed, the server status should update automatically when the server is restarted.', 'simple-stack' );
+		$instructions .= '<br /><br />' . __( 'However, you will need to monitor the status of the resize operation and restart the server when the operation is complete.', 'simple-stack' );
+		$instructions .= '<br /><br />' . __( 'If, for some reason, callbacks are not installed you can check the status of the reboot by going to the ALL CLOUD SERVERS list and clicking on the UPDATE REMOTE STATE link for the server. In this case the server will be unavailable for further operations until you click that link to update the server status.', 'simple-stack' );
 
 		$actions['server-resize-instructions'] = array(
-			'label'          => __( 'After-resize Instructions', 'wpcd' ),
+			'label'          => __( 'After-resize Instructions', 'simple-stack' ),
 			'raw_attributes' => array(
 				'desc' => $instructions,
 			),
 			'type'           => 'heading',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		return $actions;
 
@@ -286,7 +287,7 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Sanitize arguments array.
@@ -298,34 +299,34 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 		// Bail if $new_size is empty.
 		if ( empty( $new_size ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because the new size of the server is empty. Action: %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because the new size of the server is empty. Action: %s', 'simple-stack' ), $action ) );
 		}
 
 		// Make sure the new size isn't the same as the old size.
-		$old_size = WPCD_SERVER()->get_server_size( $id );
+		$old_size = SSTK_SERVER()->get_server_size( $id );
 		if ( $old_size === $new_size ) {
-			return new \WP_Error( __( 'Cannot resize server because the current size is the same as the new size being requested.', 'wpcd' ) );
+			return new \WP_Error( __( 'Cannot resize server because the current size is the same as the new size being requested.', 'simple-stack' ) );
 		}
 
 		// Make sure the new size is in the $instance array since that is getting passed to the provider.
 		$instance['new_size'] = $new_size;
 
 		/* Get the provider object */
-		$provider     = WPCD_SERVER()->get_server_provider( $id );
-		$provider_api = WPCD()->get_provider_api( $provider );
+		$provider     = SSTK_SERVER()->get_server_provider( $id );
+		$provider_api = SSTK()->get_provider_api( $provider );
 
 		/* Call the resize function on the api */
 		if ( $provider_api && is_object( $provider_api ) ) {
 			$provider_api->call( 'resize', $instance );
 		} else {
-			return new \WP_Error( __( 'Unable to execute this request because we were unable to get a handle to the API class.', 'wpcd' ) );
+			return new \WP_Error( __( 'Unable to execute this request because we were unable to get a handle to the API class.', 'simple-stack' ) );
 		}
 
 		/* Update server meta to show operation in progress */
-		update_post_meta( $id, 'wpcd_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
+		update_post_meta( $id, 'sstk_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
 
 		/* Update server to show the new size is pending. */
-		WPCD_SERVER()->set_pending_server_size( $id, $new_size );
+		SSTK_SERVER()->set_pending_server_size( $id, $new_size );
 
 		/**
 		 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
@@ -333,13 +334,13 @@ class WPCD_WORDPRESS_TABS_SERVER_RESIZE extends WPCD_WORDPRESS_TABS {
 		 * So there is no corresponding action hook for failure.
 		*/
 		$success = true;
-		do_action( "wpcd_server_{$this->get_app_name()}_server_resize_action_successful", $id, $action, $success );
+		do_action( "sstk_server_{$this->get_app_name()}_server_resize_action_successful", $id, $action, $success );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'We have requested a server resize operation via the server provider API. You will need to log into your server provider dashboard to monitor the resize operation and restart the server when it is complete.', 'wpcd' ) );
+		return new \WP_Error( __( 'We have requested a server resize operation via the server provider API. You will need to log into your server provider dashboard to monitor the resize operation and restart the server when it is complete.', 'simple-stack' ) );
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_RESIZE();
+new SSTK_WORDPRESS_TABS_SERVER_RESIZE();

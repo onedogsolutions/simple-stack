@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * SSL
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,22 +11,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SSL
+ * Class SSTK_WORDPRESS_TABS_SSL
  */
-class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SSL extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_SSL constructor.
+	 * SSTK_WORDPRESS_TABS_SSL constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
-		// Allow the toggle_ssl_status action to be triggered via an action hook.  Will primarily be used by the woocommerce add-on and REST API.
-		add_action( 'wpcd_wordpress-app_do_toggle_ssl_status', array( $this, 'toggle_ssl_status_action' ), 10, 2 );  // Toggle SSL state based on what's there now.
-		add_action( 'wpcd_wordpress-app_do_toggle_ssl_status_on', array( $this, 'toggle_ssl_status_on_action' ), 10, 2 );  // Force SSL 'on' regardless of current state.
+		// Allow the SSL status action to be triggered via an action hook.
+		add_action( 'sstk_wordpress-app_do_toggle_ssl_status', array( $this, 'toggle_ssl_status_action' ), 10, 2 );  // Toggle SSL state based on what's there now.
+		add_action( 'sstk_wordpress-app_do_toggle_ssl_status_on', array( $this, 'toggle_ssl_status_on_action' ), 10, 2 );  // Force SSL 'on' regardless of current state.
 
 	}
 
@@ -54,7 +55,7 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'SSL', 'wpcd' ),
+				'label' => __( 'SSL', 'simple-stack' ),
 				'icon'  => 'fad fa-lock-alt',
 			);
 		}
@@ -70,17 +71,17 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the SSL tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -110,15 +111,15 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'ssl-status', 'ssl-http2-status', 'ssl-flip-meta-status', 'custom-ssl-flip-meta-status' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -163,10 +164,10 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 			$actions['ssl-status-header-wc-enabled'] = array(
 				'name'           => '',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_ssl_icon( __( '%s WildCard SSL Multisite', 'wpcd' ) ),
+				'label'          => sstk_apply_ssl_icon( __( '%s WildCard SSL Multisite', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'This site is a MULTISITE that is configured to use a wildcard SSL certificate. You need to manage SSL options under the MULTISITE tab.', 'wpcd' ),
+					'desc' => __( 'This site is a MULTISITE that is configured to use a wildcard SSL certificate. You need to manage SSL options under the MULTISITE tab.', 'simple-stack' ),
 				),
 			);
 
@@ -176,9 +177,6 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Basic checks passed, ok to proceed
 		 */
-
-		// What type of web server are we running?
-		$webserver_type = $this->get_web_server_type( $id );
 
 		// Get SSL status.
 		if ( true === $this->get_site_local_ssl_status( $id ) ) {
@@ -190,9 +188,9 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable SSL?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable SSL?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable SSL?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable SSL?', 'simple-stack' );
 		}
 
 		// Get HTTP2 status.
@@ -205,33 +203,33 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 			/**
 			 * Custom SSL is enabled.
 			 */
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['ssl-status-header'] = array(
 				'name'           => '',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_warning_icon( __( '%s Custom SSL Enabled', 'wpcd' ) ),
+				'label'          => sstk_apply_warning_icon( __( '%s Custom SSL Enabled', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'desc' => wpcd_apply_warning_icon( __( '%s The admin has indicated that a Custom SSL certificate is installed for this site. You cannot request a regular SSL certificate from LetsEncrypt at this time.', 'wpcd' ) ),
+					'desc' => sstk_apply_warning_icon( __( '%s The admin has indicated that a Custom SSL certificate is installed for this site. You cannot request a regular SSL certificate from LetsEncrypt at this time.', 'simple-stack' ) ),
 				),
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		} else {
 			/**
 			 * Standard SSL.
 			 */
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-			$desc                         = __( 'Turning this on will result in an attempt to obtain a certificate from LETSEncrypt.  <br />If it fails, check the logs under the SSH LOG menu option. <br />Note that if you attempt to turn on SSL too many times in a row LETSEncrypt will block your domain for 7 days or more.', 'wpcd' );
-			$desc                         = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc                         = __( 'Turning this on will result in an attempt to obtain a certificate from LETSEncrypt.  <br />If it fails, check the logs under the SSH LOG menu option. <br />Note that if you attempt to turn on SSL too many times in a row LETSEncrypt will block your domain for 7 days or more.', 'simple-stack' );
+			$desc                         = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 			$actions['ssl-status-header'] = array(
 				'name'           => '',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'label'          => wpcd_apply_ssl_icon( __( '%s SSL', 'wpcd' ) ),
+				'label'          => sstk_apply_ssl_icon( __( '%s SSL', 'simple-stack' ) ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $desc,
@@ -239,16 +237,16 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 			);
 
 			if ( 'on' !== $status ) {
-				$desc = __( 'Click to enable SSL.', 'wpcd' );
+				$desc = __( 'Click to enable SSL.', 'simple-stack' );
 			} else {
-				$desc = __( 'Click to disable SSL', 'wpcd' );
+				$desc = __( 'Click to disable SSL', 'simple-stack' );
 			}
 
 			$actions['ssl-status'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'on_label'            => __( 'Enabled', 'wpcd' ),
-					'off_label'           => __( 'Disabled', 'wpcd' ),
+					'on_label'            => __( 'Enabled', 'simple-stack' ),
+					'off_label'           => __( 'Disabled', 'simple-stack' ),
 					'std'                 => $status === 'on',
 					'desc'                => $desc,
 					'confirmation_prompt' => $confirmation_prompt,
@@ -256,39 +254,39 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 				'type'           => 'switch',
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/**
 			 * Show SSL notes if SSL is not turned on.
 			 */
 			if ( 'on' <> $status ) {
 
-				$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+				$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 				$actions['ssl-notes-heading'] = array(
 					'type'           => 'heading',
 					/* Translators: %s is a fontawesome or similar icon. */
-					'label'          => wpcd_apply_warning_icon( __( '%s Some things to be aware of before enabling SSL', 'wpcd' ) ),
+					'label'          => sstk_apply_warning_icon( __( '%s Some things to be aware of before enabling SSL', 'simple-stack' ) ),
 					'raw_attributes' => array(
-						'desc' => __( 'Please read before attempting to turn on SSL for your site!', 'wpcd' ),
+						'desc' => __( 'Please read before attempting to turn on SSL for your site!', 'simple-stack' ),
 					),
 				);
 				$actions['ssl-notes-1']       = array(
 					'type'           => 'custom_html',
 					'label'          => '',
 					'raw_attributes' => array(
-						'std' => __( '1. If you are behind a proxy service, you might need to turn it off temporarily prior to enabling ssl.  This allows LETSEncrypt to connect directly and verify your site. <b>CloudFlare</b> will usually work as-is but if you are having trouble, try turning it off as well.', 'wpcd' ),
+						'std' => __( '1. If you are behind a proxy service, you might need to turn it off temporarily prior to enabling ssl.  This allows LETSEncrypt to connect directly and verify your site. <b>CloudFlare</b> will usually work as-is but if you are having trouble, try turning it off as well.', 'simple-stack' ),
 					),
 				);
 				$actions['ssl-notes-2']       = array(
 					'type'           => 'custom_html',
 					'label'          => '',
 					'raw_attributes' => array(
-						'std' => __( '2. Certain providers automatically deploy a firewall or NAT. This means that you need to manually enable HTTPS/port 443 through the NAT/FIREWALL.  Such services include AWS EC2 and AWS LIGHTSAIL.  So please make sure you enable HTTPS through the firewall before enabling SSL here. Digital Ocean, Linode and Vultr do not automatically deploy a nat/firewall so you should not encounter any issues there.', 'wpcd' ),
+						'std' => __( '2. If your server is behind a firewall or NAT, make sure HTTPS traffic on port 443 is allowed before enabling SSL here.', 'simple-stack' ),
 					),
 				);
 
-				$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+				$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 			}
 
 			/**
@@ -296,31 +294,18 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 			 */
 			if ( 'on' === $status ) {
 
-				$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+				$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 				// Check multisite status and do nothing if multisite is enabled.
 				if ( 'on' <> get_post_meta( $id, 'wpapp_multisite_enabled', true ) ) {
 
-					/* Set the HTTP2 title and other text based on the type of webserver we're running. */
-					switch ( $webserver_type ) {
-						case 'ols':
-						case 'ols-enterprise':
-							$http_fragment_text = __( 'HTTP2', 'wpcd' ); // This should be "HTTP2/HTTP3/SPDY" but I'm not convinced that lsws is actually handling this correctly.
-							break;
+					$http_fragment_text = __( 'HTTP2', 'simple-stack' );
 
-						case 'nginx':
-						default:
-							$http_fragment_text = __( 'HTTP2', 'wpcd' );
-							break;
-
-					}
-
-					/* Set the confirmation prompt based on the the current status of this flag */
-					$confirmation_prompt = '';
+					/* Set the confirmation prompt based on the current status of this flag */
 					if ( 'on' === $http2_status ) {
-						$confirmation_prompt_http2 = sprintf( __( 'Are you sure you would like to disable %s?', 'wpcd' ), $http_fragment_text );
+						$confirmation_prompt_http2 = sprintf( __( 'Are you sure you would like to disable %s?', 'simple-stack' ), $http_fragment_text );
 					} else {
-						$confirmation_prompt_http2 = sprintf( __( 'Are you sure you would like to enable %s?', 'wpcd' ), $http_fragment_text );
+						$confirmation_prompt_http2 = sprintf( __( 'Are you sure you would like to enable %s?', 'simple-stack' ), $http_fragment_text );
 					}
 
 					$actions['ssl-http2-header'] = array(
@@ -328,15 +313,15 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 						'label'          => sprintf( '%s', $http_fragment_text ),
 						'type'           => 'heading',
 						'raw_attributes' => array(
-							'desc' => sprintf( __( 'Manage %s', 'wpcd' ), $http_fragment_text ),
+							'desc' => sprintf( __( 'Manage %s', 'simple-stack' ), $http_fragment_text ),
 						),
 					);
 
 					$actions['ssl-http2-status'] = array(
 						'label'          => '',
 						'raw_attributes' => array(
-							'on_label'            => __( 'Enabled', 'wpcd' ),
-							'off_label'           => __( 'Disabled', 'wpcd' ),
+							'on_label'            => __( 'Enabled', 'simple-stack' ),
+							'off_label'           => __( 'Disabled', 'simple-stack' ),
 							'std'                 => $http2_status === 'on',
 							'confirmation_prompt' => $confirmation_prompt_http2,
 						),
@@ -346,7 +331,7 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 				}
 
 				// Close up prior card.
-				$actions[] = wpcd_end_card( $this->get_tab_slug() );
+				$actions[] = sstk_end_card( $this->get_tab_slug() );
 			}
 		}
 
@@ -354,21 +339,21 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 		 * Advanced action to flip metas only
 		 */
 
-		$actions[]                = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[]                = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 		$confirmation_prompt_meta = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show SSL is disabled? This will not execute any code to disable SSL if it is actually enabled on the server.', 'wpcd' );
+			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show SSL is disabled? This will not execute any code to disable SSL if it is actually enabled on the server.', 'simple-stack' );
 		} else {
-			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show SSL is enabled?  This will not execute any code to request a new SSL certificate.', 'wpcd' );
+			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show SSL is enabled?  This will not execute any code to request a new SSL certificate.', 'simple-stack' );
 		}
 
 		$actions['ssl-status-meta-only-header'] = array(
 			'name'           => '',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_change_icon( __( '%s Advanced - Flip SSL Status Flag', 'wpcd' ) ),
+			'label'          => sstk_apply_change_icon( __( '%s Advanced - Flip SSL Status Flag', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Flip the SSL status flag (aka the SSL meta value). No code will be executed on the server to disable or enable SSL. Only the status shown on this dashboard will be flipped.', 'wpcd' ),
+				'desc' => __( 'Flip the SSL status flag (aka the SSL meta value). No code will be executed on the server to disable or enable SSL. Only the status shown on this dashboard will be flipped.', 'simple-stack' ),
 			),
 		);
 
@@ -376,33 +361,33 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_change_icon( __( '%s Flip SSL Status Flag', 'wpcd' ) ),
+				'std'                 => sstk_apply_change_icon( __( '%s Flip SSL Status Flag', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt_meta,
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Set Flag for Custom SSL
 		 */
 
-		$actions[]                = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[]                = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 		$confirmation_prompt_meta = '';
 		if ( true === $this->get_site_local_custom_ssl_status( $id ) ) {
-			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show that custom SSL is disabled? This will not execute any code to disable SSL if it is actually enabled on the server.', 'wpcd' );
+			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show that custom SSL is disabled? This will not execute any code to disable SSL if it is actually enabled on the server.', 'simple-stack' );
 		} else {
-			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show that a custom SSL certificate is enabled?  This will not execute any code to request a new SSL certificate.', 'wpcd' );
+			$confirmation_prompt_meta = __( 'Are you sure you would like to flip the SSL flag to show that a custom SSL certificate is enabled?  This will not execute any code to request a new SSL certificate.', 'simple-stack' );
 		}
 
 		$actions['custom-ssl-status-meta-only-header'] = array(
 			'name'           => '',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_change_icon( __( '%s Flip Custom SSL Status Flag', 'wpcd' ) ),
+			'label'          => sstk_apply_change_icon( __( '%s Flip Custom SSL Status Flag', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Set or unset a flag that indicates that a custom SSL certificate is installed on this site. This will also flip the regular SSL flag!', 'wpcd' ),
+				'desc' => __( 'Set or unset a flag that indicates that a custom SSL certificate is installed on this site. This will also flip the regular SSL flag!', 'simple-stack' ),
 			),
 		);
 
@@ -410,7 +395,7 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_change_icon( __( '%s Flip Custom SSL Status Flag', 'wpcd' ) ),
+				'std'                 => sstk_apply_change_icon( __( '%s Flip Custom SSL Status Flag', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt_meta,
 			),
 			'type'           => 'button',
@@ -422,13 +407,13 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 				'type'           => 'custom_html',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std' => wpcd_apply_checkmark_icon( __( '%s This meta is ON.', 'wpcd' ) ),
+					'std' => sstk_apply_checkmark_icon( __( '%s This meta is ON.', 'simple-stack' ) ),
 				),
-				'std'            => wpcd_apply_checkmark_icon( __( '%s This meta is ON.', 'wpcd' ) ),
+				'std'            => sstk_apply_checkmark_icon( __( '%s This meta is ON.', 'simple-stack' ) ),
 			);
 		}
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		return $actions;
 	}
@@ -438,7 +423,7 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_toggle_ssl_status_on  (Optional).
+	 * Action hook: sstk_wordpress-app_do_toggle_ssl_status_on  (Optional).
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed  - 'ssl-status' or 'ssl-http2-status'.  This is ignored in this function.
@@ -466,7 +451,7 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_toggle_ssl_status  (Optional).
+	 * Action hook: sstk_wordpress-app_do_toggle_ssl_status  (Optional).
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed  - 'ssl-status' or 'ssl-http2-status'.
@@ -518,7 +503,7 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Construct the command to toggle SSL status and then send it via SSH to the server.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_toggle_ssl_status
+	 * Action hook: sstk_wordpress-app_do_toggle_ssl_status
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed 'enable' or 'disable' for ssl and 'enable_http2' or 'disable_http2' for http.
@@ -529,17 +514,7 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
-		}
-
-		// What type of web server are we running?
-		$webserver_type = $this->get_web_server_type( $id );
-
-		// Do not allow any changes to SSL if HTTP2 is turned on and the server is NGINX.
-		if ( 'nginx' === $webserver_type ) {
-			if ( 'on' === $this->http2_status( $id ) && ( 'enable' === $action || 'disable' === $action ) ) {
-				return new \WP_Error( __( 'Please disable HTTP2 before attempting to change your SSL status', 'wpcd' ) );
-			}
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -558,12 +533,12 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'manage_https.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 		return $success;
 	}
@@ -628,4 +603,4 @@ class WPCD_WORDPRESS_TABS_SSL extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_SSL();
+new SSTK_WORDPRESS_TABS_SSL();

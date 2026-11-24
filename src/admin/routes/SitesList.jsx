@@ -1,7 +1,8 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Sites list.
  *
- * Replaces the `wpcd_app` CPT edit screen (`app_type=wordpress-app`).
+ * Replaces the `sstk_app` CPT edit screen (`app_type=wordpress-app`).
  */
 
 import { useCallback, useEffect, useState } from 'react';

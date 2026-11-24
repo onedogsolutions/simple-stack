@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Crons tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,21 +11,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_CRONS
+ * Class SSTK_WORDPRESS_TABS_CRONS
  */
-class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_CRONS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_CRONS constructor.
+	 * SSTK_WORDPRESS_TABS_CRONS constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
-		// Allow the cron action to be triggered via an action hook.  Will primarily be used by the woocommerce add-on and REST API.
-		add_action( 'wpcd_wordpress-app_do_manage_cron_status', array( $this, 'manage_cron_status_action' ), 10, 3 );
+		// Allow the cron action to be triggered via an action hook.
+		add_action( 'sstk_wordpress-app_do_manage_cron_status', array( $this, 'manage_cron_status_action' ), 10, 3 );
 
 	}
 
@@ -53,7 +54,7 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Crons', 'wpcd' ),
+				'label' => __( 'Crons', 'simple-stack' ),
 				'icon'  => 'fad fa-clock',
 			);
 		}
@@ -69,17 +70,17 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the CRONS tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -109,15 +110,15 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'wp-linux-cron-status' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -178,9 +179,9 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 		/* Set the text of the confirmation prompt based on the current basic authentication status of the site */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable the Linux cron for this site? This will re-enable the native WordPress Cron process.', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable the Linux cron for this site? This will re-enable the native WordPress Cron process.', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable a native Linux cron process for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable a native Linux cron process for this site?', 'simple-stack' );
 		}
 
 		/* Get the cron interval that is currently set */
@@ -189,15 +190,15 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 			$current_cron_interval = '15m';
 		}
 
-		$desc = __( 'This function enables a Linux cron process and disables the native WordPress cron process.  This can help to address several limitations in the native WordPress cron process and ensure that future background processes kick off in a more timely manner. ', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'This function enables a Linux cron process and disables the native WordPress cron process.  This can help to address several limitations in the native WordPress cron process and ensure that future background processes kick off in a more timely manner. ', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$actions['wp-linux-cron-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_clock_icon( __( '%s Linux Cron', 'wpcd' ) ),
+			'label'          => sstk_apply_clock_icon( __( '%s Linux Cron', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -207,10 +208,10 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 		// Only show the interval field if the status is off.
 		if ( 'off' === $status ) {
 			$actions['wp-linux-cron-interval'] = array(
-				'label'          => __( 'Interval', 'wpcd' ),
+				'label'          => __( 'Interval', 'simple-stack' ),
 				'type'           => 'select',
 				'raw_attributes' => array(
-					'tooltip'        => __( 'How often should we run background processes in WordPress?  Remember, the more often it runs, the larger the load on your website.  Do not configure it to run more often than needed.  Most users do not need less than a 15 min interval and most WordPress sites can operate with a one hour interval without any issues.', 'wpcd' ),
+					'tooltip'        => __( 'How often should we run background processes in WordPress?  Remember, the more often it runs, the larger the load on your website.  Do not configure it to run more often than needed.  Most users do not need less than a 15 min interval and most WordPress sites can operate with a one hour interval without any issues.', 'simple-stack' ),
 					'options'        => array(
 						'1m'  => '1 Minute',
 						'2m'  => '2 Minutes',
@@ -221,7 +222,7 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 					),
 					'std'            => $current_cron_interval,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'wp_linux_cron_interval',
+					'data-sstk-name' => 'wp_linux_cron_interval',
 				),
 			);
 		}
@@ -230,16 +231,16 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 			case 'on':
 			case 'off':
 				$actions['wp-linux-cron-status'] = array(
-					'label'          => __( 'Linux Cron', 'wpcd' ),
+					'label'          => __( 'Linux Cron', 'simple-stack' ),
 					'raw_attributes' => array(
-						'on_label'            => __( 'Enabled', 'wpcd' ),
-						'off_label'           => __( 'Disabled', 'wpcd' ),
+						'on_label'            => __( 'Enabled', 'simple-stack' ),
+						'off_label'           => __( 'Disabled', 'simple-stack' ),
 						'std'                 => $status === 'on',
 						/* Translators: %s is the current cron interval. */
-						'desc'                => 'off' === $status ? __( 'Click to enable Cron', 'wpcd' ) : sprintf( __( 'Click to disable the Linux Cron currently configured to fire every %s', 'wpcd' ), $current_cron_interval ),
+						'desc'                => 'off' === $status ? __( 'Click to enable Cron', 'simple-stack' ) : sprintf( __( 'Click to disable the Linux Cron currently configured to fire every %s', 'simple-stack' ), $current_cron_interval ),
 						'confirmation_prompt' => $confirmation_prompt,
 						// fields that contribute data for this action.
-						'data-wpcd-fields'    => 'off' === $status ? json_encode( array( '#wpcd_app_action_wp-linux-cron-interval' ) ) : '',
+						'data-sstk-fields'    => 'off' === $status ? json_encode( array( '#sstk_app_action_wp-linux-cron-interval' ) ) : '',
 					),
 					'type'           => 'switch',
 				);
@@ -247,7 +248,7 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -256,7 +257,7 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Turn on/off the WP linux cron triggered via an action hook.
 	 *
-	 * Action Hook: wpcd_wordpress-app_do_manage_cron_status
+	 * Action Hook: sstk_wordpress-app_do_manage_cron_status
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed 'disable_system_cron' or 'enable_system_cron'  (this matches the string required in the bash scripts).
@@ -288,7 +289,7 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		if ( empty( $in_args ) ) {
@@ -323,12 +324,12 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'toggle_wp_linux_cron_misc.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Set the new cron interval on the app record.
@@ -339,4 +340,4 @@ class WPCD_WORDPRESS_TABS_CRONS extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_CRONS();
+new SSTK_WORDPRESS_TABS_CRONS();

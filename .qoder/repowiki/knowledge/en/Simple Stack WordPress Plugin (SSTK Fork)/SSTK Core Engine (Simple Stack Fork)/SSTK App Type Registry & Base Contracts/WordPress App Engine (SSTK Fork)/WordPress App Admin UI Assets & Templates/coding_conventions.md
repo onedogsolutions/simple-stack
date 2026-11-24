@@ -1,6 +1,6 @@
-- PHP template sections are wrapped in dynamically-named action hooks using `$this->get_app_name()` (e.g. `wpcd_{app}_create_popup_before_header` / `...after_form_close`) so child apps can inject markup at well-known insertion points.
-- All user-facing strings in templates go through `esc_html( __( '...', 'wpcd' ) )` and form values are escaped with `esc_attr()` before being printed.
+- PHP template sections are wrapped in dynamically-named action hooks using `$this->get_app_name()` (e.g. `sstk_{app}_create_popup_before_header` / `...after_form_close`) so child apps can inject markup at well-known insertion points.
+- All user-facing strings in templates go through `esc_html( __( '...', 'simple-stack' ) )` and form values are escaped with `esc_attr()` before being printed.
 - JavaScript files are IIFEs that declare their external globals (`ajaxurl`, `params`) via JSDoc `/* global */` comments and bootstrap on `$(document).ready()`.
-- Admin actions are dispatched through a single handler in `wpcd-wpapp-admin-common.js` that reads `data-wpcd-action` / `data-wpcd-id` / `data-wpcd-fields` attributes and posts a `FormData` payload containing `action`, `_action`, `nonce`, `id`, and `params`.
+- Admin actions are dispatched through a single handler in `sstk-wpapp-admin-common.js` that reads `data-sstk-action` / `data-sstk-id` / `data-sstk-fields` attributes and posts a `FormData` payload containing `action`, `_action`, `nonce`, `id`, and `params`.
 - AJAX responses are handled uniformly by inspecting `data.data.result.*` flags (`redirect`, `refresh`, `async`, `file_url`, `email_fields`) to decide between page reload, URL redirect, polling, file download, or field population.
-- CSS classes are prefixed with `wpcd_` (e.g. `wpcd_ssl_status`, `wpcd_php_version_*`, `wpcd-create-popup-*`) and colors are applied via `var(--wpcd-positive-color)` / `var(--wpcd-negative-color)` tokens instead of hard-coded hex values.
+- CSS classes are prefixed with `sstk_` (e.g. `sstk_ssl_status`, `sstk_php_version_*`, `sstk-create-popup-*`) and colors are applied via `var(--sstk-positive-color)` / `var(--sstk-negative-color)` tokens instead of hard-coded hex values.

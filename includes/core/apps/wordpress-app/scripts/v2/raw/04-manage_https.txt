@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
@@ -52,10 +53,15 @@ then
 	fi
 	# OpenLiteSpeed is the only supported stack. Certbot runs with --non-interactive and
 	# --agree-tos through gf_enable_certbot_ols_site, so this never blocks a provisioning
-	# run waiting for a renewal-terms prompt.
-	gf_disable_https_redirect_ols_htaccess "$domain" # Disable any existing redirects.
-	if gf_enable_certbot_ols_site "$domain"; then   # This function call echoes any success/failure messages so no need to handle here.
-		gf_enable_https_redirect_ols_htaccess "$domain"  # This function call echoes any success/failure messages so no need to handle here.
+	# run waiting for a renewal-terms prompt. Multisite redirects stay in the vhost so
+	# enabling HTTPS for one subsite does not force every other subsite onto HTTPS.
+	gf_disable_https_redirect_ols_htaccess "$domain"
+	gf_disable_https_redirect_ols_vhost "$domain"
+	if su - "$user_name" -c "wp --skip-plugins core is-installed --network" > /dev/null 2>&1
+	then
+		gf_enable_certbot_ols_site "$domain" "" "vhost"
+	else
+		gf_enable_certbot_ols_site "$domain"
 	fi
 
 	if [ -f /etc/letsencrypt/live/$domain/fullchain.pem  ]
@@ -84,6 +90,7 @@ then
 	gf_disable_http2_ols_site "$domain" # disable http2 if enabled
 	gf_disable_certbot_ols_site "$domain"
 	gf_disable_https_redirect_ols_htaccess "$domain"
+	gf_disable_https_redirect_ols_vhost "$domain"
 	
 	# Forcibly delete any existing certbot folders.
 	# But, do prophylactic check to make sure we still have a $domain var before we attempt to use it to delete some folders.

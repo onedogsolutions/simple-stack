@@ -1,5 +1,5 @@
 - Each model exposes a `public static function instance()` singleton and registers its CPT plus hooks through a three-step constructor flow: `register()` then `hooks()`, called from `__construct()`.
-- CPT registration uses `register_post_type()` with an explicit `capabilities` array mapping every standard capability to a WPCD-specific capability string (e.g. `wpcd_manage_logs`, `wpcd_manage_teams`), rather than relying on default `post` caps.
+- CPT registration uses `register_post_type()` with an explicit `capabilities` array mapping every standard capability to a SSTK-specific capability string (e.g. `sstk_manage_logs`, `sstk_manage_teams`), rather than relying on default `post` caps.
 - Admin list screens follow a fixed column pattern: a `*_table_head` method returns the column headers, a `*_table_content` switch dispatches per-column rendering, and a `*_table_sorting` method declares sortable columns.
 - Search on log/list screens is implemented by setting `post_search_fields` and hooking `pre_get_posts` + `posts_where` to build a `meta_query` with `LIKE` against those fields plus a title fallback.
 - Log entries are stored as `private` posts and are auto-pruned via `clean_up_old_log_entries()` using per-log options like `auto_trim_*_log_limit`, capped by `most_items_to_delete`.

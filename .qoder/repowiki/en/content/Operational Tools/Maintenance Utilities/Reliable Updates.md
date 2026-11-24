@@ -23,7 +23,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack’s reliable update system for WordPress sites, focusing on safe updates for core, themes, and plugins with automatic rollback capabilities. It covers the end-to-end flow from UI actions to server-side execution, verification via image comparison, failure recovery through backups, and configuration options that control update behavior. It also provides best practices for stability, handling third-party components, monitoring status, and integrating with CI/CD pipelines.
+This document explains Simple Stack’s reliable update system for WordPress sites, focusing on safe updates for core, themes, and plugins with automatic rollback capabilities. It covers the end-to-end flow from UI actions to server-side execution, verification via image comparison, failure recovery through backups, and configuration options that control update behavior. It also provides best practices for stability, handling third-party components, monitoring status, and integrating with CI/CD pipelines.
 
 ## Project Structure
 The reliable update feature spans PHP orchestration in the WordPress admin and Bash scripts executed on the target server:
@@ -326,7 +326,7 @@ Operational tips:
 - [50-reliable_updates.txt:220-249](file://includes/core/apps/wordpress-app/scripts/v1/raw/50-reliable_updates.txt#L220-L249)
 
 ## Conclusion
-SimpleStack’s reliable update system provides a robust mechanism for updating WordPress core, themes, and plugins safely. It combines pre-flight backups, selective updates, visual regression testing via image comparison, and automatic rollback when changes exceed a configurable threshold. Administrators can fine-tune behavior through settings such as pixel thresholds and exclusion lists, while monitoring progress via command logs and pending tasks. Following the best practices outlined here will help maintain site stability during updates and streamline integration into CI/CD workflows.
+Simple Stack’s reliable update system provides a robust mechanism for updating WordPress core, themes, and plugins safely. It combines pre-flight backups, selective updates, visual regression testing via image comparison, and automatic rollback when changes exceed a configurable threshold. Administrators can fine-tune behavior through settings such as pixel thresholds and exclusion lists, while monitoring progress via command logs and pending tasks. Following the best practices outlined here will help maintain site stability during updates and streamline integration into CI/CD workflows.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

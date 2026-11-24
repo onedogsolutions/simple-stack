@@ -1,16 +1,17 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains code for getter and setter functions to set the post type being managed by the including class.
- * Used only by the class-wpcd-posts-app-server.php and class-wpcd-posts-app.php files which define the WPCD_POSTS_APP_SERVER and WPCD_POSTS_APP classes respectively.
+ * Used only by the class-sstk-posts-app-server.php and class-sstk-posts-app.php files which define the SSTK_POSTS_APP_SERVER and SSTK_POSTS_APP classes respectively.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_get_set_post_type.
+ * Trait sstk_get_set_post_type.
  */
-trait wpcd_get_set_post_type {
+trait sstk_get_set_post_type {
 
 	/**
 	 * The primary post type being handled by the including class..

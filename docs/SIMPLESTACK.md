@@ -1,10 +1,10 @@
-# SimpleStack
+# Simple Stack
 
 Internal hosting control plane for One Dog Solutions. A WordPress plugin that provisions
 servers at Vultr and UpCloud and installs WordPress on them, entirely from inside `wp-admin`.
 
-- Forked from WP Cloud Deploy 5.8.0. Not distributed; no licence server, no telemetry, no
-  commercial add-on layer.
+- Forked from the upstream 5.8.0 release. Not distributed; no license server, no telemetry,
+  no commercial add-on layer. Attribution remains in `NOTICE.md` and `license.txt`.
 - Web stack is **OpenLiteSpeed only** on Ubuntu 24.04 LTS (`noble`) / 26.04 LTS (`resolute`),
   with `lsphp83`, `lsphp84` (default) and `lsphp85`.
 - Build state lives in [`state.md`](../state.md) at the repository root. Read it before
@@ -15,75 +15,78 @@ servers at Vultr and UpCloud and installs WordPress on them, entirely from insid
 ## 1. Architecture
 
 ```
-wpcd.php                       plugin header, constants, activation, required_files()
-  └─ WPCD()                    includes/core/wp-cloud-deploy.php
-       ├─ add_simplestack_menu_page()      one top-level menu, React container markup
-       ├─ enqueue_simplestack_app()        reads assets/dist/.vite/manifest.json
+simple-stack.php                       plugin header, constants, activation, required_files()
+  └─ SSTK()                    includes/core/simple-stack.php
+       ├─ add_sstk_menu_page()      one top-level menu, React container markup
+       ├─ enqueue_sstk_app()        reads assets/dist/.vite/manifest.json
        ├─ get_provider_api()               class-{slug}.php → CLOUD_PROVIDER_API_{CamelCase}
        └─ apps[]
             └─ wordpress-app              the only app
-                 ├─ include_tabs_server() 22 requires in tabs-server/*.php
-                 ├─ include_tabs()        29 requires in tabs/*.php
+                 ├─ include_tabs_server() loads tabs-server/*.php
+                 ├─ include_tabs()        loads tabs/*.php
                  └─ do_instance_action()  the action engine
 
 includes/core/api/             simple-stack/v1 REST — a thin adapter over the above
 src/admin/                     React + Tailwind v4 client, built into assets/dist/
-includes/core/apps/wordpress-app/scripts/v{1,2}/   provisioning scripts
+includes/core/apps/wordpress-app/scripts/v2/       active provisioning scripts
 ```
 
-### Two names, one plugin
+### Naming contract
 
-`wpcd_` is deliberately **not** renamed. PHP class names, the `wpcd_app_server` / `wpcd_app`
-custom post types, `wpcd_*` post meta keys, `wpcd_*` option keys and the Bash environment
-variables all keep their upstream names, because add-on code and the provisioning scripts
-address them by name. Only user-facing strings, the plugin header, and the new REST namespace
-say "SimpleStack". `bin/guard-wpcd-prefix.sh` fails the build if any of them disappear.
+The upstream naming surface has been replaced without a compatibility layer. Classes and
+constants use `SSTK_`; functions, hooks, options, meta, post types, taxonomies, capabilities
+and cron identifiers use the four-character `sstk_` prefix; asset handles and CSS/JS names
+use `sstk-`; the text domain, plugin folder, main file and REST namespace use `simple-stack`.
+User-facing copy says **Simple Stack**. `bin/guard-sstk-prefix.sh` rejects legacy identifiers
+outside the attribution and rename-audit allowlist.
 
 ### The action bridge
 
-Every one of the 51 server and site tabs already registers three filters:
+Tab controllers contribute their names and field arrays through filters:
 
 ```php
-add_filter( "wpcd_server_{$app}_get_tabnames", [ $this, 'get_tab' ], 10, 2 );
-add_filter( "wpcd_server_{$app}_get_tabs",     [ $this, 'get_tab_fields' ], 10, 2 );
-add_filter( "wpcd_server_{$app}_tab_action",   [ $this, 'tab_action' ], 10, 3 );
+apply_filters( "sstk_server_{$app}_get_tabnames", array(), $id );
+apply_filters( "sstk_server_{$app}_get_tabs", array(), $id );
+apply_filters( "sstk_app_{$app}_get_tabnames", array(), $id );
+apply_filters( "sstk_app_{$app}_get_tabs", array(), $id );
 ```
 
-The plugin used to render those arrays through Meta Box and dispatch through `admin-ajax.php`.
-Both are gone. Instead the REST layer:
+The server and site screens no longer render those arrays through Meta Box or dispatch through
+`admin-ajax.php`. Instead the REST layer:
 
-1. reads the same `get_tabs` arrays and serialises them as a control schema
+1. reads the same arrays and serialises them as a control schema
    (`GET /servers/{id}/tabs`, `GET /sites/{id}/tabs`);
-2. maps a submitted form back onto the same dispatch points —
-   `do_instance_action()` for servers, the `wpcd_app_wordpress-app_tab_action` filter for sites.
+2. maps a submitted form onto the shared `sstk_app_wordpress-app_tab_action` dispatch used by
+   server and site tab handlers, with `do_instance_action()` as the server lifecycle fallback.
 
-So the React rewrite did not reimplement 51 tabs. `TabRenderer` renders the schema generically
-for every tab; only a handful of panels (log console, security probe, activity feed) have
-dedicated components. Adding a tab on the PHP side makes it appear in the React UI with no
-client change.
+Some legacy server tab constructors also register `sstk_server_{$app}_tab_action`, but the active
+REST bridge does not dispatch that filter. `TabRenderer` renders the returned schema generically;
+only the log console, security probe and activity feed have dedicated components. A new PHP tab
+appears without a client change when its schema uses supported field types.
 
 ---
 
 ## 2. REST reference
 
-Namespace `simple-stack/v1`. Every route is registered by
-`includes/core/api/class-simplestack-rest-api.php` on `rest_api_init`.
+Namespace `simple-stack/v1`. `SSTK_REST_API` registers the six admin SPA controllers on
+`rest_api_init`. The WordPress App controller family and the command/webhook callbacks register
+their routes separately under the same namespace.
 
 | Method | Route | Purpose |
 |---|---|---|
 | GET | `/servers` | List servers; filters `provider`, `region`, `status`, `search` |
 | POST | `/servers` | Create a server and queue the provisioning task |
-| GET | `/servers/{id}` | Server summary plus redacted `wpcd_server_*` meta |
+| GET | `/servers/{id}` | Server summary plus redacted `sstk_server_*` meta |
 | DELETE | `/servers/{id}` | Destroy the server |
-| POST | `/servers/{id}/action` | `do_instance_action( $id, $action, $additional )` |
+| POST | `/servers/{id}/action` | Tab-action filter first; `do_instance_action()` fallback |
 | GET | `/servers/{id}/logs` | Command / SSH / error log, `type` + `since` cursor + `limit` |
-| GET | `/servers/{id}/tabs` | Tab schema from `wpcd_server_wordpress-app_get_tabs` |
+| GET | `/servers/{id}/tabs` | Tab schema from `sstk_server_wordpress-app_get_tabs` |
 | GET | `/sites` | List sites where `app_type = wordpress-app` |
 | POST | `/sites` | Deploy a site via `install_wp_validate()` |
 | GET | `/sites/{id}` | Site summary plus redacted `wpapp_*` meta |
 | DELETE | `/sites/{id}` | Trash the site |
-| POST | `/sites/{id}/action` | `wpcd_app_wordpress-app_tab_action` after mapping the body onto `$_POST` |
-| GET | `/sites/{id}/tabs` | Tab schema from `wpcd_app_wordpress-app_get_tabs` |
+| POST | `/sites/{id}/action` | `sstk_app_wordpress-app_tab_action` after mapping the body onto `$_POST` |
+| GET | `/sites/{id}/tabs` | Tab schema from `sstk_app_wordpress-app_get_tabs` |
 | POST | `/sites/{id}/security-status` | Read-only hardening probe (plugins, `DISALLOW_FILE_EDIT`, PHP version) |
 | GET | `/settings/providers` | Provider state as booleans, feature flags and cached counts |
 | POST | `/settings/providers` | Save credentials (encrypted before storage) |
@@ -92,25 +95,25 @@ Namespace `simple-stack/v1`. Every route is registered by
 
 ### Guarantees
 
-- **One permission callback.** `SimpleStack_REST_Controller_Base::permissions_check()` returns
-  `current_user_can( 'manage_options' )` and is the only one in the namespace. `__return_true` does
-  not appear anywhere under `includes/core/api/`, and the build gate fails if it does.
-  Two endpoints elsewhere in the tree are public by necessity, not by oversight: the provisioning
-  command callback (`includes/core/apps/class-wpcd-app.php`), which a `wget` in the shell scripts
-  calls with no credentials, and the GitHub webhook
-  (`includes/core/apps/wordpress-app/tabs/git-control-site.php`), which GitHub calls. The first only
-  reports on a command the site is already waiting for, checked against a transient; the second
-  verifies an HMAC-SHA1 signature with `hash_equals()`. `bin/guard-wpcd-prefix.sh` pins that set to
-  exactly these two files, so a third one is a build failure.
-- **Every argument is validated.** Each `register_rest_arg()` call carries a
-  `sanitize_callback` and a `validate_callback`; the `arg_int` / `arg_string` / `arg_text` /
-  `arg_object` / `arg_id` helpers make that structural rather than a habit.
-- **Nothing secret is serialisable.** Every response passes through
-  `SimpleStack_Secret_Redactor::redact()`. Keys matching
+- **Administrative routes are gated.** The six SPA controllers use
+  `SSTK_REST_Controller_Base::permissions_check()`, which requires `current_user_can( 'manage_options' )`.
+  WordPress App controllers use `sstk_is_admin()`. Two callbacks in the same namespace are public
+  by necessity: the provisioning command callback
+  (`includes/core/apps/class-sstk-app.php`) validates a pending-command transient, and the GitHub
+  webhook (`includes/core/apps/wordpress-app/tabs/git-control-site.php`) requires a non-empty
+  per-site secret and verifies HMAC-SHA1 with `hash_equals()`. `bin/guard-sstk-prefix.sh` limits
+  `__return_true` to those two callback files.
+- **SPA arguments are validated.** Arguments registered through
+  `SSTK_REST_Controller_Base` carry `sanitize_callback` and `validate_callback`; the `arg_int` /
+  `arg_string` / `arg_text` / `arg_object` / `arg_id` helpers make that structural. The WordPress
+  App and public-callback routes use their own validation paths.
+- **SPA response payloads are redacted.** Payloads returned through the SPA base controller's
+  `respond()` method pass through `SSTK_Secret_Redactor::redact()`. Keys matching
   `/pass|secret|token|private|authorization|_key$|api_?key/i` become `********`, PEM blocks and
   `token=` / `password=` fragments inside free text are scrubbed, and password-typed tab fields
   ship with `std` / `value` / `default` blanked. Provider routes report `has_api_key` /
-  `has_ssh_key` booleans instead of values.
+  `has_ssh_key` booleans instead of values. Other REST response paths do not inherit this automatic
+  redaction boundary.
 
 ---
 
@@ -125,7 +128,7 @@ src/admin/
   lib/api.js             fetch wrapper: X-WP-Nonce, envelope unwrap, error toast
   lib/schema.js          tab field array → control descriptor
   lib/router.js          hash router (wp-admin owns the URL bar, pushState would fight it)
-  components/TabRenderer.jsx   renders all 51 tabs from the schema
+  components/TabRenderer.jsx   renders supported tab schemas generically
   routes/                ServersList, ServerDetail, ProvisionServer,
                          SitesList, SiteDetail, DeploySite,
                          ProviderSettings, SecurityStatus, ActivityLog
@@ -157,8 +160,8 @@ Two directory shapes, and the difference matters:
 
 | Location | Form | How it reaches the server |
 |---|---|---|
-| `scripts/vN/raw/*.txt` | plain Bash | downloaded verbatim over HTTP from `SCRIPT_URL` |
-| `scripts/vN/*.txt` (no `raw/`) | PHP template | `##TOKEN##` placeholders substituted from `script_placeholders()`, then sent as a command |
+| `scripts/v2/raw/*.txt` | plain Bash | downloaded verbatim over HTTP from `SCRIPT_URL` |
+| `scripts/v2/*.txt` (no `raw/`) | PHP template | `##TOKEN##` placeholders substituted from `script_placeholders()`, then sent as a command |
 
 A raw script therefore cannot carry a placeholder, and **no raw script sources a sibling** —
 every file a script needs is fetched explicitly by the wrapper. That is why the post-install
@@ -169,14 +172,13 @@ Because `##TOKEN##` at the start of a line is a Bash comment when unsubstituted,
 wrapper template always fails. `bin/lint-sh.sh` therefore checks both populations: raw scripts
 as they ship, and wrappers after replacing every `##PLACEHOLDER##` with a plain word.
 
-### v1 and v2 coexist
+### Provisioning is fixed to `v2`
 
-`v1/` is the upstream script set and is untouched. `v2/` is the SimpleStack set. The settings
-default is `v2`; the per-server meta `wpcd_server_scripts_version` still wins, so servers
-provisioned before the fork keep using `v1` and nothing needs migrating. The version dropdown
-lists both folders.
+`get_configured_scripts_version()` always returns `v2`. Server creation and REST requests use that
+value; there is no version dropdown, per-server override or editable script-version path. The
+working tree contains no `scripts/v1/` directory and has no v1 fallback.
 
-What changed in `v2`, in one line each:
+What defines the `v2` stack, in one line each:
 
 - `01-prepare_server.txt` — Ubuntu 24.04 refusal removed, nginx/LEMP branch removed,
   `24.04 → noble` / `26.04 → resolute` guard that fails fast, explicit `lsphp83/84/85` install
@@ -188,20 +190,22 @@ What changed in `v2`, in one line each:
   `gf_set_default_php()` / `gf_list_installed_php()` / `gf_normalise_admin_ip()`.
 - `56-ols_manage_admin_console.txt` — see §5.
 - `04-manage_https.txt` — nginx branches deleted; certbot stays `--non-interactive --agree-tos`.
-- `66-simplestack_post_install.txt` — new post-install hook, see §6.
+- `66-sstk_post_install.txt` — new post-install hook, see §6.
 
 ### Port 7080
 
 Never open to the world. `01-prepare_server.txt` applies an unconditional `ufw deny 7080`.
 `56-ols_manage_admin_console.txt` then rewrites only the `:7080` listener in
-`admin_config.conf` — `*:7080` when `SIMPLE_STACK_ADMIN_IP` is set, `127.0.0.1:7080` otherwise
+`admin_config.conf` — `*:7080` when `SSTK_ADMIN_IP` is set, `127.0.0.1:7080` otherwise
 — and deletes any inherited blanket rule before adding
-`ufw allow from $SIMPLE_STACK_ADMIN_IP to any port 7080 proto tcp`. With no admin IP it adds
+`ufw allow from $SSTK_ADMIN_IP to any port 7080 proto tcp`. With no admin IP it adds
 nothing and prints the SSH-tunnel command instead.
 
-`SIMPLE_STACK_ADMIN_IP` originates at Settings → `simplestack_admin_ip`, is validated twice
-(PHP before it reaches a command line, Bash after placeholder substitution), rejects
-`0.0.0.0/0` and `::/0` outright, and requires an SSH tunnel when empty.
+`SSTK_ADMIN_IP` originates at the `sstk_admin_ip` key in the `sstk_settings` option. The
+setting is currently programmatic because its legacy settings tab remains disabled; an admin UI
+field is still an open item. The value is validated twice (PHP before it reaches a command line,
+Bash after placeholder substitution), rejects `0.0.0.0/0` and `::/0` outright, and requires an SSH
+tunnel when empty.
 
 ---
 
@@ -244,27 +248,27 @@ stays on the old rule set.
 
 ---
 
-## 6. `simplestack_post_site_install`
+## 6. `sstk_post_site_install`
 
 Called by `02-install_wordpress_site.txt` once WordPress and any post-processing script have
 finished:
 
 ```bash
-simplestack_post_site_install "$domain" "$user_name" "$g_webserver_type"
+sstk_post_site_install "$domain" "$user_name" "$g_webserver_type"
 ```
 
-Defined in `scripts/v2/raw/66-simplestack_post_install.txt`, sourced from
+Defined in `scripts/v2/raw/66-sstk_post_install.txt`, sourced from
 `9999-common-functions.txt`. `9999` defines a no-op before sourcing, so if the optional
 download did not land the call still resolves and the install completes.
 
 What it does:
 
 1. `wp config set DISALLOW_FILE_EDIT true --raw` for the site;
-2. installs and activates each plugin in `SIMPLE_STACK_SECURITY_PLUGINS`.
+2. installs and activates each plugin in `SSTK_SECURITY_PLUGINS`.
 
 The plugin list arrives through `get_post_site_install_plugins()` (in
-`includes/core/apps/class-wpcd-app.php`), which reads the
-`simplestack_post_site_install_plugins` filter and reduces every entry to `[A-Za-z0-9._-]`, an
+`includes/core/apps/class-sstk-app.php`), which reads the
+`sstk_post_site_install_plugins` filter and reduces every entry to `[A-Za-z0-9._-]`, an
 optional `author/plugin` slash, and nothing else. The Bash side re-checks the same set and
 rejects `..`. Validation is by omission rather than escaping, because the value is interpolated
 into a `su -c` command line. The filter returns an empty list by default until the One Dog
@@ -277,34 +281,60 @@ Note that the site user's home directory **is** `/var/www/<domain>/html`
 
 ## 7. Providers
 
-Registry in `includes/core/wp-cloud-deploy.php`:
+Registry in `includes/core/simple-stack.php`:
 
-| Slug | Class | Status |
+| Slug | Class | Authentication |
 |---|---|---|
-| `vultr-v2` | `CLOUD_PROVIDER_API_VultrV2` | default |
-| `upcloud` | `CLOUD_PROVIDER_API_Upcloud` | supported |
-| `custom-server` | `CLOUD_PROVIDER_API_Custom_Server` | supported |
-| `digital-ocean` | `CLOUD_PROVIDER_API_Digital_Ocean` | present, disabled by default |
+| `vultr-v2` | `CLOUD_PROVIDER_API_VultrV2` | Bearer token |
+| `upcloud` | `CLOUD_PROVIDER_API_Upcloud` | Account user name and password |
 
-Both new classes implement the full `CLOUD_PROVIDER_API` contract — `regions`, `sizes`, `keys`,
-`create`, `details`, `status`, `reboot` / `on` / `off`, `delete`, snapshot create / delete /
-list, `resize`, `ssh_create`, `test_connection` — declare their feature flags, cache
-`regions` / `sizes`, and return `credentials_available()` booleans. Neither ever places an API
-key or root password in an exception message or a log line.
-
-DigitalOcean stays in the tree but is unregistered unless the `enable-do-provider` early option
-is set.
+Both classes implement the `CLOUD_PROVIDER_API` contract — `regions`, `sizes`, `keys`,
+`create`, `details`, `status`, `reboot` / `on` / `off`, `delete`, `resize`, `ssh_create` and
+`test_connection` — with feature flags controlling provider-specific operations such as
+snapshots. They cache region and size results and never place credentials in exception
+messages or log lines. Provider options use the `sstk_` prefix.
 
 ---
 
-## 8. Working on the plugin
+## 8. Secret storage and uninstall
+
+`SSTK_ENCRYPTION_KEY` in `wp-config.php` is the preferred key for stored provider credentials,
+passwords and private SSH keys. When it is absent, `SSTK::encrypt()` generates a key once and
+persists it in the `sstk_encryption_key_v2` option. This is a durable database fallback, not a
+temporary per-request key. Operators should still configure the constant explicitly and back it
+up: changing or deleting the key makes existing ciphertext unreadable.
+
+Secrets are stored as `sstk-encrypt-v2:` envelopes containing a random AES-CBC IV, an HMAC-SHA256
+authentication tag and the ciphertext. `decrypt()` strictly decodes the envelope, validates its
+lengths and verifies the tag before decrypting. Malformed, truncated, tampered, wrong-key and
+legacy-format values return an empty string; there is no legacy decryption path.
+
+Cross-site data sync is retired. The former service class, settings tab, AJAX handlers, cron
+wiring and remote receiver are absent; there is no import endpoint or compatibility layer. Each
+control-plane site is configured explicitly.
+
+Uninstall is a hard-cutover cleanup. `uninstall.php` removes `sstk_` options and transients,
+prefixed post/user/term metadata, posts whose type starts with `sstk_`, prefixed taxonomies and
+terms, every scheduled cron hook beginning with `sstk_`, custom role definitions, role assignments
+and direct `sstk_` capabilities on users, and tables whose name starts with the site's WordPress
+table prefix plus `sstk_`. On multisite it repeats the blog cleanup for every site and removes
+network options separately. Cloud servers and remote WordPress sites are not destroyed. The
+standalone `composer test:uninstall` harness exercises these cleanup paths without MySQL; a real
+WordPress activation/uninstall test is still required before release.
+
+---
+
+## 9. Working on the plugin
 
 ```bash
 # PHP and shell gates
 bash bin/lint-php.sh            # php -l over every PHP file except node_modules/ and vendor/
 bash bin/lint-sh.sh             # bash -n over raw scripts, substituted wrappers and bin/*.sh
-bash bin/guard-wpcd-prefix.sh   # wpcd_ names, public REST callbacks, port 7080
+bash bin/guard-sstk-prefix.sh   # sstk_ names, public REST callbacks, port 7080
 composer lint                   # same as lint-php.sh
+composer test:uninstall          # standalone multisite cleanup lifecycle harness
+composer validate --no-check-publish
+php bin/rebrand.php --dry-run    # zero changes, replacements and path moves
 
 # Front end (only needed if you touch src/admin/)
 npm ci
@@ -313,7 +343,8 @@ npm run verify:css              # fails if Tailwind escapes #simplestack-admin
 ```
 
 Requirements: WordPress 6.5+, PHP 8.1+, Node 20+ for builds only. `assets/dist/` is committed,
-so a production install needs no Node.
+so a production install needs no Node. Regenerate `languages/simple-stack.pot` after source-string
+changes with `wp i18n make-pot`; WP-CLI is required for canonical source references.
 
 After any phase of work, update `state.md` — flip the phase status in the Progress table,
 refresh Overall status / Last updated / Next action, append surprises to Decisions & deviations,

@@ -1,8 +1,9 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
-	exit
+	exit 1
 fi
 
 ## Get our common functions
@@ -70,13 +71,13 @@ select_domain () {
 }
 
 
-# for options where changes are applied to the NGINX/OLS configuration
+# for options where changes are applied to the OpenLiteSpeed configuration
 select_domain_mu () {
 	while [[ -z $domain ]]
 	do
 		echo
 		echo "Please, select which site you want to work with"
-		gf_select_domain_nginx_ols
+		gf_select_domain_ols
 	done
 }
 
@@ -107,8 +108,8 @@ do
 	echo "   21) Turn off WordPress Debug Flags"
 	echo "   22) Change WordPress Upload File Limits"
 	echo "   23) Add a a new admin user to a site"
-	echo "   24) Restart the current php version for a site"
-	echo "   25) Restart Webserver"
+	echo "   24) Restart OpenLiteSpeed (all sites)"
+		echo "   25) Restart OpenLiteSpeed"
 	echo "   26) Restart MariaDB"
 	echo "   27) Restart Redis"
 	echo "   28) Restart Memcached"
@@ -118,13 +119,11 @@ do
 	echo "   32) List of Tables in Database"	
 	echo "   33) Add HTTP Auth for WP Login"	
 	echo "   34) Remove HTTP Auth for WP Login"	
-	echo "   35) Disable Php Version"
-	echo "   36) Enable Php Version"
-	echo "   37) Renew Certificates"
-	echo "   38) Fix WordPress file and folder permissions (alternative to #4 above)"
+	echo "   35) Renew Certificates"
+	echo "   36) Fix WordPress file and folder permissions (alternative to #4 above)"
 	echo
 	read -p "Action: " action
-	until [[ -z "$action" || "$action" =~ ^[1-9]|2[0-9]|3[0-9]$ ]]
+	until [[ -z "$action" || "$action" =~ ^([1-9]|2[0-9]|3[0-6])$ ]]
 	do
 		echo "$action: invalid selection."
 		read -p "Action: " action
@@ -135,22 +134,11 @@ done
 if [[ $action == "enable_auth" || $action == "1" ]]
 then
 	select_domain_mu
-	if [ "$g_webserver_type" = "nginx" ]
+	if grep -qs 'note             Password Protect document root for domain' ${VHDIR}/$domain/$g_vhost_conf
 	then
-		if grep -qs auth_basic /etc/nginx/sites-enabled/$domain
-		then
-			echo
-			echo "Basic auth is already enabled for $domain!"
-			exit
-		fi
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		if grep -qs 'note             Password Protect document root for domain' ${VHDIR}/$domain/$g_vhost_conf
-		then
-			echo
-			echo "Basic auth is already enabled for $domain!"
-			exit
-		fi 
+		echo
+		echo "Basic auth is already enabled for $domain!"
+		exit
 	fi
 
 	if [[ -z $user ]]
@@ -168,21 +156,10 @@ then
 		read -p "Password: " pass
 	fi
 
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		# password auth
-		cd /etc/nginx
-		sed -i "/client_max_body_size/a auth_basic_user_file /etc/nginx/htpasswd/$domain;" sites-enabled/$domain
-		sed -i "/client_max_body_size/a auth_basic “Protected”;" sites-enabled/$domain
-		mkdir -p htpasswd
-		htpasswd -b -c htpasswd/$domain $user $pass
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i -e "/### Insert context configs below this line/a\\
-		${preprocessed_VAR%?}"  ${VHDIR}/$domain/$g_vhost_conf
-		htpasswd -b ${VHDIR}/$domain/htpasswd $user $pass
-		chown -R lsadm:lsadm ${VHDIR}/$domain/
-	fi
+	sed -i -e "/### Insert context configs below this line/a\\
+	${preprocessed_VAR%?}"  ${VHDIR}/$domain/$g_vhost_conf
+	htpasswd -b ${VHDIR}/$domain/htpasswd $user $pass
+	chown -R lsadm:lsadm ${VHDIR}/$domain/
 	gf_restart_webserver
 	echo
 	echo "Basic authentication enabled for $domain"
@@ -193,19 +170,9 @@ fi
 if [[ $action == "disable_auth" || $action == "2" ]]
 then
 	select_domain_mu
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sed -i '/auth_basic/d' /etc/nginx/sites-enabled/$domain
-		rm /etc/nginx/htpasswd/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		# Emptying file to remove all users but leaving it in place
-		# shellcheck disable=SC2188
-		# > ${VHDIR}/$domain/htpasswd
-		# Remove block from vhost config
-		sed -i -re '/### Enabling Password Protection config start/{:a;N;/### Enabling Password Protection config end/!ba};/note             Password Protect document root for domain/d' ${VHDIR}/$domain/$g_vhost_conf
-		chown -R lsadm:lsadm ${VHDIR}/$domain/
-	fi
+	# Remove the password-protection block while leaving the htpasswd file in place.
+	sed -i -re '/### Enabling Password Protection config start/{:a;N;/### Enabling Password Protection config end/!ba};/note             Password Protect document root for domain/d' ${VHDIR}/$domain/$g_vhost_conf
+	chown -R lsadm:lsadm ${VHDIR}/$domain/
 	gf_restart_webserver
 	echo
 	echo "Basic authentication disabled for $domain"
@@ -216,12 +183,17 @@ fi
 if [[ $action == "change_php_version" || $action == "3" ]]
 then
 	select_domain
-	if [ "$g_webserver_type" = "nginx" ]
+	current_php_version=$(grep -sEo 'lsphp(83|84|85)' ${VHDIR}/$domain/$g_vhost_conf | head -n1)
+	if [ -z "$current_php_version" ]
 	then
-		current_php_version=$(ls /etc/php/*/fpm/pool.d/$domain.conf | cut -d '/' -f 4)
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
+		echo "Unable to determine the current LSPHP version for $domain."
+		exit 1
+	fi
+
+	if [ -z "$(gf_installed_php_services)" ]
 	then
-		current_php_version=$(grep -sEo 'lsphp[0-9]{2}' ${VHDIR}/$domain/$g_vhost_conf|head -n1)
+		echo "No supported LSPHP versions are installed on this server."
+		exit 1
 	fi
 
 	while [[ -z $new_php_version ]]
@@ -231,86 +203,25 @@ then
 		echo
 		echo "Select which PHP version you want to configure for $domain."
 		gf_select_phpversion
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			new_php_version=$(ls /etc/php/ | sed -n "$site_number"p)
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			new_php_version=$(ls /usr/local/lsws|grep lsphp| sed -n "$site_number"p)
-		fi
+		new_php_version=$(gf_installed_php_services | sed -n "${site_number}p")
 	done
 
-	if [ "$g_webserver_type" = "nginx" ]
-	then	
-		# The concept of versions disabled only applies to NGINX.
-		if [ -f /etc/wpcd/php-versions-disabled/$new_php_version ]
-		then
-			echo "selected php version is disabled"
-			exit
-		fi
-	fi
+	case "$new_php_version" in
+		lsphp83|lsphp84|lsphp85) ;;
+		*)
+			echo "Unsupported PHP version: $new_php_version"
+			exit 1
+			;;
+	esac
 
-	# Don't do anything if the new and old versions are the same.
-	# This is important because we'll be deleting the configuration
-	# files from the original version. If they're the same then 
-	# we'll be rendering the site unusable.
+	# Do not rewrite the vhost when the selected version is already active.
 	if [ "$new_php_version" = "$current_php_version" ]
-	then	
+	then
 		echo "PHP version remains at $new_php_version for $domain"
 		exit
 	fi
 
-	# get user name.
-	user_name=$(echo $domain | cut -c1-32)
-
-	# Handle base on type of webserver.
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		# Check meta to see if this site was an MT site before - returns value in global $wpcd_metavalue
-		gf_get_metadata -t 'domain' -d $domain -k 'IS_MT' -f '0', 
-		is_meta=$wpcd_metavalue
-
-		# Handle things differently if we're working with a multi-tenant site.
-		if [ "$is_meta" = "1" ]
-		then
-			# MT Site 
-			# 1. copy original pool file to new php version
-			cp -f /etc/php/$current_php_version/fpm/pool.d/$domain.conf /etc/php/$new_php_version/fpm/pool.d 
-
-			# 2. Remove from original php version
-			rm -f /etc/php/$current_php_version/fpm/pool.d/$domain.conf
-
-			# 3. Restart old php version.
-			if [[ ! -f /etc/wpcd/php-versions-disabled/$current_php_version ]]
-			then
-				systemctl restart php$current_php_version-fpm
-			fi
-
-			# 4. restart new php version.
-			if [[ ! -f /etc/wpcd/php-versions-disabled/$new_php_version ]]
-			then
-				systemctl restart php$new_php_version-fpm
-			fi			
-		else
-			# Standard site
-
-			# 1. Remove from original php version
-			rm -f /etc/php/$current_php_version/fpm/pool.d/$domain.conf
-
-			# 2. Restart old php version.
-			if [[ ! -f /etc/wpcd/php-versions-disabled/$current_php_version ]]
-			then
-				systemctl restart php$current_php_version-fpm
-			fi
-
-			# 3. Add new php version - clean file.
-			gf_add_php_conf $domain $user_name $new_php_version
-		fi
-
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i "s/$current_php_version/$new_php_version/g" ${VHDIR}/$domain/$g_vhost_conf > /dev/null 2>&1
-	fi
+	sed -i "s/$current_php_version/$new_php_version/g" ${VHDIR}/$domain/$g_vhost_conf
 	gf_restart_webserver
 	echo
 	echo "PHP version changed to $new_php_version for $domain"
@@ -349,13 +260,7 @@ then
 		echo
 		read -p "Header: " header
 	fi
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sed -i "/client_max_body_size/a add_header $header;" /etc/nginx/sites-enabled/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i "/<<<END_extraHeaders/a $header;" ${VHDIR}/$domain/$g_vhost_conf > /dev/null 2>&1
-	fi
+	sed -i "/<<<END_extraHeaders/a $header;" ${VHDIR}/$domain/$g_vhost_conf
 	gf_restart_webserver
 	echo
 	echo "Header $header added for $domain"
@@ -366,40 +271,20 @@ fi
 if [[ $action == "remove_header" || $action == "6" ]]
 then
 	select_domain_mu
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		while [[ -z $header ]]
+	while [[ -z $header ]]
+	do
+		echo "Select the HTTP header which you wish to remove"
+		sed -n '/extraHeaders/, /END_extraHeaders/{ /extraHeaders/! { /END_extraHeaders/! p}}' ${VHDIR}/$domain/$g_vhost_conf | nl
+		read -p "Header: " site_number
+		number_of_sites=$(sed -n '/extraHeaders/, /END_extraHeaders/{ /extraHeaders/! { /END_extraHeaders/! p}}' ${VHDIR}/$domain/$g_vhost_conf | wc -l)
+		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -ge 1 && "$site_number" -le "$number_of_sites" ]]
 		do
-			echo "Select the HTTP header which you wish to remove"
-			sed -n '/extraHeaders/, /END_extraHeaders/{ /extraHeaders/! { /END_extraHeaders/! p}}' ${VHDIR}/$domain/$g_vhost_conf| nl
+			echo "$site_number: invalid selection."
 			read -p "Header: " site_number
-			number_of_sites=$(sed -n '/extraHeaders/, /END_extraHeaders/{ /extraHeaders/! { /END_extraHeaders/! p}}' ${VHDIR}/$domain/$g_vhost_conf| wc -l )
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "Header: " site_number
-			done
-			header=$(sed -n '/extraHeaders/, /END_extraHeaders/{ /extraHeaders/! { /END_extraHeaders/! p}}' ${VHDIR}/$domain/$g_vhost_conf | sed -n "$site_number"p)
 		done
-		sed -i "\#$header#d" ${VHDIR}/$domain/$g_vhost_conf
-	elif [ "$g_webserver_type" = "nginx" ]
-	then
-		while [[ -z $header ]]
-		do
-			echo
-			echo "Select the HTTP header which you wish to remove"
-			grep add_header /etc/nginx/sites-enabled/$domain | cut -d " " -f 2-3 | cut -d ';' -f 1 | nl
-			read -p "Header: " site_number
-			number_of_sites=$(grep add_header /etc/nginx/sites-enabled/$domain | cut -d " " -f 2-3 | cut -d ';' -f 1 | wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "Header: " site_number
-			done
-			header=$(grep add_header /etc/nginx/sites-enabled/$domain | cut -d " " -f 2-3 | cut -d ';' -f 1 | sed -n "$site_number"p)
-		done
-		sed -i "\#$header#d" /etc/nginx/sites-enabled/$domain
-	fi
+		header=$(sed -n '/extraHeaders/, /END_extraHeaders/{ /extraHeaders/! { /END_extraHeaders/! p}}' ${VHDIR}/$domain/$g_vhost_conf | sed -n "$site_number"p)
+	done
+	sed -i "\#$header#d" ${VHDIR}/$domain/$g_vhost_conf
 	gf_restart_webserver
 	echo "Header $header removed for $domain"
 	exit
@@ -471,20 +356,11 @@ then
 		echo
 		read -p "PHP value: " php_param
 	fi
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		# if parameter is already set, we delete it before configuring the new one
-		sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" /etc/nginx/sites-enabled/$domain
-		sed -i "/fastcgi_param PHP_VALUE/a $php_param;" /etc/nginx/sites-enabled/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		# Update the vhost configuration file. The parameter may or may not work. (This is an OLS quirk where only certain items work in this file.)
-		sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" ${VHDIR}/$domain/$g_vhost_conf
-		sed -i -e "/### Insert common phpIni/a\\php_admin_value ${php_param}"  ${VHDIR}/$domain/$g_vhost_conf
-		# Also remove & add to the php.ini file in case the vhost configuration file doesn't work.
-		sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" /var/www/$domain/.phpini/php.ini
-		echo "$php_param" >> /var/www/$domain/.phpini/php.ini
-	fi
+	# Update the vhost configuration and the site php.ini file.
+	sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" ${VHDIR}/$domain/$g_vhost_conf
+	sed -i -e "/### Insert common phpIni/a\\php_admin_value ${php_param}" ${VHDIR}/$domain/$g_vhost_conf
+	sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" /var/www/$domain/.phpini/php.ini
+	echo "$php_param" >> /var/www/$domain/.phpini/php.ini
 	echo
 	echo "Successfully changed PHP value $php_param for $domain"
 	gf_restart_webserver
@@ -499,46 +375,19 @@ then
 	do
 		echo
 		echo "Specify the PHP value which you wish to remove"
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			sed -n '/fastcgi_param PHP_VALUE/,/";/p' /etc/nginx/sites-enabled/$domain | sed '1d;$d' | nl
+		grep php_admin_value ${VHDIR}/$domain/$g_vhost_conf | cut -d' ' -f2 | nl
+		read -p "PHP value: " site_number
+		number_of_sites=$(grep php_admin_value ${VHDIR}/$domain/$g_vhost_conf | wc -l)
+		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -ge 1 && "$site_number" -le "$number_of_sites" ]]
+		do
+			echo "$site_number: invalid selection."
 			read -p "PHP value: " site_number
-			number_of_sites=$(sed -n '/fastcgi_param PHP_VALUE/,/";/p' /etc/nginx/sites-enabled/$domain | sed '1d;$d' | wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "PHP value: " site_number
-			done
-			php_param=$(sed -n '/fastcgi_param PHP_VALUE/,/";/p' /etc/nginx/sites-enabled/$domain | sed '1d;$d' | sed -n "$site_number"p)
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			grep php_admin_value ${VHDIR}/$domain/$g_vhost_conf |cut -d' ' -f2 |nl
-			read -p "PHP value: " site_number
-			number_of_sites=$(grep php_admin_value ${VHDIR}/$domain/$g_vhost_conf| wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "PHP value: " site_number
-			done
-			php_param=$(grep php_admin_value ${VHDIR}/$domain/$g_vhost_conf| cut -d' ' -f2|sed -n "$site_number"p)
-		fi
+		done
+		php_param=$(grep php_admin_value ${VHDIR}/$domain/$g_vhost_conf | cut -d' ' -f2 | sed -n "$site_number"p)
 	done
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sed -i "/$php_param/d" /etc/nginx/sites-enabled/$domain
-		systemctl restart nginx
-		php_version=$(ls /etc/php/*/fpm/pool.d/$domain.conf | cut -d '/' -f 4)
-		if [ ! -f /etc/wpcd/php-versions-disabled/$php_version ]
-		then
-			systemctl restart php$php_version-fpm
-		fi
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		# Remove from vhost config.
-		sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" ${VHDIR}/$domain/$g_vhost_conf
-		# And from php.ini.
-		sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" /var/www/$domain/.phpini/php.ini
-	fi
+	# Remove the setting from both the vhost and the site php.ini file.
+	sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" ${VHDIR}/$domain/$g_vhost_conf
+	sed -i "/$(echo $php_param | cut -d "=" -f 1)/d" /var/www/$domain/.phpini/php.ini
 	gf_restart_webserver
 	echo
 	echo "Successfully removed PHP value $php_param for $domain"
@@ -639,14 +488,14 @@ network=`echo $line|cut -d" " -f3`
 crontime=`echo $((minutes % period))`
 if [ $crontime == 0 ] && [ $network == "true" ]
 then
-logger "WPCD: running cron for network: $domain"
+logger "SSTK: running cron for network: $domain"
 user_name=$(echo $domain | cut -c1-32)
 su - $user_name -c \"wp site list --field=url | xargs -i -n1 wp cron event run --due-now --url=\\"{}\\" \" > /dev/null 2>&1
 fi
 
 if [ $crontime == 0 ] && [ $network == "false" ]
 then
-logger "WPCD: running cron for standard domain: $domain"
+logger "SSTK: running cron for standard domain: $domain"
 user_name=$(echo $domain | cut -c1-32)
 su - $user_name -c "wp cron event run --due-now > /dev/null 2>&1"
 fi
@@ -701,47 +550,12 @@ then
 	select_domain_mu
 	user_name=$(echo $domain | cut -c1-32)
 	home_directory="/var/www/$domain/html"
+	HTACC=${home_directory}/.htaccess
 
-	if [ "$g_webserver_type" = "nginx" ]
+	if ! grep -q 'https://%{HTTP_HOST}%{REQUEST_URI}' ${HTACC}
 	then
-		# if it is not a wildcard multisite, we can use certbot to configure the redirection
-		if ! grep -q 'server_name \.' /etc/nginx/sites-enabled/$domain
-		then
-			# if current certificate includes the www subdomain, pass it to certbot
-			# else, pass only the domain without www
-			# this is needed to prevent certbot from renewing the root domain certificate when www is not present
-			if openssl x509 -in /etc/letsencrypt/live/$domain/cert.pem -noout -text | grep -qs www.$domain
-			then
-				certbot --non-interactive -q --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $domain -d www.$domain
-			else
-				certbot --non-interactive -q --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $domain
-			fi
-			# else, it is a wildcard multisite and we must configure the redirection manually
-		else
-			sed -i '/listen 80;/d' /etc/nginx/sites-enabled/$domain
-			sed -i '/listen \[\:\:\]\:80;/d' /etc/nginx/sites-enabled/$domain
-			# it's very important to escape the variables and quotes within the echo
-			echo "
-server {
-listen 80;
-listen [::]:80;
-
-server_name .$domain;
-
-return 301 https://\$host\$request_uri;
-}" >> /etc/nginx/sites-enabled/$domain
-			systemctl restart nginx
-		fi
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		HTACC=${home_directory}/.htaccess
-		grep 'https://%{HTTP_HOST}%{REQUEST_URI}' ${HTACC}
-		if [ $? -ne 0 ]
-		then
-			certbot certonly --non-interactive --expand --agree-tos --register-unsafely-without-email --webroot -w "${home_directory}" -d "${domain}" -d www."${domain}"
-			gf_enable_https_redirect_ols_htaccess "${domain}"
-			gf_restart_webserver
-		fi
+		certbot certonly --non-interactive --expand --agree-tos --register-unsafely-without-email --webroot -w "${home_directory}" -d "${domain}" -d www."${domain}"
+		gf_enable_https_redirect_ols_htaccess "${domain}"
 	fi
 
 	echo
@@ -753,26 +567,7 @@ fi
 if [[ $action == "disable_https_redir" || $action == "16" ]]
 then
 	select_domain_mu
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		if ! grep -qs 'return 301 https://$host$request_uri' /etc/nginx/sites-enabled/$domain
-		then
-			echo
-			echo "SSL redirection is already disabled for $domain"
-			exit
-		fi
-		# for multisite wildcard sites:
-		sed -i -n '/listen 80/q;p' /etc/nginx/sites-enabled/$domain
-		# for normal sites:
-		sed -i -n '/if ($host/q;p' /etc/nginx/sites-enabled/$domain
-		# for all sites:
-		sed -i '$ d' /etc/nginx/sites-enabled/$domain
-		sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		gf_disable_https_redirect_ols_htaccess "$domain"
-	fi
-	gf_restart_webserver
+	gf_disable_https_redirect_ols_htaccess "$domain"
 	echo
 	echo "HTTPS redirect disabled for $domain"
 	exit
@@ -781,43 +576,33 @@ fi
 
 if [[ $action == "enable_php_mod" || $action == "17" ]]
 then
+	default_lsphpver=$(grep -sEo 'lsphp(83|84|85)' $WEBCF | head -n1 | sed 's|lsphp||')
+	case "$default_lsphpver" in
+		83|84|85) ;;
+		*)
+			echo "Unable to determine a supported default LSPHP version."
+			exit 1
+			;;
+	esac
+	default_php_version=$(echo $default_lsphpver | sed 's/^\(.\{1\}\)/\1./')
+	mods_disabled="/usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled"
+	mods_available="/usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-available"
+
 	echo "Select which module should be enabled"
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		while [[ -z $module ]]
-		do	
-			default_lsphpver=$(grep -sEo 'lsphp[0-9]{2}' $WEBCF|head -n1| sed 's|lsphp||'); # 74
-			default_php_version=$(echo $default_lsphpver | sed 's/^\(.\{1\}\)/\1./')  # 7.0,7.1,7.2,7.3,7.4,8.0,8.1,8.2,8.3 etc
-			ls /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled | sed 's/.ini//' | nl
-			echo
-			read -p "Select module: " site_number
-			number_of_sites=$(ls /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled | sed 's/.ini//' |wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "Select module: " site_number
-			done
-			module=$(ls /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled | sed 's/.ini//' | sed -n "$site_number"p)
-		done
-		mv /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled/$module.ini /usr/local/lsws/lsphp${default_lsphpver}/etc/php/7.4/mods-available/
-	elif [ "$g_webserver_type" = "nginx" ]
-	then
-		while [[ -z $module ]]
+	while [[ -z $module ]]
+	do
+		ls "$mods_disabled" | sed 's/.ini$//' | nl
+		echo
+		read -p "Select module: " site_number
+		number_of_sites=$(ls "$mods_disabled" | wc -l)
+		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -ge 1 && "$site_number" -le "$number_of_sites" ]]
 		do
-			ls /etc/php/7.4/mods-available/ | sed 's/.ini//' | nl
-			echo
+			echo "$site_number: invalid selection."
 			read -p "Select module: " site_number
-			number_of_sites=$(ls /etc/php/7.4/mods-available/ | sed 's/.ini//' | wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "Select module: " site_number
-			done
-			module=$(ls /etc/php/7.4/mods-available/ | sed 's/.ini//' | sed -n "$site_number"p)
 		done
-		phpenmod $module
-	fi
-	echo
+		module=$(ls "$mods_disabled" | sed 's/.ini$//' | sed -n "$site_number"p)
+	done
+	mv "$mods_disabled/$module.ini" "$mods_available/"
 	gf_restart_webserver
 	echo "$module PHP module has been enabled"
 	exit
@@ -826,45 +611,35 @@ fi
 
 if [[ $action == "disable_php_mod" || $action == "18" ]]
 then
+	default_lsphpver=$(grep -sEo 'lsphp(83|84|85)' $WEBCF | head -n1 | sed 's|lsphp||')
+	case "$default_lsphpver" in
+		83|84|85) ;;
+		*)
+			echo "Unable to determine a supported default LSPHP version."
+			exit 1
+			;;
+	esac
+	default_php_version=$(echo $default_lsphpver | sed 's/^\(.\{1\}\)/\1./')
+	mods_available="/usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-available"
+	mods_disabled="/usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled"
+	mkdir -p "$mods_disabled"
+
 	echo "Select which module should be disabled"
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		default_lsphpver=$(grep -sEo 'lsphp[0-9]{2}' $WEBCF|head -n1| sed 's|lsphp||'); # 74
-		default_php_version=$(echo $default_lsphpver | sed 's/^\(.\{1\}\)/\1./')  # 7.0,7.1,7.2,7.3,7.4,8.0,8.1,8.2,8.3 etc
-		mkdir -p /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled
-		while [[ -z $module ]]
+	while [[ -z $module ]]
+	do
+		ls "$mods_available" | sed 's/.ini$//' | nl
+		echo
+		read -p "Select module: " site_number
+		number_of_sites=$(ls "$mods_available" | wc -l)
+		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -ge 1 && "$site_number" -le "$number_of_sites" ]]
 		do
-			ls /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-available | sed 's/.ini//' | nl
-			echo
+			echo "$site_number: invalid selection."
 			read -p "Select module: " site_number
-			number_of_sites=$(ls /usr/local/lsws/lsphp${default_lsphpver}/etc/php/7.4/mods-available | sed 's/.ini//' |wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "Select module: " site_number
-			done
-			module=$(ls /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-available | sed 's/.ini//' | sed -n "$site_number"p)
 		done
-		mv /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-available/$module.ini /usr/local/lsws/lsphp${default_lsphpver}/etc/php/${default_php_version}/mods-disabled/
-	elif [ "$g_webserver_type" = "nginx" ]
-	then
-		while [[ -z $module ]]
-		do
-			ls /etc/php/?.?/mods-available/ | sed 's/.ini//' | sed '/\//d' | sed '/^$/d' | sort -u | nl
-			echo
-			read -p "Select module: " site_number
-			number_of_sites=$(ls /etc/php/?.?/mods-available/ | sed 's/.ini//' | sed '/\//d' | sed '/^$/d' | sort -u | wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "Select module: " site_number
-			done
-			module=$(ls /etc/php/?.?/mods-available/ | sed 's/.ini//' | sed '/\//d' | sed '/^$/d' | sort -u | sed -n "$site_number"p)
-		done
-		phpdismod $module
-	fi
-	gf_restart_webserver "true"
-	echo
+		module=$(ls "$mods_available" | sed 's/.ini$//' | sed -n "$site_number"p)
+	done
+	mv "$mods_available/$module.ini" "$mods_disabled/"
+	gf_restart_webserver
 	echo "$module PHP module has been disabled"
 	exit
 fi
@@ -888,27 +663,26 @@ fi
 
 if [[ $action == "enable_debug" || $action == "20" ]]
 then
-	select_domain
+	select_domain_mu
 	user_name=$(echo $domain | cut -c1-32)
-	cd /var/www/$domain/html/
-	su - $user_name -c "wp --skip-plugins config set WP_DEBUG true --raw"
-	su - $user_name -c "wp --skip-plugins config set WP_DEBUG_DISPLAY false --raw"
-	su - $user_name -c "wp --skip-plugins config set WP_DEBUG_LOG true --raw"
-	su - $user_name -c "touch /var/www/$domain/html/wp-content/debug.log"
-	chmod g+w /var/www/$domain/html/wp-content/debug.log
-	
-	# Handle some OLS specific stuff.
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
+	domain_conf="${VHDIR}/${domain}/${g_vhost_conf}"
+	if [ ! -f "$domain_conf" ]
 	then
-		# Swap php error_log path
-		domain_conf="${VHDIR}/${domain}/vhconf.conf"
-		# Swaps to wp-content/debug.log 
-		# php_admin_value error_log wp-content/debug.log
-		sed -i "s|php_admin_value error_log .*|php_admin_value error_log wp-content/debug.log|" "${domain_conf}"
-		# restart ols/lsws and kill lsphp procresses so php changes are changed.
-		gf_restart_webserver "true"
+		echo "Unable to find the OpenLiteSpeed configuration for $domain."
+		exit 1
 	fi
-	
+
+	cd /var/www/$domain/html/ || exit 1
+	su - $user_name -c "wp --skip-plugins config set WP_DEBUG true --raw" || exit 1
+	su - $user_name -c "wp --skip-plugins config set WP_DEBUG_DISPLAY false --raw" || exit 1
+	su - $user_name -c "wp --skip-plugins config set WP_DEBUG_LOG true --raw" || exit 1
+	su - $user_name -c "touch /var/www/$domain/html/wp-content/debug.log" || exit 1
+	chmod g+w /var/www/$domain/html/wp-content/debug.log || exit 1
+
+	# Send PHP errors to the WordPress debug log for this OpenLiteSpeed vhost.
+	sed -i "s|php_admin_value error_log .*|php_admin_value error_log wp-content/debug.log|" "$domain_conf" || exit 1
+	gf_restart_webserver || exit 1
+
 	echo
 	echo "WordPress debug flags enabled for $domain"
 	exit
@@ -917,22 +691,22 @@ fi
 
 if [[ $action == "disable_debug" || $action == "21" ]]
 then
-	select_domain
+	select_domain_mu
 	user_name=$(echo $domain | cut -c1-32)
-	cd /var/www/$domain/html/
-	su - $user_name -c "wp --skip-plugins config set WP_DEBUG false --raw"
-	
-	# Handle some OLS specific stuff.
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then	
-		domain_conf="${VHDIR}/${domain}/vhconf.conf"
-		# Reverts back to default: logs/php_error_log
-		# php_admin_value error_log logs/php_error_log
-		sed -i "s|php_admin_value error_log .*|php_admin_value error_log logs/php_error_log|" "${domain_conf}"
-		# restart ols/lsws and kill lsphp procresses so php changes are changed.
-		gf_restart_webserver "true"
+	domain_conf="${VHDIR}/${domain}/${g_vhost_conf}"
+	if [ ! -f "$domain_conf" ]
+	then
+		echo "Unable to find the OpenLiteSpeed configuration for $domain."
+		exit 1
 	fi
-	
+
+	cd /var/www/$domain/html/ || exit 1
+	su - $user_name -c "wp --skip-plugins config set WP_DEBUG false --raw" || exit 1
+
+	# Revert PHP errors to the vhost log for this OpenLiteSpeed site.
+	sed -i "s|php_admin_value error_log .*|php_admin_value error_log logs/php_error_log|" "$domain_conf" || exit 1
+	gf_restart_webserver || exit 1
+
 	echo
 	echo "WordPress debug flags disabled for $domain"
 	exit
@@ -941,7 +715,7 @@ fi
 
 if [[ $action == "change_upload_limits" || $action == "22" ]]
 then
-	select_domain
+	select_domain_mu
 	if [[ -z $upload_limit ]]
 	then
 		echo
@@ -950,22 +724,24 @@ then
 		read -p "Upload limit: " upload_limit
 	fi
 
-	if [ "$g_webserver_type" = "nginx" ]
+	if [[ ! "$upload_limit" =~ ^[1-9][0-9]*$ ]]
 	then
-		sed -i "/client_max_body_size/c\client_max_body_size $upload_limit\M\;" /etc/nginx/sites-enabled/$domain
-		# if parameter is already set, we delete it before configuring the new one
-		sed -i "/upload_max_filesize/d" /etc/nginx/sites-enabled/$domain
-		sed -i "/post_max_size/d" /etc/nginx/sites-enabled/$domain
-		sed -i "/fastcgi_param PHP_VALUE/a upload_max_filesize=$upload_limit\M;" /etc/nginx/sites-enabled/$domain
-		sed -i "/fastcgi_param PHP_VALUE/a post_max_size=$upload_limit\M;" /etc/nginx/sites-enabled/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i "/upload_max_filesize/d" ${VHDIR}/$domain/$g_vhost_conf
-		sed -i "/post_max_size/d" ${VHDIR}/$domain/$g_vhost_conf
-		sed -i -e "/### Insert common phpIni/a\\php_admin_value upload_max_filesize=${upload_limit}M"  ${VHDIR}/$domain/$g_vhost_conf
-		sed -i -e "/### Insert common phpIni/a\\php_admin_value post_max_size=${upload_limit}M"  ${VHDIR}/$domain/$g_vhost_conf
+		echo "Upload limit must be a positive whole number of megabytes."
+		exit 1
 	fi
-	gf_restart_webserver
+
+	domain_conf="${VHDIR}/${domain}/${g_vhost_conf}"
+	if [ ! -f "$domain_conf" ]
+	then
+		echo "Unable to find the OpenLiteSpeed configuration for $domain."
+		exit 1
+	fi
+
+	sed -i "/upload_max_filesize/d" "$domain_conf" || exit 1
+	sed -i "/post_max_size/d" "$domain_conf" || exit 1
+	sed -i -e "/### Insert common phpIni/a\\php_admin_value upload_max_filesize=${upload_limit}M" "$domain_conf" || exit 1
+	sed -i -e "/### Insert common phpIni/a\\php_admin_value post_max_size=${upload_limit}M" "$domain_conf" || exit 1
+	gf_restart_webserver || exit 1
 	echo
 	echo "File upload limits have been changed for $domain"
 	exit
@@ -1009,30 +785,19 @@ fi
 
 if [[ $action == "restart_php" || $action == "24" ]]
 then
-	select_domain
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		current_php_version=$(ls /etc/php/*/fpm/pool.d/$domain.conf | cut -d '/' -f 4)
-		if [ ! -f /etc/wpcd/php-versions-disabled/$current_php_version ]
-		then
-			systemctl restart php$current_php_version-fpm
-		fi
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		current_php_version=$(grep lsapi: ${VHDIR}/$domain/$g_vhost_conf|cut -d':' -f2|cut -d' ' -f1)
-		gf_restart_webserver
-	fi
+	# OpenLiteSpeed owns the LSPHP processes, so this restarts every site.
+	gf_restart_webserver || exit 1
 	echo
-	echo "PHP service has restarted for version $current_php_version"
+	echo "OpenLiteSpeed and its LSPHP processes have been restarted for all sites."
 	exit
 fi
 
 
-if [[ $action == "restart_nginx" || $action == "restart_web_server" || $action == "25" ]]
+if [[ $action == "restart_web_server" || $action == "25" ]]
 then
-	gf_restart_webserver
+	gf_restart_webserver || exit 1
 	echo
-	echo "The webserver has been restarted ($g_webserver_type)"
+	echo "OpenLiteSpeed has been restarted for all sites."
 	exit
 fi
 
@@ -1204,21 +969,11 @@ fi
 if [[ $action == "wpadmin_enable_auth" || $action == "33" ]]
 then
 	select_domain_mu
-	if [ "$g_webserver_type" = "nginx" ]
+	domain_conf="${VHDIR}/${domain}/${g_vhost_conf}"
+	if grep -qs 'note             Password Protect wp-admin for domain' "$domain_conf"
 	then
-		if grep -qs "Protected Admin" /etc/nginx/sites-enabled/$domain
-		then
-			echo
-			echo "Wp Admin auth is already enabled for $domain!"
-			exit
-		fi
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		if grep -qs 'note             Password Protect wp-admin for domain' ${VHDIR}/$domain/$g_vhost_conf
-		then
-			echo "Wp Admin auth is already enabled for $domain!"
-			exit
-		fi
+		echo "Wp Admin auth is already enabled for $domain!"
+		exit
 	fi
 
 	if [[ -z $user ]]
@@ -1236,22 +991,11 @@ then
 		read -p "Password: " pass
 	fi
 
-	# password auth
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		cd /etc/nginx
-		sed -i "/wp-login.php/a auth_basic_user_file /etc/nginx/htpasswd/$domain-wpadmin;" sites-enabled/$domain
-		sed -i '/wp-login.php/a auth_basic "Protected Admin";' sites-enabled/$domain
-		mkdir -p htpasswd
-		htpasswd -b -c htpasswd/$domain-wpadmin $user $pass
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i -e "/### Insert context configs below this line/a\\
-		${preprocessed_VAR2%?}"  ${VHDIR}/$domain/$g_vhost_conf
-		htpasswd -b -c ${VHDIR}/$domain/htpasswd-wpadmin $user $pass
-		chown -R lsadm:lsadm ${VHDIR}/$domain/
-	fi
-	gf_restart_webserver
+	sed -i -e "/### Insert context configs below this line/a\\
+	${preprocessed_VAR2%?}" "$domain_conf" || exit 1
+	htpasswd -b -c "${VHDIR}/${domain}/htpasswd-wpadmin" "$user" "$pass" || exit 1
+	chown -R lsadm:lsadm "${VHDIR}/${domain}/" || exit 1
+	gf_restart_webserver || exit 1
 	echo
 	echo "Basic authentication enabled for $domain Admin section"
 	exit
@@ -1261,89 +1005,18 @@ fi
 if [[ $action == "wpadmin_disable_auth" || $action == "34" ]]
 then
 	select_domain_mu
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sed -i '/Protected Admin/I,+1 d' /etc/nginx/sites-enabled/$domain
-		rm /etc/nginx/htpasswd/$domain-wpadmin
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i -re '/### Enabling Password Protection wp-admin config start/{:a;N;/### Enabling Password Protection wp-admin config end/!ba};/note             Password Protect wp-admin for domain/d' ${VHDIR}/$domain/$g_vhost_conf
-		rm ${VHDIR}/$domain/htpasswd-wpadmin > /dev/null 2>&1
-		chown -R lsadm:lsadm ${VHDIR}/$domain/
-	fi
-	gf_restart_webserver
+	domain_conf="${VHDIR}/${domain}/${g_vhost_conf}"
+	sed -i -re '/### Enabling Password Protection wp-admin config start/{:a;N;/### Enabling Password Protection wp-admin config end/!ba};/note             Password Protect wp-admin for domain/d' "$domain_conf" || exit 1
+	rm -f "${VHDIR}/${domain}/htpasswd-wpadmin"
+	chown -R lsadm:lsadm "${VHDIR}/${domain}/" || exit 1
+	gf_restart_webserver || exit 1
 	echo
 	echo "Basic authentication disabled for $domain"
 	exit
 fi
 
 
-if [[ $action == "php_version_disable" || $action == "35" ]]
-then
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		mkdir -p /etc/wpcd/php-versions-disabled
-		while [[ -z $php_version ]]
-		do
-			echo
-			echo "Available PHP versions are:"
-			echo "Select which PHP version you want to disable"
-			gf_select_phpversion
-			php_version=$(ls /etc/php/ | sed -n "$site_number"p)
-		done
-
-		systemctl status php$php_version-fpm |grep running > /dev/null
-		if [ $? -eq 0 ] || [ -f /etc/systemd/system/multi-user.target.wants/php$php_version-fpm.service ]
-		then
-			systemctl stop php$php_version-fpm
-			systemctl disable php$php_version-fpm  > /dev/null 2>&1
-			echo `date +%d-%m-%Y` > /etc/wpcd/php-versions-disabled/$php_version
-			echo "php version $php_version has been disabled"
-		else
-			echo "php version $php_version already disabled"
-		fi
-		exit
-	fi
-fi
-
-
-if [[ $action == "php_version_enable" || $action == "36" ]]
-then
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		mkdir -p /etc/wpcd/php-versions-disabled
-		while [[ -z $php_version ]]
-		do
-			echo
-			echo "Available PHP versions are:"
-			ls /etc/wpcd/php-versions-disabled/ | nl
-			echo
-			echo "Select which PHP version you want to enable"
-			read -p "Select PHP version: " site_number
-			number_of_sites=$(ls /etc/wpcd/php-versions-disabled/ | wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "Select PHP version: " site_number
-			done
-			php_version=$(ls /etc/wpcd/php-versions-disabled/ | sed -n "$site_number"p)
-		done
-
-		systemctl status php$php_version-fpm |grep running > /dev/null
-		if [ $? -ne 0 ] || [ ! -f /etc/systemd/system/multi-user.target.wants/php$php_version-fpm.service ] || [ -f /etc/wpcd/php-versions-disabled/$php_version ]
-		then
-			systemctl start php$php_version-fpm
-			systemctl enable php$php_version-fpm  > /dev/null 2>&1
-			rm -f /etc/wpcd/php-versions-disabled/$php_version
-			echo "php version $php_version has been enabled"
-		else
-			echo "php version $php_version already enabled"
-		fi
-		exit
-	fi
-fi
-
-if [[ $action == "renew_all_certificates" || $action == "37" ]]
+if [[ $action == "renew_all_certificates" || $action == "35" ]]
 then
 	echo "Attempting to renew all certificates eligible for renewals..."
 	sudo certbot renew
@@ -1351,7 +1024,7 @@ then
 	exit
 fi
 
-if [[ $action == "reset_permissions_alt" || $action == "38" ]]
+if [[ $action == "reset_permissions_alt" || $action == "36" ]]
 then
 	select_domain
 

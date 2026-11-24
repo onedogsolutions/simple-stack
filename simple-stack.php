@@ -1,6 +1,7 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
-Plugin Name: SimpleStack
+Plugin Name: Simple Stack
 Plugin URI: https://onedogsolutions.com
 Description: Internal hosting control plane for One Dog Solutions. Deploys and manages OpenLiteSpeed servers and WordPress sites from inside wp-admin.
 Version: 1.0.0
@@ -9,14 +10,14 @@ Requires PHP: 8.1
 Author: One Dog Solutions
 Author URI: https://onedogsolutions.com
 Domain Path: /languages
-Text Domain: wpcd
+Text Domain: simple-stack
  */
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 /**
- * Class WPCD_Init.
+ * Class SSTK_Init.
  */
-class WPCD_Init {
+class SSTK_Init {
 
 	/**
 	 * Construct function.
@@ -25,80 +26,61 @@ class WPCD_Init {
 
 		$plugin_data = get_plugin_data( __FILE__ );
 
-		if ( ! defined( 'wpcd_url' ) ) {
-			// Deprecated constants - lowercased.
-			define( 'wpcd_url', plugin_dir_url( __FILE__ ) );
-			define( 'wpcd_path', plugin_dir_path( __FILE__ ) );
-			define( 'wpcd_root', dirname( plugin_basename( __FILE__ ) ) );
-			define( 'wpcd_plugin', plugin_basename( __FILE__ ) );
-			define( 'wpcd_extension', $plugin_data['Name'] );
-			define( 'wpcd_version', $plugin_data['Version'] );
-			define( 'wpcd_textdomain', 'wpcd' );
-			define( 'wpcd_requires', '2.0.3' );
-			define( 'wpcd_rest_version', '1' );
-			define( 'wpcd_db_version', '1' );
-
-			// Redefine again as upper-case since we're going to be moving all constants to uppercase going forward.
-			// Note that there are additional constants here vs above since we added new ones.  But we're only
-			// adding new UPPERCASE ones.
-			define( 'WPCD_URL', plugin_dir_url( __FILE__ ) );
-			define( 'WPCD_PATH', plugin_dir_path( __FILE__ ) );
-			define( 'WPCD_ROOT', dirname( plugin_basename( __FILE__ ) ) );
-			define( 'WPCD_PLUGIN', plugin_basename( __FILE__ ) );
-			define( 'WPCD_BASE_FILE', __FILE__ );
-			define( 'WPCD_EXTENSION', $plugin_data['Name'] );
-			define( 'WPCD_VERSION', $plugin_data['Version'] );
-			define( 'WPCD_TEXTDOMAIN', 'wpcd' );
-			define( 'WPCD_REQUIRES', '2.0.3' );
-			define( 'WPCD_REST_VERSION', '1' );
-			define( 'WPCD_DB_VERSION', '1' );
+		if ( ! defined( 'SSTK_URL' ) ) {
+			define( 'SSTK_URL', plugin_dir_url( __FILE__ ) );
+			define( 'SSTK_PATH', plugin_dir_path( __FILE__ ) );
+			define( 'SSTK_ROOT', dirname( plugin_basename( __FILE__ ) ) );
+			define( 'SSTK_PLUGIN', plugin_basename( __FILE__ ) );
+			define( 'SSTK_BASE_FILE', __FILE__ );
+			define( 'SSTK_EXTENSION', $plugin_data['Name'] );
+			define( 'SSTK_VERSION', $plugin_data['Version'] );
+			define( 'SSTK_TEXTDOMAIN', 'simple-stack' );
+			define( 'SSTK_REQUIRES', '2.0.3' );
+			define( 'SSTK_REST_VERSION', '1' );
+			define( 'SSTK_DB_VERSION', '1' );
 
 			// Define the default brand colors for wp-admin.
-			define( 'WPCD_PRIMARY_BRAND_COLOR', '#E91E63' );
-			define( 'WPCD_SECONDARY_BRAND_COLOR', '#FF5722' );
-			define( 'WPCD_TERTIARY_BRAND_COLOR', '#03114A' );
-			define( 'WPCD_ACCENT_BG_COLOR', '#0d091a' );
-			define( 'WPCD_MEDIUM_ACCENT_BG_COLOR', '#D3D3D3' );
-			define( 'WPCD_MEDIUM_BG_COLOR', '#F3F3F5' );
-			define( 'WPCD_LIGHT_BG_COLOR', '#FDFDFD' );
-			define( 'WPCD_ALTERNATE_ACCENT_BG_COLOR', '#CFD8DC' );
-			define( 'WPCD_POSITIVE_COLOR', '#008000' );
-			define( 'WPCD_NEGATIVE_COLOR', '#8B0000' );
-			define( 'WPCD_ALT_NEGATIVE_COLOR', '#FF0000' );
-			define( 'WPCD_WHITE_COLOR', '#ffffff' );
-			define( 'WPCD_TERMINAL_BG_COLOR', '#000000' );
-			define( 'WPCD_TERMINAL_FG_COLOR', '#ffffff' );
+			define( 'SSTK_PRIMARY_BRAND_COLOR', '#E91E63' );
+			define( 'SSTK_SECONDARY_BRAND_COLOR', '#FF5722' );
+			define( 'SSTK_TERTIARY_BRAND_COLOR', '#03114A' );
+			define( 'SSTK_ACCENT_BG_COLOR', '#0d091a' );
+			define( 'SSTK_MEDIUM_ACCENT_BG_COLOR', '#D3D3D3' );
+			define( 'SSTK_MEDIUM_BG_COLOR', '#F3F3F5' );
+			define( 'SSTK_LIGHT_BG_COLOR', '#FDFDFD' );
+			define( 'SSTK_ALTERNATE_ACCENT_BG_COLOR', '#CFD8DC' );
+			define( 'SSTK_POSITIVE_COLOR', '#008000' );
+			define( 'SSTK_NEGATIVE_COLOR', '#8B0000' );
+			define( 'SSTK_ALT_NEGATIVE_COLOR', '#FF0000' );
+			define( 'SSTK_WHITE_COLOR', '#ffffff' );
+			define( 'SSTK_TERMINAL_BG_COLOR', '#000000' );
+			define( 'SSTK_TERMINAL_FG_COLOR', '#ffffff' );
 
 			// Define the default brand colors for front-end.
-			define( 'WPCD_FE_PRIMARY_BRAND_COLOR', '#E91E63' );
-			define( 'WPCD_FE_SECONDARY_BRAND_COLOR', '#281d67' );
-			define( 'WPCD_FE_TERTIARY_BRAND_COLOR', '#03114A' );
-			define( 'WPCD_FE_ACCENT_BG_COLOR', '#0d091a' );
-			define( 'WPCD_FE_MEDIUM_ACCENT_BG_COLOR', '#D3D3D3' );
-			define( 'WPCD_FE_MEDIUM_BG_COLOR', '#F3F3F5' );
-			define( 'WPCD_FE_LIGHT_BG_COLOR', '#FDFDFD' );
-			define( 'WPCD_FE_ALTERNATE_ACCENT_BG_COLOR', '#CFD8DC' );
-			define( 'WPCD_FE_POSITIVE_COLOR', '#008000' );
-			define( 'WPCD_FE_NEGATIVE_COLOR', '#8B0000' );
-			define( 'WPCD_FE_ALT_NEGATIVE_COLOR', '#FF0000' );
-			define( 'WPCD_FE_WHITE_COLOR', '#ffffff' );
+			define( 'SSTK_FE_PRIMARY_BRAND_COLOR', '#E91E63' );
+			define( 'SSTK_FE_SECONDARY_BRAND_COLOR', '#281d67' );
+			define( 'SSTK_FE_TERTIARY_BRAND_COLOR', '#03114A' );
+			define( 'SSTK_FE_ACCENT_BG_COLOR', '#0d091a' );
+			define( 'SSTK_FE_MEDIUM_ACCENT_BG_COLOR', '#D3D3D3' );
+			define( 'SSTK_FE_MEDIUM_BG_COLOR', '#F3F3F5' );
+			define( 'SSTK_FE_LIGHT_BG_COLOR', '#FDFDFD' );
+			define( 'SSTK_FE_ALTERNATE_ACCENT_BG_COLOR', '#CFD8DC' );
+			define( 'SSTK_FE_POSITIVE_COLOR', '#008000' );
+			define( 'SSTK_FE_NEGATIVE_COLOR', '#8B0000' );
+			define( 'SSTK_FE_ALT_NEGATIVE_COLOR', '#FF0000' );
+			define( 'SSTK_FE_WHITE_COLOR', '#ffffff' );
 
 			// Define a variable that can be used for versioning scripts - required to force multisite to use different version numbers for each site.
 			if ( is_multisite() ) {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					define( 'wpcd_scripts_version', (string) get_current_blog_id() . '_' . (string) time() );
-					define( 'WPCD_SCRIPTS_VERSION', (string) get_current_blog_id() . '_' . (string) time() );
+					define( 'SSTK_SCRIPTS_VERSION', (string) get_current_blog_id() . '_' . (string) time() );
 				} else {
-					define( 'wpcd_scripts_version', (string) get_current_blog_id() . '_' . (string) wpcd_version );
-					define( 'WPCD_SCRIPTS_VERSION', (string) get_current_blog_id() . '_' . (string) wpcd_version );
+					define( 'SSTK_SCRIPTS_VERSION', (string) get_current_blog_id() . '_' . (string) SSTK_VERSION );
 				}
 			} else {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					define( 'wpcd_scripts_version', (string) time() );
-					define( 'WPCD_SCRIPTS_VERSION', (string) time() );
+					define( 'SSTK_SCRIPTS_VERSION', (string) time() );
 				} else {
-					define( 'wpcd_scripts_version', (string) wpcd_version );
-					define( 'WPCD_SCRIPTS_VERSION', (string) wpcd_version );
+					define( 'SSTK_SCRIPTS_VERSION', (string) SSTK_VERSION );
 				}
 			}
 		}
@@ -114,10 +96,10 @@ class WPCD_Init {
 		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
 
 		/* Show some notices as required */
-		add_action( 'admin_notices', array( $this, 'wpcd_global_admin_notice' ) );
+		add_action( 'admin_notices', array( $this, 'sstk_global_admin_notice' ) );
 
 		/* Show documentation and quick-start links in the plugin list. */
-		add_filter( 'plugin_row_meta', array( $this, 'wpcd_append_support_and_faq_links' ), 10, 4 );
+		add_filter( 'plugin_row_meta', array( $this, 'sstk_append_support_and_faq_links' ), 10, 4 );
 
 		/* Load languages files */
 		add_action( 'plugins_loaded', array( $this, 'load_plugin_textdomain' ) );
@@ -130,29 +112,29 @@ class WPCD_Init {
 	}
 
 	/**
-	 * Create cron timers for use by other wpcd functions.
+	 * Create cron timers for use by other sstk functions.
 	 * Three timers - 1 min, 2 min and 15 min.
 	 *
 	 * @param Array $schedules schedules.
 	 */
 	public function custom_cron_schedule( $schedules ) {
 		// if this schedule is not already defined by someone else...
-		if ( ! isset( $schedules['every_minute'] ) ) {
-			$schedules['every_minute'] = array(
+		if ( ! isset( $schedules['sstk_every_minute'] ) ) {
+			$schedules['sstk_every_minute'] = array(
 				'interval' => MINUTE_IN_SECONDS,
-				'display'  => __( 'Every minute', 'wpcd' ),
+				'display'  => __( 'Every minute', 'simple-stack' ),
 			);
 		}
-		if ( ! isset( $schedules['every_two_minute'] ) ) {
-			$schedules['every_two_minute'] = array(
+		if ( ! isset( $schedules['sstk_every_two_minutes'] ) ) {
+			$schedules['sstk_every_two_minutes'] = array(
 				'interval' => 120,
-				'display'  => __( 'Every 2 minutes', 'wpcd' ),
+				'display'  => __( 'Every 2 minutes', 'simple-stack' ),
 			);
 		}
-		if ( ! isset( $schedules['every_fifteen_minute'] ) ) {
-			$schedules['every_fifteen_minute'] = array(
+		if ( ! isset( $schedules['sstk_every_fifteen_minutes'] ) ) {
+			$schedules['sstk_every_fifteen_minutes'] = array(
 				'interval' => 900,
-				'display'  => __( 'Every 15 minutes', 'wpcd' ),
+				'display'  => __( 'Every 15 minutes', 'simple-stack' ),
 			);
 		}
 		return $schedules;
@@ -165,71 +147,68 @@ class WPCD_Init {
 	 */
 	public function activate( $network_wide ) {
 
-		require_once wpcd_path . 'includes/core/class-wpcd-base.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-base.php';
-		require_once wpcd_path . 'includes/core/apps/class-wpcd-app.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-permission-type.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-dns.php';
-		require_once wpcd_path . 'includes/core/functions.php';
-		require_once wpcd_path . 'includes/core/functions-kses.php';
-		require_once wpcd_path . 'includes/core/functions-icons.php';
-		require_once wpcd_path . 'includes/core/functions-metabox.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-base.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-base.php';
+		require_once SSTK_PATH . 'includes/core/apps/class-sstk-app.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-permission-type.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-dns.php';
+		require_once SSTK_PATH . 'includes/core/functions.php';
+		require_once SSTK_PATH . 'includes/core/functions-kses.php';
+		require_once SSTK_PATH . 'includes/core/functions-icons.php';
+		require_once SSTK_PATH . 'includes/core/functions-metabox.php';
 
-		$this->wpcd_load_wpapp_traits();
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-app.php';
-		WPCD_WORDPRESS_APP::activate( $network_wide );
+		$this->sstk_load_wpapp_traits();
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/class-wordpress-app.php';
+		SSTK_WORDPRESS_APP::activate( $network_wide );
 
-		WPCD_POSTS_PERMISSION_TYPE::activate( $network_wide );
+		SSTK_POSTS_PERMISSION_TYPE::activate( $network_wide );
 
-		require_once wpcd_path . 'includes/core/class-wpcd-sync.php';
-		WPCD_Sync::activate( $network_wide );
+		require_once SSTK_PATH . 'includes/core/class-sstk-roles-capabilities.php';
+		SSTK_ROLES_CAPABILITIES::activate( $network_wide );
 
-		require_once wpcd_path . 'includes/core/class-wpcd-roles-capabilities.php';
-		WPCD_ROLES_CAPABILITIES::activate( $network_wide );
-
-		$this->wpcd_load_core_traits();
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-app-server.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-app.php';
-		WPCD_POSTS_APP_SERVER::activate( $network_wide );
-		WPCD_POSTS_APP::activate( $network_wide );
+		$this->sstk_load_core_traits();
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-app-server.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-app.php';
+		SSTK_POSTS_APP_SERVER::activate( $network_wide );
+		SSTK_POSTS_APP::activate( $network_wide );
 
 		/* Custom tables for DNS and PROVIDERS */
-		if ( true === wpcd_is_custom_dns_provider_tables_enabled() ) {
-			require_once wpcd_path . 'includes/core/custom-table/api/class-wpcd-custom-table-api.php';
-			require_once wpcd_path . 'includes/core/custom-table/api/class-wpcd-ct-provider-api.php';
-			require_once wpcd_path . 'includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php';
-			require_once wpcd_path . 'includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php';
-			require_once wpcd_path . 'includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php';
+		if ( true === sstk_is_custom_dns_provider_tables_enabled() ) {
+			require_once SSTK_PATH . 'includes/core/custom-table/api/class-sstk-custom-table-api.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/api/class-sstk-ct-provider-api.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php';
 
-			require_once wpcd_path . 'includes/core/apps/wordpress-app/public/class-wordpress-app-public.php';
-			require_once wpcd_path . 'required_plugins/mb-custom-table/mb-custom-table.php';
-			require_once wpcd_path . 'includes/core/custom-table/class-wpcd-custom-table.php';
-			require_once wpcd_path . 'includes/core/custom-table/class-wpcd-provider.php';
-			require_once wpcd_path . 'includes/core/custom-table/class-wpcd-dns-provider.php';
-			require_once wpcd_path . 'includes/core/custom-table/class-wpcd-dns-zone.php';
-			require_once wpcd_path . 'includes/core/custom-table/class-wpcd-dns-zone-record.php';
+			require_once SSTK_PATH . 'includes/core/apps/wordpress-app/public/class-wordpress-app-public.php';
+			require_once SSTK_PATH . 'required_plugins/mb-custom-table/mb-custom-table.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/class-sstk-custom-table.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/class-sstk-provider.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/class-sstk-dns-provider.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/class-sstk-dns-zone.php';
+			require_once SSTK_PATH . 'includes/core/custom-table/class-sstk-dns-zone-record.php';
 
-			WPCD_MB_Custom_Table::Activate( $network_wide );
+			SSTK_MB_Custom_Table::Activate( $network_wide );
 		}
 
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/public/class-wordpress-app-public.php';
-		WPCD_WORDPRESS_APP_PUBLIC::activate( $network_wide );
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/public/class-wordpress-app-public.php';
+		SSTK_WORDPRESS_APP_PUBLIC::activate( $network_wide );
 
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-notify-user.php';
-		WPCD_NOTIFY_USER::activate( $network_wide );
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-notify-user.php';
+		SSTK_NOTIFY_USER::activate( $network_wide );
 
-		if ( defined( 'WPCD_DISABLE_EMAIL_NOTIFICATIONS' ) && ( false === WPCD_DISABLE_EMAIL_NOTIFICATIONS ) ) {
-			require_once wpcd_path . 'includes/core/class-wpcd-email-notifications.php';
-			WPCD_EMAIL_NOTIFICATIONS::activate( $network_wide );
+		if ( defined( 'SSTK_DISABLE_EMAIL_NOTIFICATIONS' ) && ( false === SSTK_DISABLE_EMAIL_NOTIFICATIONS ) ) {
+			require_once SSTK_PATH . 'includes/core/class-sstk-email-notifications.php';
+			SSTK_EMAIL_NOTIFICATIONS::activate( $network_wide );
 		}
 
 		// Set transient for not showing the cron check message immediately as soon as plugin is activated.
 		// It will be shown after 2 minutes if crons are not scheduled and loaded.
-		set_transient( 'wpcd_loaded_timeout', 1, 2 * MINUTE_IN_SECONDS );
+		set_transient( 'sstk_loaded_timeout', 1, 2 * MINUTE_IN_SECONDS );
 
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-pending-tasks-log.php';
-		WPCD_PENDING_TASKS_LOG::activate( $network_wide );
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-pending-tasks-log.php';
+		SSTK_PENDING_TASKS_LOG::activate( $network_wide );
 
 		flush_rewrite_rules();
 	}
@@ -240,25 +219,22 @@ class WPCD_Init {
 	 * @param String $network_wide network_wide.
 	 */
 	public function deactivate( $network_wide ) {
-		require_once wpcd_path . 'includes/core/apps/class-wpcd-app.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-app.php';
+		require_once SSTK_PATH . 'includes/core/apps/class-sstk-app.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/class-wordpress-app.php';
 
-		WPCD_WORDPRESS_APP::deactivate( $network_wide );
+		SSTK_WORDPRESS_APP::deactivate( $network_wide );
 
-		require_once wpcd_path . 'includes/core/class-wpcd-sync.php';
-		WPCD_Sync::deactivate( $network_wide );
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-notify-user.php';
+		SSTK_NOTIFY_USER::deactivate( $network_wide );
 
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-notify-user.php';
-		WPCD_NOTIFY_USER::deactivate( $network_wide );
-
-		if ( wpcd_email_notifications_allowed() ) {
-			require_once wpcd_path . 'includes/core/class-wpcd-email-notifications.php';
-			WPCD_EMAIL_NOTIFICATIONS::deactivate( $network_wide );
+		if ( sstk_email_notifications_allowed() ) {
+			require_once SSTK_PATH . 'includes/core/class-sstk-email-notifications.php';
+			SSTK_EMAIL_NOTIFICATIONS::deactivate( $network_wide );
 		}
 
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-pending-tasks-log.php';
-		WPCD_PENDING_TASKS_LOG::deactivate( $network_wide );
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-pending-tasks-log.php';
+		SSTK_PENDING_TASKS_LOG::deactivate( $network_wide );
 	}
 
 	/**
@@ -266,131 +242,113 @@ class WPCD_Init {
 	 */
 	public function required_files() {
 		/* These two files ensure that certain third party plugins are available - primarily METABOX.IO */
-		require_once wpcd_path . 'required_plugins/class-tgm-plugin-activation.php';
-		require_once wpcd_path . 'required_plugins/wpcd-required-plugins.php';
+		require_once SSTK_PATH . 'required_plugins/class-tgm-plugin-activation.php';
+		require_once SSTK_PATH . 'required_plugins/sstk-required-plugins.php';
 		/* End ensure third party plugins are available */
 
 		/* Include the SETTINGS PAGE and other related metabox.io extension files */
-		require_once wpcd_path . 'required_plugins/mb-settings-page/mb-settings-page.php';
-		require_once wpcd_path . '/required_plugins/mb-admin-columns/mb-admin-columns.php';
-		require_once wpcd_path . '/required_plugins/meta-box-conditional-logic/meta-box-conditional-logic.php';
-		require_once wpcd_path . '/required_plugins/meta-box-tabs/meta-box-tabs.php';
-		require_once wpcd_path . '/required_plugins/meta-box-tooltip/meta-box-tooltip.php';
-		require_once wpcd_path . '/required_plugins/mb-term-meta/mb-term-meta.php';
-		require_once wpcd_path . '/required_plugins/meta-box-columns/meta-box-columns.php';
-		require_once wpcd_path . '/required_plugins/meta-box-group/meta-box-group.php';
-		require_once wpcd_path . '/required_plugins/mb-user-meta/mb-user-meta.php';
-		require_once wpcd_path . '/required_plugins/mb-custom-table/mb-custom-table.php';
+		require_once SSTK_PATH . 'required_plugins/mb-settings-page/mb-settings-page.php';
+		require_once SSTK_PATH . '/required_plugins/mb-admin-columns/mb-admin-columns.php';
+		require_once SSTK_PATH . '/required_plugins/meta-box-conditional-logic/meta-box-conditional-logic.php';
+		require_once SSTK_PATH . '/required_plugins/meta-box-tabs/meta-box-tabs.php';
+		require_once SSTK_PATH . '/required_plugins/meta-box-tooltip/meta-box-tooltip.php';
+		require_once SSTK_PATH . '/required_plugins/mb-term-meta/mb-term-meta.php';
+		require_once SSTK_PATH . '/required_plugins/meta-box-columns/meta-box-columns.php';
+		require_once SSTK_PATH . '/required_plugins/meta-box-group/meta-box-group.php';
+		require_once SSTK_PATH . '/required_plugins/mb-user-meta/mb-user-meta.php';
+		require_once SSTK_PATH . '/required_plugins/mb-custom-table/mb-custom-table.php';
 
 		/* Include custom metabox.io fields we created. */
-		require_once wpcd_path . 'includes/core/metabox-io-custom-fields/wpcd-card-container-field.php';
+		require_once SSTK_PATH . 'includes/core/metabox-io-custom-fields/sstk-card-container-field.php';
 
 		/* Load up our files */
-		require_once wpcd_path . 'includes/core/functions.php';
-		require_once wpcd_path . 'includes/core/functions-kses.php';
-		require_once wpcd_path . 'includes/core/functions-icons.php';
-		require_once wpcd_path . 'includes/core/functions-metabox.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-custom-fields.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-roles-capabilities.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-server-statistics.php';
-		$this->wpcd_load_core_traits();
-		require_once wpcd_path . 'includes/core/class-wpcd-base.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-dns.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-base.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-app.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-app-server.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-cloud-provider.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-notify-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-notify-user.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-notify-sent-log.php';
-		if ( wpcd_email_notifications_allowed() ) {
-			require_once wpcd_path . 'includes/core/class-wpcd-email-notifications.php';
+		require_once SSTK_PATH . 'includes/core/functions.php';
+		require_once SSTK_PATH . 'includes/core/functions-kses.php';
+		require_once SSTK_PATH . 'includes/core/functions-icons.php';
+		require_once SSTK_PATH . 'includes/core/functions-metabox.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-custom-fields.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-roles-capabilities.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-server-statistics.php';
+		$this->sstk_load_core_traits();
+		require_once SSTK_PATH . 'includes/core/class-sstk-base.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-dns.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-base.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-app.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-app-server.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-cloud-provider.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-notify-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-notify-user.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-notify-sent-log.php';
+		if ( sstk_email_notifications_allowed() ) {
+			require_once SSTK_PATH . 'includes/core/class-sstk-email-notifications.php';
 		}
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-ssh-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-error-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-command-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-pending-tasks-log.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-app-expiration.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-server.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-settings.php';
-		if ( wpcd_data_sync_allowed() ) {
-			require_once wpcd_path . 'includes/core/class-wpcd-sync.php';
-		}
-		require_once wpcd_path . 'includes/core/class-wpcd-setup.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-ssh-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-error-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-command-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-pending-tasks-log.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-app-expiration.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-server.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-settings.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-setup.php';
 
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-team.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-posts-permission-type.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-team.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-posts-permission-type.php';
 
-		require_once wpcd_path . 'includes/core/providers/class-cloud-provider-api.php';
-		require_once wpcd_path . 'includes/core/providers/class-digital-ocean-parent.php';
-		require_once wpcd_path . 'includes/core/providers/class-digital-ocean.php';
-		if ( defined( 'WPCD_LOAD_BACKUP_DO_PROVIDER' ) && ( true === WPCD_LOAD_BACKUP_DO_PROVIDER ) ) {
-			require_once wpcd_path . 'includes/core/providers/class-digital-ocean-alternate.php';
-		}
-		require_once wpcd_path . 'includes/core/providers/class-custom-server-parent.php';
+		require_once SSTK_PATH . 'includes/core/providers/class-cloud-provider-api.php';
 
-		/* SimpleStack cloud providers. Guarded so a partial checkout still boots. */
-		if ( file_exists( wpcd_path . 'includes/core/providers/class-vultr-v2.php' ) ) {
-			require_once wpcd_path . 'includes/core/providers/class-vultr-v2.php';
+		/* Simple Stack cloud providers. Guarded so a partial checkout still boots. */
+		if ( file_exists( SSTK_PATH . 'includes/core/providers/class-vultr-v2.php' ) ) {
+			require_once SSTK_PATH . 'includes/core/providers/class-vultr-v2.php';
 		}
-		if ( file_exists( wpcd_path . 'includes/core/providers/class-upcloud.php' ) ) {
-			require_once wpcd_path . 'includes/core/providers/class-upcloud.php';
+		if ( file_exists( SSTK_PATH . 'includes/core/providers/class-upcloud.php' ) ) {
+			require_once SSTK_PATH . 'includes/core/providers/class-upcloud.php';
 		}
 
-		require_once wpcd_path . 'includes/core/apps/class-wpcd-app.php';
-		require_once wpcd_path . 'includes/core/apps/class-wpcd-app-settings.php';
-		require_once wpcd_path . 'includes/core/apps/class-wpcd-ssh.php';
+		require_once SSTK_PATH . 'includes/core/apps/class-sstk-app.php';
+		require_once SSTK_PATH . 'includes/core/apps/class-sstk-app-settings.php';
+		require_once SSTK_PATH . 'includes/core/apps/class-sstk-ssh.php';
 
 		// Handle admin notices.
 		if ( is_admin() ) {
-			require_once wpcd_path . 'includes/core/functions-handle-admin-notices.php';
+			require_once SSTK_PATH . 'includes/core/functions-handle-admin-notices.php';
 		}
 
-		// WPCD Better Crons.
-		require_once wpcd_path . 'includes/core/class-wpcd-better-crons.php';
+		// SSTK Better Crons.
+		require_once SSTK_PATH . 'includes/core/class-sstk-better-crons.php';
 
 		/**
 		* For the WP App
 		*/
 		/* @TODO: Need to find a more dynamic way to load these by letting apps register themselves at the right time and having them load up their own files */
-		$this->wpcd_load_wpapp_traits();
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-app.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-app-settings.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-ssh.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-posts-site-package.php';
-
-		/*
-		 * WaaS post types are kept on disk but stay dormant: their initialisers are
-		 * gated on the WooCommerce module, which this build no longer ships.
-		 */
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-posts-update-plan.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-posts-update-plan-log.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-posts-quota-profile.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/class-wordpress-posts-quota-limits.php';
+		$this->sstk_load_wpapp_traits();
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/class-wordpress-app.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/class-wordpress-app-settings.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/class-wordpress-ssh.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/class-wordpress-posts-site-package.php';
 
 		// Remaining files for the WP APP.
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/functions-classes-wordpress-app.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/public/class-wordpress-app-public.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/functions-classes-wordpress-app.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/public/class-wordpress-app-public.php';
 
 		/**
 		 * Remaining core files.
 		 */
-		require_once wpcd_path . 'includes/core/wp-cloud-deploy.php';
-		require_once wpcd_path . 'includes/core/class-wpcd-server.php';
-		require_once wpcd_path . 'includes/core/functions-classes.php';
+		require_once SSTK_PATH . 'includes/core/simple-stack.php';
+		require_once SSTK_PATH . 'includes/core/class-sstk-server.php';
+		require_once SSTK_PATH . 'includes/core/functions-classes.php';
 		
 		/**
-		 * SimpleStack REST layer (simple-stack/v1).
+		 * Simple Stack REST layer (simple-stack/v1).
 		 *
 		 * Loaded after the app classes so the controllers can reach the app engine and
 		 * the provider registry. The registrar hooks rest_api_init, which fires well
 		 * after this point, so instantiating here is safe. plugins_loaded is already in
 		 * the past by the time required_files() runs on init.
 		 */
-		require_once wpcd_path . 'includes/core/api/class-simplestack-rest-api.php';
-		SimpleStack_REST_API::load_files();
-		simplestack_rest_api();
+		require_once SSTK_PATH . 'includes/core/api/class-sstk-rest-api.php';
+		SSTK_REST_API::load_files();
+		sstk_rest_api();
 
 		/**
 		 * Now fire up the main class
@@ -401,16 +359,16 @@ class WPCD_Init {
 		 * @TODO: There's likely a better way to do this - maybe an action hook such as plugins-loaded or init
 		 * that calls the constructor function directly?
 		 */
-		$wpcd_throwaaway_var = new WP_CLOUD_DEPLOY();
+		$sstk_throwaaway_var = new SSTK_CORE();
 
 		/**
 		 * Finally, maybe ask for setup using Setup wizard.
-		 * Proceed only if both options 'wpcd_plugin_setup' & 'wpcd_skip_wizard_setup' = false
-		 * 'wpcd_plugin_setup' will be added at the end of wizard steps
-		 * 'wpcd_skip_wizard_setup' will be set to true if user chose to skip wizard from admin notice
+		 * Proceed only if both options 'sstk_plugin_setup' & 'sstk_skip_wizard_setup' = false
+		 * 'sstk_plugin_setup' will be added at the end of wizard steps
+		 * 'sstk_skip_wizard_setup' will be set to true if user chose to skip wizard from admin notice
 		 */
-		if ( ! get_option( 'wpcd_plugin_setup', false ) && ! get_option( 'wpcd_skip_wizard_setup', false ) ) {
-			require_once wpcd_path . 'includes/core/class-wpcd-setup-wizard.php';
+		if ( ! get_option( 'sstk_plugin_setup', false ) && ! get_option( 'sstk_skip_wizard_setup', false ) ) {
+			require_once SSTK_PATH . 'includes/core/class-sstk-setup-wizard.php';
 		}
 
 	}
@@ -418,87 +376,87 @@ class WPCD_Init {
 	/**
 	 * Load CORE Trait Files
 	 */
-	public function wpcd_load_core_traits() {
-		require_once wpcd_path . 'includes/core/traits/get_set_post_type.php';
-		require_once wpcd_path . 'includes/core/traits/metaboxes_for_taxonomies_for_servers_and_apps.php';
-		require_once wpcd_path . 'includes/core/traits/metaboxes_for_teams_for_servers_and_apps.php';
-		require_once wpcd_path . 'includes/core/traits/metaboxes_for_labels_notes_for_servers_and_apps.php';
+	public function sstk_load_core_traits() {
+		require_once SSTK_PATH . 'includes/core/traits/get_set_post_type.php';
+		require_once SSTK_PATH . 'includes/core/traits/metaboxes_for_taxonomies_for_servers_and_apps.php';
+		require_once SSTK_PATH . 'includes/core/traits/metaboxes_for_teams_for_servers_and_apps.php';
+		require_once SSTK_PATH . 'includes/core/traits/metaboxes_for_labels_notes_for_servers_and_apps.php';
 	}
 
 
 	/**
 	 * Load WP APP Trait Files
 	 */
-	public function wpcd_load_wpapp_traits() {
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/tabs-security.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/admin-columns.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/backup.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/multi-tenant-app.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/upgrade.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/unused.php';
+	public function sstk_load_wpapp_traits() {
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/tabs-security.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/admin-columns.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/backup.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/multi-tenant-app.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/upgrade.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/unused.php';
 	}
 
 	/**
-	 * Warn user of a number of issues that could affect the clean running of wpcd:
+	 * Warn user of a number of issues that could affect the clean running of sstk:
 	 *  1. If encryption key in wp-config is not defined.
 	 *  2. Permalink structure is incorrect.
 	 *  3. Certain files cannot be read.
 	 *  4. Certain crons are not running on a regular basis.
 	 */
-	public function wpcd_global_admin_notice() {
+	public function sstk_global_admin_notice() {
 
 		// Only show messages to admins.
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 			return;
 		}
 
 		$screen     = get_current_screen();
-		$post_types = array( 'wpcd_app_server', 'wpcd_app', 'wpcd_team', 'wpcd_permission_type', 'wpcd_command_log', 'wpcd_ssh_log', 'wpcd_error_log', 'wpcd_pending_log' );
+		$post_types = array( 'sstk_app_server', 'sstk_app', 'sstk_team', 'sstk_permission_type', 'sstk_command_log', 'sstk_ssh_log', 'sstk_error_log', 'sstk_pending_log' );
 
 		$php_version    = phpversion();
 		$php_version_id = str_replace( '.', '0', $php_version );
 
 		// Checks to see if "php version check" transient is set or not. If not set then show an admin notice.
-		if ( ! get_transient( 'wpcd_php_version_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
+		if ( ! get_transient( 'sstk_php_version_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
 			// Here 80100 is PHP version 8.1.0.
 			if ( (int) $php_version_id < 80100 ) {
-				$class = 'notice notice-error is-dismissible wpcd-php-version-check';
+				$class = 'notice notice-error is-dismissible sstk-php-version-check';
 				/* translators: %s php version */
-				$message = sprintf( __( '<strong>SimpleStack requires PHP 8.1 or newer. You are running %s.</strong>', 'wpcd' ), $php_version );
+				$message = sprintf( __( '<strong>Simple Stack requires PHP 8.1 or newer. You are running %s.</strong>', 'simple-stack' ), $php_version );
 				/* Translators: %2$s is a set of CSS classes; %2$s is a text message about the PHP version being incompatible. */
-				printf( '<div data-dismissible="notice-php-warning" class="%2$s"><p>%3$s</p></div>', wp_create_nonce( 'wpcd-admin-dismissible-notice' ), $class, $message );
+				printf( '<div data-dismissible="notice-php-warning" class="%2$s"><p>%3$s</p></div>', wp_create_nonce( 'sstk-admin-dismissible-notice' ), $class, $message );
 			}
 		}
 
 		// Are we running on localhost?  Of so throw error.
 		if ( in_array( isset( $_SERVER['SERVER_ADDR'] ) ? $_SERVER['SERVER_ADDR'] : '', array( '127.0.0.1', '::1' ), true ) ) {
-			if ( ! wpcd_get_early_option( 'hide-local-host-warning' ) ) {
+			if ( ! sstk_get_early_option( 'hide-local-host-warning' ) ) {
 				// Checks to see if "localhost check" transient is set or not. If not set then show an admin notice.
-				if ( ! get_transient( 'wpcd_localhost_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
-					$class   = 'notice notice-error is-dismissible wpcd-localhost-check';
-					$message = __( '<strong>SimpleStack cannot run on a localhost server or a server that cannot be reached from the internet.</strong>', 'wpcd' );
-					/* Translators: %2$s is a set of CSS classes; %2$s is a text message about wpcd not compatible with localhost installations. */
-					printf( '<div data-dismissible="notice-localhost-warning" class="%2$s"><p>%3$s</p></div>', wp_create_nonce( 'wpcd-admin-dismissible-notice' ), $class, $message );
+				if ( ! get_transient( 'sstk_localhost_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
+					$class   = 'notice notice-error is-dismissible sstk-localhost-check';
+					$message = __( '<strong>Simple Stack cannot run on a localhost server or a server that cannot be reached from the internet.</strong>', 'simple-stack' );
+					/* Translators: %2$s is a set of CSS classes; %2$s is a text message about Simple Stack not being compatible with localhost installations. */
+					printf( '<div data-dismissible="notice-localhost-warning" class="%2$s"><p>%3$s</p></div>', wp_create_nonce( 'sstk-admin-dismissible-notice' ), $class, $message );
 				}
 			}
 		}
 
-		if ( ! defined( 'WPCD_ENCRYPTION_KEY' ) ) {
+		if ( ! defined( 'SSTK_ENCRYPTION_KEY' ) ) {
 			$class = 'notice notice-error is-dismissible';
 			/* translators: %s read more */
-			$message = sprintf( __( '<strong>WPCD_ENCRYPTION_KEY</strong> is not defined in wp-config.php. Define an encryption key there so server passwords and private SSH keys are stored encrypted. Until then a temporary key has been created and stored in the database. %s', 'wpcd' ), '<a href="https://github.com/onedogsolutions/simple-stack" target="_blank">' . __( 'Read More', 'wpcd' ) . '</a>' );
+			$message = sprintf( __( '<strong>SSTK_ENCRYPTION_KEY</strong> is not defined in wp-config.php. Define an encryption key there so server passwords and private SSH keys are stored encrypted. Until then a persistent fallback key has been created and stored in the database. %s', 'simple-stack' ), '<a href="https://github.com/onedogsolutions/simple-stack" target="_blank">' . __( 'Read More', 'simple-stack' ) . '</a>' );
 			/* Translators: %1$s is a set of CSS classes; %2$s is a text message about the encryption key being required in wp-config.php. */
 			printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
 		}
 
-		if ( defined( 'WPCD_ENCRYPTION_KEY' ) && ( 'your very long encryption key goes here' === WPCD_ENCRYPTION_KEY ) ) {
+		if ( defined( 'SSTK_ENCRYPTION_KEY' ) && ( 'your very long encryption key goes here' === SSTK_ENCRYPTION_KEY ) ) {
 			$class = 'notice notice-error is-dismissible';
 			/* translators: %s read more */
-			$message = sprintf( __( '<strong>WPCD_ENCRYPTION_KEY</strong> is defined in wp-config.php but uses the example key from the documentation. Set a new encryption key. %s', 'wpcd' ), '<a href="https://github.com/onedogsolutions/simple-stack" target="_blank">' . __( 'Read More', 'wpcd' ) . '</a>' );
+			$message = sprintf( __( '<strong>SSTK_ENCRYPTION_KEY</strong> is defined in wp-config.php but uses the example key from the documentation. Set a new encryption key. %s', 'simple-stack' ), '<a href="https://github.com/onedogsolutions/simple-stack" target="_blank">' . __( 'Read More', 'simple-stack' ) . '</a>' );
 			/* Translators: %1$s is a set of CSS classes; %2$s is a text message about the encryption key not being correct. */
 			printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
 		}
@@ -508,15 +466,15 @@ class WPCD_Init {
 		if ( empty( $structure ) ) {
 			// means that default structure is in use which is no good for callbacks.
 			$class   = 'notice notice-error';
-			$message = __( 'Warning: SimpleStack cannot use the WordPress default permalink. Please change the permalinks option to something other than <em>plain.</em> This can be done under the WordPress <strong>SETTINGS->Permalinks</strong> menu option.', 'wpcd' );
+			$message = __( 'Warning: Simple Stack cannot use the WordPress default permalink. Please change the permalinks option to something other than <em>plain.</em> This can be done under the WordPress <strong>SETTINGS->Permalinks</strong> menu option.', 'simple-stack' );
 			/* Translators: %1$s is a set of CSS classes; %2$s is a text message about permalinks not being set properly. */
 			printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
 		}
 
 		// Checks to see if "text files are readable" transient is set or not. If not set then show an admin notice.
-		if ( ! get_transient( 'wpcd_readable_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
-			$class   = 'notice notice-error is-dismissible wpcd-readability-check';
-			$message = __( '<strong>WPCD: Warning</strong> - The <em>includes/core/apps/wordpress-app/scripts/v1/raw/ </em> folder on your WordPress server does not allow text files to be read by browsers and other outside viewers. This folder contains the script files that we execute on your WordPress server. Please modify your web server configuration to allow .txt files in this folder to be readable. Otherwise, The WPCD plugin will not be able to manage your servers and sites. <br /><br /> Note that you CANNOT run this plugin on a local machine - it must be run on a server that is reachable from the public internet. <br /><br /> If you dismiss this message but do not resolve the issue, it will appear again in 12 hours. <br /><br /> <a href="" id="wpcd-check-again">Check Again</a>', 'wpcd' );
+		if ( ! get_transient( 'sstk_readable_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
+			$class   = 'notice notice-error is-dismissible sstk-readability-check';
+			$message = __( '<strong>Simple Stack: Warning</strong> - The <em>includes/core/apps/wordpress-app/scripts/v2/raw/ </em> folder on your WordPress server does not allow text files to be read by browsers and other outside viewers. This folder contains the script files that we execute on your WordPress server. Please modify your web server configuration to allow .txt files in this folder to be readable. Otherwise, the Simple Stack plugin will not be able to manage your servers and sites. <br /><br /> Note that you CANNOT run this plugin on a local machine - it must be run on a server that is reachable from the public internet. <br /><br /> If you dismiss this message but do not resolve the issue, it will appear again in 12 hours. <br /><br /> <a href="" id="sstk-check-again">Check Again</a>', 'simple-stack' );
 			/* Translators: %1$s is a set of CSS classes; %2$s is a text message about the files that are not readable but should be. */
 			printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
 		}
@@ -525,18 +483,18 @@ class WPCD_Init {
 		$not_loaded_crons = $this->get_list_of_absent_crons();
 
 		// Checks to see if "cron check" transient is set or not. If not set then show an admin notice.
-		if ( ! get_transient( 'wpcd_loaded_timeout' ) && ! get_transient( 'wpcd_cron_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
-			$class            = 'notice notice-error is-dismissible wpcd-cron-check';
+		if ( ! get_transient( 'sstk_loaded_timeout' ) && ! get_transient( 'sstk_cron_check' ) && is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) {
+			$class            = 'notice notice-error is-dismissible sstk-cron-check';
 			$not_loaded_crons = implode( ', ', $not_loaded_crons );
-			$message          = __( '<strong>WPCD: Warning</strong> - ' . $not_loaded_crons . ' cron(s) are not running.', 'wpcd' );
+			$message          = __( '<strong>Simple Stack: Warning</strong> - ' . $not_loaded_crons . ' cron(s) are not running.', 'simple-stack' );
 			/* Translators: %1$s is a set of CSS classes; %2$s is a text message about crons that are not currently running. */
 			printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
 		}
 
 		// If our REDIS plugin is active, show a message since that's no longer necessary for REDIS functionality.
-		if ( class_exists( 'WPCD_Redis_Init' ) ) {
-			$class   = 'notice notice-error wpcd-redis-deprecation-check';
-			$message = __( '<strong>SimpleStack: Warning</strong> - The <em>REDIS</em> plugin from the WPCD era is no longer required. Please deactivate it!', 'wpcd' );
+		if ( class_exists( 'SSTK_Redis_Init' ) ) {
+			$class   = 'notice notice-error sstk-redis-deprecation-check';
+			$message = __( '<strong>Simple Stack: Warning</strong> - The legacy <em>REDIS</em> plugin is no longer required. Please deactivate it!', 'simple-stack' );
 			/* Translators: %1$s is a set of CSS classes; %2$s is a text message about the REDIS plugin not being required. */
 			printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
 		}
@@ -550,7 +508,7 @@ class WPCD_Init {
 	public function send_email_for_absent_crons() {
 
 		// Exit if option to suppress sending these emails is turned on.
-		if ( true === (bool) wpcd_get_early_option( 'wpcd_do_not_send_cron_warning_emails' ) ) {
+		if ( true === (bool) sstk_get_early_option( 'sstk_do_not_send_cron_warning_emails' ) ) {
 			return;
 		}
 
@@ -565,33 +523,33 @@ class WPCD_Init {
 			$headers   = array( 'Content-Type: text/html; charset=UTF-8' );
 			$subject   = sprintf(
 				/* translators: %s: Site title. */
-				__( '[%s] - One or more critical crons are not running...', 'wpcd' ),
+				__( '[%s] - One or more critical crons are not running...', 'simple-stack' ),
 				wp_specialchars_decode( get_option( 'blogname' ) )
 			);
 			$body   = array();
-			$body[] = __( 'Hello Admin,', 'wpcd' );
+			$body[] = __( 'Hello Admin,', 'simple-stack' );
 			$body[] = '';
-			$body[] = __( '<strong>WPCD: Warning</strong> - certain critical CRONS are not running on your site.  Below are the ones that appear to be missing:', 'wpcd' );
+			$body[] = __( '<strong>Simple Stack: Warning</strong> - certain critical CRONS are not running on your site.  Below are the ones that appear to be missing:', 'simple-stack' );
 			$body[] = '';
 			$body[] = $str_crons;
 			$body[] = '';
-			$body[] = __( 'It is possible that this is a minor hiccup or false positive and the cron(s) are still running. You can use the free WP CRONTROL plugin to examine running crons to see if the crons are still present and active.', 'wpcd' );
+			$body[] = __( 'It is possible that this is a minor hiccup or false positive and the cron(s) are still running. You can use the free WP CRONTROL plugin to examine running crons to see if the crons are still present and active.', 'simple-stack' );
 			$body[] = '';
-			$body[] = __( 'Before contacting support, please try to disable and renable the plugin to reactivate crons. Additionally, please verify that your WP CRON is firing every 1 minute - either from enough frequent site traffic, a native LINUX cron process or better yet, the use of the WPCD BETTER CRONS method.', 'wpcd' );
+			$body[] = __( 'Before contacting support, please try to disable and renable the plugin to reactivate crons. Additionally, please verify that your WP CRON is firing every 1 minute - either from enough frequent site traffic, a native LINUX cron process or better yet, the Simple Stack Better Crons method.', 'simple-stack' );
 			$body[] = '';
-			$body[] = __( '--------', 'wpcd' );
+			$body[] = __( '--------', 'simple-stack' );
 			$body[] = '';
-			$body[] = __( 'If you do not want to receive these emails you can turn them off in the settings area under the MISC tab.', 'wpcd' );
+			$body[] = __( 'If you do not want to receive these emails you can turn them off in the settings area under the MISC tab.', 'simple-stack' );
 			$body[] = '';
-			$body[] = __( 'Thanks,', 'wpcd' );
+			$body[] = __( 'Thanks,', 'simple-stack' );
 			$body[] = '';
-			$body[] = __( '- Your WP Management Dashboard BOT.', 'wpcd' );
+			$body[] = __( '- Your Simple Stack Management Dashboard BOT.', 'simple-stack' );
 
 			// Apply filters to each var for the outgoing email.
-			$headers = apply_filters( 'wpcd_send_email_for_absent_crons_to', $headers );
-			$to      = apply_filters( 'wpcd_send_email_for_absent_crons_to', $to );
-			$subject = apply_filters( 'wpcd_send_email_for_absent_crons_subject', $subject );
-			$body    = apply_filters( 'wpcd_send_email_for_absent_crons_body', $body );
+			$headers = apply_filters( 'sstk_send_email_for_absent_crons_to', $headers );
+			$to      = apply_filters( 'sstk_send_email_for_absent_crons_to', $to );
+			$subject = apply_filters( 'sstk_send_email_for_absent_crons_subject', $subject );
+			$body    = apply_filters( 'sstk_send_email_for_absent_crons_body', $body );
 
 			$email = array(
 				'to'      => $to,
@@ -600,7 +558,7 @@ class WPCD_Init {
 				'headers' => $headers,
 			);
 
-			if ( defined( 'WPCD_CRONS_NOT_RUNNING_EMAIL_TEST' ) && WPCD_CRONS_NOT_RUNNING_EMAIL_TEST ) {
+			if ( defined( 'SSTK_CRONS_NOT_RUNNING_EMAIL_TEST' ) && SSTK_CRONS_NOT_RUNNING_EMAIL_TEST ) {
 				// When this constant is set, we're always going to send an email - useful for TESTING.
 				wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
 			} else {
@@ -608,13 +566,13 @@ class WPCD_Init {
 				$current_datetime     = gmdate( 'Y-m-d H:i:s' );
 				$str_current_datetime = strtotime( $current_datetime );
 
-				// Calculate the next date/time to send an alert email. The option wpcd_crons_not_running_email_next_send_date is where we store the next time we have to send an email if all our crons aren't running.
-				$next_email_send_date     = get_option( 'wpcd_crons_not_running_email_next_send_date' );
+				// Calculate the next date/time to send an alert email. The option sstk_crons_not_running_email_next_send_date is where we store the next time we have to send an email if all our crons aren't running.
+				$next_email_send_date     = get_option( 'sstk_crons_not_running_email_next_send_date' );
 				$str_next_email_send_date = strtotime( $next_email_send_date );
 
 				if ( $str_current_datetime >= $str_next_email_send_date ) {
 					$next_send_time = gmdate( 'Y-m-d H:i:s', strtotime( '+8 hours' ) );
-					update_option( 'wpcd_crons_not_running_email_next_send_date', $next_send_time );
+					update_option( 'sstk_crons_not_running_email_next_send_date', $next_send_time );
 					wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
 				}
 			}
@@ -631,12 +589,12 @@ class WPCD_Init {
 
 		$not_loaded_crons = array();
 
-		if ( ! get_transient( 'wpcd_cron_check' ) ) {
-			$wpcd_crons = array( 'send_email_alert_for_long_pending_tasks', 'do_deferred_actions_for_server', 'do_deferred_actions_for_app', 'wordpress_file_watcher_delete_temp_files', 'scan_new_notifications_to_send', 'clean_up_pending_logs' );
-			$wpcd_crons = apply_filters( 'wpcd_crons_needing_active_check', $wpcd_crons );
+		if ( ! get_transient( 'sstk_cron_check' ) ) {
+			$sstk_crons = array( 'send_email_alert_for_long_pending_tasks', 'do_deferred_actions_for_server', 'do_deferred_actions_for_app', 'wordpress_file_watcher_delete_temp_files', 'scan_new_notifications_to_send', 'clean_up_pending_logs' );
+			$sstk_crons = apply_filters( 'sstk_crons_needing_active_check', $sstk_crons );
 
-			foreach ( $wpcd_crons as $cron ) {
-				$cron_transient = "wpcd_{$cron}_is_active";
+			foreach ( $sstk_crons as $cron ) {
+				$cron_transient = "sstk_{$cron}_is_active";
 
 				if ( ! get_transient( $cron_transient ) ) {
 					$not_loaded_crons[] = $cron;
@@ -648,17 +606,17 @@ class WPCD_Init {
 			// Here we will set it so that we'll recheck in 1 hour.  If it gets set when the user dismisses the notice it will be set for 12 hours.
 			// See the function set_cron_check() in file class-wordpress-app.php.
 			if ( count( $not_loaded_crons ) === 0 ) {
-				set_transient( 'wpcd_cron_check', 1, 1 * HOUR_IN_SECONDS );
+				set_transient( 'sstk_cron_check', 1, 1 * HOUR_IN_SECONDS );
 			}
 		} else {
 			// Transient is set.  But the time remaining can sometimes be negative. While we're not sure why that happens, if it is, delete it!
-			$time_left = (int) wpcd_get_transient_remaining_time_in_mins( 'wpcd_cron_check' );
+			$time_left = (int) sstk_get_transient_remaining_time_in_mins( 'sstk_cron_check' );
 
 			if ( false === $time_left ) {
 				// looks like an object cache is in use so we can't get the time left data.  Therefore do nothing.
 			} else {
 				if ( $time_left < 0 ) {
-					delete_transient( 'wpcd_cron_check' );
+					delete_transient( 'sstk_cron_check' );
 				}
 			}
 		}
@@ -683,13 +641,13 @@ class WPCD_Init {
 	 *
 	 * @return  array  $links_array New links to be added to the plugin list.
 	 */
-	public function wpcd_append_support_and_faq_links( $links_array, $plugin_file_name, $plugin_data, $status ) {
+	public function sstk_append_support_and_faq_links( $links_array, $plugin_file_name, $plugin_data, $status ) {
 		if ( plugin_basename( __FILE__ ) === $plugin_file_name ) {
 
 			// You can still use `array_unshift()` to add links at the beginning.
 			$links_array[] = '<a href="https://github.com/onedogsolutions/simple-stack" target="_blank">Repository</a>';
 
-			$settings_link = admin_url( 'admin.php?page=simplestack_settings' );
+			$settings_link = admin_url( 'admin.php?page=sstk_settings' );
 			$links_array[] = '<a href="' . $settings_link . '">Settings</a>';
 		}
 
@@ -720,16 +678,16 @@ class WPCD_Init {
 		$screen = get_current_screen();
 
 		/* @TODO: The list of post types and taxonomies used below should be a global function that is filtered and called by add-ons to add their own CPT to the arrays. */
-		if ( ( is_object( $screen ) && ( in_array( $screen->post_type, array( 'wpcd_app', 'wpcd_app_server', 'wpcd_cloud_provider', 'wpcd_ssh_log', 'wpcd_team', 'wpcd_command_log', 'wpcd_pending_log', 'wpcd_error_log', 'wpcd_schedules', 'wpcd_snapshots', 'wpcd_permission_type', 'wpcd_notify_log', 'wpcd_notify_user', 'wpcd_notify_sent' ), true ) || in_array( $screen->taxonomy, array( 'wpcd_app_group', 'wpcd_app_server_group', 'wpcd_reporting_group' ), true ) ) ) ) {
+		if ( ( is_object( $screen ) && ( in_array( $screen->post_type, array( 'sstk_app', 'sstk_app_server', 'sstk_cloud_provider', 'sstk_ssh_log', 'sstk_team', 'sstk_command_log', 'sstk_pending_log', 'sstk_error_log', 'sstk_schedules', 'sstk_snapshots', 'sstk_permission_type', 'sstk_notify_log', 'sstk_notify_user', 'sstk_notify_sent' ), true ) || in_array( $screen->taxonomy, array( 'sstk_app_group', 'sstk_app_server_group', 'sstk_reporting_group' ), true ) ) ) ) {
 
-			if ( defined( 'WPCD_LONG_NAME' ) && ! empty( WPCD_LONG_NAME ) ) {
-				$product_name = WPCD_LONG_NAME;
+			if ( defined( 'SSTK_LONG_NAME' ) && ! empty( SSTK_LONG_NAME ) ) {
+				$product_name = SSTK_LONG_NAME;
 			} else {
-				$product_name = 'SimpleStack';
+				$product_name = 'Simple Stack';
 			}
 
-			/* Translators: %1$s is the WPCD Product Name; %2$s is the WPCD product version. */
-			$return = sprintf( __( 'Powered by %1$s %2$s.', 'wpcd' ), $product_name, WPCD_VERSION ) . '<br />' . $return;
+			/* Translators: %1$s is the SSTK Product Name; %2$s is the SSTK product version. */
+			$return = sprintf( __( 'Powered by %1$s %2$s.', 'simple-stack' ), $product_name, SSTK_VERSION ) . '<br />' . $return;
 
 		}
 
@@ -754,19 +712,19 @@ class WPCD_Init {
 	 */
 	public function load_plugin_textdomain() {
 
-		$lang_dir       = trailingslashit( wpcd_root ) . 'languages/';
-		$lang_path      = trailingslashit( wpcd_path ) . 'languages/';
-		$locale         = apply_filters( 'plugin_locale', get_locale(), 'wpcd' );
-		$mofile         = "wpcd-$locale.mo";
-		$glotpress_file = WP_LANG_DIR . '/plugins/wpcd/' . $mofile;
+		$lang_dir       = trailingslashit( SSTK_ROOT ) . 'languages/';
+		$lang_path      = trailingslashit( SSTK_PATH ) . 'languages/';
+		$locale         = apply_filters( 'plugin_locale', get_locale(), 'simple-stack' );
+		$mofile         = "simple-stack-$locale.mo";
+		$glotpress_file = WP_LANG_DIR . '/plugins/simple-stack/' . $mofile;
 
 		// Look for the GlotPress language pack first of all.
 		if ( file_exists( $glotpress_file ) ) {
-			$language = load_textdomain( 'wpcd', $glotpress_file );
+			$language = load_textdomain( 'simple-stack', $glotpress_file );
 		} elseif ( file_exists( $lang_path . $mofile ) ) {
-			$language = load_textdomain( 'wpcd', $lang_path . $mofile );
+			$language = load_textdomain( 'simple-stack', $lang_path . $mofile );
 		} else {
-			$language = load_plugin_textdomain( 'wpcd', false, $lang_dir );
+			$language = load_plugin_textdomain( 'simple-stack', false, $lang_dir );
 		}
 
 		return $language;
@@ -780,27 +738,27 @@ class WPCD_Init {
 	 */
 	public function activation_hook() {
 		// first install.
-		$version = get_option( 'wpcd_version' );
+		$version = get_option( 'sstk_version' );
 		if ( ! $version ) {
-			update_option( 'wpcd_last_version_upgrade', wpcd_version );
+			update_option( 'sstk_last_version_upgrade', SSTK_VERSION );
 		}
 
-		if ( wpcd_version !== $version ) {
-			update_option( 'wpcd_version', wpcd_version );
+		if ( SSTK_VERSION !== $version ) {
+			update_option( 'sstk_version', SSTK_VERSION );
 		}
 
 		// run setup.
-		if ( ! class_exists( 'WPCD_Setup' ) ) {
-			require_once wpcd_path . 'includes/core/class-wpcd-setup.php';
+		if ( ! class_exists( 'SSTK_Setup' ) ) {
+			require_once SSTK_PATH . 'includes/core/class-sstk-setup.php';
 		}
 
-		$wpcd_setup = new WPCD_Setup();
-		$wpcd_setup->run_setup();
+		$sstk_setup = new SSTK_Setup();
+		$sstk_setup->run_setup();
 	}
 
 }
 
 /**
- * Get WPCD running.
+ * Get SSTK running.
  */
-$wpcd_throwaway = new WPCD_Init();
+$sstk_throwaway = new SSTK_Init();

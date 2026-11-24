@@ -22,12 +22,12 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document provides comprehensive guidance for database optimization within SimpleStack, focusing on MySQL/MariaDB tuning, query optimization, and maintenance procedures. It explains how SimpleStack scripts support WordPress database operations such as switching between local and remote databases, copying data between environments, performing search-and-replace operations, and running repair workflows. It also covers monitoring and health checks for the database service.
+This document provides comprehensive guidance for database optimization within Simple Stack, focusing on MySQL/MariaDB tuning, query optimization, and maintenance procedures. It explains how Simple Stack scripts support WordPress database operations such as switching between local and remote databases, copying data between environments, performing search-and-replace operations, and running repair workflows. It also covers monitoring and health checks for the database service.
 
 Where applicable, this guide references concrete implementation files to help you locate and understand the underlying automation.
 
 ## Project Structure
-SimpleStack organizes database-related automation under the WordPress app scripts directory. The key files relevant to database optimization and maintenance are:
+Simple Stack organizes database-related automation under the WordPress app scripts directory. The key files relevant to database optimization and maintenance are:
 - A script to switch or copy databases between local and remote hosts
 - A script to perform search-and-replace operations in the WordPress database
 - A script that outlines a repair workflow (currently limited to MyISAM via wp-cli)
@@ -80,7 +80,7 @@ MONIT -.->|"MariaDB process/port"| DBOP
 - [20-monit.txt:358-413](file://includes/core/apps/wordpress-app/scripts/v1/raw/20-monit.txt#L358-L413)
 
 ## Architecture Overview
-The database optimization workflow in SimpleStack is primarily script-driven and integrates with standard MySQL/MariaDB tools and wp-cli. The following sequence illustrates a typical “copy from local to remote” operation:
+The database optimization workflow in Simple Stack is primarily script-driven and integrates with standard MySQL/MariaDB tools and wp-cli. The following sequence illustrates a typical “copy from local to remote” operation:
 
 ```mermaid
 sequenceDiagram
@@ -297,7 +297,7 @@ MONIT["monit.conf"] --> SYSTEMD["systemctl mariadb"]
 - [20-monit.txt:358-413](file://includes/core/apps/wordpress-app/scripts/v1/raw/20-monit.txt#L358-L413)
 
 ## Performance Considerations
-While SimpleStack does not directly manage MySQL/MariaDB server configuration parameters, the scripts facilitate operational tasks that impact performance indirectly:
+While Simple Stack does not directly manage MySQL/MariaDB server configuration parameters, the scripts facilitate operational tasks that impact performance indirectly:
 - Safe backups before modifications reduce risk and downtime
 - Cache flushing after search-and-replace or repair improves consistency
 - Monitoring ensures rapid recovery from outages
@@ -337,7 +337,7 @@ Operational tips:
 - [20-monit.txt:358-413](file://includes/core/apps/wordpress-app/scripts/v1/raw/20-monit.txt#L358-L413)
 
 ## Conclusion
-SimpleStack provides robust, script-driven utilities to manage WordPress database operations safely, including switching connections, copying data between environments, performing search-and-replace operations, and initiating repair workflows. These scripts integrate with standard MySQL/MariaDB clients and wp-cli, and leverage a connectivity checker to prevent misconfigurations. System-level monitoring ensures database availability and automated recovery. For advanced server tuning and capacity planning, apply industry-standard practices at the database layer while leveraging SimpleStack’s operational safeguards.
+Simple Stack provides robust, script-driven utilities to manage WordPress database operations safely, including switching connections, copying data between environments, performing search-and-replace operations, and initiating repair workflows. These scripts integrate with standard MySQL/MariaDB clients and wp-cli, and leverage a connectivity checker to prevent misconfigurations. System-level monitoring ensures database availability and automated recovery. For advanced server tuning and capacity planning, apply industry-standard practices at the database layer while leveraging Simple Stack’s operational safeguards.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
@@ -199,12 +200,11 @@ fi
 
 if [[ $action == "enable_phpmyadmin_whitelist" || $action == "5" ]]
 then
-	if [ "$g_webserver_type" = "nginx" ]
+	phpmyadmin_htaccess="/var/www/$domain/html/.htaccess"
+	phpmyadmin_rule='RewriteRule ^phpMyAdmin/.*$ - [R=403,NC,L]'
+	if ! grep -Fqx "$phpmyadmin_rule" "$phpmyadmin_htaccess"
 	then
-		sed -i "/allow all;/c\deny all;" /etc/nginx/sites-enabled/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		echo 'RewriteRule ^phpMyAdmin/.*$ - [R=403,NC,L]' >> /var/www/$domain/html/.htaccess
+		echo "$phpmyadmin_rule" >> "$phpmyadmin_htaccess"
 	fi
 
 	gf_restart_webserver
@@ -216,14 +216,8 @@ fi
 
 if [[ $action == "disable_phpmyadmin_whitelist" || $action == "6" ]]
 then
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sed -i "/deny all;/c\allow all;" /etc/nginx/sites-enabled/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		# Remove Rewrite rule to do redirect to Rickroll youtube link.
-		sed -i '/RewriteRule ^phpMyAdmin/d' /var/www/$domain/html/.htaccess
-	fi
+	# Remove the phpMyAdmin access restriction rule.
+	sed -i '/RewriteRule ^phpMyAdmin/d' /var/www/$domain/html/.htaccess
 
 	gf_restart_webserver
 	echo
@@ -240,14 +234,38 @@ then
 		echo "Example: 12.34.56.78"
 		read -p "IP address: " whitelistip
 	fi
-	if [ "$g_webserver_type" = "nginx" ]
+	if [[ ! "$whitelistip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]
 	then
-		sed -i "/location ~ \/phpMyAdmin/a allow $whitelistip;" /etc/nginx/sites-enabled/$domain
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
+		echo "A valid IPv4 address is required."
+		exit 1
+	fi
+
+	phpmyadmin_htaccess="/var/www/$domain/html/.htaccess"
+	phpmyadmin_rule='RewriteRule ^phpMyAdmin/.*$ - [R=403,NC,L]'
+	if ! grep -Fqx "$phpmyadmin_rule" "$phpmyadmin_htaccess"
 	then
-		ip_rewrite_allow=$(echo "RewriteCond %{REMOTE_ADDR}" '!'"${whitelistip}"|sed 's|\.|\\\.|g')
-		# We need to only insert this right before the matching phpmyadmin redirect
-		sed -i "/RewriteRule \^phpMyAdmin.*/i $(printf %q "$ip_rewrite_allow")"  /var/www/$domain/html/.htaccess
+		echo "Enable phpMyAdmin access restrictions before adding a whitelisted IP."
+		exit 1
+	fi
+
+	ip_rewrite_allow=$(printf '%s' "$whitelistip" | sed 's/\./\\./g')
+	phpmyadmin_ip_rule="RewriteCond %{REMOTE_ADDR} !${ip_rewrite_allow}"
+	if ! grep -Fqx "$phpmyadmin_ip_rule" "$phpmyadmin_htaccess"
+	then
+		phpmyadmin_tmp=$(mktemp)
+		if ! SSTK_PMA_RULE="$phpmyadmin_ip_rule" awk '
+			BEGIN { inserted = 0 }
+			!inserted && index($0, "RewriteRule ^phpMyAdmin") == 1 { print ENVIRON["SSTK_PMA_RULE"]; inserted = 1 }
+			{ print }
+			END { if (!inserted) exit 1 }
+		' "$phpmyadmin_htaccess" > "$phpmyadmin_tmp"
+		then
+			rm -f "$phpmyadmin_tmp"
+			echo "Unable to update the phpMyAdmin access restrictions."
+			exit 1
+		fi
+		cat "$phpmyadmin_tmp" > "$phpmyadmin_htaccess"
+		rm -f "$phpmyadmin_tmp"
 	fi
 	gf_restart_webserver
 
@@ -259,33 +277,25 @@ fi
 
 if [[ $action == "remove_whitelisted_ip" || $action == "8" ]]
 then
-	if [ "$g_webserver_type" = "nginx" ]
+	if [[ -z $whitelistip ]]
 	then
-		while [[ -z $whitelistip ]]
-		do
-			echo "Specify the IP address which you wish to remove"
-			sed -n '/location ~ \/phpMyAdmin/,/ all;/p' /etc/nginx/sites-enabled/$domain | sed '1d;$d' | sed 's/allow //g' | sed 's/;//g' | nl
-			read -p "IP address: " site_number
-			number_of_sites=$(sed -n '/location ~ \/phpMyAdmin/,/ all;/p' /etc/nginx/sites-enabled/$domain | sed '1d;$d' | sed 's/allow //g' | sed 's/;//g' | wc -l)
-			until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-			do
-				echo "$site_number: invalid selection."
-				read -p "IP address: " whitelistip
-			done
-			whitelistip=$(sed -n '/location ~ \/phpMyAdmin/,/ all;/p' /etc/nginx/sites-enabled/$domain | sed '1d;$d' | sed 's/allow //g' | sed 's/;//g' | sed -n "$site_number"p)
-		done
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		if [[ -z $whitelistip ]]
-		then
-			echo "Specify the IP address which you wish to add"
-			echo "Example: 12.34.56.78"
-			read -p "IP address: " whitelistip
-		fi
-		# We want to remove the line that looks like : RewriteCond %{REMOTE_ADDR} !^12\.34\.56\.78
-		ip_rewrite=$(echo ${whitelistip}|sed 's|\.|\\\.|g')
-		sed -i '/RewriteCond %{REMOTE_ADDR} !'$(printf %q "$ip_rewrite")'/d' /var/www/$domain/html/.htaccess
+		echo "Specify the IP address which you wish to remove"
+		echo "Example: 12.34.56.78"
+		read -p "IP address: " whitelistip
 	fi
+	if [[ ! "$whitelistip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]
+	then
+		echo "A valid IPv4 address is required."
+		exit 1
+	fi
+
+	ip_rewrite=$(printf '%s' "$whitelistip" | sed 's/\./\\./g')
+	phpmyadmin_ip_rule="RewriteCond %{REMOTE_ADDR} !${ip_rewrite}"
+	phpmyadmin_htaccess="/var/www/$domain/html/.htaccess"
+	phpmyadmin_tmp=$(mktemp)
+	SSTK_PMA_RULE="$phpmyadmin_ip_rule" awk '$0 != ENVIRON["SSTK_PMA_RULE"]' "$phpmyadmin_htaccess" > "$phpmyadmin_tmp"
+	cat "$phpmyadmin_tmp" > "$phpmyadmin_htaccess"
+	rm -f "$phpmyadmin_tmp"
 
 	gf_restart_webserver
 	echo

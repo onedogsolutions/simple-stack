@@ -25,14 +25,14 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how SimpleStack installs, configures, and manages Memcached for WordPress applications. It covers:
+This document explains how Simple Stack installs, configures, and manages Memcached for WordPress applications. It covers:
 - Installing the Memcached daemon and PHP extensions
 - Enabling/disabling Memcached per site with WordPress object cache integration
 - Managing the Memcached service (restart, clear, remove)
 - Monitoring and performance tuning guidance
 - Security considerations and troubleshooting steps
 
-SimpleStack provides both server-level installation scripts and application-level toggles to enable or disable Memcached for individual sites.
+Simple Stack provides both server-level installation scripts and application-level toggles to enable or disable Memcached for individual sites.
 
 ## Project Structure
 Memcached support is implemented across three layers:
@@ -298,7 +298,7 @@ RAW --> WP["WordPress Sites"]
 
 ## Performance Considerations
 - Single-object size limit: The scripts delete all transients before enabling Memcached because large objects can exceed Memcached’s single-object size limit.
-- PHP extension availability: Ensure the correct PHP memcache/memcached extensions are installed for each PHP version managed by SimpleStack.
+- PHP extension availability: Ensure the correct PHP memcache/memcached extensions are installed for each PHP version managed by Simple Stack.
 - Web server restarts: After installing extensions, the web server is restarted to load new modules.
 
 Operational tips derived from the scripts:
@@ -342,6 +342,6 @@ Common issues and resolutions based on the implementation:
 - [16-memcached.txt (v2):169-229](file://includes/core/apps/wordpress-app/scripts/v2/raw/16-memcached.txt#L169-L229)
 
 ## Conclusion
-SimpleStack automates Memcached installation and configuration for WordPress sites, handling both system-level setup and per-site integration. Administrators can enable or disable Memcached through the UI, while underlying scripts ensure proper installation of the daemon, PHP extensions, and WordPress object cache configuration. Operational utilities allow clearing caches, restarting services, and removing installations cleanly.
+Simple Stack automates Memcached installation and configuration for WordPress sites, handling both system-level setup and per-site integration. Administrators can enable or disable Memcached through the UI, while underlying scripts ensure proper installation of the daemon, PHP extensions, and WordPress object cache configuration. Operational utilities allow clearing caches, restarting services, and removing installations cleanly.
 
 [No sources needed since this section summarizes without analyzing specific files]

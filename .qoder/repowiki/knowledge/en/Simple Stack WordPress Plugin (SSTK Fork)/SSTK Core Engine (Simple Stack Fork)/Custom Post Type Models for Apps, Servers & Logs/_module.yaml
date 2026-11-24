@@ -2,7 +2,7 @@ schema_version: 1
 module_path: core_engine/post_type_models
 title: Custom Post Type Models for Apps, Servers & Logs
 scope:
-    - includes/core/class-wpcd-posts-*
+    - includes/core/class-sstk-posts-*
 source_files: []
 depends_on: []
 related_to: []

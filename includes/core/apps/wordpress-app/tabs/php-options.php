@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * PHP Tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,27 +11,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_PHP_OPTIONS
+ * Class SSTK_WORDPRESS_TABS_PHP_OPTIONS
  */
-class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_PHP_OPTIONS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
 		// Allow the change_php_version action to be triggered via an action hook.
-		add_action( 'wpcd_wordpress-app_do_change_php_version', array( $this, 'change_php_version_action' ), 10, 2 );
+		add_action( 'sstk_wordpress-app_do_change_php_version', array( $this, 'change_php_version_action' ), 10, 2 );
 
 		// Allow the advanced add_php_param (change_php_options) action to be triggered via an action hook.
-		add_action( 'wpcd_wordpress-app_do_change_php_options', array( $this, 'change_php_options_action' ), 10, 3 );
-
-		// Allow php worker changes via action hook (change_php_workers).
-		add_action( 'wpcd_wordpress-app_do_change_php_workers', array( $this, 'change_php_workers_action' ), 10, 2 );
+		add_action( 'sstk_wordpress-app_do_change_php_options', array( $this, 'change_php_options_action' ), 10, 3 );
 
 	}
 
@@ -59,7 +57,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'PHP', 'wpcd' ),
+				'label' => __( 'PHP', 'simple-stack' ),
 				'icon'  => 'fad fa-cog',
 			);
 		}
@@ -75,17 +73,17 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the PHP tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -115,15 +113,15 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
-		$valid_actions = array( 'restart-php-service', 'change-php-version', 'change-php-common-options', 'change-php-advanced-options', 'change-php-workers-pm' );
+		$valid_actions = array( 'restart-php-service', 'change-php-version', 'change-php-common-options', 'change-php-advanced-options' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -144,8 +142,8 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 					break;
 				case 'change-php-common-options':
 					// Verify that the user is allowed to update php site options.
-					if ( ! $this->wpcd_wpapp_user_can_change_php_options( $id ) ) {
-						$msg    = __( 'You don\'t have permission to update PHP options for this site.', 'wpcd' );
+					if ( ! $this->sstk_wpapp_user_can_change_php_options( $id ) ) {
+						$msg    = __( 'You don\'t have permission to update PHP options for this site.', 'simple-stack' );
 						$result = array(
 							'refresh' => 'yes',
 							'msg'     => $msg,
@@ -160,8 +158,8 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 					break;
 				case 'change-php-advanced-options':
 					// Verify that the user is allowed to update php site options.
-					if ( ! $this->wpcd_wpapp_user_can_change_php_advanced_options( $id ) ) {
-						$msg    = __( 'You don\'t have permission to update PHP options for this site.', 'wpcd' );
+					if ( ! $this->sstk_wpapp_user_can_change_php_advanced_options( $id ) ) {
+						$msg    = __( 'You don\'t have permission to update PHP options for this site.', 'simple-stack' );
 						$result = array(
 							'refresh' => 'yes',
 							'msg'     => $msg,
@@ -170,22 +168,6 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 					}
 					// User is allowed to update php options so proceed.
 					$result = $this->change_php_options( $id, 'add_php_param' );
-					if ( ! is_wp_error( $result ) ) {
-						$result = array( 'refresh' => 'yes' );
-					}
-					break;
-				case 'change-php-workers-pm':
-					// Verify that the user is allowed to update php site options/php workers.
-					if ( ! $this->wpcd_wpapp_user_can_change_php_advanced_options( $id ) ) {
-						$msg    = __( 'You don\'t have permission to update PHP workers for this site.', 'wpcd' );
-						$result = array(
-							'refresh' => 'yes',
-							'msg'     => $msg,
-						);
-						break;
-					}
-					// User is allowed to update php workers so proceed.
-					$result = $this->change_php_workers( $id, 'change_php_workers' );
 					if ( ! is_wp_error( $result ) ) {
 						$result = array( 'refresh' => 'yes' );
 					}
@@ -215,7 +197,6 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 			$this->get_php_restart_fields( $id ),
 			$this->get_common_php_options_fields( $id ),
 			$this->get_advanced_php_options_fields( $id ),
-			$this->get_php_workers_fields( $id ),
 		);
 
 	}
@@ -232,32 +213,16 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
+		$desc = __( 'Restart OpenLiteSpeed to reload this site\'s PHP configuration. This temporarily interrupts all sites on the server.', 'simple-stack' );
 
-		/* Set description based on web server. */
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				$desc = __( 'Restart the PHP service for this site', 'wpcd' );
-				break;
-
-			case 'nginx':
-			default:
-				$desc = __( 'Restart the PHP FPM service for this site', 'wpcd' );
-				break;
-
-		}
-
-		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = '';
-		$confirmation_prompt = __( 'Are you sure you would like to restart the PHP service for this site??', 'wpcd' );
+		/* Set the text of the confirmation prompt. */
+		$confirmation_prompt = __( 'Are you sure you would like to restart OpenLiteSpeed? All sites on this server will be temporarily unavailable.', 'simple-stack' );
 
 		$actions['restart-php-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_restart_icon( __( '%s Restart PHP Service', 'wpcd' ) ),
+			'label'          => sstk_apply_restart_icon( __( '%s Restart OpenLiteSpeed', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -268,14 +233,14 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_restart_icon( __( '%s Restart', 'wpcd' ) ),
+				'std'                 => sstk_apply_restart_icon( __( '%s Restart OpenLiteSpeed', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -293,24 +258,21 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
-
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* What is the current php version on the site? */
 		$current_version = $this->get_php_version_for_app( $id );
 
 		/* Set the text of the confirmation prompt */
 		$confirmation_prompt = '';
-		$confirmation_prompt = __( 'Are you sure you would like to switch PHP versions?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to switch PHP versions?', 'simple-stack' );
 
-		$desc = __( 'Use this section to change the PHP version for this site. If you have installed any custom PHP options, you will need to reinstall them after switching versions. <br /> We STRONGLY recommend that you use version 8.1 or greater if you can since security updates have ceased for all prior PHP versions.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Use this section to change the PHP version for this site. If you have installed any custom PHP options, you will need to reinstall them after switching versions. Simple Stack supports PHP 8.3, 8.4 and 8.5; PHP 8.4 is the default.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['change-php-version-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_php_icon( __( '%s Change PHP Version', 'wpcd' ) ),
+			'label'          => sstk_apply_php_icon( __( '%s Change PHP Version', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -320,36 +282,27 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		// Get an associated array of PHP versions.
 		$php_select_options_raw = $this->get_php_versions( $id );
 
-		// Convert the keys of the array to a list of OLS services if necessary.
-		// For OLS, the service name is the PHP version for bash.
+		// OpenLiteSpeed selects PHP through the LSPHP external processor name.
 		$php_select_options = array();
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				foreach ( $php_select_options_raw as $php_version_key => $php_version ) {
-					$service                        = wpcd_convert_php_version_to_ols_service( $php_version );
-					$php_select_options[ $service ] = $php_version;
-				}
-				// Also need to convert the current version so that it can be defaulted for the SELECT input.
-				$current_version = wpcd_convert_php_version_to_ols_service( $current_version );
-				break;
-
-			case 'nginx':
-			default:
-				$php_select_options = $php_select_options_raw;
-				break;
-
+		foreach ( $php_select_options_raw as $php_version ) {
+			$service = sstk_convert_php_version_to_ols_service( $php_version );
+			if ( false !== $service ) {
+				$php_select_options[ $service ] = $php_version;
+			}
 		}
 
+		// Convert the current version so it can be selected by default.
+		$current_version = sstk_convert_php_version_to_ols_service( $current_version );
+
 		$actions['change-php-version-new-version'] = array(
-			'label'          => __( 'PHP Version', 'wpcd' ),
+			'label'          => __( 'PHP Version', 'simple-stack' ),
 			'desc'           => '',
 			'type'           => 'select',
 			'raw_attributes' => array(
 				'options'        => $php_select_options,
 				'std'            => $current_version,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'new_php_version',
+				'data-sstk-name' => 'new_php_version',
 			),
 		);
 
@@ -357,16 +310,16 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_change_icon( __( '%s Change PHP Version', 'wpcd' ) ),
+				'std'                 => sstk_apply_change_icon( __( '%s Change PHP Version', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_change-php-version-new-version' ) ),
+				'data-sstk-fields'    => json_encode( array( '#sstk_app_action_change-php-version-new-version' ) ),
 			),
 			'type'           => 'button',
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -382,17 +335,17 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	private function get_common_php_options_fields( $id ) {
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to set this option?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to set this option?', 'simple-stack' );
 
-		$desc = __( 'These are the most commonly changed PHP options.  Make sure you set a VALID value for the option - we do not validate your input before sending it on to the server! ', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'These are the most commonly changed PHP options.  Make sure you set a VALID value for the option - we do not validate your input before sending it on to the server! ', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['change-php-common-options-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_change_icon( __( '%s Add Or Update Some Common PHP Options', 'wpcd' ) ),
+			'label'          => sstk_apply_change_icon( __( '%s Add Or Update Some Common PHP Options', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -400,27 +353,27 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		);
 
 		/* Check permissions and fill out fields array if appropriate */
-		if ( $this->wpcd_wpapp_user_can_change_php_options( $id ) ) {
+		if ( $this->sstk_wpapp_user_can_change_php_options( $id ) ) {
 
 			$actions['change-php-common-options-select'] = array(
-				'label'          => __( 'Select a common PHP option to add or change', 'wpcd' ),
+				'label'          => __( 'Select a common PHP option to add or change', 'simple-stack' ),
 				'type'           => 'select',
 				'raw_attributes' => array(
 					'options'        => $this->get_common_php_options_list(),
 					'desc'           => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'php_common_option_to_set',
+					'data-sstk-name' => 'php_common_option_to_set',
 				),
 			);
 
 			$actions['change-php-common-options-value'] = array(
-				'label'          => __( 'Enter a value for the option', 'wpcd' ),
+				'label'          => __( 'Enter a value for the option', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'desc'           => wpcd_apply_warning_icon( __( '%s Make sure you set a VALID value for the option - we do not validate your input before sending it on to the server!', 'wpcd' ) ),
+					'desc'           => sstk_apply_warning_icon( __( '%s Make sure you set a VALID value for the option - we do not validate your input before sending it on to the server!', 'simple-stack' ) ),
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'php_common_option_value',
+					'data-sstk-name' => 'php_common_option_value',
 				),
 			);
 
@@ -428,9 +381,9 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_install_icon( __( '%s Set the selected option', 'wpcd' ) ),
+					'std'                 => sstk_apply_install_icon( __( '%s Set the selected option', 'simple-stack' ) ),
 					'confirmation_prompt' => $confirmation_prompt,                  // fields that contribute data for this action.
-					'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_change-php-common-options-select', '#wpcd_app_action_change-php-common-options-value' ) ),
+					'data-sstk-fields'    => json_encode( array( '#sstk_app_action_change-php-common-options-select', '#sstk_app_action_change-php-common-options-value' ) ),
 				),
 				'type'           => 'button',
 			);
@@ -440,24 +393,24 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'type'           => 'custom_html',
 				'raw_attributes' => array(
-					'std' => '<h4>' . __( '***You do not have permissions to add or update common php options.***', 'wpcd' ) . '</h4>',
+					'std' => '<h4>' . __( '***You do not have permissions to add or update common php options.***', 'simple-stack' ) . '</h4>',
 				),
 			);
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$custom_options_desc = __( 'Here are the custom PHP options currently set for this site.', 'wpcd' );
-		$custom_options_desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $custom_options_desc );
+		$custom_options_desc = __( 'Here are the custom PHP options currently set for this site.', 'simple-stack' );
+		$custom_options_desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $custom_options_desc );
 
 		/* Fields to show existing options that the user has set */
 		$actions['change-php-common-existing-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_php_icon( __( '%s Existing Options', 'wpcd' ) ),
+			'label'          => sstk_apply_php_icon( __( '%s Existing Options', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $custom_options_desc,
@@ -466,15 +419,15 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 
 		/* Get the existing php options that were set from the database and construct a custom HTML string*/
 		$customhtml   = '';
-		$saved_values = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_php_custom_options', true ) );
+		$saved_values = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_php_custom_options', true ) );
 		if ( empty( $saved_values ) || ( ! is_array( $saved_values ) ) ) {
 			/* Translators: %s is a fontawesome or similar icon. */
-			$customhtml = '<p>' . wpcd_apply_x_icon( __( '%s No common or custom php values have been set for this site.', 'wpcd' ) ) . '</p>';
+			$customhtml = '<p>' . sstk_apply_x_icon( __( '%s No common or custom php values have been set for this site.', 'simple-stack' ) ) . '</p>';
 		} else {
 			// At least one value was set in the past so lets loop through the array and construct the html.
 			foreach ( $saved_values as $key => $value ) {
 				$value_pair  = "$key: <b>$value</b>";
-				$value_pair  = wpcd_apply_checkmark_icon( '%s ' . $value_pair );
+				$value_pair  = sstk_apply_checkmark_icon( '%s ' . $value_pair );
 				$customhtml .= '<p>' . $value_pair . '</p>';
 			}
 		}
@@ -488,7 +441,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -529,48 +482,48 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	 */
 	private function get_advanced_php_options_fields( $id ) {
 
-		if ( ! $this->wpcd_wpapp_user_can_change_php_advanced_options( $id ) ) {
+		if ( ! $this->sstk_wpapp_user_can_change_php_advanced_options( $id ) ) {
 			return array();
 		}
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to set this option?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to set this option?', 'simple-stack' );
 
-		$desc = __( 'Use this to set a custom value for a PHP.ini value. Custom values are placed in the web server vhost configuration files and apply only to this site. Please make sure that you set a VALID value for the option - we do not validate your input before sending it on to the server! ', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Use this to set a custom value for a PHP.ini value. Custom values are placed in the web server vhost configuration files and apply only to this site. Please make sure that you set a VALID value for the option - we do not validate your input before sending it on to the server! ', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['change-php-advanced-options-header'] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_change_icon( __( '%s [Danger Zone] Add Or Update a PHP Option', 'wpcd' ) ),
+			'label'          => sstk_apply_change_icon( __( '%s [Danger Zone] Add Or Update a PHP Option', 'simple-stack' ) ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
 			),
 		);
 
-		if ( $this->wpcd_wpapp_user_can_change_php_options( $id ) ) {
+		if ( $this->sstk_wpapp_user_can_change_php_options( $id ) ) {
 
 			$actions['change-php-advanced-options-item'] = array(
-				'label'          => __( 'php.ini item', 'wpcd' ),
+				'label'          => __( 'php.ini item', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
-					'desc'           => __( 'Enter a text string corresponding to an item in the php.ini file. Make sure you set a valid string for the option - we do not validate your input before sending it on to the server!', 'wpcd' ),
+					'desc'           => __( 'Enter a text string corresponding to an item in the php.ini file. Make sure you set a valid string for the option - we do not validate your input before sending it on to the server!', 'simple-stack' ),
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'php_advanced_option_to_set',
+					'data-sstk-name' => 'php_advanced_option_to_set',
 				),
 			);
 
 			$actions['change-php-advanced-options-value'] = array(
-				'label'          => __( 'Enter a value for the option', 'wpcd' ),
+				'label'          => __( 'Enter a value for the option', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'desc'           => wpcd_apply_warning_icon( __( ' %s Make sure you set a VALID value for the option - we do not validate your input before sending it on to the server!', 'wpcd' ) ),
+					'desc'           => sstk_apply_warning_icon( __( ' %s Make sure you set a VALID value for the option - we do not validate your input before sending it on to the server!', 'simple-stack' ) ),
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'php_advanced_option_value',
+					'data-sstk-name' => 'php_advanced_option_value',
 				),
 			);
 
@@ -578,9 +531,9 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'raw_attributes' => array(
 					/* Translators: %s is a fontawesome or similar icon. */
-					'std'                 => wpcd_apply_install_icon( __( '%s Set the selected option', 'wpcd' ) ),
+					'std'                 => sstk_apply_install_icon( __( '%s Set the selected option', 'simple-stack' ) ),
 					'confirmation_prompt' => $confirmation_prompt,                  // fields that contribute data for this action.
-					'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_change-php-advanced-options-item', '#wpcd_app_action_change-php-advanced-options-value' ) ),
+					'data-sstk-fields'    => json_encode( array( '#sstk_app_action_change-php-advanced-options-item', '#sstk_app_action_change-php-advanced-options-value' ) ),
 				),
 				'type'           => 'button',
 			);
@@ -590,148 +543,13 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'type'           => 'custom_html',
 				'raw_attributes' => array(
-					'std' => '<h4>' . __( '***You do not have permissions to add or update advanced php options.***', 'wpcd' ) . '</h4>',
+					'std' => '<h4>' . __( '***You do not have permissions to add or update advanced php options.***', 'simple-stack' ) . '</h4>',
 				),
 			);
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
-
-		return $actions;
-
-	}
-
-	/**
-	 * Gets the fields for the PHP WORKERS options to be shown in the PHP tab.
-	 *
-	 * @param int $id the post id of the app cpt record.
-	 *
-	 * @return array Array of actions with key as the action slug and value complying with the structure necessary by metabox.io fields.
-	 */
-	private function get_php_workers_fields( $id ) {
-
-		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
-
-		if ( ! $this->wpcd_wpapp_user_can_change_php_advanced_options( $id ) ) {
-			return array();
-		}
-
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
-
-		/* We should only show this section for nginx servers */
-		if ( 'nginx' !== $webserver_type ) {
-			return array();
-		}
-
-		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to update your PHP Workers? If you set these values incorrectly, your server will NOT restart!', 'wpcd' );
-
-		$actions['change-php-workers-fields-header'] = array(
-			/* Translators: %s is a fontawesome or similar icon. */
-			'label'          => wpcd_apply_php_icon( __( '%s [Danger Zone] PHP Workers', 'wpcd' ) ),
-			'type'           => 'heading',
-			'raw_attributes' => array(
-				'desc' => __( 'Use this section to update the PHP Workers values used for this site. Note: Incorrect values in this section can break your site by preventing the PHP service from restarting.', 'wpcd' ),
-			),
-		);
-
-		/* Get current values */
-		$pm = get_post_meta( $id, 'wpapp_php_workers', true );  // should be an array.
-		if ( empty( $pm ) ) {
-			$pm                         = array();
-			$pm['pm']                   = 'dynamic';
-			$pm['pm_max_children']      = '5';
-			$pm['pm_start_servers']     = '2';
-			$pm['pm_min_spare_servers'] = '1';
-			$pm['pm_max_spare_servers'] = '2';
-		}
-
-		$actions['change-php-workers-pm-value'] = array(
-			'label'          => __( 'PM', 'wpcd' ),
-			'type'           => 'select',
-			'raw_attributes' => array(
-				'options'        => array(
-					'dynamic'  => __( 'Dynamic', 'wpcd' ),
-					'static'   => __( 'Static', 'wpcd' ),
-					'ondemand' => __( 'On Demand', 'wpcd' ),
-				),
-				'std'            => $pm['pm'],
-				'columns'        => 6,
-				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'pm',
-			),
-		);
-
-		$actions['change-php-workers-pm-max-children'] = array(
-			'label'          => __( 'PM - Max Children', 'wpcd' ),
-			'type'           => 'number',
-			'raw_attributes' => array(
-				'std'            => $pm['pm_max_children'],
-				'columns'        => 6,
-				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'pm_max_children',
-			),
-		);
-
-		$actions['change-php-workers-pm-max-start-servers'] = array(
-			'label'          => __( 'PM - Start Servers', 'wpcd' ),
-			'type'           => 'number',
-			'raw_attributes' => array(
-				'std'            => $pm['pm_start_servers'],
-				'columns'        => 6,
-				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'pm_start_servers',
-			),
-		);
-
-		$actions['change-php-workers-pm-min-spare-servers'] = array(
-			'label'          => __( 'PM - Min Spare Servers', 'wpcd' ),
-			'type'           => 'number',
-			'raw_attributes' => array(
-				'std'            => $pm['pm_min_spare_servers'],
-				'columns'        => 6,
-				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'pm_min_spare_servers',
-			),
-		);
-
-		$actions['change-php-workers-pm-max-spare-servers'] = array(
-			'label'          => __( 'PM - Max Spare Servers', 'wpcd' ),
-			'type'           => 'number',
-			'raw_attributes' => array(
-				'std'            => $pm['pm_max_spare_servers'],
-				'columns'        => 6,
-				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'pm_max_spare_servers',
-			),
-		);
-
-		$actions['change-php-workers-pm'] = array(
-			'label'          => __( 'Apply Changes', 'wpcd' ),
-			'raw_attributes' => array(
-				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_change_icon( __( '%s Update', 'wpcd' ) ),
-				'confirmation_prompt' => $confirmation_prompt,
-				'columns'             => 6,
-				// fields that contribute data for this action.
-				'data-wpcd-fields'    => wp_json_encode(
-					array(
-						'#wpcd_app_action_change-php-workers-pm-value',
-						'#wpcd_app_action_change-php-workers-pm-max-children',
-						'#wpcd_app_action_change-php-workers-pm-max-start-servers',
-						'#wpcd_app_action_change-php-workers-pm-min-spare-servers',
-						'#wpcd_app_action_change-php-workers-pm-max-spare-servers',
-					)
-				),
-			),
-			'type'           => 'button',
-		);
-
-		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $actions;
 
@@ -742,41 +560,29 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_change_php_version  (Optional).
+	 * Action hook: sstk_wordpress-app_do_change_php_version  (Optional).
 	 *
 	 * @param int    $id     The postID of the app cpt.
-	 * @param string $php_version The new php version - eg: 7.4, 8.1 etc.
+	 * @param string $php_version The new PHP version: 8.3, 8.4 or 8.5.
 	 *
 	 * @return string|WP_Error
 	 */
 	public function change_php_version_action( $id, $php_version ) {
 
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
-
-		/* What is the current php version on the site? */
-		$current_version = $this->get_php_version_for_app( $id );
+		$php_version = (string) $php_version;
+		if ( ! in_array( $php_version, array( '8.3', '8.4', '8.5' ), true ) ) {
+			return new \WP_Error( __( 'You must specify a supported PHP version: 8.3, 8.4 or 8.5.', 'simple-stack' ) );
+		}
 
 		/* If we're already at the current version, do nothing. */
-		if ( $current_version === $php_version ) {
+		if ( $this->get_php_version_for_app( $id ) === $php_version ) {
 			return true;
 		}
 
-		// For OLS, the service name is the PHP version for bash.
-		$php_select_options = array();
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				$php_version = wpcd_convert_php_version_to_ols_service( $php_version );
-				break;
-		}
+		// OpenLiteSpeed uses the LSPHP external processor name in the shell command.
+		$args['new_php_version'] = sstk_convert_php_version_to_ols_service( $php_version );
 
-		// Array to pass into function call.
-		$args['new_php_version'] = $php_version;
-
-		$return = $this->change_php_version( $id, 'change_php_version', $args );
-
-		return $return;
+		return $this->change_php_version( $id, 'change_php_version', $args );
 
 	}
 
@@ -794,7 +600,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		if ( empty( $in_args ) ) {
@@ -804,16 +610,15 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 			$args = $in_args;
 		}
 
-		// What type of web server are we running?
-		$webserver_type = $this->get_web_server_type( $id );
-
-		// Special sanitization for the new version.
-		// Reminder: ols versions are names such as lsphp74 while nginx versions are just 7.4.
-		$new_php_version = '';
-		if ( isset( $args['new_php_version'] ) ) {
-			$new_php_version         = $args['new_php_version'];  // Get the version before we escape it for the linux command line - we'll need this if the action is successful.
-			$args['new_php_version'] = escapeshellarg( $args['new_php_version'] );
+		// Accept a dotted version from internal callers or an LSPHP service from the UI.
+		$new_php_version = isset( $args['new_php_version'] ) ? (string) $args['new_php_version'] : '';
+		if ( in_array( $new_php_version, array( '8.3', '8.4', '8.5' ), true ) ) {
+			$new_php_version = sstk_convert_php_version_to_ols_service( $new_php_version );
 		}
+		if ( ! in_array( $new_php_version, array( 'lsphp83', 'lsphp84', 'lsphp85' ), true ) ) {
+			return new \WP_Error( __( 'You must specify a supported PHP version: 8.3, 8.4 or 8.5.', 'simple-stack' ) );
+		}
+		$args['new_php_version'] = escapeshellarg( $new_php_version );
 
 		// Get the full command to be executed by ssh.
 		$run_cmd = $this->turn_script_into_command(
@@ -833,25 +638,17 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'change_php_version_misc.txt' );
 		if ( ! $success ) {
 			/* Translators: %1 is an action, %2 is the site / domain name. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
-		/**
-		 * Need to do some translation of the version if the web server is litespeed.
-		 * This is because the litespeed version is something like 'lsphp80' and we
-		 * need to record a three digit character like '8.0' in the db.
-		 */
-		if ( 'nginx' !== $webserver_type ) {
-			$new_php_version = wpcd_convert_ols_phpservice_to_php_version( $new_php_version );
-		}
-
-		// Record the new version on the app record.
+		// Record the dotted version rather than the LSPHP service name.
+		$new_php_version = sstk_convert_ols_phpservice_to_php_version( $new_php_version );
 		$this->set_php_version_for_app( $id, $new_php_version );
 
 		return $success;
@@ -862,7 +659,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_change_php_options  (Optional).
+	 * Action hook: sstk_wordpress-app_do_change_php_options  (Optional).
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $php_param The php option/parameter to set - eg: max_execution_time.
@@ -895,7 +692,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		if ( empty( $in_args ) ) {
@@ -913,7 +710,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 
 			// Make sure the "common" option is in a known good list.
 			if ( ! in_array( $php_option, $this->get_common_php_options_keys(), true ) ) {
-				return new \WP_Error( __( 'Whoa...looks like you are trying to hack the system - this is most definitely not allowed!', 'wpcd' ) );
+				return new \WP_Error( __( 'Whoa...looks like you are trying to hack the system - this is most definitely not allowed!', 'simple-stack' ) );
 			}
 
 			// Now make sure we sanitize the fields for use on the linux command line and put them back into the array - in this case under a different KEY!...
@@ -930,7 +727,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 				$args['php_option_value']  = escapeshellarg( $args['php_advanced_option_value'] );
 			} else {
 				// whoops, neither field has a value so error...
-				return new \WP_Error( sprintf( __( 'Looks like no valid data was entered so we are unable to execute this request for action %s. Please check to make sure you have entered both an option and a value for the option!', 'wpcd' ), $action ) );
+				return new \WP_Error( sprintf( __( 'Looks like no valid data was entered so we are unable to execute this request for action %s. Please check to make sure you have entered both an option and a value for the option!', 'simple-stack' ), $action ) );
 			}
 		}
 
@@ -952,17 +749,17 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
 		$success = $this->is_ssh_successful( $result, 'change_php_option_misc.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Record the new data onto the app record.
-		$saved_values = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_php_custom_options', true ) );
+		$saved_values = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_php_custom_options', true ) );
 		if ( empty( $saved_values ) || ( ! is_array( $saved_values ) ) ) {
 			$saved_values = array();
 		}
@@ -973,7 +770,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 	}
 
 	/**
-	 * Restart the PHP FPM Service.
+	 * Restart OpenLiteSpeed to reload the site's PHP configuration.
 	 *
 	 * @param int    $id     The postID of the app cpt.
 	 * @param string $action The action to be performed (this matches the string required in the bash scripts).
@@ -984,7 +781,7 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -1001,110 +798,19 @@ class WPCD_WORDPRESS_TABS_PHP_OPTIONS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
 		$success = $this->is_ssh_successful( $result, 'restart_php_service.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		return $success;
 
-	}
-
-	/**
-	 * Helper function to change php workers
-	 *
-	 * Can be called directly or by an action hook.
-	 *
-	 * Action hook: wpcd_wordpress-app_do_change_php_workers (Optional).
-	 *
-	 * @param int   $id     The postID of the app cpt.
-	 * @param array $php_worker_values - this array must contain the following keys: pm,pm_max_children,pm_start_servers,pm_min_spare_servers,pm_max_spare_servers.
-	 *
-	 * @return string|WP_Error
-	 */
-	public function change_php_workers_action( $id, $php_worker_values ) {
-
-		$return = $this->change_php_workers( $id, 'change_php_workers', $php_worker_values );
-
-		return $return;
-
-	}
-
-	/**
-	 * Change PHP Workers.
-	 *
-	 * @param int    $id     The postID of the app cpt.
-	 * @param string $action The action to be performed (this matches the string required in the bash scripts).
-	 * @param array  $in_args Alternative source of arguments passed via action hook or direct function call instead of pulling from $_POST.
-	 *
-	 * @return boolean|WP_Error    success/failure
-	 */
-	private function change_php_workers( $id, $action, $in_args = array() ) {
-		$instance = $this->get_app_instance_details( $id );
-
-		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
-		}
-
-		if ( empty( $in_args ) ) {
-			// Get data from the POST request.
-			$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
-		} else {
-			$args = $in_args;
-		}
-
-		// Create a new array with the unescaped fields for storage in the database.
-		$pm                         = array();
-		$pm['pm']                   = $args['pm'];
-		$pm['pm_max_children']      = $args['pm_max_children'];
-		$pm['pm_start_servers']     = $args['pm_start_servers'];
-		$pm['pm_min_spare_servers'] = $args['pm_min_spare_servers'];
-		$pm['pm_max_spare_servers'] = $args['pm_max_spare_servers'];
-
-		// Now lets make sure we escape all the arguments so it's safe for the command line.
-		$args = array_map(
-			function( $item ) {
-				return escapeshellarg( $item );
-			},
-			$args
-		);
-
-		// Get the full command to be executed by ssh.
-		$run_cmd = $this->turn_script_into_command(
-			$instance,
-			'php_workers.txt',
-			array_merge(
-				$args,
-				array(
-					'action' => $action,
-					'domain' => get_post_meta(
-						$id,
-						'wpapp_domain',
-						true
-					),
-				)
-			)
-		);
-
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
-
-		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
-
-		$success = $this->is_ssh_successful( $result, 'php_workers.txt' );
-		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
-		}
-
-		// Record the new data onto the app record.
-		update_post_meta( $id, 'wpapp_php_workers', $pm );
-
-		return $success;
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_PHP_OPTIONS();
+new SSTK_WORDPRESS_TABS_PHP_OPTIONS();

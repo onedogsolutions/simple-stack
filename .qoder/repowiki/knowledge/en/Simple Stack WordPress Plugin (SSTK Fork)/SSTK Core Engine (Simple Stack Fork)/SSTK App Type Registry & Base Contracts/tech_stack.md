@@ -1,1 +1,1 @@
-PHP classes implementing a common abstract app interface; shell scripts under `scripts/v1/` and `scripts/v2/` (with wordpress-app carrying both versions) are the execution payload consumed uniformly by the base SSH layer.
+PHP classes implementing the shared app contract, with the base SSH layer executing the fixed `scripts/v2/` Bash payload used by the WordPress app.

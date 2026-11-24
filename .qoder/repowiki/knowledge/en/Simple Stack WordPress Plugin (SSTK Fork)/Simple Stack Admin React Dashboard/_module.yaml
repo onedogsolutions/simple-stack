@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: admin_react_app
-title: SimpleStack Admin React Dashboard
+title: Simple Stack Admin React Dashboard
 scope:
     - src/admin/
 source_files: []

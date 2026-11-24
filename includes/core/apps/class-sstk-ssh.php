@@ -1,15 +1,16 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_SSH Class
+ * SSTK_SSH Class
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require wpcd_path . 'vendor/autoload.php';
+require SSTK_PATH . 'vendor/autoload.php';
 
 use phpseclib3\Net\SSH2;
 use phpseclib3\Net\SFTP;
@@ -20,10 +21,10 @@ use phpseclib3\Crypt\PublicKeyLoader;
 /**
  * Parent class for all app specific SSH classes.
  */
-class WPCD_SSH {
+class SSTK_SSH {
 
 	/**
-	 * WPCD_SSH constructor.
+	 * SSTK_SSH constructor.
 	 */
 	public function __construct() {
 		// empty.
@@ -38,29 +39,34 @@ class WPCD_SSH {
 	 * @param string $action The action that is executing this command.
 	 * @param string $reference_post_id The post ID most affected by this action and which will be used as a log reference (generally the server post).
 	 * @param string $user The user to login with.
-	 * @param string $callback callback.
+	 * @param callable|null $callback callback.
+	 * @param array $secrets_to_redact Exact secret values used by the command.
 	 *
 	 * @return mixed
 	 */
-	public function exec( $ip, $command, array $key_attributes, $action, $reference_post_id, $user = 'root', $callback = null ) {
-		do_action( 'wpcd_log_error', "trying to execute $command on $ip", 'debug', __FILE__, __LINE__ );
+	public function exec( $ip, $command, array $key_attributes, $action, $reference_post_id, $user = 'root', $callback = null, $secrets_to_redact = array() ) {
+		$private_key = SSTK()->decrypt( $key_attributes['key'] );
+		$log_secrets = array_merge( (array) $secrets_to_redact, array( $key_attributes['key'], $private_key, $key_attributes['passwd'] ) );
+		$log_command = sstk_redact_secret_text( $command, $log_secrets );
+
+		do_action( 'sstk_log_error', "trying to execute $log_command on $ip", 'debug', __FILE__, __LINE__ );
 
 		/* Use a filter to force an override of the user name if necessary - this can be useful when servers such as aws don't use the 'root' user as the default login user */
-		$user = apply_filters( 'wpcd_exec_ssh_user', $user );
+		$user = apply_filters( 'sstk_exec_ssh_user', $user );
 
 		$ssh = new SSH2( $ip );
 
-		$key = PublicKeyLoader::load( WPCD()->decrypt( $key_attributes['key'] ), $key_attributes['passwd'] );
+		$key = PublicKeyLoader::load( $private_key, $key_attributes['passwd'] );
 
 		/* Login */
 		if ( ! $ssh->login( $user, $key ) ) {
-			do_action( 'wpcd_log_error', "Unable to login to server at ip $ip", 'error', __FILE__, __LINE__ );
-			WPCD_POSTS_SSH_LOG()->add_ssh_log_entry( $reference_post_id, 'Login', 'Failed' );
-			return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like we are unable to connect to the server at this time.  This generally occurs when the server is initializing for the first time or is being restarted. <br /><br /> Please wait a few minutes and try again.  If the problem continues, please contact our support team.', 'wpcd' ) ) );
+			do_action( 'sstk_log_error', "Unable to login to server at ip $ip", 'error', __FILE__, __LINE__ );
+			SSTK_POSTS_SSH_LOG()->add_ssh_log_entry( $reference_post_id, 'Login', 'Failed' );
+			return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like we are unable to connect to the server at this time.  This generally occurs when the server is initializing for the first time or is being restarted. <br /><br /> Please wait a few minutes and try again.  If the problem continues, please contact our support team.', 'simple-stack' ) ) );
 		}
 
 		/* Get ssh timeout and, it none set, use a default */
-		$default_ssh_timeout = wpcd_get_early_option( 'ssh_timeout' );
+		$default_ssh_timeout = sstk_get_early_option( 'ssh_timeout' );
 		if ( empty( $default_ssh_timeout ) ) {
 			$default_ssh_timeout = 29;
 		}
@@ -75,18 +81,9 @@ class WPCD_SSH {
 			if ( ! empty( $php_max_execution_time ) ) {
 				// Set the SSH timeout to a few seconds less than the max execution timeout for a php script.
 				$ssh_timeout = ( (int) $php_max_execution_time ) - 15;
-				// Note that we cannot set the timeout for the webserver.  So if the above timeout value is greater than the server timeouts, then weird behavior will occur.
-				// For NGINX set the following values in the nginx config file - we're using 600 seconds as an example here:
-				// * fastcgi_read_timeout 600;
-				// * client_header_timeout 600;
-				// * client_body_timeout 600;
-				//
-				// For proxied nginx:
-				// * proxy_read_timeout 600s;
-				//
-				// For APACHE servers (which we don't use but mentioning here for completeness)
-				// in .htaccess set the followng:
-				// * TimeOut 600.
+				// Note that we cannot set the timeout for the webserver. So if the above timeout value is greater than the server timeouts, then weird behavior will occur.
+				// For OpenLiteSpeed, set connTimeout in the tuning block of
+				// /usr/local/lsws/conf/httpd_config.conf to 600 seconds or more.
 			} else {
 				$ssh_timeout = $default_ssh_timeout;
 			}
@@ -94,49 +91,23 @@ class WPCD_SSH {
 
 		/* Execute command - you have 3 mins before it times out. Anything greater than 3 mins should be handled with a callback.  Some proxy servers such as Cloudflare might only give you 1 minute before it times out! */
 		$ssh->setTimeout( $ssh_timeout );
-		$result = $ssh->exec( $command, $callback );
-		do_action( 'wpcd_log_error', "Executing command $command, getting result = $result", 'trace', __FILE__, __LINE__, null, false );
+		$result      = $ssh->exec( $command, $callback );
+		$log_result  = sstk_redact_secret_text( $result, $log_secrets );
+		do_action( 'sstk_log_error', "Executing command $log_command, getting result = $log_result", 'trace', __FILE__, __LINE__, null, false );
 
 		/* Add log */
-		WPCD_POSTS_SSH_LOG()->add_ssh_log_entry( $reference_post_id, $command, $result );
+		SSTK_POSTS_SSH_LOG()->add_ssh_log_entry( $reference_post_id, $command, $result, $log_secrets );
 
 		/* No data coming back is considered an error.  SO, if running a command that results in no feedback pipe follow it up with "&& echo done" or something similar so you get some output. */
 		if ( empty( $result ) ) {
-			/* All of these actions are for the VPN app.  Non VPN actions are 'generic' actions with no specific switch statement associated with it here, just the default switch. */
-			switch ( $action ) {
-				case 'remove-user':
-				case 'connected':
-				case 'disconnect':
-					return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like there are no clients connected to the server at this time.', 'wpcd' ) ) );
-				default:
-					return new \WP_Error( $this->construct_error( __( 'Oops - an internal error occurred. Please wait a few minutes and try again.  If the problem continues, please contact our support team.', 'wpcd' ) ) );
-			}
-		}
-
-		/* Evaluate potential errors for certain action types */
-		if ( in_array( $action, array( 'remove-user', 'download-file', 'connected', 'disconnect' ) ) ) {
-
-			if ( strpos( $result, 'No such file or directory' ) !== false ) {
-
-				do_action( 'wpcd_log_error', "Error in executing command: $result", 'error', __FILE__, __LINE__ );
-
-				/* All of these actions are for the VPN app.  Non VPN actions are 'generic' actions with no specific switch statement associated with it here, just teh default switch. */
-				switch ( $action ) {
-					case 'remove-user':
-					case 'connected':
-					case 'disconnect':
-						return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like there are no clients connected to the server at this time.', 'wpcd' ) ) );
-					default:
-						return new \WP_Error( $this->construct_error( __( 'Oops - it looks like we cannot find the file or directory that we were searching for. Please wait a few minutes and try again.  If the problem continues, please contact our support team.', 'wpcd' ) ) );
-				}
-			}
+			return new \WP_Error( $this->construct_error( __( 'Oops - an internal error occurred. Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'simple-stack' ) ) );
 		}
 
 		/* Check for certain errors in generic commands related to this app */
 		if ( in_array( $action, array( 'generic' ) ) ) {
 			if ( strpos( $result, 'Could not get lock' ) !== false ) {
-				do_action( 'wpcd_log_error', "Error in executing command: $result", 'error', __FILE__, __LINE__ );
-				return new \WP_Error( $this->construct_error( $result ) );
+				do_action( 'sstk_log_error', "Error in executing command: $log_result", 'error', __FILE__, __LINE__ );
+				return new \WP_Error( $this->construct_error( $log_result ) );
 			}
 		}
 
@@ -163,42 +134,42 @@ class WPCD_SSH {
 	 * @return mixed
 	 */
 	public function download( $ip, $remote_file, $local_file, array $key_attributes, $user = 'root', $error_type = 1 ) {
-		do_action( 'wpcd_log_error', "trying to download $remote_file from $ip", 'debug', __FILE__, __LINE__ );
+		do_action( 'sstk_log_error', "trying to download $remote_file from $ip", 'debug', __FILE__, __LINE__ );
 
 		/* Use a filter to force an override of the user name if necessary - this can be useful when servers such as aws don't use the 'root' user as the default login user */
-		$user = apply_filters( 'wpcd_download_ssh_user', $user, $key_attributes );
+		$user = apply_filters( 'sstk_download_ssh_user', $user, $key_attributes );
 
 		$ssh = new SFTP( $ip );
 
-		$key = PublicKeyLoader::load( WPCD()->decrypt( $key_attributes['key'] ), $key_attributes['passwd'] );
+		$key = PublicKeyLoader::load( SSTK()->decrypt( $key_attributes['key'] ), $key_attributes['passwd'] );
 
 		if ( ! $ssh->login( $user, $key ) ) {
-			do_action( 'wpcd_log_error', "Unable to login to server at ip $ip", 'error', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', "Unable to login to server at ip $ip", 'error', __FILE__, __LINE__ );
 			switch ( $error_type ) {
 				case 1:
-					return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like we are unable to connect to the server at this time. This generally occurs when the server is initializing for the first time or is being restarted. <br /><br />Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'wpcd' ) ) );
+					return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like we are unable to connect to the server at this time. This generally occurs when the server is initializing for the first time or is being restarted. <br /><br />Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'simple-stack' ) ) );
 					break;
 				case 2:
 					return 101;
 					break;
 				case 3:
-					return __( 'Unfortunately it looks like we are unable to connect to the server at this time. This generally occurs when the server is initializing for the first time or is being restarted. Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'wpcd' );
+					return __( 'Unfortunately it looks like we are unable to connect to the server at this time. This generally occurs when the server is initializing for the first time or is being restarted. Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'simple-stack' );
 					break;
 			}
 		}
 		if ( empty( $local_file ) ) {
 			$contents = $ssh->get( $remote_file );
 			if ( empty( $contents ) ) {
-				do_action( 'wpcd_log_error', "Unable to find file $remote_file", 'error', __FILE__, __LINE__ );
+				do_action( 'sstk_log_error', "Unable to find file $remote_file", 'error', __FILE__, __LINE__ );
 				switch ( $error_type ) {
 					case 1:
-						return new \WP_Error( $this->construct_error( __( 'We are not able to locate the file we are looking for. Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'wpcd' ) ) );
+						return new \WP_Error( $this->construct_error( __( 'We are not able to locate the file we are looking for. Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'simple-stack' ) ) );
 						break;
 					case 2:
 						return 102;
 						break;
 					case 3:
-						return __( 'We are not able to locate the file we are looking for. Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'wpcd' );
+						return __( 'We are not able to locate the file we are looking for. Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'simple-stack' );
 						break;
 				}
 			}
@@ -222,23 +193,23 @@ class WPCD_SSH {
 	 * @return mixed
 	 */
 	public function upload( $ip, $remote_file, $local_file, array $key_attributes, $user = 'root' ) {
-		do_action( 'wpcd_log_error', "trying to upload $remote_file to $local_file on $ip", 'debug', __FILE__, __LINE__ );
+		do_action( 'sstk_log_error', "trying to upload $remote_file to $local_file on $ip", 'debug', __FILE__, __LINE__ );
 
 		/* Use a filter to force an override of the user name if necessary - this can be useful when servers such as aws don't use the 'root' user as the default login user */
-		$user = apply_filters( 'wpcd_upload_ssh_user', $user, $key_attributes );
+		$user = apply_filters( 'sstk_upload_ssh_user', $user, $key_attributes );
 
 		$ssh = new SFTP( $ip );
 
-		$key = PublicKeyLoader::load( WPCD()->decrypt( $key_attributes['key'] ), $key_attributes['passwd'] );
+		$key = PublicKeyLoader::load( SSTK()->decrypt( $key_attributes['key'] ), $key_attributes['passwd'] );
 
 		if ( ! $ssh->login( $user, $key ) ) {
-			do_action( 'wpcd_log_error', "Unable to login to server at ip $ip", 'error', __FILE__, __LINE__ );
-			return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like we are unable to connect to the server at this time. This generally occurs when the server is initializing for the first time or is being restarted. <br /><br />Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'wpcd' ) ) );
+			do_action( 'sstk_log_error', "Unable to login to server at ip $ip", 'error', __FILE__, __LINE__ );
+			return new \WP_Error( $this->construct_error( __( 'Unfortunately it looks like we are unable to connect to the server at this time. This generally occurs when the server is initializing for the first time or is being restarted. <br /><br />Please wait a few minutes and try again. If the problem continues, please contact our support team.', 'simple-stack' ) ) );
 		}
 
 		$result = $ssh->put( $remote_file, $local_file, SFTP::SOURCE_LOCAL_FILE );
 
-		do_action( 'wpcd_log_error', "uploaded $remote_file to $local_file on $ip", 'trace', __FILE__, __LINE__, null, false );
+		do_action( 'sstk_log_error', "uploaded $remote_file to $local_file on $ip", 'trace', __FILE__, __LINE__, null, false );
 
 		return $result;
 	}
@@ -252,23 +223,25 @@ class WPCD_SSH {
 	 * @return string $new_message The reformatted message.
 	 */
 	public function construct_error( $message ) {
-		$new_message     = '<div class="wpcd-vpn-error-message-wrap">';
-			$new_message = $new_message . '<div class="wpcd-vpn-error-message-title">' . __( 'Oops - An Error Has Occurred', 'wpcd' ) . '</div>';
-			$new_message = $new_message . '<div class="wpcd-vpn-error-message">' . $message;
-				// Add text to tell user how to dismiss the message..
-				$new_message = $new_message . '<div class="wpcd-vpn-error-dismiss-message">' . __( 'To dismiss this message click on the X in the upper right or anywhere on the page outside of this box.', 'wpcd' ) . '</div>';
-			$new_message    .= '</div>';
+		$message      = sstk_redact_secret_text( $message );
+		$new_message  = '<div class="sstk-error-message-wrap">';
+		$new_message .= '<div class="sstk-error-message-title">' . __( 'Oops - An Error Has Occurred', 'simple-stack' ) . '</div>';
+		$new_message .= '<div class="sstk-error-message">' . $message;
 
-			// add in a link to the help screen if a link was set up in settings...
-			$help_url = wpcd_get_option( 'vpn_general_help_url' );
+		// Add text to tell the user how to dismiss the message.
+		$new_message .= '<div class="sstk-error-dismiss-message">' . __( 'To dismiss this message click on the X in the upper right or anywhere on the page outside of this box.', 'simple-stack' ) . '</div>';
+		$new_message .= '</div>';
+
+		// Add a link to the help screen if one is configured.
+		$help_url = sstk_get_option( 'sstk_general_help_url' );
 		if ( ! empty( $help_url ) ) {
-			$new_message         .= '<hr />';
-			$new_message         .= '<div class="wpcd-vpn-error-message-help-footer">';
-				$new_message     .= '<div class="wpcd-vpn-error-message-help-title">' . 'Help Resources' . '</div>';
-				$new_message     .= '<div class="wpcd-vpn-error-message-help-text">';
-					$new_message .= sprintf( __( 'For more information and additional help please check out our <a href="%s"> help pages.</a>', 'wpcd' ), $help_url );
-				$new_message     .= '</div> <!-- error-message-help-text -->';
-			$new_message         .= '</div>';
+			$new_message     .= '<hr />';
+			$new_message     .= '<div class="sstk-error-message-help-footer">';
+			$new_message     .= '<div class="sstk-error-message-help-title">' . __( 'Help Resources', 'simple-stack' ) . '</div>';
+			$new_message     .= '<div class="sstk-error-message-help-text">';
+			$new_message     .= sprintf( __( 'For more information and additional help please check out our <a href="%s"> help pages.</a>', 'simple-stack' ), esc_url( $help_url ) );
+			$new_message     .= '</div> <!-- error-message-help-text -->';
+			$new_message     .= '</div>';
 		}
 
 		$new_message .= '</div> <!-- error-message-wrap -->';
@@ -289,7 +262,7 @@ class WPCD_SSH {
 			'private' => $private->toString( 'OpenSSH' ),
 		);
 
-		return apply_filters( 'wpcd_create_ssh_key_pair', $pair );
+		return apply_filters( 'sstk_create_ssh_key_pair', $pair );
 
 	}
 

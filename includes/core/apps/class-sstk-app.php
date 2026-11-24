@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD APP Class
+ * SSTK APP Class
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,9 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_APP
+ * Class SSTK_APP
  */
-class WPCD_APP extends WPCD_Base {
+class SSTK_APP extends SSTK_Base {
 
 	/**
 	 * Absolute path to the main scripts folder - needs to be sent by the app inheriting this class.
@@ -23,9 +24,9 @@ class WPCD_APP extends WPCD_Base {
 
 	/**
 	 * Relative path to the main scripts folder.
-	 * The path is relative to the WPCD URL.
+	 * The path is relative to the SSTK URL.
 	 * So, if the scripts folder is under
-	 * 'includes\core\apps\vpn\scripts' then
+	 * 'includes/core/apps/wordpress-app/scripts' then
 	 * that is what must be specified here.
 	 *
 	 * @var $scripts_folder_relative
@@ -60,7 +61,7 @@ class WPCD_APP extends WPCD_Base {
 	public function __construct() {
 
 		// Instantiate some variables.
-		self::$providers = WPCD()->get_cloud_providers();
+		self::$providers = SSTK()->get_cloud_providers();
 
 		// Fire hooks.
 		$this->hooks();
@@ -90,14 +91,14 @@ class WPCD_APP extends WPCD_Base {
 		add_action( 'save_post', array( $this, 'save_meta_values_for_background_task_details' ), 10, 2 );
 
 		// Show some app details in the wp-admin list of apps.
-		add_filter( 'wpcd_app_admin_list_summary_column', array( &$this, 'app_admin_list_summary_status_column' ), 10, 2 );
+		add_filter( 'sstk_app_admin_list_summary_column', array( &$this, 'app_admin_list_summary_status_column' ), 10, 2 );
 
 	}
 
 	/**
 	 * Returns all the providers
 	 *
-	 * Right now this is effectively the same as WPCD()->get_cloud_providers()
+	 * Right now this is effectively the same as SSTK()->get_cloud_providers()
 	 * which is ALL Providers.
 	 * But, we're including this function in the event that this app
 	 * needs to modify the list before returning it to the caller.
@@ -113,7 +114,7 @@ class WPCD_APP extends WPCD_Base {
 	 * Returns only the providers that have an API key set.
 	 */
 	public function get_active_providers() {
-		return WPCD()->get_active_cloud_providers();
+		return SSTK()->get_active_cloud_providers();
 	}
 
 	/**
@@ -124,12 +125,12 @@ class WPCD_APP extends WPCD_Base {
 	public function enqueue_scripts( $hook ) {
 		if ( in_array( $hook, array( 'post.php' ) ) ) {
 			$screen = get_current_screen();
-			if ( is_object( $screen ) && 'wpcd_app' == $screen->post_type ) {
-				wp_register_script( 'wpcd-magnific', wpcd_url . 'assets/js/jquery.magnific-popup.min.js', array( 'jquery' ), wpcd_scripts_version, true );
+			if ( is_object( $screen ) && 'sstk_app' == $screen->post_type ) {
+				wp_register_script( 'sstk-magnific', SSTK_URL . 'assets/js/jquery.magnific-popup.min.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, true );
 
-				wp_enqueue_style( 'wpcd-magnific', wpcd_url . 'assets/css/magnific-popup.css', array(), wpcd_scripts_version );
-				wp_enqueue_style( 'wpcd-app-admin', wpcd_url . 'assets/css/wpcd-app.css', array( 'wpcd-magnific' ), wpcd_scripts_version );
-				wp_enqueue_style( 'wpcd-cards-admin', wpcd_url . 'assets/css/wpcd-cards.css', array(), wpcd_scripts_version );
+				wp_enqueue_style( 'sstk-magnific', SSTK_URL . 'assets/css/magnific-popup.css', array(), SSTK_SCRIPTS_VERSION );
+				wp_enqueue_style( 'sstk-app-admin', SSTK_URL . 'assets/css/sstk-app.css', array( 'sstk-magnific' ), SSTK_SCRIPTS_VERSION );
+				wp_enqueue_style( 'sstk-cards-admin', SSTK_URL . 'assets/css/sstk-cards.css', array(), SSTK_SCRIPTS_VERSION );
 			}
 		}
 	}
@@ -144,7 +145,7 @@ class WPCD_APP extends WPCD_Base {
 	 * @return array    Array of actions.
 	 */
 	public function row_actions( $actions, $post ) {
-		if ( 'wpcd_app' === $post->post_type ) {
+		if ( 'sstk_app' === $post->post_type ) {
 			// hide Quick Edit.
 			unset( $actions['inline hide-if-no-js'] );
 		}
@@ -167,7 +168,7 @@ class WPCD_APP extends WPCD_Base {
 	 */
 	public function register_app_metaboxes( $metaboxes ) {
 
-		return apply_filters( "wpcd_app_{$this->get_app_name()}_metaboxes", $metaboxes );
+		return apply_filters( "sstk_app_{$this->get_app_name()}_metaboxes", $metaboxes );
 
 	}
 
@@ -199,54 +200,15 @@ class WPCD_APP extends WPCD_Base {
 	}
 
 	/**
-	 * Resolve which script version this plugin should use.
+	 * Return the only supported provisioning script version.
 	 *
-	 * Two different option keys were in play: the settings screen writes
-	 * `wordpress_app_script_version` while the script readers asked for
-	 * `{app_name}_script_version`, i.e. `wordpress-app_script_version`. Nothing ever wrote
-	 * the hyphenated key, so the settings value was inert and every server silently fell
-	 * back to `v1`.
+	 * Simple Stack is a hard cutover with no legacy installs to migrate, so script-version
+	 * options and per-server legacy values are intentionally ignored.
 	 *
-	 * The underscored key is read first because that is the one the settings UI and the
-	 * REST controller persist. The hyphenated key is still honoured so an install that set
-	 * it out of band keeps working. `v2` is the shipped default.
-	 *
-	 * The option is read directly (`wpcd_get_early_option`) before `wpcd_get_option` is
-	 * tried. Meta Box only resolves fields it registered for the current request, and the
-	 * WordPress App settings metabox is registered in admin; commands are built during REST
-	 * requests and cron, where the read would otherwise return false and the operator's
-	 * choice would be silently discarded.
-	 *
-	 * @return string Script version folder name, eg `v2`.
+	 * @return string Script version folder name.
 	 */
 	public function get_configured_scripts_version() {
-		$version = wpcd_get_early_option( 'wordpress_app_script_version' );
-
-		if ( empty( $version ) ) {
-			$version = wpcd_get_option( 'wordpress_app_script_version' );
-		}
-
-		if ( empty( $version ) ) {
-			$version = wpcd_get_early_option( "{$this->get_app_name()}_script_version" );
-		}
-
-		if ( empty( $version ) ) {
-			$version = wpcd_get_option( "{$this->get_app_name()}_script_version" );
-		}
-
-		if ( empty( $version ) ) {
-			$version = 'v2';
-		}
-
-		/*
-		 * A name that does not match a folder would publish 404 script URLs, and the failure
-		 * would only surface half way through provisioning. Fall back to the shipped default.
-		 */
-		if ( ! is_dir( $this->get_scripts_folder() . $version ) ) {
-			$version = 'v2';
-		}
-
-		return $version;
+		return 'v2';
 	}
 
 	/**
@@ -261,18 +223,18 @@ class WPCD_APP extends WPCD_Base {
 	 *
 	 * @return string A validated address/CIDR, or '' when unset or invalid.
 	 */
-	public function get_simplestack_admin_ip() {
+	public function get_sstk_admin_ip() {
 		/*
-		 * Read the option directly rather than only through wpcd_get_option(): Meta Box
+		 * Read the option directly rather than only through sstk_get_option(): Meta Box
 		 * resolves fields registered for the current request, and the WordPress App settings
 		 * metabox is registered in admin. Commands are built during REST requests and cron,
 		 * where the rwmb_meta() read returns false - so relying on it alone left a configured
 		 * address permanently ignored and the console permanently closed.
 		 */
-		$value = wpcd_get_early_option( 'simplestack_admin_ip' );
+		$value = sstk_get_early_option( 'sstk_admin_ip' );
 
 		if ( empty( $value ) ) {
-			$value = wpcd_get_option( 'simplestack_admin_ip' );
+			$value = sstk_get_option( 'sstk_admin_ip' );
 		}
 
 		$value = trim( (string) $value );
@@ -302,7 +264,7 @@ class WPCD_APP extends WPCD_Base {
 	}
 
 	/**
-	 * Return the WordPress.org plugin slugs the SimpleStack post-install hook activates.
+	 * Return the WordPress.org plugin slugs the Simple Stack post-install hook activates.
 	 *
 	 * The hook runs inside the provisioning script, so this value ends up on a Bash command
 	 * line. Every entry is therefore reduced to the WordPress.org slug character set and
@@ -311,12 +273,12 @@ class WPCD_APP extends WPCD_Base {
 	 *
 	 * Slug list is empty until the One Dog plugin slugs are supplied through the filter.
 	 *
-	 * Filter Hook: simplestack_post_site_install_plugins
+	 * Filter Hook: sstk_post_site_install_plugins
 	 *
 	 * @return string Space separated, validated plugin slugs, or '' when none are configured.
 	 */
 	public function get_post_site_install_plugins() {
-		$plugins = apply_filters( 'simplestack_post_site_install_plugins', array() );
+		$plugins = apply_filters( 'sstk_post_site_install_plugins', array() );
 
 		if ( is_string( $plugins ) ) {
 			$plugins = preg_split( '/[\s,]+/', $plugins );
@@ -405,7 +367,7 @@ class WPCD_APP extends WPCD_Base {
 	 */
 	public function set_delete_protection_flag( $post_id ) {
 
-		update_post_meta( $post_id, 'wpcd_app_delete_protection', '1' );
+		update_post_meta( $post_id, 'sstk_app_delete_protection', '1' );
 
 	}
 
@@ -426,7 +388,7 @@ class WPCD_APP extends WPCD_Base {
 
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app',
+				'post_type'   => 'sstk_app',
 				'post_status' => 'private',
 				'numberposts' => -1,
 				'meta_query'  => array(),
@@ -445,7 +407,7 @@ class WPCD_APP extends WPCD_Base {
 	 *
 	 * @return array|boolean Array of app posts or false or error message
 	 *
-	 * @TODO - this might be better off in the WPCD_Server class?
+	 * @TODO - this might be better off in the SSTK_Server class?
 	 * If so, we can always add a stub function here to replace it
 	 * and move it there if necessary later.
 	 */
@@ -458,7 +420,7 @@ class WPCD_APP extends WPCD_Base {
 
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app_server',
+				'post_type'   => 'sstk_app_server',
 				'post_status' => 'private',
 				'numberposts' => -1,
 				'meta_query'  => array(),
@@ -520,7 +482,7 @@ class WPCD_APP extends WPCD_Base {
 	 */
 	public function get_server_by_app_id( $app_id ) {
 
-		return WPCD()->get_server_by_app_id( $app_id );
+		return SSTK()->get_server_by_app_id( $app_id );
 
 	}
 
@@ -573,7 +535,7 @@ class WPCD_APP extends WPCD_Base {
 	public function get_server_type( $server_id ) {
 
 		// Get the server post.
-		$server_type = get_post_meta( $server_id, 'wpcd_server_initial_app_name', true );
+		$server_type = get_post_meta( $server_id, 'sstk_server_initial_app_name', true );
 
 		return $server_type;
 
@@ -590,14 +552,14 @@ class WPCD_APP extends WPCD_Base {
 	public function get_ipv4_address( $app_id ) {
 
 		// if for some reason the $app_id is actually a server id return the server data right away.
-		if ( 'wpcd_app_server' === get_post_type( $app_id ) ) {
-			return WPCD_SERVER()->get_ipv4_address( $app_id );
+		if ( 'sstk_app_server' === get_post_type( $app_id ) ) {
+			return SSTK_SERVER()->get_ipv4_address( $app_id );
 		}
 
 		// ok, we probably have an app id so work with that.
 		$server_post = $this->get_server_by_app_id( $app_id );
 		if ( $server_post ) {
-			return WPCD_SERVER()->get_ipv4_address( $server_post->ID );
+			return SSTK_SERVER()->get_ipv4_address( $server_post->ID );
 		} else {
 			return false;
 		}
@@ -616,14 +578,14 @@ class WPCD_APP extends WPCD_Base {
 	public function get_ipv6_address( $app_id ) {
 
 		// if for some reason the $app_id is actually a server id return the server data right away.
-		if ( 'wpcd_app_server' === get_post_type( $app_id ) ) {
-			return WPCD_SERVER()->get_ipv6_address( $app_id );
+		if ( 'sstk_app_server' === get_post_type( $app_id ) ) {
+			return SSTK_SERVER()->get_ipv6_address( $app_id );
 		}
 
 		// ok, we probably have an app id so work with that.
 		$server_post = $this->get_server_by_app_id( $app_id );
 		if ( $server_post ) {
-			return WPCD_SERVER()->get_ipv6_address( $server_post->ID );
+			return SSTK_SERVER()->get_ipv6_address( $server_post->ID );
 		} else {
 			return false;
 		}
@@ -643,15 +605,15 @@ class WPCD_APP extends WPCD_Base {
 		$ip   = '';
 		$ipv4 = $this->get_ipv4_address( $app_id );
 		if ( ! empty( $ipv4 ) ) {
-			$ip = wpcd_wrap_clipboard_copy( $ipv4, false );
+			$ip = sstk_wrap_clipboard_copy( $ipv4, false );
 		}
-		if ( wpcd_get_early_option( 'wpcd_show_ipv6' ) ) {
+		if ( sstk_get_early_option( 'sstk_show_ipv6' ) ) {
 			$ipv6 = $this->get_ipv6_address( $app_id );
 			if ( ! empty( $ipv6 ) ) {
 				if ( ! empty( $ip ) ) {
-					$ip .= '<br />' . wpcd_wrap_clipboard_copy( $ipv6, false );
+					$ip .= '<br />' . sstk_wrap_clipboard_copy( $ipv6, false );
 				} else {
-					$ip = wpcd_wrap_clipboard_copy( $ipv6 );
+					$ip = sstk_wrap_clipboard_copy( $ipv6 );
 				}
 			}
 		}
@@ -670,14 +632,14 @@ class WPCD_APP extends WPCD_Base {
 	public function get_server_name( $app_id ) {
 
 		// if for some reason the $app_id is actually a server id return the server data right away.
-		if ( 'wpcd_app_server' == get_post_type( $app_id ) ) {
-			return WPCD_SERVER()->get_server_name( $app_id );
+		if ( 'sstk_app_server' == get_post_type( $app_id ) ) {
+			return SSTK_SERVER()->get_server_name( $app_id );
 		}
 
 		// ok, we probably have an app id so work with that.
 		$server_post = $this->get_server_by_app_id( $app_id );
 		if ( $server_post ) {
-			return WPCD_SERVER()->get_server_name( $server_post->ID );
+			return SSTK_SERVER()->get_server_name( $server_post->ID );
 		} else {
 			return false;
 		}
@@ -693,7 +655,7 @@ class WPCD_APP extends WPCD_Base {
 	public function get_server_region( $app_id ) {
 		$server_post = $this->get_server_by_app_id( $app_id );
 		if ( $server_post ) {
-			return WPCD_SERVER()->get_server_region( $server_post->ID );
+			return SSTK_SERVER()->get_server_region( $server_post->ID );
 		} else {
 			return false;
 		}
@@ -709,7 +671,7 @@ class WPCD_APP extends WPCD_Base {
 	public function get_server_provider( $app_id ) {
 		$server_post = $this->get_server_by_app_id( $app_id );
 		if ( $server_post ) {
-			return WPCD_SERVER()->get_server_provider( $server_post->ID );
+			return SSTK_SERVER()->get_server_provider( $server_post->ID );
 		} else {
 			return false;
 		}
@@ -728,7 +690,7 @@ class WPCD_APP extends WPCD_Base {
 	public function get_server_meta_by_app_id( $app_id, $key, $single = false ) {
 
 		// If for some reason the $app_id is actually a server id return the server data right away.
-		if ( 'wpcd_app_server' == get_post_type( $app_id ) ) {
+		if ( 'sstk_app_server' == get_post_type( $app_id ) ) {
 			return get_post_meta( $app_id, $key, $single );
 		}
 
@@ -775,7 +737,7 @@ class WPCD_APP extends WPCD_Base {
 	public function add_custom_field_tokens_to_script( $script_name, $script_contents ) {
 
 		// Get the list of custom fields applicable for the $script_name - make sure to run it through a filter so that devs can modify it if necessary.
-		$custom_fields = apply_filters( "wpcd_{$this->get_app_name()}_add_custom_field_tokens_to_script", WPCD_CUSTOM_FIELDS()->get_fields_for_script( $script_name ), $script_name, $script_contents );
+		$custom_fields = apply_filters( "sstk_{$this->get_app_name()}_add_custom_field_tokens_to_script", SSTK_CUSTOM_FIELDS()->get_fields_for_script( $script_name ), $script_name, $script_contents );
 
 		if ( ! empty( $custom_fields ) ) {
 			$custom_fields_string = '';
@@ -797,7 +759,7 @@ class WPCD_APP extends WPCD_Base {
 	 * Tokens are of the format ##TOKEN## and it is expected that
 	 * the 'TOKEN' is uppercase.
 	 *
-	 * As of Version 4.2.5 of WPCD, this function also handles
+	 * As of Version 4.2.5 of SSTK, this function also handles
 	 * replacing similar tokens in EMAIL templates.
 	 *
 	 * @param string $script The full text of the script contents.
@@ -820,12 +782,8 @@ class WPCD_APP extends WPCD_Base {
 	}
 
 	/**
-	 * Get script temp folder - create it if not already created
-	 *
-	 * Certain providers such as digital ocean allow you to execute
-	 * a script from a certain path by loading it up with wget.
-	 * So, we place our scripts in a temp folder and pass that foldername
-	 * and script name to the provider.
+	 * Get the temporary folder used for generated scripts and log downloads.
+	 * Create it if it does not already exist.
 	 *
 	 * @return $string $temp_path temporary path based on the name of the app (which must be set by the descendent class).
 	 */
@@ -837,12 +795,12 @@ class WPCD_APP extends WPCD_Base {
 		WP_Filesystem();
 		global $wp_filesystem;
 
-		if ( ! $wp_filesystem->is_dir( trailingslashit( $dir['basedir'] ) . 'wpcd_app_' . $this->get_app_name() . '/scripts' ) ) {
-			// $wp_filesystem->mkdir( trailingslashit( $dir['basedir'] ) . 'wpcd_app_' . $this->get_app_name()  . '/scripts' );
-			wp_mkdir_p( trailingslashit( $dir['basedir'] ) . 'wpcd_app_' . $this->get_app_name() . '/scripts' );
+		if ( ! $wp_filesystem->is_dir( trailingslashit( $dir['basedir'] ) . 'sstk_app_' . $this->get_app_name() . '/scripts' ) ) {
+			// $wp_filesystem->mkdir( trailingslashit( $dir['basedir'] ) . 'sstk_app_' . $this->get_app_name()  . '/scripts' );
+			wp_mkdir_p( trailingslashit( $dir['basedir'] ) . 'sstk_app_' . $this->get_app_name() . '/scripts' );
 		}
 
-		$temp_path = trailingslashit( $dir['basedir'] ) . 'wpcd_app_' . $this->get_app_name() . '/scripts';
+		$temp_path = trailingslashit( $dir['basedir'] ) . 'sstk_app_' . $this->get_app_name() . '/scripts';
 
 		return $temp_path;
 	}
@@ -852,7 +810,7 @@ class WPCD_APP extends WPCD_Base {
 	 */
 	public function get_script_temp_path_uri() {
 		$dir = wp_get_upload_dir();
-		return trailingslashit( $dir['baseurl'] ) . 'wpcd_app_' . $this->get_app_name() . '/scripts';
+		return trailingslashit( $dir['baseurl'] ) . 'sstk_app_' . $this->get_app_name() . '/scripts';
 	}
 
 	/**
@@ -866,10 +824,10 @@ class WPCD_APP extends WPCD_Base {
 		WP_Filesystem();
 		global $wp_filesystem;
 
-		set_transient( 'wpcd_file_watcher_delete_temp_files_is_active', 1, 15 * MINUTE_IN_SECONDS );
+		set_transient( 'sstk_file_watcher_delete_temp_files_is_active', 1, 15 * MINUTE_IN_SECONDS );
 
 		// Set transient to check WordPress logs delete cron scheduled and loaded.
-		set_transient( 'wpcd_wordpress_file_watcher_delete_temp_files_is_active', 1, 15 * MINUTE_IN_SECONDS );
+		set_transient( 'sstk_wordpress_file_watcher_delete_temp_files_is_active', 1, 15 * MINUTE_IN_SECONDS );
 
 		$dir = $this->get_script_temp_path();
 
@@ -898,14 +856,14 @@ class WPCD_APP extends WPCD_Base {
 	 *
 	 * Examples:
 	 * 1. When the server install completes
-	 * Route: /wp-json/wordpress-app/v1/command/123/prepare_server/completed/123142341/ where
+	 * Route: /wp-json/simple-stack/v1/command/123/prepare_server/completed/123142341/ where
 	 * - 123: post_id of the server
 	 * - prepare_server: command name
 	 * - completed: command status
 	 * - 123142341: timestamp of when the callback was created
 	 *
 	 * 2. When an install WP completes:
-	 * Route: /wp-json/wordpress-app/v1/command/123/install_wp_bcedc450f8481e89b1445069acdc3dd9/completed/123142341/ where
+	 * Route: /wp-json/simple-stack/v1/command/123/install_wp_bcedc450f8481e89b1445069acdc3dd9/completed/123142341/ where
 	 * - 123: post_id of the server
 	 * - install_wp_bcedc450f8481e89b1445069acdc3dd9: command name (including the MD5 hash of the domain)
 	 * - completed: command status
@@ -919,7 +877,7 @@ class WPCD_APP extends WPCD_Base {
 		 * command this site is actually waiting on.
 		 */
 		register_rest_route(
-			$this->get_app_name() . '/v' . WPCD_REST_VERSION,
+			'simple-stack/v' . SSTK_REST_VERSION,
 			'/command/(?P<id>\d+)/(?P<name>.+)/(?P<status>.+)/(?P<cmdid>\d+)/',
 			array(
 				'methods'             => array( 'GET', 'POST' ),
@@ -939,7 +897,7 @@ class WPCD_APP extends WPCD_Base {
 	 */
 	protected function get_command_url( $id, $name, $status, $attributes = array() ) {
 		$time = time();
-		return apply_filters( 'wpcd_rest_url', rest_url( "{$this->get_app_name()}/v" . WPCD_REST_VERSION . "/command/$id/$name/$status/$time/" ), $id, $name, $status, $attributes );
+		return apply_filters( 'sstk_rest_url', rest_url( "simple-stack/v" . SSTK_REST_VERSION . "/command/$id/$name/$status/$time/" ), $id, $name, $status, $attributes );
 	}
 
 	/**
@@ -949,7 +907,7 @@ class WPCD_APP extends WPCD_Base {
 	 * @param string $name name.
 	 */
 	protected function get_command_attributes( $id, $name ) {
-		$attributes = get_transient( "wpcd_command_{$this->get_app_name()}_{$id}_{$name}" );
+		$attributes = get_transient( "sstk_command_{$this->get_app_name()}_{$id}_{$name}" );
 		if ( $attributes !== false ) {
 			return $attributes;
 		}
@@ -961,8 +919,8 @@ class WPCD_APP extends WPCD_Base {
 	 *
 	 * This function seems to be triggered only by ajax
 	 * or other explicit calls.  So using the action hooks
-	 * in here is not useful for anything being done in the
-	 * background - eg: via woocommerce.
+	 * in here is not useful for work performed in the
+	 * background.
 	 * Alternative hooks to use are in the UPDATE_COMMAND_STATUS
 	 * function.
 	 *
@@ -972,19 +930,19 @@ class WPCD_APP extends WPCD_Base {
 	 * Doneness is indicated by the transient having the string value of 'done'.
 	 */
 	protected function is_command_done( $id, $name ) {
-		$attributes = get_transient( "wpcd_command_{$this->get_app_name()}_{$id}_{$name}" );
+		$attributes = get_transient( "sstk_command_{$this->get_app_name()}_{$id}_{$name}" );
 		$done       = $attributes && is_string( $attributes ) && $attributes === 'done';
-		do_action( 'wpcd_log_error', "is_command_done( $id, $name ) = " . ( $done ? 'yes' : 'no' ), 'trace', __FILE__, __LINE__, null, false );
+		do_action( 'sstk_log_error', "is_command_done( $id, $name ) = " . ( $done ? 'yes' : 'no' ), 'trace', __FILE__, __LINE__, null, false );
 
 		/* Allow things to hook in when a command is completed. */
 		if ( 1 === (int) $done ) {
-			// Action hook: wpcd_server_wordpress-app_command_done.
+			// Action hook: sstk_server_wordpress-app_command_done.
 			// This will allow things to hook into any action that is marked as done.
-			do_action( "wpcd_server_{$this->get_app_name()}_command_done", $id, $name );
+			do_action( "sstk_server_{$this->get_app_name()}_command_done", $id, $name );
 
-			// Action hook: example - wpcd_server_wordpress-app_prepare_server_command_done.
+			// Action hook: example - sstk_server_wordpress-app_prepare_server_command_done.
 			// This will allow things to hook into a specific action name marked as done.
-			do_action( "wpcd_server_{$this->get_app_name()}_{$name}_command_done", $id );
+			do_action( "sstk_server_{$this->get_app_name()}_{$name}_command_done", $id );
 		}
 
 		return $done;
@@ -999,9 +957,9 @@ class WPCD_APP extends WPCD_Base {
 	 * @param string $name name.
 	 */
 	protected function is_command_running( $id, $name ) {
-		$attributes = get_transient( "wpcd_command_{$this->get_app_name()}_{$id}_{$name}" );
+		$attributes = get_transient( "sstk_command_{$this->get_app_name()}_{$id}_{$name}" );
 		$running    = $attributes && is_array( $attributes );
-		do_action( 'wpcd_log_error', "is_command_running( $id, $name ) = " . ( $running ? 'yes' : 'no' ), 'debug', __FILE__, __LINE__, false );
+		do_action( 'sstk_log_error', "is_command_running( $id, $name ) = " . ( $running ? 'yes' : 'no' ), 'debug', __FILE__, __LINE__, false );
 		return $running;
 	}
 
@@ -1019,44 +977,44 @@ class WPCD_APP extends WPCD_Base {
 
 		if ( $attributes === false ) {
 			// invalid command, bail!
-			return new \WP_Error( __( 'Invalid Command or Command has expired', 'wpcd' ) );
+			return new \WP_Error( __( 'Invalid Command or Command has expired', 'simple-stack' ) );
 		}
 
 		$logs = '';
 
-		// we need to save logs in 2 parts. This first part is to quickly create the wpcd_temp_log_id with an empty log.
+		// we need to save logs in 2 parts. This first part is to quickly create the sstk_temp_log_id with an empty log.
 		if ( $persist_in_db ) {
-			$log_id = get_post_meta( $id, 'wpcd_temp_log_id', true );
+			$log_id = get_post_meta( $id, 'sstk_temp_log_id', true );
 			if ( empty( $log_id ) ) {
-				$log_id = WPCD_POSTS_COMMAND_LOG()->add_command_log_entry( $id, $name, $logs, $ref, null );
-				update_post_meta( $id, 'wpcd_temp_log_id', $log_id );
+				$log_id = SSTK_POSTS_COMMAND_LOG()->add_command_log_entry( $id, $name, $logs, $ref, null );
+				update_post_meta( $id, 'sstk_temp_log_id', $log_id );
 			}
 		}
 
 		// if completed, then get .log.done.
 		if ( is_string( $attributes ) && $attributes === 'done' ) {
 			// get the log done contents.
-			$logs = apply_filters( "wpcd_command_{$this->get_app_name()}_logs_done", '', $id, $name, $attributes );
+			$logs = apply_filters( "sstk_command_{$this->get_app_name()}_logs_done", '', $id, $name, $attributes );
 		} else {
 			// otherwise get .log.intermed.
-			$logs = apply_filters( "wpcd_command_{$this->get_app_name()}_logs_intermed", '', $id, $name, $attributes );
+			$logs = apply_filters( "sstk_command_{$this->get_app_name()}_logs_intermed", '', $id, $name, $attributes );
 		}
 
-		// we need to save logs in 2 parts. This second part is to update the log id from wpcd_temp_log_id with the actual logs.
+		// we need to save logs in 2 parts. This second part is to update the log id from sstk_temp_log_id with the actual logs.
 		if ( $persist_in_db ) {
-			$log_id = get_post_meta( $id, 'wpcd_temp_log_id', true );
+			$log_id = get_post_meta( $id, 'sstk_temp_log_id', true );
 			if ( ! empty( $log_id ) ) {
-				$log_id = WPCD_POSTS_COMMAND_LOG()->add_command_log_entry( $id, $name, $logs, $ref, $log_id );
+				$log_id = SSTK_POSTS_COMMAND_LOG()->add_command_log_entry( $id, $name, $logs, $ref, $log_id );
 			} else {
 				// this can only happen when the polling requests have very short intervals.
 				// Intervals should be increased to avoid this occurrence.
-				do_action( 'wpcd_log_error', "Unable to find a log id in wpcd_temp_log_id for post $id. Increase the polling interval", 'error', __FILE__, __LINE__, false );
+				do_action( 'sstk_log_error', "Unable to find a log id in sstk_temp_log_id for post $id. Increase the polling interval", 'error', __FILE__, __LINE__, false );
 			}
 		}
 
 		if ( $log_id ) {
 			// We need to re-retrieve the logs from the database because the process of saving them might have added data that the user needs to see on the screen.
-			$logs = apply_filters( "wpcd_command_{$this->get_app_name()}_logs", WPCD_POSTS_COMMAND_LOG()->get_command_log( $log_id ) );
+			$logs = apply_filters( "sstk_command_{$this->get_app_name()}_logs", SSTK_POSTS_COMMAND_LOG()->get_command_log( $log_id ) );
 		}
 
 		return $logs;
@@ -1096,17 +1054,17 @@ class WPCD_APP extends WPCD_Base {
 		$id         = filter_var( sanitize_text_field( $params['id'] ), FILTER_VALIDATE_INT );
 
 		if ( ! $id ) {
-			return new WP_REST_Response( array( 'error' => new WP_Error( __( 'Invalid instance', 'wpcd' ) ) ) );
+			return new WP_REST_Response( array( 'error' => new WP_Error( __( 'Invalid instance', 'simple-stack' ) ) ) );
 		}
 		if ( ! $name ) {
-			return new WP_REST_Response( array( 'error' => new WP_Error( __( 'Invalid name: %s', 'wpcd' ) ) ) );
+			return new WP_REST_Response( array( 'error' => new WP_Error( __( 'Invalid name: %s', 'simple-stack' ) ) ) );
 		}
 		// if status is not in a limited set.
-		if ( ! $status || ! in_array( $status, apply_filters( 'wpcd_command_statuses', array( 'started', 'completed', 'errored', 'in-progress', 'misc', 'progress-report' ), $name ), true ) ) {
-			return new WP_REST_Response( array( 'error' => new WP_Error( sprintf( __( 'Invalid status: %s', 'wpcd' ), $status ) ) ) );
+		if ( ! $status || ! in_array( $status, apply_filters( 'sstk_command_statuses', array( 'started', 'completed', 'errored', 'in-progress', 'misc', 'progress-report' ), $name ), true ) ) {
+			return new WP_REST_Response( array( 'error' => new WP_Error( sprintf( __( 'Invalid status: %s', 'simple-stack' ), $status ) ) ) );
 		}
 		if ( ! $command_id ) {
-			return new WP_REST_Response( array( 'error' => new WP_Error( __( 'Invalid command ID', 'wpcd' ) ) ) );
+			return new WP_REST_Response( array( 'error' => new WP_Error( __( 'Invalid command ID', 'simple-stack' ) ) ) );
 		}
 
 		/*
@@ -1117,10 +1075,10 @@ class WPCD_APP extends WPCD_Base {
 		 * it could guess.
 		 */
 		if ( false === $this->get_command_attributes( $id, $name ) ) {
-			return new WP_REST_Response( array( 'error' => new WP_Error( 'wpcd_unknown_command', __( 'Unknown command.', 'wpcd' ) ) ) );
+			return new WP_REST_Response( array( 'error' => new WP_Error( 'sstk_unknown_command', __( 'Unknown command.', 'simple-stack' ) ) ) );
 		}
 
-		$data = apply_filters( "wpcd_{$this->get_app_name()}_command_status", $data, $id, $name, $status, $command_id, $params );
+		$data = apply_filters( "sstk_{$this->get_app_name()}_command_status", $data, $id, $name, $status, $command_id, $params );
 		// short-circuit the action if a non-null is returned.
 		if ( ! is_null( $data ) ) {
 			// if an error is raised, send it back as an error.
@@ -1131,8 +1089,8 @@ class WPCD_APP extends WPCD_Base {
 			return new WP_REST_Response( array( 'data' => $data ) );
 		}
 
-		do_action( "wpcd_{$this->get_app_name()}_command_status_action", $id, $name, $status, $command_id, $params );
-		do_action( "wpcd_{$this->get_app_name()}_command_{$name}_{$status}", $id, $command_id, $name, $status, $params );
+		do_action( "sstk_{$this->get_app_name()}_command_status_action", $id, $name, $status, $command_id, $params );
+		do_action( "sstk_{$this->get_app_name()}_command_{$name}_{$status}", $id, $command_id, $name, $status, $params );
 
 		$this->update_command_status( $id, $name, $status );
 
@@ -1161,14 +1119,14 @@ class WPCD_APP extends WPCD_Base {
 		// if the status is completed, we will mark the command as done.
 		if ( $status === 'completed' ) {
 			// set transient (no expiry) with a string, not an array.
-			set_transient( "wpcd_command_{$this->get_app_name()}_{$id}_{$name}", 'done' );
+			set_transient( "sstk_command_{$this->get_app_name()}_{$id}_{$name}", 'done' );
 			$this->unlock_command_mutex( $id, $name );
 		} else {
 			$attributes['_status'] = $status;
 			// set the status and again extend the time.
 			// The expiration is updated every time the command status is updated.
-			// This means if a command goes through 5 status updates, it gives each status update 15 minutes to run (the function wpcd_get_long_running_command_timeout() defaults to 15 minutes but can be changed in the setttings screen).
-			set_transient( "wpcd_command_{$this->get_app_name()}_{$id}_{$name}", $attributes, wpcd_get_long_running_command_timeout() * MINUTE_IN_SECONDS );
+			// This means if a command goes through 5 status updates, it gives each status update 15 minutes to run (the function sstk_get_long_running_command_timeout() defaults to 15 minutes but can be changed in the setttings screen).
+			set_transient( "sstk_command_{$this->get_app_name()}_{$id}_{$name}", $attributes, sstk_get_long_running_command_timeout() * MINUTE_IN_SECONDS );
 		}
 
 		/**
@@ -1178,11 +1136,11 @@ class WPCD_APP extends WPCD_Base {
 		$base_command = $this->get_command_base_name( $name );
 		if ( ! empty( $base_command ) ) {
 			// fire action hooks.
-			do_action( "wpcd_command_{$this->get_app_name()}_{$base_command}_{$status}", $id, $name );  // Hook Name Example: wpcd_command_wordpress-app_install_wp_completed.
+			do_action( "sstk_command_{$this->get_app_name()}_{$base_command}_{$status}", $id, $name );  // Hook Name Example: sstk_command_wordpress-app_install_wp_completed.
 		}
 
 		/* Fire this hook no matter what */
-		do_action( "wpcd_command_{$this->get_app_name()}_{$status}", $id, $name, $base_command );  // Hook Name Example: wpcd_command_wordpress-app_completed.
+		do_action( "sstk_command_{$this->get_app_name()}_{$status}", $id, $name, $base_command );  // Hook Name Example: sstk_command_wordpress-app_completed.
 	}
 
 	/**
@@ -1203,7 +1161,7 @@ class WPCD_APP extends WPCD_Base {
 
 		if ( false === strpos( $name, '---' ) ) {
 			// command is likely format #1.
-			$start_of_numbers = wpcd_locate_first_number_in_string( $name );
+			$start_of_numbers = sstk_locate_first_number_in_string( $name );
 			if ( $start_of_numbers >= 1 ) {
 				// make sure the character preceeding the number is an "_".
 				if ( '_' == substr( $name, $start_of_numbers - 1, 1 ) ) {
@@ -1239,7 +1197,7 @@ class WPCD_APP extends WPCD_Base {
 			'_id'     => $id,
 			'_status' => 'started',
 		);
-		set_transient( "wpcd_command_{$this->app_name}_{$id}_{$name}", $attributes, wpcd_get_long_running_command_timeout() * MINUTE_IN_SECONDS );
+		set_transient( "sstk_command_{$this->app_name}_{$id}_{$name}", $attributes, sstk_get_long_running_command_timeout() * MINUTE_IN_SECONDS );
 
 		if ( $lock ) {
 			$this->get_command_mutex( $id, $name );
@@ -1255,7 +1213,7 @@ class WPCD_APP extends WPCD_Base {
 	 * @return string
 	 */
 	public static function encrypt( $plainText ) {
-		return WPCD()->encrypt( $plainText );
+		return SSTK()->encrypt( $plainText );
 	}
 
 	/**
@@ -1266,14 +1224,14 @@ class WPCD_APP extends WPCD_Base {
 	 * @return string
 	 */
 	public static function decrypt( $encryptedText ) {
-		return WPCD()->decrypt( $encryptedText );
+		return SSTK()->decrypt( $encryptedText );
 	}
 
 
 	/**
 	 * Adds the scripts for provider/region/size support.
 	 *
-	 * @TODO Anyone who wants to add the drop down support should use this, including VPN.
+	 * App types can reuse this helper for their provider, region and size dropdowns.
 	 *
 	 * @param bool   $get_regions get_regions.
 	 * @param bool   $get_sizes get_sizes.
@@ -1353,16 +1311,16 @@ class WPCD_APP extends WPCD_Base {
 			}
 		}
 
-		wp_register_script( 'wpcd-provider-regions-sizes', wpcd_url . 'assets/js/wpcd-provider-regions-sizes.js', array( 'jquery', 'wp-util' ), wpcd_scripts_version, true );
+		wp_register_script( 'sstk-provider-regions-sizes', SSTK_URL . 'assets/js/sstk-provider-regions-sizes.js', array( 'jquery', 'wp-util' ), SSTK_SCRIPTS_VERSION, true );
 		wp_localize_script(
-			'wpcd-provider-regions-sizes',
+			'sstk-provider-regions-sizes',
 			'attributes',
 			array(
 				'provider_regions' => $provider_regions,
 				'provider_sizes'   => $provider_sizes,
 			)
 		);
-		wp_enqueue_script( 'wpcd-provider-regions-sizes' );
+		wp_enqueue_script( 'sstk-provider-regions-sizes' );
 
 		return array(
 			'providers' => $providers,
@@ -1379,10 +1337,10 @@ class WPCD_APP extends WPCD_Base {
 	 */
 	protected function unlock_command_mutex( $id, $name ) {
 		$this->get_command_logs( $id, $name );
-		delete_post_meta( $id, 'wpcd_command_mutex' );
+		delete_post_meta( $id, 'sstk_command_mutex' );
 
 		// delete the temp log id when the command completes.
-		delete_post_meta( $id, 'wpcd_temp_log_id' );
+		delete_post_meta( $id, 'sstk_temp_log_id' );
 	}
 
 	/**
@@ -1393,10 +1351,10 @@ class WPCD_APP extends WPCD_Base {
 	 * @param string $command command.
 	 */
 	protected function get_command_mutex( $id, $command ) {
-		$mutex = get_post_meta( $id, 'wpcd_command_mutex', true );
+		$mutex = get_post_meta( $id, 'sstk_command_mutex', true );
 		// no command is running; set our command.
 		if ( ! $mutex ) {
-			add_post_meta( $id, 'wpcd_command_mutex', $command );
+			add_post_meta( $id, 'sstk_command_mutex', $command );
 			$mutex = $command;
 		}
 
@@ -1414,13 +1372,13 @@ class WPCD_APP extends WPCD_Base {
 	public static function show_log_button_for( $id, $running_only = true ) {
 		if ( $running_only ) {
 			// get the mutex to find out what command is currently running, if any.
-			$mutex = get_post_meta( $id, 'wpcd_command_mutex', true );
+			$mutex = get_post_meta( $id, 'sstk_command_mutex', true );
 			if ( ! empty( $mutex ) ) {
 				return $mutex;
 			}
 		} else {
 			// let's see all logs that have been captured...
-			$logs    = wpcd_get_child_posts( 'wpcd_command_log', $id );
+			$logs    = sstk_get_child_posts( 'sstk_command_log', $id );
 			$buttons = array();
 			if ( $logs ) {
 				foreach ( $logs as $log ) {
@@ -1465,16 +1423,10 @@ class WPCD_APP extends WPCD_Base {
 			/* this does not belong to us so just quit now */
 			return $run_cmd;
 		}
-		/* End first check that we are handling a basic server app / server - use attributes array */
+		/* End the check that this command belongs to the current app or server. */
 
-		/* What version of the scripts are we getting? */
-		$script_version = '';
-		if ( isset( $attributes['scripts_version'] ) && ( ! empty( $attributes['scripts_version'] ) ) ) {
-			$script_version = $attributes['scripts_version'];
-		} else {
-			$script_version = $this->get_configured_scripts_version();
-		}
-		/* End what version of the scripts are we getting */
+		/* Simple Stack only ships and executes the v2 provisioning scripts. */
+		$script_version = $this->get_configured_scripts_version();
 
 		/**
 		 * Grab the contents of the run commands template - the text in this template is updated to replace certain ##TOKENS##
@@ -1482,7 +1434,7 @@ class WPCD_APP extends WPCD_Base {
 		 *
 		 * We first check to see if the filename exists with the providers prefix.  If not then we try to grab one without the prefix.
 		 */
-		$command = $this->get_script_file_contents( apply_filters( 'wpcd_script_file_name', $script_name, $attributes ) ); // let developers override...
+		$command = $this->get_script_file_contents( apply_filters( 'sstk_script_file_name', $script_name, $attributes ) ); // let developers override...
 		if ( empty( $command ) ) {
 			$command = $this->get_script_file_contents( $this->get_scripts_folder() . $script_version . '/' . $attributes['provider'] . '-' . $script_name );
 		}
@@ -1490,14 +1442,14 @@ class WPCD_APP extends WPCD_Base {
 			$command = $this->get_script_file_contents( $this->get_scripts_folder() . $script_version . '/' . $script_name );
 		}
 		$command = $this->add_custom_field_tokens_to_script( $script_name, $command ); // Add custom fields to command script file.
-		$command = apply_filters( 'wpcd_script_file_contents', $command, $script_name ); // let developers override again...
+		$command = apply_filters( 'sstk_script_file_contents', $command, $script_name ); // let developers override again...
 
 		/* Construct an array of placeholder tokens for the run command file  */
-		$place_holders = apply_filters( "wpcd_script_placeholders_{$this->get_app_name()}", array(), $script_name, $script_version, $attributes, $command, $additional );
+		$place_holders = apply_filters( "sstk_script_placeholders_{$this->get_app_name()}", array(), $script_name, $script_version, $attributes, $command, $additional );
 
 		/* Replace the startup run command contents */
 		$command = $this->replace_script_tokens( $command, $place_holders );
-		if ( apply_filters( 'wpcd_dos2unix', true, $command ) ) {
+		if ( apply_filters( 'sstk_dos2unix', true, $command ) ) {
 			$command = dos2unix_strings( $command ); // make sure that we only have unix line endings...
 		}
 		return $command;
@@ -1509,12 +1461,12 @@ class WPCD_APP extends WPCD_Base {
 	public function add_meta_boxes_background_task_details() {
 
 		/* Only render for true admins! */
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 			return;
 		}
 
 		/* Only render if the settings option is turned on. */
-		if ( ! (bool) wpcd_get_option( 'show-advanced-metaboxes' ) ) {
+		if ( ! (bool) sstk_get_option( 'show-advanced-metaboxes' ) ) {
 			return;
 		}
 
@@ -1522,9 +1474,9 @@ class WPCD_APP extends WPCD_Base {
 		// This will be used to show data on the background actions/tasks.
 		add_meta_box(
 			'app_background_action',
-			__( 'Application Details: Scheduled and Background Actions Status', 'wpcd' ),
+			__( 'Application Details: Scheduled and Background Actions Status', 'simple-stack' ),
 			array( $this, 'render_app_details_for_background_tasks_meta_box' ),
-			'wpcd_app',
+			'sstk_app',
 			'advanced',
 			'default'
 		);
@@ -1541,20 +1493,20 @@ class WPCD_APP extends WPCD_Base {
 
 		$html = '';
 
-		$wpcd_app_action_status = get_post_meta( $post->ID, "wpcd_app_{$this->get_app_name()}_action_status", true );
-		$wpcd_app_action        = get_post_meta( $post->ID, "wpcd_app_{$this->get_app_name()}_action", true );
-		$wpcd_app_action_args   = wpcd_maybe_unserialize( get_post_meta( $post->ID, "wpcd_app_{$this->get_app_name()}_action_args", true ) );
+		$sstk_app_action_status = get_post_meta( $post->ID, "sstk_app_{$this->get_app_name()}_action_status", true );
+		$sstk_app_action        = get_post_meta( $post->ID, "sstk_app_{$this->get_app_name()}_action", true );
+		$sstk_app_action_args   = sstk_maybe_unserialize( get_post_meta( $post->ID, "sstk_app_{$this->get_app_name()}_action_args", true ) );
 		// Notice that this field does not have the word "app" in it.
-		$wpcd_app_command_mutex = get_post_meta( $post->ID, 'wpcd_command_mutex', true );
-		$wpcd_temp_log_id       = get_post_meta( $post->ID, 'wpcd_temp_log_id', true );
+		$sstk_app_command_mutex = get_post_meta( $post->ID, 'sstk_command_mutex', true );
+		$sstk_temp_log_id       = get_post_meta( $post->ID, 'sstk_temp_log_id', true );
 
 		// Convert action args array into "," separated string.
-		if ( ! empty( $wpcd_app_action_args ) && is_array( $wpcd_app_action_args ) ) {
-			$wpcd_app_action_args = implode( ',', $wpcd_app_action_args );
+		if ( ! empty( $sstk_app_action_args ) && is_array( $sstk_app_action_args ) ) {
+			$sstk_app_action_args = implode( ',', $sstk_app_action_args );
 		}
 
 		ob_start();
-		require wpcd_path . 'includes/templates/app_background_tasks_details.php';
+		require SSTK_PATH . 'includes/templates/app_background_tasks_details.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -1572,7 +1524,7 @@ class WPCD_APP extends WPCD_Base {
 	public function save_meta_values_for_background_task_details( $post_id, $post ) {
 		// Add nonce for security and authentication.
 		$nonce_name   = sanitize_text_field( filter_input( INPUT_POST, 'app_meta', FILTER_UNSAFE_RAW ) );
-		$nonce_action = 'wpcd_app_nonce_meta_action';
+		$nonce_action = 'sstk_app_nonce_meta_action';
 
 		// Check if nonce is valid.
 		if ( ! wp_verify_nonce( $nonce_name, $nonce_action ) ) {
@@ -1594,35 +1546,35 @@ class WPCD_APP extends WPCD_Base {
 			return;
 		}
 
-		// Make sure post type is wpcd_app.
-		if ( 'wpcd_app' !== $post->post_type ) {
+		// Make sure post type is sstk_app.
+		if ( 'sstk_app' !== $post->post_type ) {
 			return;
 		}
 
-		$wpcd_app_action_status = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_app_action_status', FILTER_UNSAFE_RAW ) );
-		$wpcd_app_action        = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_app_action', FILTER_UNSAFE_RAW ) );
-		$wpcd_app_action_args   = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_app_action_args', FILTER_UNSAFE_RAW ) );
-		$wpcd_app_command_mutex = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_app_command_mutex', FILTER_UNSAFE_RAW ) );
-		$wpcd_temp_log_id       = filter_input( INPUT_POST, 'wpcd_temp_log_id', FILTER_SANITIZE_NUMBER_INT );
+		$sstk_app_action_status = sanitize_text_field( filter_input( INPUT_POST, 'sstk_app_action_status', FILTER_UNSAFE_RAW ) );
+		$sstk_app_action        = sanitize_text_field( filter_input( INPUT_POST, 'sstk_app_action', FILTER_UNSAFE_RAW ) );
+		$sstk_app_action_args   = sanitize_text_field( filter_input( INPUT_POST, 'sstk_app_action_args', FILTER_UNSAFE_RAW ) );
+		$sstk_app_command_mutex = sanitize_text_field( filter_input( INPUT_POST, 'sstk_app_command_mutex', FILTER_UNSAFE_RAW ) );
+		$sstk_temp_log_id       = filter_input( INPUT_POST, 'sstk_temp_log_id', FILTER_SANITIZE_NUMBER_INT );
 
 		// save action arguments as array.
-		if ( ! empty( $wpcd_app_action_args ) ) {
-			$wpcd_app_action_args = explode( ',', $wpcd_app_action_args );
+		if ( ! empty( $sstk_app_action_args ) ) {
+			$sstk_app_action_args = explode( ',', $sstk_app_action_args );
 		}
 
-		update_post_meta( $post_id, "wpcd_app_{$this->get_app_name()}_action_status", $wpcd_app_action_status );
-		update_post_meta( $post_id, "wpcd_app_{$this->get_app_name()}_action", $wpcd_app_action );
-		update_post_meta( $post_id, "wpcd_app_{$this->get_app_name()}_action_args", $wpcd_app_action_args );
+		update_post_meta( $post_id, "sstk_app_{$this->get_app_name()}_action_status", $sstk_app_action_status );
+		update_post_meta( $post_id, "sstk_app_{$this->get_app_name()}_action", $sstk_app_action );
+		update_post_meta( $post_id, "sstk_app_{$this->get_app_name()}_action_args", $sstk_app_action_args );
 		// Notice that this field does not have the word "app" in it.
-		update_post_meta( $post_id, 'wpcd_command_mutex', $wpcd_app_command_mutex );
-		update_post_meta( $post_id, 'wpcd_temp_log_id', $wpcd_temp_log_id );
+		update_post_meta( $post_id, 'sstk_command_mutex', $sstk_app_command_mutex );
+		update_post_meta( $post_id, 'sstk_temp_log_id', $sstk_temp_log_id );
 	}
 
 	/**
 	 * Add content to the app summary column that shows up in app admin list.
 	 * Show the application status metas
 	 *
-	 * Filter Hook: wpcd_app_admin_list_summary_column
+	 * Filter Hook: sstk_app_admin_list_summary_column
 	 *
 	 * @param string $column_data Data to show in the column.
 	 * @param int    $post_id Id of app post being displayed.
@@ -1637,18 +1589,18 @@ class WPCD_APP extends WPCD_Base {
 		}
 
 		/* Get app status */
-		$action_status = get_post_meta( $post_id, "wpcd_app_{$this->get_app_name()}_action_status", true );
-		$action        = get_post_meta( $post_id, "wpcd_app_{$this->get_app_name()}_action", true );
+		$action_status = get_post_meta( $post_id, "sstk_app_{$this->get_app_name()}_action_status", true );
+		$action        = get_post_meta( $post_id, "sstk_app_{$this->get_app_name()}_action", true );
 
 		/* Add it to the column data */
 		if ( ! empty( $action_status ) ) {
 
 			$our_data = '';
 
-			$our_data = $our_data . '<b>' . __( 'Action Status: ', 'wpcd' ) . $action_status . '</b>' . '<br />';
+			$our_data = $our_data . '<b>' . __( 'Action Status: ', 'simple-stack' ) . $action_status . '</b>' . '<br />';
 
 			if ( ! empty( $action ) ) {
-				$our_data = $our_data . '<em>' . __( 'Action: ', 'wpcd' ) . $action . '</em>' . '<br /><br />';
+				$our_data = $our_data . '<em>' . __( 'Action: ', 'simple-stack' ) . $action . '</em>' . '<br /><br />';
 			}
 
 			// Is our data already in the column?  If not, add it!
@@ -1686,7 +1638,7 @@ class WPCD_APP extends WPCD_Base {
 		// find domain name in app records.
 		$app_posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app',
+				'post_type'   => 'sstk_app',
 				'post_status' => 'private',
 				'numberposts' => 1,
 				'meta_query'  => array(

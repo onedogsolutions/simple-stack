@@ -2,7 +2,7 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [class-simplestack-rest-tabs.php](file://includes/core/api/class-simplestack-rest-tabs.php)
+- [class-sstk-rest-tabs.php](file://includes/core/api/class-sstk-rest-tabs.php)
 - [schema.js](file://src/admin/lib/schema.js)
 - [TabRenderer.jsx](file://src/admin/components/TabRenderer.jsx)
 - [api.js](file://src/admin/lib/api.js)
@@ -26,7 +26,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how to extend the SimpleStack admin interface through its tab system. The extension model is built around a small contract:
+This document explains how to extend the Simple Stack admin interface through its tab system. The extension model is built around a small contract:
 
 - Server and site tabs declare their UI as Meta Box field arrays.
 - A REST controller exposes those declarations as JSON schema.
@@ -41,7 +41,7 @@ The tab extension system spans three layers:
 | Layer | Responsibility | Key Files |
 |---|---|---|
 | Server-side tab definitions | Register tab labels, fields, permissions, and action handlers | `includes/core/apps/wordpress-app/tabs/*.php`, `includes/core/apps/wordpress-app/tabs-server/*.php` |
-| REST schema bridge | Convert tab definitions into JSON-safe schema for the browser | `includes/core/api/class-simplestack-rest-tabs.php` |
+| REST schema bridge | Convert tab definitions into JSON-safe schema for the browser | `includes/core/api/class-sstk-rest-tabs.php` |
 | React renderer | Render tabs, controls, actions, files, logs, and state | `src/admin/components/TabRenderer.jsx`, `src/admin/lib/schema.js`, `src/admin/lib/api.js` |
 | Detail routes | Load detail data, fetch tab schema, dispatch actions | `src/admin/routes/SiteDetail.jsx`, `src/admin/routes/ServerDetail.jsx` |
 
@@ -50,7 +50,7 @@ graph TB
 subgraph "PHP"
 SiteTabs["Site Tabs<br/>wordpress-app/tabs/*.php"]
 ServerTabs["Server Tabs<br/>wordpress-app/tabs-server/*.php"]
-RestTabs["REST Tabs Controller<br/>class-simplestack-rest-tabs.php"]
+RestTabs["REST Tabs Controller<br/>class-sstk-rest-tabs.php"]
 end
 subgraph "Browser"
 ApiClient["API Client<br/>lib/api.js"]
@@ -70,7 +70,7 @@ TabRenderer --> ApiClient
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-tabs.php:12-26](file://includes/core/api/class-simplestack-rest-tabs.php#L12-L26)
+- [class-sstk-rest-tabs.php:12-26](file://includes/core/api/class-sstk-rest-tabs.php#L12-L26)
 - [schema.js:1-19](file://src/admin/lib/schema.js#L1-L19)
 - [TabRenderer.jsx:1-11](file://src/admin/components/TabRenderer.jsx#L1-L11)
 - [api.js:1-7](file://src/admin/lib/api.js#L1-L7)
@@ -78,7 +78,7 @@ TabRenderer --> ApiClient
 - [ServerDetail.jsx:1-8](file://src/admin/routes/ServerDetail.jsx#L1-L8)
 
 **Section sources**
-- [class-simplestack-rest-tabs.php:12-26](file://includes/core/api/class-simplestack-rest-tabs.php#L12-L26)
+- [class-sstk-rest-tabs.php:12-26](file://includes/core/api/class-sstk-rest-tabs.php#L12-L26)
 - [schema.js:1-19](file://src/admin/lib/schema.js#L1-L19)
 - [TabRenderer.jsx:1-11](file://src/admin/components/TabRenderer.jsx#L1-L11)
 - [api.js:1-7](file://src/admin/lib/api.js#L1-L7)
@@ -88,9 +88,9 @@ TabRenderer --> ApiClient
 ## Core Components
 The extension system has five core responsibilities:
 
-1. **Tab registration**: Add a tab entry under `wpcd_app_{app}_get_tabnames` for sites or `wpcd_server_{app}_get_tabnames` for servers.
-2. **Field declaration**: Add Meta Box-style field arrays under `wpcd_app_{app}_get_tabs` or `wpcd_server_{app}_get_tabs`.
-3. **Action handling**: Implement logic under `wpcd_app_{app}_tab_action` or server equivalents.
+1. **Tab registration**: Add a tab entry under `sstk_app_{app}_get_tabnames` for sites or `sstk_server_{app}_get_tabnames` for servers.
+2. **Field declaration**: Add Meta Box-style field arrays under `sstk_app_{app}_get_tabs` or `sstk_server_{app}_get_tabs`.
+3. **Action handling**: Implement logic under `sstk_app_{app}_tab_action` or server equivalents.
 4. **Schema exposure**: Serve sanitized tab lists and field definitions through `/servers/{id}/tabs` and `/sites/{id}/tabs`.
 5. **Generic rendering**: Let `TabRenderer` draw controls, cards, actions, files, and logs from the schema.
 
@@ -101,7 +101,7 @@ Key implementation patterns:
 | Tab slug + label + icon | Identifies and titles the tab | Site general tab |
 | Permission gate | Controls visibility per team and author | `get_tab_security` methods |
 | Field array | Declares inputs, headings, buttons, and HTML | sFTP tab fields |
-| Action button attributes | Connects UI to backend action | `data-wpcd-action`, `data-wpcd-fields` |
+| Action button attributes | Connects UI to backend action | `data-sstk-action`, `data-sstk-fields` |
 | File upload | Sends public key or other files | sFTP set-key flow |
 | Refresh response | Tells the client to reload data | `refresh => yes` |
 
@@ -122,7 +122,7 @@ sequenceDiagram
 participant User as "Admin User"
 participant Route as "SiteDetail / ServerDetail"
 participant Api as "api.js"
-participant Rest as "SimpleStack_REST_Tabs"
+participant Rest as "SSTK_REST_Tabs"
 participant Handler as "Tab PHP Class"
 participant Renderer as "TabRenderer.jsx"
 User->>Route : Open server or site detail
@@ -147,8 +147,8 @@ Route->>Renderer : Update UI or reload
 - [ServerDetail.jsx:39-72](file://src/admin/routes/ServerDetail.jsx#L39-L72)
 - [api.js:124-151](file://src/admin/lib/api.js#L124-L151)
 - [api.js:186-229](file://src/admin/lib/api.js#L186-L229)
-- [class-simplestack-rest-tabs.php:41-86](file://includes/core/api/class-simplestack-rest-tabs.php#L41-L86)
-- [class-simplestack-rest-tabs.php:98-125](file://includes/core/api/class-simplestack-rest-tabs.php#L98-L125)
+- [class-sstk-rest-tabs.php:41-86](file://includes/core/api/class-sstk-rest-tabs.php#L41-L86)
+- [class-sstk-rest-tabs.php:98-125](file://includes/core/api/class-sstk-rest-tabs.php#L98-L125)
 - [TabRenderer.jsx:108-144](file://src/admin/components/TabRenderer.jsx#L108-L144)
 
 ## Detailed Component Analysis
@@ -218,16 +218,16 @@ MaskPasswords --> Response["Return JSON-safe schema"]
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-tabs.php:41-86](file://includes/core/api/class-simplestack-rest-tabs.php#L41-L86)
-- [class-simplestack-rest-tabs.php:98-125](file://includes/core/api/class-simplestack-rest-tabs.php#L98-L125)
-- [class-simplestack-rest-tabs.php:134-154](file://includes/core/api/class-simplestack-rest-tabs.php#L134-L154)
-- [class-simplestack-rest-tabs.php:163-221](file://includes/core/api/class-simplestack-rest-tabs.php#L163-L221)
+- [class-sstk-rest-tabs.php:41-86](file://includes/core/api/class-sstk-rest-tabs.php#L41-L86)
+- [class-sstk-rest-tabs.php:98-125](file://includes/core/api/class-sstk-rest-tabs.php#L98-L125)
+- [class-sstk-rest-tabs.php:134-154](file://includes/core/api/class-sstk-rest-tabs.php#L134-L154)
+- [class-sstk-rest-tabs.php:163-221](file://includes/core/api/class-sstk-rest-tabs.php#L163-L221)
 
 **Section sources**
-- [class-simplestack-rest-tabs.php:41-86](file://includes/core/api/class-simplestack-rest-tabs.php#L41-L86)
-- [class-simplestack-rest-tabs.php:98-125](file://includes/core/api/class-simplestack-rest-tabs.php#L98-L125)
-- [class-simplestack-rest-tabs.php:134-154](file://includes/core/api/class-simplestack-rest-tabs.php#L134-L154)
-- [class-simplestack-rest-tabs.php:163-221](file://includes/core/api/class-simplestack-rest-tabs.php#L163-L221)
+- [class-sstk-rest-tabs.php:41-86](file://includes/core/api/class-sstk-rest-tabs.php#L41-L86)
+- [class-sstk-rest-tabs.php:98-125](file://includes/core/api/class-sstk-rest-tabs.php#L98-L125)
+- [class-sstk-rest-tabs.php:134-154](file://includes/core/api/class-sstk-rest-tabs.php#L134-L154)
+- [class-sstk-rest-tabs.php:163-221](file://includes/core/api/class-sstk-rest-tabs.php#L163-L221)
 
 ### React Tab Rendering
 `TabRenderer` is the central UI component. It receives:
@@ -289,9 +289,9 @@ LogCheck --> |No| Done["Complete"]
 
 Key responsibilities:
 
-- Identify action fields by `data-wpcd-action` or the generated action ID prefix.
-- Resolve request parameter names via `data-wpcd-name` or the element ID.
-- Parse `data-wpcd-fields` selectors to collect dependent inputs.
+- Identify action fields by `data-sstk-action` or the generated action ID prefix.
+- Resolve request parameter names via `data-sstk-name` or the element ID.
+- Parse `data-sstk-fields` selectors to collect dependent inputs.
 - Encode switch and checkbox values as `'on'` or `'off'` to match legacy PHP comparisons.
 - Build initial control values from declared attributes, values, defaults, and stored values.
 - Describe each field as a control kind with metadata.
@@ -366,9 +366,9 @@ Api-->>Renderer : Unwrapped data or error
 ### Site-Level Tab Extensions
 Site-level tabs live under `includes/core/apps/wordpress-app/tabs`. A typical site tab class:
 
-- Registers `wpcd_app_{app}_get_tabnames`.
-- Registers `wpcd_app_{app}_get_tabs`.
-- Registers `wpcd_app_{app}_tab_action`.
+- Registers `sstk_app_{app}_get_tabnames`.
+- Registers `sstk_app_{app}_get_tabs`.
+- Registers `sstk_app_{app}_tab_action`.
 - Guards visibility with team and author permissions.
 - Returns tab metadata including label and icon.
 - Builds field arrays grouped by tab slug.
@@ -453,7 +453,7 @@ ServerRoute["ServerDetail.jsx"] --> ApiJs
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-tabs.php:41-86](file://includes/core/api/class-simplestack-rest-tabs.php#L41-L86)
+- [class-sstk-rest-tabs.php:41-86](file://includes/core/api/class-sstk-rest-tabs.php#L41-L86)
 - [api.js:153-251](file://src/admin/lib/api.js#L153-L251)
 - [schema.js:1-19](file://src/admin/lib/schema.js#L1-L19)
 - [TabRenderer.jsx:1-11](file://src/admin/components/TabRenderer.jsx#L1-L11)
@@ -461,7 +461,7 @@ ServerRoute["ServerDetail.jsx"] --> ApiJs
 - [ServerDetail.jsx:1-8](file://src/admin/routes/ServerDetail.jsx#L1-L8)
 
 **Section sources**
-- [class-simplestack-rest-tabs.php:41-86](file://includes/core/api/class-simplestack-rest-tabs.php#L41-L86)
+- [class-sstk-rest-tabs.php:41-86](file://includes/core/api/class-sstk-rest-tabs.php#L41-L86)
 - [api.js:153-251](file://src/admin/lib/api.js#L153-L251)
 - [schema.js:1-19](file://src/admin/lib/schema.js#L1-L19)
 - [TabRenderer.jsx:1-11](file://src/admin/components/TabRenderer.jsx#L1-L11)
@@ -495,8 +495,8 @@ Checklist:
 
 1. Verify the tab slug matches the intended identifier.
 2. Confirm the correct filter is used:
-   - Site: `wpcd_app_{app}_get_tabnames`
-   - Server: `wpcd_server_{app}_get_tabnames`
+   - Site: `sstk_app_{app}_get_tabnames`
+   - Server: `sstk_server_{app}_get_tabnames`
 3. Ensure `get_tab_security` allows the current user.
 4. Check whether the tab is conditionally hidden by enabled/disabled state.
 
@@ -509,16 +509,16 @@ Checklist:
 Likely causes:
 
 - The action slug does not match the handler.
-- `data-wpcd-fields` references missing IDs.
+- `data-sstk-fields` references missing IDs.
 - Parameter names do not match expected keys.
 - The action is blocked by permissions.
 - The server is unavailable.
 
 Checklist:
 
-1. Confirm the button uses `data-wpcd-action`.
-2. Confirm `data-wpcd-fields` contains valid element IDs.
-3. Confirm `data-wpcd-name` maps to the expected parameter key.
+1. Confirm the button uses `data-sstk-action`.
+2. Confirm `data-sstk-fields` contains valid element IDs.
+3. Confirm `data-sstk-name` maps to the expected parameter key.
 4. Confirm the action slug is whitelisted in the handler.
 5. Check whether the route disables actions due to unavailability.
 
@@ -538,8 +538,8 @@ Behavior:
 - Submissions should send only the new value, not the existing secret.
 
 **Section sources**
-- [class-simplestack-rest-tabs.php:29-34](file://includes/core/api/class-simplestack-rest-tabs.php#L29-L34)
-- [class-simplestack-rest-tabs.php:193-221](file://includes/core/api/class-simplestack-rest-tabs.php#L193-L221)
+- [class-sstk-rest-tabs.php:29-34](file://includes/core/api/class-sstk-rest-tabs.php#L29-L34)
+- [class-sstk-rest-tabs.php:193-221](file://includes/core/api/class-sstk-rest-tabs.php#L193-L221)
 
 ### File Upload Fails
 Likely causes:
@@ -601,7 +601,7 @@ Guidelines for custom tabs:
 - [TabRenderer.jsx:181-206](file://src/admin/components/TabRenderer.jsx#L181-L206)
 
 ## Conclusion
-Extending the SimpleStack admin interface through the tab system means working with a small, stable contract:
+Extending the Simple Stack admin interface through the tab system means working with a small, stable contract:
 
 - Declare tabs and fields in PHP.
 - Expose them through the REST tabs controller.

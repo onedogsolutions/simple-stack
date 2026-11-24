@@ -1,6 +1,6 @@
-- Each domain entity is implemented as a singleton class extending `WPCD_MB_Custom_Table`, exposing a private `$instance` static property and a `public static function instance()` factory.
+- Each domain entity is implemented as a singleton class extending `SSTK_MB_Custom_Table`, exposing a private `$instance` static property and a `public static function instance()` factory.
 - Models register themselves by overriding `register_model()` and calling `mb_register_model()` with a `table` key pointing at `get_table_name()`, and create their schema in `create_table()` via `MetaBox\CustomTable\API::create`.
 - Form definitions live in `metaboxes()` returning an array of RWMB field arrays with `storage_type => 'custom_table'` and `models => [$this->get_model_name()]`.
-- Cross-model access goes through the base factory `WPCD_MB_Custom_Table::get( $slug )` rather than direct class instantiation, so sibling models resolve each other by slug string.
-- AJAX handlers are registered with names following the pattern `wp_ajax_wpcd_{model}_{action}` and payloads carry both a view-scoped nonce (via `get_view_nonce`) and a model-scoped nonce (via `get_nonce`).
-- Permission enforcement is centralized in `check_action_permission` / `should_add_permission_query` / `permission_where_clause`, which filter listings by owner, `allowed_roles`, and `allowed_users` stored in the shared `wpcd_ct_model_meta` table.
+- Cross-model access goes through the base factory `SSTK_MB_Custom_Table::get( $slug )` rather than direct class instantiation, so sibling models resolve each other by slug string.
+- AJAX handlers are registered with names following the pattern `wp_ajax_sstk_{model}_{action}` and payloads carry both a view-scoped nonce (via `get_view_nonce`) and a model-scoped nonce (via `get_nonce`).
+- Permission enforcement is centralized in `check_action_permission` / `should_add_permission_query` / `permission_where_clause`, which filter listings by owner, `allowed_roles`, and `allowed_users` stored in the shared `sstk_ct_model_meta` table.

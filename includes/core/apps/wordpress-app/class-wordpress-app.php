@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WordPress App WPCD_WORDPRESS_APP.
+ * WordPress App SSTK_WORDPRESS_APP.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,21 +11,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_APP
+ * Class SSTK_WORDPRESS_APP
  */
-class WPCD_WORDPRESS_APP extends WPCD_APP {
+class SSTK_WORDPRESS_APP extends SSTK_APP {
 
 	/* Include traits */
-	use wpcd_wpapp_after_prepare_server;
-	use wpcd_wpapp_tabs_security;
-	use wpcd_wpapp_commands_and_logs;
-	use wpcd_wpapp_script_handlers;
-	use wpcd_wpapp_push_commands;
-	use wpcd_wpapp_admin_column_data;
-	use wpcd_wpapp_backup_functions;
-	use wpcd_wpapp_upgrade_functions;
-	use wpcd_wpapp_unused_functions;
-	use wpcd_wpapp_multi_tenant_app;
+	use sstk_wpapp_after_prepare_server;
+	use sstk_wpapp_tabs_security;
+	use sstk_wpapp_commands_and_logs;
+	use sstk_wpapp_script_handlers;
+	use sstk_wpapp_push_commands;
+	use sstk_wpapp_admin_column_data;
+	use sstk_wpapp_backup_functions;
+	use sstk_wpapp_upgrade_functions;
+	use sstk_wpapp_unused_functions;
+	use sstk_wpapp_multi_tenant_app;
 
 	/**
 	 * Holds a reference to this class
@@ -57,7 +58,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	}
 
 	/**
-	 * WPCD_WORDPRESS_APP constructor.
+	 * SSTK_WORDPRESS_APP constructor.
 	 */
 	public function __construct() {
 
@@ -66,8 +67,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$this->set_app_name( 'wordpress-app' );
 		$this->set_app_description( 'WordPress' );
 
-		// Register an app id for this app with WPCD...
-		WPCD()->set_app_id( array( $this->get_app_name() => $this->get_app_description() ) );
+		// Register an app id for this app with SSTK...
+		SSTK()->set_app_id( array( $this->get_app_name() => $this->get_app_description() ) );
 
 		// Set folder where scripts are located.
 		$this->set_scripts_folder( dirname( __FILE__ ) . '/scripts/' );
@@ -76,7 +77,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		add_action( 'init', array( &$this, 'init' ), 1 );
 
 		// Global for backwards compatibility.
-		$GLOBALS[ "wpcd_app_{$this->get_app_name()}" ] = $this;
+		$GLOBALS[ "sstk_app_{$this->get_app_name()}" ] = $this;
 
 	}
 
@@ -88,9 +89,6 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// setup needed objects.
 		$this->settings();
 		$this->ssh();
-
-		// run upgrades if necessary.
-		$this->upgrade();
 
 		// setup WordPress hooks.
 		$this->hooks();
@@ -105,112 +103,106 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$this->include_tabs_server();
 
 		// Enable the REST API if the settings allow for it.
-		if ( true === (bool) wpcd_get_early_option( 'wordpress_app_rest_api_enable' ) ) {
+		if ( true === (bool) sstk_get_early_option( 'wordpress_app_rest_api_enable' ) ) {
 			$this->include_rest_api();
 		}
 
 		// Make sure WordPress loads up our css and js scripts.
 		add_action( 'admin_enqueue_scripts', array( $this, 'wpapp_enqueue_scripts' ), 10, 1 );
 
-		// Show any admin notices related to upgrades.
-		add_action( 'admin_notices', array( $this, 'wpapp_upgrades_admin_notice' ) );
-
 		// Actions send from the front-end when installing servers and sites.
-		add_action( "wpcd_server_{$this->get_app_name()}_action", array( &$this, 'do_instance_action' ), 10, 3 );
-		add_action( "wpcd_app_{$this->get_app_name()}_action", array( &$this, 'do_app_action' ), 10, 3 );
+		add_action( "sstk_server_{$this->get_app_name()}_action", array( &$this, 'do_instance_action' ), 10, 3 );
+		add_action( "sstk_app_{$this->get_app_name()}_action", array( &$this, 'do_app_action' ), 10, 3 );
 
-		add_filter( "wpcd_command_{$this->get_app_name()}_logs_done", array( &$this, 'get_logs_done' ), 10, 4 );
-		add_filter( "wpcd_command_{$this->get_app_name()}_logs_intermed", array( &$this, 'get_logs_intermed' ), 10, 4 );
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( &$this, 'command_completed' ), 10, 2 );
-		add_filter( 'wpcd_server_script_args', array( $this, 'add_script_args_server' ), 10, 2 );
-		add_filter( 'wpcd_app_script_args', array( $this, 'add_script_args_app' ), 10, 2 );
-		add_filter( 'wpcd_actions', array( $this, 'add_post_actions' ), 10, 2 );
-		add_filter( "wpcd_script_placeholders_{$this->get_app_name()}", array( $this, 'script_placeholders' ), 10, 6 );
-		add_filter( 'wpcd_app_server_admin_list_local_status_column', array( &$this, 'app_server_admin_list_local_status_column' ), 10, 2 );  // Show the server status.
-		add_filter( 'wpcd_app_server_admin_list_local_status_column', array( &$this, 'app_server_admin_list_upgrade_status' ), 11, 2 );  // Show the upgrade status in the local status column - function located in trait file upgrade.php.
-		add_filter( 'wpcd_app_admin_list_summary_column', array( &$this, 'app_admin_list_upgrade_status' ), 11, 2 );  // Show the upgrade status in the TITLE column of the app list - function located in trait file upgrade.php.
+		add_filter( "sstk_command_{$this->get_app_name()}_logs_done", array( &$this, 'get_logs_done' ), 10, 4 );
+		add_filter( "sstk_command_{$this->get_app_name()}_logs_intermed", array( &$this, 'get_logs_intermed' ), 10, 4 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( &$this, 'command_completed' ), 10, 2 );
+		add_filter( 'sstk_server_script_args', array( $this, 'add_script_args_server' ), 10, 2 );
+		add_filter( 'sstk_app_script_args', array( $this, 'add_script_args_app' ), 10, 2 );
+		add_filter( 'sstk_actions', array( $this, 'add_post_actions' ), 10, 2 );
+		add_filter( "sstk_script_placeholders_{$this->get_app_name()}", array( $this, 'script_placeholders' ), 10, 6 );
+		add_filter( 'sstk_app_server_admin_list_local_status_column', array( &$this, 'app_server_admin_list_local_status_column' ), 10, 2 );  // Show the server status.
 
 		// Push commands and callbacks from servers.
-		add_action( "wpcd_{$this->get_app_name()}_command_server_status_completed", array( &$this, 'push_command_server_status_completed' ), 10, 4 );  // When a server sends us it's daily status report, part 1 - see bash script #24.
-		add_action( "wpcd_{$this->get_app_name()}_command_sites_status_completed", array( &$this, 'push_command_sites_status_completed' ), 10, 4 );  // When a server sends us it's daily status report, part 2 - see bash script #24.
-		add_action( "wpcd_{$this->get_app_name()}_command_aptget_status_completed", array( &$this, 'push_command_aptget_status_completed' ), 10, 4 );  // When a server sends us information that apt-get is running - see bash script #24.
-		add_action( "wpcd_{$this->get_app_name()}_command_posttypes_status_completed", array( &$this, 'push_command_posttypes_status_completed' ), 10, 6 );  // When a server sends us information about the post types on a site - see bash script #24.
-		add_action( "wpcd_{$this->get_app_name()}_command_maldet_scan_completed", array( &$this, 'push_command_maldet_scan_completed' ), 10, 4 );  // When a server sends us a report of maldet scan results - see bash script #26.
-		add_action( "wpcd_{$this->get_app_name()}_command_server_restart_completed", array( &$this, 'push_command_server_restart_completed' ), 10, 4 );  // When a server sends us a report of restart or shutdown.
-		add_action( "wpcd_{$this->get_app_name()}_command_monit_log_completed", array( &$this, 'push_command_monit_log_completed' ), 10, 4 );  // When a server sends us a monit alert or report.
-		add_action( "wpcd_{$this->get_app_name()}_command_start_domain_backup_completed", array( &$this, 'push_command_domain_backup_v1_started' ), 10, 4 );  // When a server sends us a notification telling us a scheduled backup was started for a domain.
-		add_action( "wpcd_{$this->get_app_name()}_command_end_domain_backup_completed", array( &$this, 'push_command_domain_backup_v1_completed' ), 10, 4 );  // When a server sends us a notification telling us a scheduled backup was completed for a domain.
-		add_action( "wpcd_{$this->get_app_name()}_command_server_config_backup_completed", array( &$this, 'push_command_server_config_backup' ), 10, 4 );  // When a server sends us a notification telling us a backup of the server configuration has started or ended.
-		add_action( "wpcd_{$this->get_app_name()}_command_test_rest_api_completed", array( &$this, 'push_command_test_rest_api_completed' ), 10, 4 );  // When a server sends us a test notification (initiated from the TOOLS tab on a server screen).
+		add_action( "sstk_{$this->get_app_name()}_command_server_status_completed", array( &$this, 'push_command_server_status_completed' ), 10, 4 );  // When a server sends us it's daily status report, part 1 - see bash script #24.
+		add_action( "sstk_{$this->get_app_name()}_command_sites_status_completed", array( &$this, 'push_command_sites_status_completed' ), 10, 4 );  // When a server sends us it's daily status report, part 2 - see bash script #24.
+		add_action( "sstk_{$this->get_app_name()}_command_aptget_status_completed", array( &$this, 'push_command_aptget_status_completed' ), 10, 4 );  // When a server sends us information that apt-get is running - see bash script #24.
+		add_action( "sstk_{$this->get_app_name()}_command_posttypes_status_completed", array( &$this, 'push_command_posttypes_status_completed' ), 10, 6 );  // When a server sends us information about the post types on a site - see bash script #24.
+		add_action( "sstk_{$this->get_app_name()}_command_maldet_scan_completed", array( &$this, 'push_command_maldet_scan_completed' ), 10, 4 );  // When a server sends us a report of maldet scan results - see bash script #26.
+		add_action( "sstk_{$this->get_app_name()}_command_server_restart_completed", array( &$this, 'push_command_server_restart_completed' ), 10, 4 );  // When a server sends us a report of restart or shutdown.
+		add_action( "sstk_{$this->get_app_name()}_command_monit_log_completed", array( &$this, 'push_command_monit_log_completed' ), 10, 4 );  // When a server sends us a monit alert or report.
+		add_action( "sstk_{$this->get_app_name()}_command_start_domain_backup_completed", array( &$this, 'push_command_domain_backup_v1_started' ), 10, 4 );  // When a server sends us a notification telling us a scheduled backup was started for a domain.
+		add_action( "sstk_{$this->get_app_name()}_command_end_domain_backup_completed", array( &$this, 'push_command_domain_backup_v1_completed' ), 10, 4 );  // When a server sends us a notification telling us a scheduled backup was completed for a domain.
+		add_action( "sstk_{$this->get_app_name()}_command_server_config_backup_completed", array( &$this, 'push_command_server_config_backup' ), 10, 4 );  // When a server sends us a notification telling us a backup of the server configuration has started or ended.
+		add_action( "sstk_{$this->get_app_name()}_command_test_rest_api_completed", array( &$this, 'push_command_test_rest_api_completed' ), 10, 4 );  // When a server sends us a test notification (initiated from the TOOLS tab on a server screen).
 
 		// Push commands and callbacks from sites.
-		add_action( "wpcd_{$this->get_app_name()}_command_schedule_site_sync_completed", array( &$this, 'push_command_schedule_site_sync' ), 10, 4 );  // When a scheduled site sync has started or ended.
-		add_action( "wpcd_{$this->get_app_name()}_command_install_logtivity_status_completed", array( &$this, 'push_command_install_logtivity_completed' ), 10, 4 );  // When logtivity has been installed.
+		add_action( "sstk_{$this->get_app_name()}_command_schedule_site_sync_completed", array( &$this, 'push_command_schedule_site_sync' ), 10, 4 );  // When a scheduled site sync has started or ended.
 
 		// After server prepare action hooks.
-		$this->wpcd_after_server_prepare_action_hooks();
+		$this->sstk_after_server_prepare_action_hooks();
 
 		// When we're querying to find out the status of a server.
-		add_filter( 'wpcd_is_server_available_for_commands', array( &$this, 'wpcd_is_server_available_for_commands' ), 10, 2 );
+		add_filter( 'sstk_is_server_available_for_commands', array( &$this, 'sstk_is_server_available_for_commands' ), 10, 2 );
 
 		// When an app cleanup script is being run.
-		add_action( 'wpcd_cleanup_app_after', array( $this, 'wpcd_cleanup_app_after' ), 10, 1 );
+		add_action( 'sstk_cleanup_app_after', array( $this, 'sstk_cleanup_app_after' ), 10, 1 );
 
 		// When a server cleanup script is being run.
-		add_action( 'wpcd_cleanup_server_after', array( $this, 'wpcd_cleanup_server_after' ), 10, 1 );
+		add_action( 'sstk_cleanup_server_after', array( $this, 'sstk_cleanup_server_after' ), 10, 1 );
 
 		// When WP has been installed, add temp domain to DNS if configured as well as perform other actions after the site is successfully installed.
-		add_action( 'wpcd_command_wordpress-app_completed_after_cleanup', array( $this, 'wpcd_wpapp_install_complete' ), 10, 4 );
+		add_action( 'sstk_command_wordpress-app_completed_after_cleanup', array( $this, 'sstk_wpapp_install_complete' ), 10, 4 );
 
 		// Ajax Hooks.
-		add_action( "wp_ajax_wpcd_{$this->get_app_name()}", array( &$this, 'ajax_server' ) );       // For ajax calls dealing with servers in wp-admin.
-		add_action( "wp_ajax_wpcd_app_{$this->get_app_name()}", array( &$this, 'ajax_app' ) );      // for ajax calls dealing with apps in wp-admin.
+		add_action( "wp_ajax_sstk_{$this->get_app_name()}", array( &$this, 'ajax_server' ) );       // For ajax calls dealing with servers in wp-admin.
+		add_action( "wp_ajax_sstk_app_{$this->get_app_name()}", array( &$this, 'ajax_app' ) );      // for ajax calls dealing with apps in wp-admin.
 
 		// Add welcome message to the settings screen.
-		add_filter( 'wpcd_general_settings_after_welcome_message', array( $this, 'welcome_message_settings' ), 10, 1 );
+		add_filter( 'sstk_general_settings_after_welcome_message', array( $this, 'welcome_message_settings' ), 10, 1 );
 
 		// Add some additional instructions to the "no application servers found" message.
-		add_filter( 'wpcd_no_app_servers_found_msg', array( $this, 'no_app_servers_found_msg' ), 10, 1 );
+		add_filter( 'sstk_no_app_servers_found_msg', array( $this, 'no_app_servers_found_msg' ), 10, 1 );
 
 		// Add a state called "WordPress" to the app when its shown on the app list.
 		add_filter( 'display_post_states', array( $this, 'display_post_states' ), 20, 2 );
 
 		// Background actions for SERVER.
-		add_action( 'wpcd_wordpress_deferred_actions_for_server', array( $this, 'do_deferred_actions_for_server' ), 10 );
+		add_action( 'sstk_wordpress_deferred_actions_for_server', array( $this, 'do_deferred_actions_for_server' ), 10 );
 
 		// Background actions for APPS.
-		add_action( 'wpcd_wordpress_deferred_actions_for_apps', array( $this, 'do_deferred_actions_for_app' ), 10 );
+		add_action( 'sstk_wordpress_deferred_actions_for_apps', array( $this, 'do_deferred_actions_for_app' ), 10 );
 
 		// Delete temp log files.
-		add_action( 'wpcd_wordpress_file_watcher', array( $this, 'file_watcher_delete_temp_files' ) );
+		add_action( 'sstk_wordpress_file_watcher', array( $this, 'file_watcher_delete_temp_files' ) );
 
 		/*********************************************
 		* Hooks and filters for screens in wp-admin
 		*/
 
 		// Filter hook to setup additional search fields specific to the wordpress-app.
-		add_filter( 'wpcd_app_search_fields', array( $this, 'wpcd_app_search_fields' ), 10, 1 );
+		add_filter( 'sstk_app_search_fields', array( $this, 'sstk_app_search_fields' ), 10, 1 );
 
 		// Filter hook to add new columns to the APP list.
-		add_filter( 'manage_wpcd_app_posts_columns', array( $this, 'app_posts_app_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_app_posts_columns', array( $this, 'app_posts_app_table_head' ), 10, 1 );
 
 		// Action hook to add values in new columns in the APP list.
-		add_action( 'manage_wpcd_app_posts_custom_column', array( $this, 'app_posts_app_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_app_posts_custom_column', array( $this, 'app_posts_app_table_content' ), 10, 2 );
 
 		// Filter hook to add new columns to the SERVER list.
-		add_filter( 'manage_wpcd_app_server_posts_columns', array( $this, 'app_server_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_app_server_posts_columns', array( $this, 'app_server_table_head' ), 10, 1 );
 
 		// Show some app details in the wp-admin list of apps.
-		add_filter( 'wpcd_app_admin_list_summary_column', array( &$this, 'app_admin_list_summary_column' ), 10, 2 );
+		add_filter( 'sstk_app_admin_list_summary_column', array( &$this, 'app_admin_list_summary_column' ), 10, 2 );
 
 		// Show some app details in the wp-admin server column.
-		add_filter( 'wpcd_app_admin_list_server_column_before_apps_link', array( &$this, 'app_admin_list_server_column_before_apps_link' ), 10, 2 );
+		add_filter( 'sstk_app_admin_list_server_column_before_apps_link', array( &$this, 'app_admin_list_server_column_before_apps_link' ), 10, 2 );
 
 		// Show some app details about the health of the app the wp-admin list of apps.
-		add_filter( 'wpcd_app_admin_list_app_health_column', array( &$this, 'app_admin_list_health_column' ), 10, 2 );
+		add_filter( 'sstk_app_admin_list_app_health_column', array( &$this, 'app_admin_list_health_column' ), 10, 2 );
 
 		// Add the INSTALL WordPress button to the server list.
-		add_filter( 'wpcd_app_server_table_content', array( &$this, 'app_server_table_content' ), 10, 3 );
+		add_filter( 'sstk_app_server_table_content', array( &$this, 'app_server_table_content' ), 10, 3 );
 
 		// Filter hook to add a REMOVE SITE link to the hover action on an app.
 		add_filter( 'post_row_actions', array( $this, 'post_row_actions' ), 10, 2 );
@@ -218,7 +210,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		/*
 		 * Meta Box registration is retired as of Phase 4. The server and site screens are
 		 * rendered by the React client, which reads the same schema through the
-		 * `get_tabnames` / `get_tabs` filters (see SimpleStack_REST_Tabs) and dispatches
+		 * `get_tabnames` / `get_tabs` filters (see SSTK_REST_Tabs) and dispatches
 		 * through the `*_tab_action` filters below. Nothing here needs Meta Box any more.
 		 */
 
@@ -227,9 +219,6 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// Action hook to set transient if directory is readable and .txt files are accessible.
 		add_action( 'admin_init', array( $this, 'wpapp_admin_init_is_readable' ) );
-
-		// Admin hook that will handle any automatic upgrades or database changes.
-		add_action( 'admin_init', array( $this, 'wpapp_admin_init_app_silent_auto_upgrade' ) );  // This function is in the upgrade.php trait file.
 
 		// Action hook to handle ajax request to set transient if user closed the readable notice check.
 		add_action( 'wp_ajax_set_readable_check', array( $this, 'set_readable_check' ) );
@@ -241,10 +230,10 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		add_action( 'wp_ajax_passwordless_login', array( $this, 'passwordless_login' ) );
 
 		// Action hook to extend admin filter options.
-		add_action( 'restrict_manage_posts', array( $this, 'wpapp_wpcd_app_table_filtering' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'wpapp_sstk_app_table_filtering' ) );
 
 		// Filter hook to filter app listing on custom meta data.
-		add_filter( 'parse_query', array( $this, 'wpapp_wpcd_app_parse_query' ), 10, 1 );
+		add_filter( 'parse_query', array( $this, 'wpapp_sstk_app_parse_query' ), 10, 1 );
 
 		// Action hook to handle ajax request to set transient if user closed the notice for cron check.
 		add_action( 'wp_ajax_set_cron_check', array( $this, 'set_cron_check' ) );
@@ -260,26 +249,26 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Setup some action hooks to do things after a server has been created.
 	 * The hook functions themselves are in a trait file  after-prepare-server.php
 	 */
-	public function wpcd_after_server_prepare_action_hooks() {
+	public function sstk_after_server_prepare_action_hooks() {
 		/* Add tasks to pending logs after a server is created. */
-		add_action( 'wpcd_command_wordpress-app_prepare_server_completed', array( $this, 'wpcd_wpapp_core_prepare_server_completed' ), 10, 2 );
+		add_action( 'sstk_command_wordpress-app_prepare_server_completed', array( $this, 'sstk_wpapp_core_prepare_server_completed' ), 10, 2 );
 
 		/* Pending Logs Background Task: Trigger installation of backup scripts on the server */
-		add_action( 'wpcd_core_after_server_prepare_install_server_backups', array( $this, 'wpcd_core_install_server_backups' ), 10, 3 );
+		add_action( 'sstk_core_after_server_prepare_install_server_backups', array( $this, 'sstk_core_install_server_backups' ), 10, 3 );
 
 		/*  Install Backups: Handle backup script installation success or failure */
-		add_action( 'wpcd_server_wordpress-app_server_auto_backup_action_all_sites_successful', array( $this, 'wpcd_core_install_server_handle_backup_script_install_success' ), 10, 3 );
-		add_action( 'wpcd_server_wordpress-app_server_auto_backup_action_all_sites_failed', array( $this, 'wpcd_core_install_server_handle_backup_script_install_failed' ), 10, 3 );
+		add_action( 'sstk_server_wordpress-app_server_auto_backup_action_all_sites_successful', array( $this, 'sstk_core_install_server_handle_backup_script_install_success' ), 10, 3 );
+		add_action( 'sstk_server_wordpress-app_server_auto_backup_action_all_sites_failed', array( $this, 'sstk_core_install_server_handle_backup_script_install_failed' ), 10, 3 );
 
 		/* Pending Logs Background Task: Trigger installation of server configuration backups on the server */
-		add_action( 'wpcd_core_after_server_prepare_install_server_configuration_backups', array( $this, 'wpcd_core_install_server_configuration_backups' ), 10, 3 );
+		add_action( 'sstk_core_after_server_prepare_install_server_configuration_backups', array( $this, 'sstk_core_install_server_configuration_backups' ), 10, 3 );
 
 		/*  Install Server Configuration Backups: Handle backup script installation success or failure */
-		add_action( 'wpcd_server_wordpress-app_toggle_server_configuration_backups_success', array( $this, 'wpcd_core_install_server_handle_config_backup_install_success' ), 10, 3 );
-		add_action( 'wpcd_server_wordpress-app_toggle_server_configuration_backups_failed', array( $this, 'wpcd_core_install_server_handle_config_backup_install_failed' ), 10, 3 );
+		add_action( 'sstk_server_wordpress-app_toggle_server_configuration_backups_success', array( $this, 'sstk_core_install_server_handle_config_backup_install_success' ), 10, 3 );
+		add_action( 'sstk_server_wordpress-app_toggle_server_configuration_backups_failed', array( $this, 'sstk_core_install_server_handle_config_backup_install_failed' ), 10, 3 );
 
 		/* Pending Logs Background Task: Run callback for the first time on a server after they're installed. */
-		add_action( 'wpcd_core_after_server_prepare_run_server_callbacks', array( $this, 'wpcd_core_run_server_callbacks' ), 10, 3 );
+		add_action( 'sstk_core_after_server_prepare_run_server_callbacks', array( $this, 'sstk_core_run_server_callbacks' ), 10, 3 );
 
 	}
 
@@ -288,44 +277,43 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	private function include_tabs() {
 
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/tabs.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/general.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/backup.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/ssl.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/cache.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/sftp.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/staging.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/clone-site.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/copy-to-existing-site.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/site-sync.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/crons.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/php-options.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/change-domain.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/misc.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/tweaks.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/tools.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/theme-and-plugin-updates.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/phpmyadmin.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/6g_firewall.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/7g_firewall.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/security.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/statistics.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/logs.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/wp-site-users.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/wpconfig-options.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/redirect-rules.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/file-manager.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/tabs.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/general.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/backup.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/ssl.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/cache.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/sftp.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/staging.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/clone-site.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/copy-to-existing-site.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/site-sync.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/crons.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/php-options.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/change-domain.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/misc.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/tweaks.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/tools.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/theme-and-plugin-updates.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/phpmyadmin.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/7g_firewall.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/security.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/statistics.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/logs.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/wp-site-users.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/wpconfig-options.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/redirect-rules.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/file-manager.php';
 
-		if ( true === wpcd_is_git_enabled() ) {
-			require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/git-control-site.php';
+		if ( true === sstk_is_git_enabled() ) {
+			require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/git-control-site.php';
 		}
 
-		if ( true === wpcd_is_mt_enabled() ) {
-			require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/multitenant-site.php';
+		if ( true === sstk_is_mt_enabled() ) {
+			require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/multitenant-site.php';
 		}
 
-		if ( defined( 'WPCD_SHOW_SITE_USERS_TAB' ) && WPCD_SHOW_SITE_USERS_TAB ) {
-			require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs/site-system-users.php';
+		if ( defined( 'SSTK_SHOW_SITE_USERS_TAB' ) && SSTK_SHOW_SITE_USERS_TAB ) {
+			require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs/site-system-users.php';
 		}
 
 		/**
@@ -333,7 +321,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		 * Then this action hook MUST be used! Otherwise, weird
 		 * stuff will happen and you will not know why!
 		 */
-		do_action( 'wpcd_wpapp_include_app_tabs' );
+		do_action( 'sstk_wpapp_include_app_tabs' );
 
 	}
 
@@ -343,44 +331,42 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	private function include_tabs_server() {
 
 		// No upgrades needed - show every thing.
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/general.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/services.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/callbacks.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/ufw_firewall.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/backup.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/monit.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/general.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/services.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/callbacks.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/ufw_firewall.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/backup.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/monit.php';
 
 		// Possibly add required files for ssh console.
-		$option_hide_ssh_console = get_option( 'wpcd_wpapp_ssh_console_hide' );
+		$option_hide_ssh_console = get_option( 'sstk_wpapp_ssh_console_hide' );
 		if ( ! empty( $option_hide_ssh_console ) && true == boolval( $option_hide_ssh_console ) ) {
 			// ssh console tab should be hidden unless a wp-config option forces it to be shown - so check for that here.
-			if ( defined( 'WPCD_HIDE_SSH_CONSOLE' ) && ! WPCD_HIDE_SSH_CONSOLE ) {
-				require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/ssh_console.php';
+			if ( defined( 'SSTK_HIDE_SSH_CONSOLE' ) && ! SSTK_HIDE_SSH_CONSOLE ) {
+				require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/ssh_console.php';
 			}
 		} else {
 			// possibly show the console unless a wp-config option forces it to be hidden so check for that here.
-			if ( ! defined( 'WPCD_HIDE_SSH_CONSOLE' ) || ( defined( 'WPCD_HIDE_SSH_CONSOLE' ) && ! WPCD_HIDE_SSH_CONSOLE ) ) {
-				require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/ssh_console.php';
+			if ( ! defined( 'SSTK_HIDE_SSH_CONSOLE' ) || ( defined( 'SSTK_HIDE_SSH_CONSOLE' ) && ! SSTK_HIDE_SSH_CONSOLE ) ) {
+				require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/ssh_console.php';
 			}
 		}
 
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/statistics.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/tools.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/tweaks.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/upgrade.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/sites.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/power.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/users.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/logs.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/fail2ban.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/sshkeys.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/monitorix.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/goaccess.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/resize.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/ols_console.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/statistics.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/tools.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/tweaks.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/upgrade.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/sites.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/power.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/users.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/logs.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/fail2ban.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/sshkeys.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/resize.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/ols_console.php';
 
-		if ( true === wpcd_is_git_enabled() ) {
-			require_once wpcd_path . 'includes/core/apps/wordpress-app/tabs-server/git_control.php';
+		if ( true === sstk_is_git_enabled() ) {
+			require_once SSTK_PATH . 'includes/core/apps/wordpress-app/tabs-server/git_control.php';
 		}
 
 		/**
@@ -388,7 +374,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		 * Then this action hook MUST be used! Otherwise, weird
 		 * stuff will happen and you will not know why!
 		 */
-		do_action( 'wpcd_wpapp_include_server_tabs' );
+		do_action( 'sstk_wpapp_include_server_tabs' );
 
 	}
 
@@ -396,14 +382,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Include the files for the REST API and instantiate the controllers
 	 */
 	private function include_rest_api() {
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-base.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-servers.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-tasks.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-base.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-servers.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-tasks.php';
 
 		// Function specific endpoints for sites - so that the main sites controller file does not get large and unwieldly.
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-change-domain.php';
-		require_once wpcd_path . 'includes/core/apps/wordpress-app/rest-api/class-wpcd-rest-api-controller-sites-clone-site.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-change-domain.php';
+		require_once SSTK_PATH . 'includes/core/apps/wordpress-app/rest-api/class-sstk-rest-api-controller-sites-clone-site.php';
 
 		/**
 		 * Need to add new REST API controllers from an add-on?
@@ -416,18 +402,18 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		 * to add the new controller to the array so that
 		 * they can be instantiated.
 		 */
-		do_action( 'wpcd_wpapp_include_rest_api' );
+		do_action( 'sstk_wpapp_include_rest_api' );
 
 		// List of controllers to instantiate.
 		// This list should be added to by other plugins adding their own rest api controllers.
 		$controllers = apply_filters(
-			"wpcd_app_{$this->get_app_name()}_rest_api_controller_list",
+			"sstk_app_{$this->get_app_name()}_rest_api_controller_list",
 			array(
-				WPCD_REST_API_Controller_Servers::class,
-				WPCD_REST_API_Controller_Sites::class,
-				WPCD_REST_API_Controller_Sites_Change_Domain::class,
-				WPCD_REST_API_Controller_Sites_Clone_Site::class,
-				WPCD_REST_API_Controller_Tasks::class,
+				SSTK_REST_API_Controller_Servers::class,
+				SSTK_REST_API_Controller_Sites::class,
+				SSTK_REST_API_Controller_Sites_Change_Domain::class,
+				SSTK_REST_API_Controller_Sites_Clone_Site::class,
+				SSTK_REST_API_Controller_Tasks::class,
 			)
 		);
 
@@ -457,31 +443,31 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// SSL enabled?
 		$ssl_status               = $this->get_site_local_ssl_status( $app_id );   // Returns a boolean.
-		$ssl_status_display_value = true === $ssl_status ? __( 'On', 'wpcd' ) : __( 'Off', 'wpcd' );
+		$ssl_status_display_value = true === $ssl_status ? __( 'On', 'simple-stack' ) : __( 'Off', 'simple-stack' );
 		if ( true === boolval( $ssl_status ) ) {
-			$ssl_class_name = 'wpcd_site_details_top_row_element_ssl_on';
+			$ssl_class_name = 'sstk_site_details_top_row_element_ssl_on';
 		} else {
-			$ssl_class_name = 'wpcd_site_details_top_row_element_ssl_off';
+			$ssl_class_name = 'sstk_site_details_top_row_element_ssl_off';
 		}
 
 		// Page Cache.
 		$page_cache_status        = $this->get_page_cache_status( $app_id );
-		$page_cache_display_value = 'on' === $page_cache_status ? __( 'On', 'wpcd' ) : __( 'Off', 'wpcd' );
+		$page_cache_display_value = 'on' === $page_cache_status ? __( 'On', 'simple-stack' ) : __( 'Off', 'simple-stack' );
 		if ( 'on' === $page_cache_status ) {
-			$page_cache_class_name = 'wpcd_site_details_top_row_element_page_cache_on';
+			$page_cache_class_name = 'sstk_site_details_top_row_element_page_cache_on';
 		} else {
-			$page_cache_class_name = 'wpcd_site_details_top_row_element_page_cache_off';
+			$page_cache_class_name = 'sstk_site_details_top_row_element_page_cache_off';
 		}
 
 		// Git.
 		$git_status               = $this->get_git_status( $app_id );
 		$git_status_display_value = '';
 		if ( true === $git_status ) {
-			$git_status_display_value = __( 'On', 'wpcd' );
-			$git_status_class_name    = 'wpcd_site_details_top_row_element_git_status';
+			$git_status_display_value = __( 'On', 'simple-stack' );
+			$git_status_class_name    = 'sstk_site_details_top_row_element_git_status';
 
 			$git_branch_display_value = $this->get_git_branch( $app_id );
-			$git_branch_class_name    = 'wpcd_site_details_top_row_element_git_branch';  // Not used - for now we're using the $git_status_class_name for both git status and branch name.
+			$git_branch_class_name    = 'sstk_site_details_top_row_element_git_branch';  // Not used - for now we're using the $git_status_class_name for both git status and branch name.
 		}
 
 		// Site Type.
@@ -489,142 +475,126 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$site_type_display_value = '';
 		if ( 'standard' !== $site_type && ! empty( $site_type ) ) {
 			$site_type_display_value = $site_type;
-			$site_type_class_name    = 'wpcd_site_details_top_row_element_site_type';
+			$site_type_class_name    = 'sstk_site_details_top_row_element_site_type';
 		}
 
 		/**
 		 * Wrap the page cache, ssl status and other elements into a set of spans that will go underneath the domain name.
 		 */
-		$other_data = '<div class="wpcd_site_details_top_row_element_wrapper">';
+		$other_data = '<div class="sstk_site_details_top_row_element_wrapper">';
 
-		if ( wpcd_is_admin() && ( ! wpcd_get_early_option( 'wordpress_app_disable_passwordless_login' ) ) ) {
-			$passwordless_login_link = $this->get_passwordless_login_link_for_display( $app_id, __( 'Login', 'wpcd' ) );
-			$other_data             .= '<span class="wpcd_medium_chicklet wpcd_site_details_top_row_element_passwordless_login">' . $passwordless_login_link . '</span>';
+		if ( sstk_is_admin() && ( ! sstk_get_early_option( 'wordpress_app_disable_passwordless_login' ) ) ) {
+			$passwordless_login_link = $this->get_passwordless_login_link_for_display( $app_id, __( 'Login', 'simple-stack' ) );
+			$other_data             .= '<span class="sstk_medium_chicklet sstk_site_details_top_row_element_passwordless_login">' . $passwordless_login_link . '</span>';
 		}
 
-		$other_data .= '<span class="wpcd_medium_chicklet wpcd_site_details_top_row_element_wstype">' . $webserver_type_name . '</span>';
-		$other_data .= '<span class=" wpcd_medium_chicklet ' . $ssl_class_name . '">' . sprintf( __( 'SSL: %s', 'wpcd' ), $ssl_status_display_value ) . '</span>';
-		$other_data .= '<span class=" wpcd_medium_chicklet ' . $page_cache_class_name . '">' . sprintf( __( 'Cache: %s', 'wpcd' ), $page_cache_display_value ) . '</span>';
+		$other_data .= '<span class="sstk_medium_chicklet sstk_site_details_top_row_element_wstype">' . $webserver_type_name . '</span>';
+		$other_data .= '<span class=" sstk_medium_chicklet ' . $ssl_class_name . '">' . sprintf( __( 'SSL: %s', 'simple-stack' ), $ssl_status_display_value ) . '</span>';
+		$other_data .= '<span class=" sstk_medium_chicklet ' . $page_cache_class_name . '">' . sprintf( __( 'Cache: %s', 'simple-stack' ), $page_cache_display_value ) . '</span>';
 		if ( ! empty( $git_status ) ) {
 			/* Translators: %s is the git status (on or off). */
-			$other_data .= '<span class=" wpcd_medium_chicklet ' . $git_status_class_name . '">' . sprintf( __( 'Git: %s', 'wpcd' ), $git_status_display_value ) . '</span>';
+			$other_data .= '<span class=" sstk_medium_chicklet ' . $git_status_class_name . '">' . sprintf( __( 'Git: %s', 'simple-stack' ), $git_status_display_value ) . '</span>';
 		}
 		if ( ! empty( $git_branch_display_value ) ) {
 			/* Translators: %s is the git branch name. */
-			$other_data .= '<span class=" wpcd_medium_chicklet ' . $git_status_class_name . '">' . sprintf( __( 'Branch: %s', 'wpcd' ), $git_branch_display_value ) . '</span>';
+			$other_data .= '<span class=" sstk_medium_chicklet ' . $git_status_class_name . '">' . sprintf( __( 'Branch: %s', 'simple-stack' ), $git_branch_display_value ) . '</span>';
 		}
 		if ( ! empty( $site_type_display_value ) ) {
 			/* Translators: %s is the multi-tenant site type. */
-			$other_data .= '<span class=" wpcd_medium_chicklet ' . $site_type_class_name . '">' . sprintf( __( '%s', 'wpcd' ), $site_type_display_value ) . '</span>';
+			$other_data .= '<span class=" sstk_medium_chicklet ' . $site_type_class_name . '">' . sprintf( __( '%s', 'simple-stack' ), $site_type_display_value ) . '</span>';
 		}
 		$other_data .= '</div>';
 		/* End Wrap page cache, ssl status and other elements */
 
 		// Copy IP.
-		$copy_app_ip = wpcd_wrap_clipboard_copy( $this->get_ipv4_address( $app_id ) );
+		$copy_app_ip = sstk_wrap_clipboard_copy( $this->get_ipv4_address( $app_id ) );
 
-		if ( wpcd_get_early_option( 'wpcd_show_ipv6' ) ) {
-			$copy_app_ip .= wpcd_wrap_clipboard_copy( $this->get_ipv6_address( $app_id ) );
+		if ( sstk_get_early_option( 'sstk_show_ipv6' ) ) {
+			$copy_app_ip .= sstk_wrap_clipboard_copy( $this->get_ipv6_address( $app_id ) );
 		}
 
 		// There should be no 'other data' if the setting to not show it is enabled.
-		if ( wpcd_get_option( 'wordpress_app_hide_chicklet_area_in_site_detail' ) ) {
+		if ( sstk_get_option( 'wordpress_app_hide_chicklet_area_in_site_detail' ) ) {
 			$other_data = '';
 		}
 
 		// Certain columns need to be expanded or contracted based on whether other columns are allowed to be shown or hidden.
 		$view_admin_site_columns       = 2;
 		$hide_view_apps_on_server_link = false;
-		if ( true === (bool) wpcd_get_early_option( 'wordpress_app_hide_view_apps_on_server_link' ) && ! wpcd_is_admin() ) {
+		if ( true === (bool) sstk_get_early_option( 'wordpress_app_hide_view_apps_on_server_link' ) && ! sstk_is_admin() ) {
 			$view_admin_site_columns       = 3;
 			$hide_view_apps_on_server_link = true;
 		}
 
 		$fields[] = array(
-			'name'    => __( 'Domain', 'wpcd' ),
+			'name'    => __( 'Domain', 'simple-stack' ),
 			'type'    => 'custom_html',
-			'std'     => wpcd_wrap_clipboard_copy( $this->get_domain_name( $app_id ) ) . $other_data,
+			'std'     => sstk_wrap_clipboard_copy( $this->get_domain_name( $app_id ) ) . $other_data,
 			'columns' => 'left' === $this->get_tab_style() ? 4 : 4,
-			'class'   => 'left' === $this->get_tab_style() ? 'wpcd_site_details_top_row wpcd_site_details_top_row_domain wpcd_site_details_top_row_domain_left' : 'wpcd_site_details_top_row wpcd_site_details_top_row_domain',
+			'class'   => 'left' === $this->get_tab_style() ? 'sstk_site_details_top_row sstk_site_details_top_row_domain sstk_site_details_top_row_domain_left' : 'sstk_site_details_top_row sstk_site_details_top_row_domain',
 		);
 		$fields[] = array(
-			'name'    => __( 'IP', 'wpcd' ),
+			'name'    => __( 'IP', 'simple-stack' ),
 			'type'    => 'custom_html',
 			'std'     => $copy_app_ip,
 			'columns' => 'left' === $this->get_tab_style() ? 2 : 2,
-			'class'   => 'wpcd_site_details_top_row wpcd_site_details_top_row_ip',
+			'class'   => 'sstk_site_details_top_row sstk_site_details_top_row_ip',
 		);
 		$fields[] = array(
-			'name'    => __( 'Admin', 'wpcd' ),
-			'id'      => 'wpcd_app_action_site-detail-header-view-admin',
+			'name'    => __( 'Admin', 'simple-stack' ),
+			'id'      => 'sstk_app_action_site-detail-header-view-admin',
 			'type'    => 'button',
 			'std'     => $this->get_formatted_wpadmin_link( $app_id ),
 			'columns' => 'left' === $this->get_tab_style() ? $view_admin_site_columns : $view_admin_site_columns,
-			'class'   => 'wpcd_site_details_top_row wpcd_site_details_top_row_admin_login',
+			'class'   => 'sstk_site_details_top_row sstk_site_details_top_row_admin_login',
 		);
 		$fields[] = array(
-			'name'    => __( 'Front-end', 'wpcd' ),
-			'id'      => 'wpcd_app_action_site-detail-header-view-site',
+			'name'    => __( 'Front-end', 'simple-stack' ),
+			'id'      => 'sstk_app_action_site-detail-header-view-site',
 			'type'    => 'button',
 			'std'     => $this->get_formatted_site_link( $app_id ),
 			'columns' => 'left' === $this->get_tab_style() ? $view_admin_site_columns : $view_admin_site_columns,
-			'class'   => 'wpcd_site_details_top_row wpcd_site_details_top_row_front_end',
+			'class'   => 'sstk_site_details_top_row sstk_site_details_top_row_front_end',
 		);
 
 		if ( false === $hide_view_apps_on_server_link ) {
 			$server_post_id = get_post_meta( $app_id, 'parent_post_id', true );
 			if ( is_admin() ) {
 				// We're viewing in the wp-admin area.
-				$url = admin_url( 'edit.php?post_type=wpcd_app&server_id=' . (string) $server_post_id );
+				$url = admin_url( 'edit.php?post_type=sstk_app&server_id=' . (string) $server_post_id );
 			} else {
 				// We're viewing on the front-end.
 				$url = get_permalink( (int) $server_post_id );
 			}
-			$apps_on_server = sprintf( '<a href="%s" target="_blank">%s</a>', $url, __( 'View Apps', 'wpcd' ) );
+			$apps_on_server = sprintf( '<a href="%s" target="_blank">%s</a>', $url, __( 'View Apps', 'simple-stack' ) );
 
 			$fields[] = array(
-				'name'    => __( 'Apps on Server', 'wpcd' ),
-				'id'      => 'wpcd_app_action_site-detail-header-view-apps',
+				'name'    => __( 'Apps on Server', 'simple-stack' ),
+				'id'      => 'sstk_app_action_site-detail-header-view-apps',
 				'type'    => 'button',
 				'std'     => $apps_on_server,
 				'columns' => 'left' === $this->get_tab_style() ? 2 : 2,
-				'class'   => 'wpcd_site_details_top_row wpcd_site_details_top_row_apps_on_server',
-			);
-		}
-
-		// Does the server for this app need an upgrade?
-		$upgrade_needed = $this->app_admin_list_upgrade_status( '', $app_id );  // This function is located in traits/traits-for-class-wordpress-app/upgrade.php.
-		if ( ! empty( $upgrade_needed ) ) {
-
-			$fields[] = array(
-				'type' => 'divider',
-			);
-
-			$fields[] = array(
-				'name'  => __( 'Upgrade Notice', 'wpcd' ),
-				'type'  => 'custom_html',
-				'std'   => $upgrade_needed,
-				'class' => 'wpcd_site_details_top_row',
+				'class'   => 'sstk_site_details_top_row sstk_site_details_top_row_apps_on_server',
 			);
 		}
 
 		// Does a warning need to be shown because SITE PACKAGES are likely still running?
-		if ( true === $this->wpcd_is_site_package_running( $app_id ) ) {
-			$message  = '<b><small>' . __( 'WPCD: It appears we are still setting up this site for you.', 'wpcd' );
+		if ( true === $this->sstk_is_site_package_running( $app_id ) ) {
+			$message  = '<b><small>' . __( 'Simple Stack: It appears we are still setting up this site for you.', 'simple-stack' );
 			$message .= '<br />';
-			$message .= __( 'Certain actions for site packages are still running.', 'wpcd' );
+			$message .= __( 'Certain actions for site packages are still running.', 'simple-stack' );
 			$message .= '<br />';
-			$message .= __( 'The site should be available shortly!', 'wpcd' ) . '</b></small>';
+			$message .= __( 'The site should be available shortly!', 'simple-stack' ) . '</b></small>';
 
 			$fields[] = array(
 				'type' => 'divider',
 			);
 
 			$fields[] = array(
-				'name'  => __( 'Not-Ready Notice', 'wpcd' ),
+				'name'  => __( 'Not-Ready Notice', 'simple-stack' ),
 				'type'  => 'custom_html',
 				'std'   => $message,
-				'class' => 'wpcd_site_details_top_row',
+				'class' => 'sstk_site_details_top_row',
 			);
 
 		}
@@ -651,79 +621,63 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// Is git installed?
 		$git_status = $this->get_git_status( $id );
 
-		$other_data  = '<div class="wpcd_site_details_top_row_element_wrapper">';
-		$other_data .= '<span class="wpcd_medium_chicklet wpcd_server_details_top_row_element_wstype">' . $webserver_type_name . '</span>';
+		$other_data  = '<div class="sstk_site_details_top_row_element_wrapper">';
+		$other_data .= '<span class="sstk_medium_chicklet sstk_server_details_top_row_element_wstype">' . $webserver_type_name . '</span>';
 		if ( true === $git_status ) {
-			$other_data .= '<span class="wpcd_medium_chicklet wpcd_server_details_top_row_element_git_status">' . __( 'Git On', 'wpcd' ) . '</span>';
+			$other_data .= '<span class="sstk_medium_chicklet sstk_server_details_top_row_element_git_status">' . __( 'Git On', 'simple-stack' ) . '</span>';
 		}
 		$other_data .= '</div>';
 
-		$copy_ip = wpcd_wrap_clipboard_copy( WPCD_SERVER()->get_ipv4_address( $id ) );
-		if ( wpcd_get_early_option( 'wpcd_show_ipv6' ) ) {
-			$copy_ip .= wpcd_wrap_clipboard_copy( WPCD_SERVER()->get_ipv6_address( $id ) );
+		$copy_ip = sstk_wrap_clipboard_copy( SSTK_SERVER()->get_ipv4_address( $id ) );
+		if ( sstk_get_early_option( 'sstk_show_ipv6' ) ) {
+			$copy_ip .= sstk_wrap_clipboard_copy( SSTK_SERVER()->get_ipv6_address( $id ) );
 		}
 
 		$fields['general-welcome-top-col_1'] = array(
-			'name'    => __( 'Server Name', 'wpcd' ),
+			'name'    => __( 'Server Name', 'simple-stack' ),
 			'type'    => 'custom_html',
-			'std'     => get_post_meta( $id, 'wpcd_server_name', true ) . $other_data,
+			'std'     => get_post_meta( $id, 'sstk_server_name', true ) . $other_data,
 			'columns' => 3,
-			'class'   => 'wpcd_server_details_top_row wpcd_server_details_top_row_server_name',
+			'class'   => 'sstk_server_details_top_row sstk_server_details_top_row_server_name',
 		);
 
 		$fields['general-welcome-top-col_2'] = array(
-			'name'    => __( 'IP', 'wpcd' ),
+			'name'    => __( 'IP', 'simple-stack' ),
 			'type'    => 'custom_html',
 			'std'     => $copy_ip,
 			'columns' => 3,
-			'class'   => 'wpcd_server_details_top_row wpcd_server_details_top_row_ip',
+			'class'   => 'sstk_server_details_top_row sstk_server_details_top_row_ip',
 		);
 
 		$fields['general-welcome-top-col_3'] = array(
-			'name'    => __( 'Provider', 'wpcd' ),
+			'name'    => __( 'Provider', 'simple-stack' ),
 			'type'    => 'custom_html',
-			'std'     => WPCD()->wpcd_get_cloud_provider_desc( get_post_meta( $id, 'wpcd_server_provider', true ) ),
+			'std'     => SSTK()->sstk_get_cloud_provider_desc( get_post_meta( $id, 'sstk_server_provider', true ) ),
 			'columns' => 2,
-			'class'   => 'wpcd_server_details_top_row wpcd_server_details_top_row_provider',
+			'class'   => 'sstk_server_details_top_row sstk_server_details_top_row_provider',
 		);
 
 		$fields['general-welcome-top-col_4'] = array(
-			'name'    => __( 'Region', 'wpcd' ),
+			'name'    => __( 'Region', 'simple-stack' ),
 			'type'    => 'custom_html',
-			'std'     => get_post_meta( $id, 'wpcd_server_region', true ),
+			'std'     => get_post_meta( $id, 'sstk_server_region', true ),
 			'columns' => 2,
-			'class'   => 'wpcd_server_details_top_row wpcd_server_details_top_row_region',
+			'class'   => 'sstk_server_details_top_row sstk_server_details_top_row_region',
 		);
 
 		if ( is_admin() ) {
-			$apps_url = admin_url( 'edit.php?post_type=wpcd_app&server_id=' . $id );
+			$apps_url = admin_url( 'edit.php?post_type=sstk_app&server_id=' . $id );
 		} else {
-			$apps_url = get_permalink( WPCD_WORDPRESS_APP_PUBLIC::get_apps_list_page_id() ) . '?server_id=' . (string) $id;
+			$apps_url = get_permalink( SSTK_WORDPRESS_APP_PUBLIC::get_apps_list_page_id() ) . '?server_id=' . (string) $id;
 		}
 
 		$fields['general-welcome-top-col_5'] = array(
-			'name'    => __( 'Apps', 'wpcd' ),
+			'name'    => __( 'Apps', 'simple-stack' ),
 			'type'    => 'custom_html',
-			'std'     => sprintf( '<a href="%s" target="_blank">%d</a>', esc_url( $apps_url ), WPCD_SERVER()->get_app_count( $id ) ),
+			'std'     => sprintf( '<a href="%s" target="_blank">%d</a>', esc_url( $apps_url ), SSTK_SERVER()->get_app_count( $id ) ),
 			'columns' => 2,
-			'class'   => 'wpcd_server_details_top_row wpcd_server_details_top_row_app_count',
+			'class'   => 'sstk_server_details_top_row sstk_server_details_top_row_app_count',
 		);
-
-		// Does this server need an upgrade?
-		$upgrade_needed = $this->app_server_admin_list_upgrade_status( '', $id );  // This function is located in traits/traits-for-class-wordpress-app/upgrade.php.
-		if ( ! empty( $upgrade_needed ) ) {
-
-			$fields[] = array(
-				'type' => 'divider',
-			);
-
-			$fields[] = array(
-				'name'  => __( 'Upgrade Notice', 'wpcd' ),
-				'type'  => 'custom_html',
-				'std'   => $upgrade_needed,
-				'class' => 'wpcd_server_details_top_row',
-			);
-		}
 
 		return $fields;
 	}
@@ -739,18 +693,18 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// @SEE: https://wordpress.org/download/releases/
 		$versions          = array( 'latest', '6.5.2', '6.4.4', '6.3.4', '6.2.5', '6.1.6', '6.0.7', '5.9.9', '5.8.9', '5.7.11', '5.6.13', '5.5.14', '5.4.15', '5.3.17', '5.2.20', '5.1.18', '5.0.21', '4.9.25', '4.8.24', '4.7.28' );
-		$override_versions = wpcd_get_option( 'wordpress_app_allowed_wp_versions' );
+		$override_versions = sstk_get_option( 'wordpress_app_allowed_wp_versions' );
 
 		if ( ! empty( $override_versions ) ) {
 			$versions = $override_versions;
 		}
 
 		// Possibly add in the 'nightly' version option.
-		if ( wpcd_get_option( 'wordpress_app_versions_show_nightly' ) ) {
+		if ( sstk_get_option( 'wordpress_app_versions_show_nightly' ) ) {
 			$versions = array_merge( $versions, array( 'nightly' ) );
 		}
 
-		return apply_filters( 'wpcd_allowed_wp_versions', $versions );
+		return apply_filters( 'sstk_allowed_wp_versions', $versions );
 
 	}
 
@@ -762,11 +716,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return string.
 	 */
 	public static function get_default_os() {
-		$default_os = wpcd_get_option( 'wordpress_app_default_os' );
-		if ( empty( $default_os ) ) {
-			$default_os = 'ubuntu2204lts';
+		$default_os = sstk_get_option( 'wordpress_app_default_os' );
+		$os_list    = SSTK()->get_os_list();
+
+		if ( empty( $default_os ) || ! isset( $os_list[ $default_os ] ) ) {
+			$default_os = 'ubuntu2404lts';
 		}
-		return apply_filters( 'wpcd_default_os', $default_os );
+
+		$default_os = apply_filters( 'sstk_default_os', $default_os );
+
+		return isset( $os_list[ $default_os ] ) ? $default_os : 'ubuntu2404lts';
 	}
 
 	/**
@@ -777,11 +736,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return string.
 	 */
 	public static function get_default_webserver() {
-		$default_web_server = wpcd_get_option( 'wordpress_app_default_webserver' );
-		if ( empty( $default_web_server ) ) {
-			$default_web_server = 'ols';
-		}
-		return apply_filters( 'wpcd_default_web_server_type', $default_web_server );
+		return 'ols';
 	}
 
 	/**
@@ -797,15 +752,17 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// If for some reason we didn't get a server_id, retrieve it from the app.
 		$server_id = $post_id;
-		if ( 'wpcd_app_server' !== get_post_type( $server_id ) ) {
+		if ( 'sstk_app_server' !== get_post_type( $server_id ) ) {
 			$server_id = $this->get_server_id_by_app_id( $server_id );
 		}
 
 		$web_server_type = false;
 		if ( ! empty( $server_id ) && ( ! is_wp_error( $server_id ) ) ) {
-			$web_server_type = get_post_meta( $server_id, 'wpcd_server_webserver_type', true );
+			$web_server_type = get_post_meta( $server_id, 'sstk_server_webserver_type', true );
 			if ( empty( $web_server_type ) ) {
 				$web_server_type = 'ols';
+			} elseif ( 'ols' !== $web_server_type ) {
+				$web_server_type = false;
 			}
 		}
 
@@ -826,18 +783,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		$return = $web_server_type;
 
-		switch ( $web_server_type ) {
-			case 'ols':
-				$return = __( 'OpenLiteSpeed', 'wpcd' );
-				break;
-
-			case 'nginx':
-				$return = __( 'Nginx', 'wpcd' );
-				break;
-
-			case 'ols-enterprise':
-				$return = __( 'LiteSpeed Enterprise', 'wpcd' );
-				break;
+		if ( 'ols' === $web_server_type ) {
+			return __( 'OpenLiteSpeed', 'simple-stack' );
 		}
 
 		return $return;
@@ -883,13 +830,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function get_app_id_by_server_id_and_domain( $server_id, $domain ) {
 
 		// If the server id is not for a server post, return immediately with an error.
-		if ( 'wpcd_app_server' !== get_post_type( $server_id ) ) {
+		if ( 'sstk_app_server' !== get_post_type( $server_id ) ) {
 			return false;
 		}
 
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app',
+				'post_type'   => 'sstk_app',
 				'post_status' => 'private',
 				'numberposts' => -1,
 				'meta_query'  => array(
@@ -927,7 +874,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app',
+				'post_type'   => 'sstk_app',
 				'post_status' => 'private',
 				'numberposts' => -1,
 				'meta_query'  => array(
@@ -1091,7 +1038,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		if ( true === $icon ) {
 			return sprintf( '<a href = "%s" target="_blank">' . '<i class="fa-duotone fa-user-unlock"></i>' . '</a>', $url_wpadmin );
 		} else {
-			return sprintf( '<a href = "%s" target="_blank">' . __( 'Admin Login', 'wpcd' ) . '</a>', $url_wpadmin );
+			return sprintf( '<a href = "%s" target="_blank">' . __( 'Admin Login', 'simple-stack' ) . '</a>', $url_wpadmin );
 		}
 
 	}
@@ -1112,115 +1059,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	}
 
 	/**
-	 * Returns a boolean true/false if PHP 5.5/7.0/7.1/7.2/7.3 is supposed to be installed.
-	 *
-	 * @param int    $server_id ID of server being interrogated.
-	 * @param string $php_version PHP version being inquired about - eg: 56,70,71,72,73.
-	 *
-	 * @return boolean
-	 */
-	public function is_old_php_version_installed( $server_id, $php_version ) {
-
-		// "old" versions are 5.6, 7.0, 7.1. 7.2, 7.3.
-		if ( ! in_array( $php_version, array( '56', '70', '71', '72', '73' ) ) ) {
-			return false;
-		}
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.3.9' ) === -1 ) {
-			// Versions of the plugin before 5.3.9 automatically install PHP 5.6/7.0./7.2/7.2/7.3.
-			return true;
-		} else {
-			// See if it was manually installed via an upgrade process - which would leave a meta field value behind on the server CPT record.
-			$meta_name    = '';
-			$meta_name    = sprintf( 'wpcd_server_php%s_installed', $php_version );
-			$is_installed = (bool) $this->get_server_meta_by_app_id( $server_id, $meta_name, true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( true === $is_installed ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if PHP 80 is supposed to be installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_php_80_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.2.4' ) > -1 ) {
-			return true;
-		} else {
-			return false;
-		}
-
-	}
-
-	/**
-	 * Returns a boolean true/false if PHP 81 is supposed to be installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_php_81_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.12.1' ) > -1 ) {
-			// Versions of the plugin after 4.12.1 automatically install PHP 8.1.
-			return true;
-		} else {
-			// See if it was manually installed via an upgrade process - which would leave a meta field value behind on the server CPT record.
-			$is_php81_installed = (bool) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_php81_installed', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( true === $is_php81_installed ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if PHP 82 is supposed to be installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_php_82_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.2.6' ) > -1 ) {
-			// Versions of the plugin after 5.2.6 automatically install PHP 8.2.
-			return true;
-		} else {
-			// See if it was manually installed via an upgrade process - which would leave a meta field value behind on the server CPT record.
-			$is_php82_installed = (bool) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_php82_installed', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( true === $is_php82_installed ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-	
-	/**
-	 * Returns a boolean true/false if PHP 83 is supposed to be installed.
+	 * Returns whether PHP 8.3 is part of the server baseline.
 	 *
 	 * @param int $server_id ID of server being interrogated.
 	 *
@@ -1228,332 +1067,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function is_php_83_installed( $server_id ) {
 
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
+		$initial_plugin_version = (string) $this->get_server_meta_by_app_id( $server_id, 'sstk_server_plugin_initial_version', true );
 
-		if ( version_compare( $initial_plugin_version, '5.7.0' ) > -1 ) {
-			// Versions of the plugin after 5.7.0 automatically install PHP 8.3.
-			return true;
-		} else {
-			// See if it was manually installed via an upgrade process - which would leave a meta field value behind on the server CPT record.
-			$is_php83_installed = (bool) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_php83_installed', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( true === $is_php83_installed ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}	
-
-	/**
-	 * Returns a boolean true/false if a particular PHP version is active.
-	 * Version 4.16 and later of WPCD deactivated earlier versions of PHP
-	 * by default.  Only if the user explicitly activated it was it enabled.
-	 *
-	 * @param int    $server_id ID of server being interrogated.
-	 * @param string $php_version PHP version - eg: php56, php71, php72, php73, php74, php81, php82, php83 etc.
-	 *
-	 * @return boolean
-	 */
-	public function is_php_version_active( $server_id, $php_version ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		$return = true;  // assume true for active.
-		if ( version_compare( $initial_plugin_version, '4.15.0' ) > -1 ) {
-			// Versions of WPCD later than 4.15 deactivated PHP versions 5.6, 7.1, 7.2 and 7.3.
-			switch ( $php_version ) {
-				case 'php56':
-				case 'php70':
-				case 'php71':
-				case 'php72':
-				case 'php73':
-					$return = false;
-					break;
-			}
-		} else {
-			// Versions of WPCD prior to 4.15 activated almost all php versions.  Except PHP 8.0, 8.1, 8.2 & 8.3 are special cases because of the timing of when these were added to servers.
-			switch ( $php_version ) {
-				case 'php80':
-					if ( ! $this->is_php_80_installed( $server_id ) ) {
-						$return = false;
-					}
-					break;
-				case 'php81':
-					if ( ! $this->is_php_81_installed( $server_id ) ) {
-						$return = false;
-					}
-					break;
-				case 'php82':
-					if ( ! $this->is_php_82_installed( $server_id ) ) {
-						$return = false;
-					}
-					break;
-				case 'php83':
-					if ( ! $this->is_php_83_installed( $server_id ) ) {
-						$return = false;
-					}
-					break;
-			}
-		}
-
-		// Check for metas - this overrides defaults from above.
-		$current_php_activation_state = wpcd_maybe_unserialize( get_post_meta( $server_id, 'wpcd_wpapp_php_activation_state', true ) );
-		if ( is_array( $current_php_activation_state ) ) {
-			if ( ! empty( $current_php_activation_state[ $php_version ] ) ) {
-				if ( 'disabled' === $current_php_activation_state[ $php_version ] ) {
-					$return = false;
-				}
-				if ( 'enabled' === $current_php_activation_state[ $php_version ] ) {
-					$return = true;
-				}
-			}
-		}
-
-		return $return;
-	}
-
-
-	/**
-	 * Set the state of a php version after it's been activated/deactivated.
-	 *
-	 * @param int    $server_id ID of server being interrogated.
-	 * @param string $php_version PHP version - eg: php56, php71, php72 etc.
-	 * @param string $php_activation_state - 'enabled', 'disabled'.
-	 */
-	public function set_php_activation_state( $server_id, $php_version, $php_activation_state ) {
-
-		$current_php_activation_state = wpcd_maybe_unserialize( get_post_meta( $server_id, 'wpcd_wpapp_php_activation_state', true ) );
-		if ( empty( $current_php_activation_state ) ) {
-			$current_php_activation_state = array();
-		}
-
-		$current_php_activation_state[ $php_version ] = $php_activation_state;
-		update_post_meta( $server_id, 'wpcd_wpapp_php_activation_state', $current_php_activation_state );
-
+		return version_compare( $initial_plugin_version, '1.0.0', '>=' );
 	}
 
 	/**
-	 * Returns a boolean true/false if the 6G firewall Rules are installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_6g_installed( $server_id ) {
-
-		// Check first to see if they were removed.
-		$was_6g_removed = (bool) $this->get_server_meta_by_app_id( $server_id, 'wpcd_6g_removed', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( true === $was_6g_removed ) {
-			return false;
-		}
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.4.0' ) <= 0 ) {
-			// Versions of the plugin after 5.4.0 did not activate 6g (though the files were still added to the server).
-			return true;
-		}
-
-		// If you got here, assume false.
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if the 7G V 1.5 Firewall Rules are installed.
-	 *
-	 * ***This is no longer needed - see the is_7g16_installed() function below instead.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_7g15_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.12.1' ) > -1 ) {
-			// Versions of the plugin after 4.12.1 automatically install 7g V 1.5.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_7g_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 1.5 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if the 7G V 1.6 Firewall Rules are installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_7g16_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.2.6' ) > -1 ) {
-			// Versions of the plugin after 5.2.6 automatically install 7g V 1.6.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_7g_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 1.6 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if wpcli 2.5 is installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_wpcli25_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.12.1' ) > -1 ) {
-			// Versions of the plugin after 4.12.1 automatically install wpcli 2.5.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_wpcli_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 2.5 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if wpcli 2.6 is installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_wpcli26_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.14.2' ) > -1 ) {
-			// Versions of the plugin after 4.14.2 automatically install wpcli 2.6.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_wpcli_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 2.6 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if wpcli 2.7 is installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_wpcli27_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.27.0' ) > -1 ) {
-			// Versions of the plugin after 4.14.2 automatically install wpcli 2.7.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_wpcli_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 2.7 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if wpcli 2.8 is installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_wpcli28_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.3.2' ) > -1 ) {
-			// Versions of the plugin after 5.3.2 automatically install wpcli 2.8.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_wpcli_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 2.8 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if wpcli 2.9 is installed.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_wpcli29_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.4.1' ) > -1 ) {
-			// Versions of the plugin after 5.4.0 automatically install wpcli 2.9.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_wpcli_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 2.9 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if wpcli 2.10 is installed.
+	 * Returns whether WP-CLI 2.10 or newer is installed.
 	 *
 	 * @param int $server_id ID of server being interrogated.
 	 *
@@ -1561,95 +1081,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function is_wpcli210_installed( $server_id ) {
 
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.6.1' ) > -1 ) {
-			// Versions of the plugin after 5.6.0 automatically install wpcli 2.10.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (float) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_wpcli_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			if ( $it_is_installed >= 2.10 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return false;
-	}
-
-
-	/**
-	 * Returns a boolean true/false if the PHP Module INTL is supposed to be installed on the server.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_php_intl_module_installed( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.16.2' ) > -1 ) {
-			// Versions of the plugin after 4.16.2 automatically install the PHP INTL module on all new servers.
-			return true;
-		} else {
-			// See if it was manually upgraded - which would leave a meta field value behind on the server CPT record.
-			$it_is_installed = (bool) $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_phpintl_upgrade', true );   // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-			return $it_is_installed;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns a boolean true/false if the server is a 4.6.0 or later server or was upgraded to that version.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_460_or_later( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '4.6.0' ) > -1 ) {
+		$initial_plugin_version = (string) $this->get_server_meta_by_app_id( $server_id, 'sstk_server_plugin_initial_version', true );
+		if ( version_compare( $initial_plugin_version, '1.0.0', '>=' ) ) {
 			return true;
 		}
 
-		$last_upgrade_done = $this->get_server_meta_by_app_id( $server_id, 'wpcd_last_upgrade_done', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
+		$installed_version = (string) $this->get_server_meta_by_app_id( $server_id, 'sstk_server_wpcli_upgrade', true );
 
-		if ( (int) $last_upgrade_done >= 460 ) {
-			return true;
-		}
-
-		return false;
-
-	}
-
-	/**
-	 * Returns a boolean true/false if the server is a 5.2.6 or later server.
-	 *
-	 * Unlike the is_460_or_later() function above, this one does not check to
-	 * the server upgrade meta. Right now the processes that use this particular
-	 * version check function does care about the upgrade meta.  We only want
-	 * To check the original installed version.
-	 *
-	 * @param int $server_id ID of server being interrogated.
-	 *
-	 * @return boolean
-	 */
-	public function is_526_or_later( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-
-		if ( version_compare( $initial_plugin_version, '5.2.6' ) > -1 ) {
-			return true;
-		}
-
-		return false;
-
+		return '' !== $installed_version && version_compare( $installed_version, '2.10', '>=' );
 	}
 
 	/**
@@ -1749,11 +1188,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function set_admin_lock_status( $app_id, $status ) {
 
 		if ( true === $status || 'on' === $status ) {
-			update_post_meta( $app_id, 'wpcd_wpapp_admin_lock_status', 'on' );
+			update_post_meta( $app_id, 'sstk_wpapp_admin_lock_status', 'on' );
 		}
 
 		if ( false === $status || 'off' === $status ) {
-			update_post_meta( $app_id, 'wpcd_wpapp_admin_lock_status', 'off' );
+			update_post_meta( $app_id, 'sstk_wpapp_admin_lock_status', 'off' );
 		}
 
 	}
@@ -1769,7 +1208,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function get_admin_lock_status( $app_id ) {
 
-		$current_status = get_post_meta( $app_id, 'wpcd_wpapp_admin_lock_status', true );
+		$current_status = get_post_meta( $app_id, 'sstk_wpapp_admin_lock_status', true );
 
 		if ( empty( $current_status ) ) {
 			$current_status = 'off';
@@ -1798,7 +1237,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return boolean|object The return value from the update_post_meta function.
 	 */
 	public function set_server_max_sites_allowed( $id, $count ) {
-		return update_post_meta( $id, 'wpcd_server_max_sites', $count );
+		return update_post_meta( $id, 'sstk_server_max_sites', $count );
 	}
 
 
@@ -1812,7 +1251,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return int
 	 */
 	public function get_server_max_sites_allowed( $id ) {
-		return (int) get_post_meta( $id, 'wpcd_server_max_sites', true );
+		return (int) get_post_meta( $id, 'sstk_server_max_sites', true );
 	}
 
 	/**
@@ -1830,10 +1269,10 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// Make sure the ID is for a server post type.
 		$server_id = 0;
 		$post_type = get_post_type( $id );
-		if ( ( 'wpcd_app_server' !== $post_type ) && ( 'wpcd_app' === $post_type ) ) {
+		if ( ( 'sstk_app_server' !== $post_type ) && ( 'sstk_app' === $post_type ) ) {
 			$server_id = $this->get_server_id_by_app_id( $id );
 		} else {
-			if ( 'wpcd_app_server' === $post_type ) {
+			if ( 'sstk_app_server' === $post_type ) {
 				$server_id = $id;
 			}
 		}
@@ -1848,7 +1287,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		if ( $sites_allowed > 0 ) {
 			// Get count of sites on server.
-			$current_count = WPCD_SERVER()->get_app_count( $server_id );
+			$current_count = SSTK_SERVER()->get_app_count( $server_id );
 
 			if ( $current_count >= $sites_allowed ) {
 				return true;
@@ -1871,23 +1310,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return string 'on' or 'off'
 	 */
 	public function get_page_cache_status( $app_id ) {
-		// Default current status.
-		$current_status = '';
-
-		/**
-		 * We have to handle older WPCD versions (versions prior to WPCD 5.0).
-		 */
-		// First, check to see if the nginx meta has a value.
-		$nginx_value = get_post_meta( $app_id, 'wpapp_nginx_pagecache_status', true );
-
-		// If it does, convert it to our new meta and delete the old value.
-		if ( ! empty( $nginx_value ) ) {
-			update_post_meta( $app_id, 'wpapp_pagecache_status', $nginx_value );
-			delete_post_meta( $app_id, 'wpapp_nginx_pagecache_status' );
-		}
-
-		// Now we can pick up the current status after any conversions.
-		$current_status = wpcd_maybe_unserialize( get_post_meta( $app_id, 'wpapp_pagecache_status', true ) );
+		$current_status = sstk_maybe_unserialize( get_post_meta( $app_id, 'wpapp_pagecache_status', true ) );
 
 		if ( empty( $current_status ) ) {
 			$current_status = 'off';
@@ -1901,35 +1324,23 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Return the PHP version that is the default for this version of the app.
 	 */
 	public function get_wpapp_default_php_version() {
-		return '8.1';
+		return '8.4';
 	}
 
 	/**
 	 * Returns the default PHP version for a server.
-	 *
-	 * Versions of WPCD earlier than 4.30 used 7.4.
-	 * Versions after that uses 8.1.
 	 *
 	 * @param int $server_id The post id of the server (or app).
 	 *
 	 * @return string
 	 */
 	public function get_default_php_version_for_server( $server_id ) {
-
-		$initial_plugin_version = $this->get_server_meta_by_app_id( $server_id, 'wpcd_server_plugin_initial_version', true );  // This function is smart enough to know if the ID being passed is a server or app id and adjust accordingly.
-		if ( version_compare( $initial_plugin_version, '4.30.0' ) > -1 ) {
-			// Versions of the plugin after 4.30.0 automatically uses PHP 8.1.
-			return '8.1';
-		} else {
-			// Earlier versions used PHP 7.4.
-			return '7.4';
-		}
-
+		return '8.4';
 	}
 
 	/**
 	 * Returns the default PHP version for a server without the period in it.
-	 * Eg: 74 instead of 7.4
+	 * Eg: 84 instead of 8.4
 	 *
 	 * @param int $server_id The post id of the server (or app).
 	 *
@@ -1937,7 +1348,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function get_default_php_version_no_period( $server_id ) {
 		$version = $this->get_default_php_version_for_server( $server_id );
-		$version = str_replace( '.', '', $version, );
+		$version = str_replace( '.', '', $version );
 		return $version;
 	}
 
@@ -1951,24 +1362,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function get_php_version_for_app( $app_id ) {
 
 		// Check to see if the version is stamped on the record.
-		$php_version = wpcd_maybe_unserialize( get_post_meta( $app_id, 'wpapp_php_version', true ) );
+		$php_version = sstk_maybe_unserialize( get_post_meta( $app_id, 'wpapp_php_version', true ) );
 
-		// If not, then do some tortured logic to guess at it.
-		if ( empty( $php_version ) ) {
-			// What is the PLUGIN WPCD initial version?
-			$initial_plugin_version_on_app = get_post_meta( $app_id, 'wpcd_app_plugin_initial_version', true );
-			if ( empty( $initial_plugin_version_on_app ) ) {
-				// Just get the wpcd default plugin version since we don't have anything else to use.
-				$php_version = '7.4';  // Must be an old version of WPCD since all records should include the wpcd version.
-			} else {
-				if ( version_compare( $initial_plugin_version_on_app, '4.30.0' ) > -1 ) {
-					// Versions of the plugin after 4.30.0 automatically uses PHP 8.1.
-					return '8.1';
-				} else {
-					// Earlier versions used PHP 7.4.
-					return '7.4';
-				}
-			}
+		// Use the supported default when the stored version is missing or unsupported.
+		if ( ! in_array( (string) $php_version, array( '8.3', '8.4', '8.5' ), true ) ) {
+			$php_version = $this->get_wpapp_default_php_version();
 		}
 
 		return $php_version;
@@ -1979,10 +1377,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Set the PHP version for app.
 	 *
 	 * @param int    $app_id post id of app.
-	 * @param string $php_version new php version (7.4, 8.1 etc.).
+	 * @param string $php_version new php version (8.3, 8.4 or 8.5).
 	 */
 	public function set_php_version_for_app( $app_id, $php_version ) {
-		update_post_meta( $app_id, 'wpapp_php_version', $php_version );
+		if ( ! in_array( (string) $php_version, array( '8.3', '8.4', '8.5' ), true ) ) {
+			return false;
+		}
+
+		return update_post_meta( $app_id, 'wpapp_php_version', $php_version );
 	}
 
 	/**
@@ -1993,131 +1395,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return array Associated array of php versions.
 	 */
 	public function get_php_versions( $id ) {
-
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
-
-		/* What OS are we running on? */
-		$server_id = $this->get_server_id_by_app_id( $id );
-		$os        = WPCD_SERVER()->get_server_os( $server_id );
-
-		// Create single element array if php 8.0 is installed.
-		if ( $this->is_php_80_installed( $id ) ) {
-			$php80 = array( '8.0' => '8.0' );
-		} else {
-			$php80 = array();
-		}
-
-		// Create single element array if php 8.1 is installed.
-		if ( $this->is_php_81_installed( $id ) ) {
-			$php81 = array( '8.1' => '8.1' );
-		} else {
-			$php81 = array();
-		}
-
-		// Create single element array if php 8.2 is installed.
-		if ( $this->is_php_82_installed( $id ) ) {
-			$php82 = array( '8.2' => '8.2' );
-		} else {
-			$php82 = array();
-		}
-		
-		// Create single element array if php 8.3 is installed.
-		if ( $this->is_php_83_installed( $id ) ) {
-			$php83 = array( '8.3' => '8.3' );
-		} else {
-			$php83 = array();
-		}
-
-		// Array of other PHP versions.
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				/* Different versions of PHP are supported on each OS for OLS.  Notable here is it does not support php 5.6 at all and it doesn't support anything below 7.4 on Ubuntu 22.04. */
-				switch ( $os ) {
-					case 'ubuntu1804lts':
-						$other_php_versions = array(
-							'7.4' => '7.4',
-							'7.3' => '7.3',
-							'7.2' => '7.2',
-							'7.1' => '7.1',
-						);
-						break;
-
-					case 'ubuntu2004lts':
-						$other_php_versions = array(
-							'7.4' => '7.4',
-							'7.3' => '7.3',
-							'7.2' => '7.2',
-						);
-						break;
-
-					case 'ubuntu2204lts':
-						$other_php_versions = array(
-							'7.4' => '7.4',
-						);
-						break;
-
-					default:
-						$other_php_versions = array(
-							'7.4' => '7.4',
-							'7.3' => '7.3',
-							'7.2' => '7.2',
-							'7.1' => '7.1',
-						);
-						break;
-				}
-				break;
-
-			case 'nginx':
-			default:
-				$other_php_versions = array(
-					'7.4' => '7.4',
-					'7.3' => '7.3',
-					'7.2' => '7.2',
-					'7.1' => '7.1',
-					'5.6' => '5.6',
-				);
-				break;
-		}
-
-		// Array of php version options.
-		$php_select_options = array_merge(
-			$other_php_versions,
-			$php80,
-			$php81,
-			$php82,
-			$php83
+		$php_versions = array(
+			'8.3' => '8.3',
+			'8.4' => '8.4',
+			'8.5' => '8.5',
 		);
 
-		// Filter out inactive versions.  Only applies to NGINX.  OLS always have all versions listed in the above switch statement active.
-		if ( 'nginx' === $webserver_type ) {
-			// Remove invalid PHP versions (those that are deactivated on the server).
-			$server_id = $this->get_server_id_by_app_id( $id );
-			if ( ! empty( $server_id ) ) {
-				$php_versions = array(
-					'php56' => '5.6',
-					'php71' => '7.1',
-					'php72' => '7.2',
-					'php73' => '7.3',
-					'php74' => '7.4',
-					'php80' => '8.0',
-					'php81' => '8.1',
-					'php82' => '8.2',
-					'php82' => '8.3',
-				);
-				foreach ( $php_versions as $php_version_key => $php_version ) {
-					if ( ! $this->is_php_version_active( $server_id, $php_version_key ) ) {
-						if ( ! empty( $php_select_options[ $php_version ] ) ) {
-							unset( $php_select_options[ $php_version ] );
-						}
-					}
-				}
-			}
-		}
-
-		return $php_select_options;
-
+		return apply_filters( "sstk_{$this->get_app_name()}_php_versions", $php_versions, $id );
 	}
 
 	/**
@@ -2142,7 +1426,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function is_staging_site( $app_id ) {
 
-		return WPCD()->is_staging_site( $app_id );
+		return SSTK()->is_staging_site( $app_id );
 
 	}
 
@@ -2206,73 +1490,6 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 	}
 
-	/**
-	 * Gets the disk quota defined for a site.
-	 *
-	 * @param int $app_id The post id of the app we're working with.
-	 *
-	 * @return int disk quota defined for a site or global setting.
-	 */
-	public function get_site_disk_quota( $app_id ) {
-
-		// Get the quota defined on the site.
-		$disk_space_quota = (int) get_post_meta( $app_id, 'wpcd_app_disk_space_quota', true );
-
-		// No quota? Check global default.
-		if ( empty( $disk_space_quota ) ) {
-			$disk_space_quota = (int) wpcd_get_option( 'wordpress_app_sites_default_disk_quota' );
-		}
-
-		return $disk_space_quota;
-
-	}
-
-	/**
-	 * Sets the disk quota for a site.
-	 *
-	 * @param int $app_id The post id of the app we're working with.
-	 * @param int $quota  The disk quota for the site in megabytes.
-	 *
-	 * @return boolean|wp_error|object The value returned from the update_post_meta function.
-	 */
-	public function set_site_disk_quota( $app_id, $quota ) {
-
-		return update_post_meta( $app_id, 'wpcd_app_disk_space_quota', $quota );
-
-	}
-
-	/**
-	 * Get the total amount of disk space used for the site.
-	 *
-	 * This only works if the callbacks are installed and have run at least once to populate the appropriate meta.
-	 *
-	 * @param int $app_id is the post id of the app record we're asking about.
-	 */
-	public function get_total_disk_used( $app_id ) {
-
-		$disk_used = 0;
-
-		$site_push_data = wpcd_maybe_unserialize( get_post_meta( $app_id, 'wpcd_site_status_push', true ) );
-
-		if ( ! empty( $site_push_data ) ) {
-
-			if ( ! empty( $site_push_data['domain_file_size'] ) ) {
-				$disk_used = $disk_used + (int) $site_push_data['domain_file_size'];
-			}
-
-			if ( ! empty( $site_push_data['domain_file_size'] ) ) {
-				$disk_used = $disk_used + (int) $site_push_data['domain_file_size'];
-			}
-
-			if ( ! empty( $site_push_data['domain_backup_size'] ) ) {
-				$disk_used = $disk_used + (int) $site_push_data['domain_backup_size'];
-			}
-		}
-
-		return $disk_used;
-
-	}
-
 
 	/**
 	 * Get a formatted link to the front-end of the site
@@ -2293,7 +1510,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// Label.
 		if ( empty( $label ) ) {
-			$label = __( 'View site', 'wpcd' );
+			$label = __( 'View site', 'simple-stack' );
 		}
 
 		if ( true == $ssl ) {
@@ -2319,31 +1536,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function set_ssl_status( $app_id, $ssl_status ) {
 
-		// What type of web server are we running?
 		$webserver_type = $this->get_web_server_type( $app_id );
 
 		update_post_meta( $app_id, 'wpapp_ssl_status', $ssl_status );
 
-		// Update HTTP2 status based on webserver type.
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				if ( 'on' === $ssl_status ) {
-					// SSL turned on so we turn http2 on.
-					update_post_meta( $app_id, 'wpapp_ssl_http2_status', 'on' );  // OLS always have http2, http3 and spdy turned on by default.
-				} else {
-					// SSL turned off so we turn http2 off.
-					update_post_meta( $app_id, 'wpapp_ssl_http2_status', 'off' );
-				}
-				break;
-
-			case 'nginx':
-			default:
-				// For NGINX we can only turn ssl on/off if HTTP2 is off so this meta is always going to be "off".
-				update_post_meta( $app_id, 'wpapp_ssl_http2_status', 'off' );
-				break;
-
-		}
+		// OpenLiteSpeed enables HTTP/2, HTTP/3 and SPDY with SSL.
+		update_post_meta( $app_id, 'wpapp_ssl_http2_status', 'ols' === $webserver_type && 'on' === $ssl_status ? 'on' : 'off' );
 
 	}
 
@@ -2456,11 +1654,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 *
 	 * @param string $provider name of provider.
 	 *
-	 * @return VPN_API_Provider_{provider}()
+	 * @return CLOUD_PROVIDER_API_Provider_{provider}()
 	 */
 	public function api( $provider ) {
 
-		return WPCD()->get_provider_api( $provider );
+		return SSTK()->get_provider_api( $provider );
 
 	}
 
@@ -2486,11 +1684,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function get_git_status( $post_id ) {
 
-		if ( 'wpcd_app_server' === (string) get_post_type( $post_id ) ) {
-			return (bool) get_post_meta( $post_id, 'wpcd_wpapp_git_status', true );
+		if ( 'sstk_app_server' === (string) get_post_type( $post_id ) ) {
+			return (bool) get_post_meta( $post_id, 'sstk_wpapp_git_status', true );
 		}
 
-		if ( 'wpcd_app' === (string) get_post_type( $post_id ) ) {
+		if ( 'sstk_app' === (string) get_post_type( $post_id ) ) {
 			return (bool) get_post_meta( $post_id, 'wpapp_git_status', true );
 		}
 
@@ -2507,11 +1705,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function set_git_status( $post_id, $git_status ) {
 
-		if ( 'wpcd_app_server' == get_post_type( $post_id ) ) {
-			return update_post_meta( $post_id, 'wpcd_wpapp_git_status', (int) $git_status );
+		if ( 'sstk_app_server' == get_post_type( $post_id ) ) {
+			return update_post_meta( $post_id, 'sstk_wpapp_git_status', (int) $git_status );
 		}
 
-		if ( 'wpcd_app' == get_post_type( $post_id ) ) {
+		if ( 'sstk_app' == get_post_type( $post_id ) ) {
 			return update_post_meta( $post_id, 'wpapp_git_status', (int) $git_status );
 		}
 
@@ -2549,7 +1747,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * These parameters are intended to be common to all JS scripts for the apps screen.
 	 * Unique parameters per script should probably not be added here.
 	 *
-	 * Filter hook: wpcd_app_script_args
+	 * Filter hook: sstk_app_script_args
 	 *
 	 * @param array  $args args.
 	 * @param string $script script.
@@ -2558,15 +1756,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Example, action will be referenced as params.action.
 	 */
 	public function add_script_args_app( $args, $script ) {
-		$args['action']                  = "wpcd_app_{$this->get_app_name()}";
-		$args['redirect']                = admin_url( '/edit.php?post_type=wpcd_app' );
+		$args['action']                  = "sstk_app_{$this->get_app_name()}";
+		$args['redirect']                = admin_url( '/edit.php?post_type=sstk_app' );
 		$args['refresh_seconds']         = 30;  // No point in trying to go too low since the cron process that collects and stores the logs only run once per minute.
 		$args['l10n']                    = array(
-			'done'                     => __( 'The command has completed.', 'wpcd' ),
-			'checking_for_logs'        => __( 'Checking server for updated progress information...', 'wpcd' ),
-			'no_progress_data_in_logs' => __( 'Last progress check resulted in no new data. The operation seems to still be in progress. However, if you see this error more than 10 times or so, it might be because the connection to the WordPress server has been severed.', 'wpcd' ),
+			'done'                     => __( 'The command has completed.', 'simple-stack' ),
+			'checking_for_logs'        => __( 'Checking server for updated progress information...', 'simple-stack' ),
+			'no_progress_data_in_logs' => __( 'Last progress check resulted in no new data. The operation seems to still be in progress. However, if you see this error more than 10 times or so, it might be because the connection to the WordPress server has been severed.', 'simple-stack' ),
 		);
-		$args['user_can_manage_servers'] = current_user_can( 'wpcd_manage_servers' );
+		$args['user_can_manage_servers'] = current_user_can( 'sstk_manage_servers' );
 		return $args;
 	}
 
@@ -2585,13 +1783,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function add_script_args_server( $args, $script ) {
 		$this->add_provider_support();
-		$args['action']                     = "wpcd_{$this->get_app_name()}";
+		$args['action']                     = "sstk_{$this->get_app_name()}";
 		$args['refresh_seconds']            = 5;
 		$args['l10n']                       = array(
-			'add_new' => __( 'Deploy A New WordPress Server', 'wpcd' ),
-			'done'    => __( 'The command has completed.', 'wpcd' ),
+			'add_new' => __( 'Deploy A New WordPress Server', 'simple-stack' ),
+			'done'    => __( 'The command has completed.', 'simple-stack' ),
 		);
-		$args['user_can_provision_servers'] = apply_filters( "wpcd_{$this->get_app_name()}_show_deploy_server_button", current_user_can( 'wpcd_provision_servers' ) );  // Filter: wpcd_wordpress-app_show_deploy_server_button.
+		$args['user_can_provision_servers'] = apply_filters( "sstk_{$this->get_app_name()}_show_deploy_server_button", current_user_can( 'sstk_provision_servers' ) );  // Filter: sstk_wordpress-app_show_deploy_server_button.
 		return $args;
 	}
 
@@ -2602,7 +1800,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function ajax_app() {
 
 		/* Check nonce */
-		check_ajax_referer( 'wpcd-app', 'nonce' );
+		check_ajax_referer( 'sstk-app', 'nonce' );
 
 		/* Get action requested */
 		$action = sanitize_text_field( filter_input( INPUT_POST, '_action', FILTER_UNSAFE_RAW ) );
@@ -2614,8 +1812,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$id = filter_input( INPUT_POST, 'id', FILTER_VALIDATE_INT );
 
 		/* Make sure user can at least view the app */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			echo wp_send_json_error( array( 'msg' => __( 'You are not allowed to perform this operation on this app.', 'wpcd' ) ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			echo wp_send_json_error( array( 'msg' => __( 'You are not allowed to perform this operation on this app.', 'simple-stack' ) ) );
 			wp_die();
 		}
 
@@ -2648,7 +1846,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				);
 				break;
 			default:
-				$result = apply_filters( "wpcd_app_{$this->get_app_name()}_tab_action", $result, $action, $id );
+				$result = apply_filters( "sstk_app_{$this->get_app_name()}_tab_action", $result, $action, $id );
 		}
 
 		if ( is_wp_error( $result ) ) {
@@ -2671,13 +1869,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function get_server_instance_details( $server_id ) {
 		if ( ! $server_id ) {
-			return new \WP_Error( __( 'Invalid server ID', 'wpcd' ) );
+			return new \WP_Error( __( 'Invalid server ID', 'simple-stack' ) );
 		}
 
 		// Verify the cpt type.
 		$post = get_post( $server_id );
-		if ( 'wpcd_app_server' !== $post->post_type ) {
-			return new \WP_Error( __( 'Invalid server', 'wpcd' ) );
+		if ( 'sstk_app_server' !== $post->post_type ) {
+			return new \WP_Error( __( 'Invalid server', 'simple-stack' ) );
 		}
 
 		$instance = $this->get_instance_details( $server_id );
@@ -2693,19 +1891,19 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function get_app_instance_details( $id ) {
 		if ( ! $id ) {
-			return new \WP_Error( __( 'Invalid site ID', 'wpcd' ) );
+			return new \WP_Error( __( 'Invalid site ID', 'simple-stack' ) );
 		}
 
 		// Verify the app type.
 		$post = get_post( $id );
-		if ( 'wpcd_app' !== $post->post_type || $this->get_app_name() !== get_post_meta( $id, 'app_type', true ) ) {
-			return new \WP_Error( __( 'Invalid app', 'wpcd' ) );
+		if ( 'sstk_app' !== $post->post_type || $this->get_app_name() !== get_post_meta( $id, 'app_type', true ) ) {
+			return new \WP_Error( __( 'Invalid app', 'simple-stack' ) );
 		}
 
 		// @TODO: replace the get_post_meta call below with this line for standardization purposes: $this->get_server_id_by_app_id( $id ) ;
 		$server_id = get_post_meta( $id, 'parent_post_id', true );
 		if ( ! $server_id ) {
-			return new \WP_Error( __( 'No server found', 'wpcd' ) );
+			return new \WP_Error( __( 'No server found', 'simple-stack' ) );
 		}
 
 		$instance = $this->get_instance_details( $server_id );
@@ -2724,8 +1922,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function ajax_server_handle_create_popup( $view = 'admin' ) {
 
 		/* Check permissions */
-		if ( ! current_user_can( 'wpcd_provision_servers' ) ) {
-			$invalid_msg = __( 'You don\'t have access to provision a server. Perhaps you\'re not logged in?', 'wpcd' );
+		if ( ! current_user_can( 'sstk_provision_servers' ) ) {
+			$invalid_msg = __( 'You don\'t have access to provision a server. Perhaps you\'re not logged in?', 'simple-stack' );
 			if ( $view == 'public' ) {
 				echo $invalid_msg;
 			} else {
@@ -2734,29 +1932,27 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			return;
 		}
 
-		/* Get list of directories within specified directory */
-		$dir_path        = wpcd_path . 'includes/core/apps/wordpress-app/scripts';
-		$dir_list        = wpcd_get_dir_list( $dir_path );
+		/* Simple Stack only supports the locked provisioning script version. */
 		$scripts_version = $this->get_configured_scripts_version();
 
 		/* Get list of regions */
 		$provider_regions = $this->add_provider_support();
-		$provider_regions = apply_filters( "wpcd_{$this->get_app_name()}_provider_regions_create_server_popup", $provider_regions );
+		$provider_regions = apply_filters( "sstk_{$this->get_app_name()}_provider_regions_create_server_popup", $provider_regions );
 
 		/* Get the list of providers - we'll need it in the popup area */
 		$providers = $this->get_active_providers();
-		$providers = apply_filters( "wpcd_{$this->get_app_name()}_providers_create_server_popup", $providers );
+		$providers = apply_filters( "sstk_{$this->get_app_name()}_providers_create_server_popup", $providers );
 
 		/* Get list of OSes */
-		$oslist = WPCD()->get_os_list();
-		$oslist = apply_filters( "wpcd_{$this->get_app_name()}_oslist_create_server_popup", $oslist );
+		$oslist = SSTK()->get_os_list();
+		$oslist = apply_filters( "sstk_{$this->get_app_name()}_oslist_create_server_popup", $oslist );
 
 		/* Get list of webservers */
-		$webserver_list = WPCD()->get_webserver_list();
-		$webserver_list = apply_filters( "wpcd_{$this->get_app_name()}_webserver_list_create_server_popup", $webserver_list );
+		$webserver_list = SSTK()->get_webserver_list();
+		$webserver_list = apply_filters( "sstk_{$this->get_app_name()}_webserver_list_create_server_popup", $webserver_list );
 
 		/* Include the popup file */
-		include apply_filters( "wpcd_{$this->get_app_name()}_create_popup", wpcd_path . 'includes/core/apps/wordpress-app/templates/create-popup.php' );
+		include apply_filters( "sstk_{$this->get_app_name()}_create_popup", SSTK_PATH . 'includes/core/apps/wordpress-app/templates/create-popup.php' );
 	}
 
 	/**
@@ -2764,7 +1960,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function ajax_server() {
 
-		check_ajax_referer( 'wpcd-server', 'nonce' );
+		check_ajax_referer( 'sstk-server', 'nonce' );
 
 		$action = sanitize_text_field( $_REQUEST['_action'] );
 
@@ -2776,14 +1972,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			 * The admin popups (install-app, create server, log console) were rendered by
 			 * templates/ and driven by admin-ajax from the legacy jQuery bundle. Phase 4
 			 * replaced them with the React routes, so those actions no longer exist here.
-			 * The public (unauthenticated) deploy form in WPCD_WORDPRESS_APP_PUBLIC still
+			 * The public (unauthenticated) deploy form in SSTK_WORDPRESS_APP_PUBLIC still
 			 * uses ajax_server_handle_create_popup() directly and is unaffected.
 			 */
 			/* Called when the admin pushes the install button on the server popup to create/deploy a new server */
 			case 'create':
 				/* Check permissions */
-				if ( ! current_user_can( 'wpcd_provision_servers' ) ) {
-					$invalid_msg = __( 'You don\'t have access to provision a server. Perhaps you\'re not logged in?', 'wpcd' );
+				if ( ! current_user_can( 'sstk_provision_servers' ) ) {
+					$invalid_msg = __( 'You don\'t have access to provision a server. Perhaps you\'re not logged in?', 'simple-stack' );
 					wp_send_json_error( array( 'msg' => $invalid_msg ) );
 					break;
 				}
@@ -2805,7 +2001,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				if ( isset( $args['invalid_message'] ) ) {
 					$invalid_msg = sanitize_text_field( $args['invalid_message'] );
 				} else {
-					$invalid_msg = __( 'If you are seeing this message, something went very wrong at the start of the create a new server process. However, we are unable to be more specific at this time about its root cause.', 'wpcd' );
+					$invalid_msg = __( 'If you are seeing this message, something went very wrong at the start of the create a new server process. However, we are unable to be more specific at this time about its root cause.', 'simple-stack' );
 				}
 
 				// Validate the server name and return right away if invalid format.
@@ -2824,27 +2020,19 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				// End validate the server name.
 
 				/* Validate the os */
-				$oslist = WPCD()->get_os_list();
-				if ( ! $oslist[ $os ] ) {
-					wp_send_json_error( array( 'msg' => __( 'Invalid OS - security issue?', 'wpcd' ) ) );
+				$oslist = SSTK()->get_os_list();
+				if ( ! isset( $oslist[ $os ] ) ) {
+					wp_send_json_error( array( 'msg' => __( 'Invalid OS - security issue?', 'simple-stack' ) ) );
 					break;
 				}
 
 				/* Validate the webserver type */
 				if ( ! empty( $webserver ) ) {
-					$webserver_list = WPCD()->get_webserver_list();
-					if ( ! $webserver_list[ $webserver ] ) {
-						wp_send_json_error( array( 'msg' => __( 'Invalid Webserver type - security issue?', 'wpcd' ) ) );
+					$webserver_list = SSTK()->get_webserver_list();
+					if ( ! isset( $webserver_list[ $webserver ] ) ) {
+						wp_send_json_error( array( 'msg' => __( 'Invalid Webserver type - security issue?', 'simple-stack' ) ) );
 						break;
 					}
-				}
-
-				/**
-				 * Certain combinations of webservers and os's aren't allowed.
-				 */
-				if ( 'ubuntu1804lts' === $os && ( 'ols' === $webserver || 'ols-enterprise' === $webserver ) ) {
-					wp_send_json_error( array( 'msg' => __( 'OpenLiteSpeed is not yet supported on Ubuntu 18.04 LTS.', 'wpcd' ) ) );
-					break;
 				}
 
 				/* Everything ok so far - create the server instance. */
@@ -2852,10 +2040,10 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 				/* Check and handle errors if server instance was not created correctly. If it was created correctly, set the data that is to be sent back to front-end jscript. */
 				if ( ( ! is_wp_error( $result ) ) && $result ) {
-					$text_msg          = apply_filters( "wpcd_{$this->get_app_name()}_pre_create_server_message", __( 'Waiting for the server to startup...<br />We recommend that you do NOT exit this screen until you see a pop-up indicating that the installation is complete.<br />You can expect this process to take at least 10 minutes or more. Your first feedback message after this can take up to 5 minutes so please be patient.<br />If you do exit this screen, the process will continue in the background - you can check the COMMAND & SSH logs for progress reports.', 'wpcd' ), $args );
-					$text_msg          = apply_filters( "wpcd_{$this->get_app_name()}_{$provider}_pre_create_server_message", $text_msg, $args );
-					$msg               = '<span class="wpcd_pre_install_text">' . $text_msg . '</span>';
-					$msg              .= wpcd_get_loading_svg_code(); // add in the loading icon.
+					$text_msg          = apply_filters( "sstk_{$this->get_app_name()}_pre_create_server_message", __( 'Waiting for the server to startup...<br />We recommend that you do NOT exit this screen until you see a pop-up indicating that the installation is complete.<br />You can expect this process to take at least 10 minutes or more. Your first feedback message after this can take up to 5 minutes so please be patient.<br />If you do exit this screen, the process will continue in the background - you can check the COMMAND & SSH logs for progress reports.', 'simple-stack' ), $args );
+					$text_msg          = apply_filters( "sstk_{$this->get_app_name()}_{$provider}_pre_create_server_message", $text_msg, $args );
+					$msg               = '<span class="sstk_pre_install_text">' . $text_msg . '</span>';
+					$msg              .= sstk_get_loading_svg_code(); // add in the loading icon.
 					$result['command'] = array( 'name' => 'prepare_server' );
 				} else {
 					$err_msg = '';
@@ -2863,9 +2051,9 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 						$err_msg = $result->get_error_message();
 					}
 					/* Translators: %1: Error message. */
-					$msg = sprintf( __( 'Unfortunately we could not start deploying this server - most likely because of an error from the provider api. <br />Please contact support or you can check the COMMAND & SSH logs for errors.<br />  You can close this screen and then retry the operation.<br />%s', 'wpcd' ), $err_msg );
-					$msg = apply_filters( 'wpcd_wordpress-app-server_deployment_error', $msg );
-					$msg = '<span class="wpcd_pre_install_text_error">' . $msg . '</span>';
+					$msg = sprintf( __( 'Unfortunately we could not start deploying this server - most likely because of an error from the provider api. <br />Please contact support or you can check the COMMAND & SSH logs for errors.<br />  You can close this screen and then retry the operation.<br />%s', 'simple-stack' ), $err_msg );
+					$msg = apply_filters( 'sstk_wordpress-app-server_deployment_error', $msg );
+					$msg = '<span class="sstk_pre_install_text_error">' . $msg . '</span>';
 				}
 
 				break;
@@ -2905,8 +2093,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				$server_id   = sanitize_text_field( $_REQUEST['id'] );
 				$user_id     = get_current_user_id();
 				$post_author = get_post( $server_id )->post_author;
-				if ( ! wpcd_user_can( $user_id, 'add_app_wpapp', $server_id ) && $post_author != $user_id ) {
-					$msg = __( 'You don\'t have permission to install WordPress on this server.', 'wpcd' );
+				if ( ! sstk_user_can( $user_id, 'add_app_wpapp', $server_id ) && $post_author != $user_id ) {
+					$msg = __( 'You don\'t have permission to install WordPress on this server.', 'simple-stack' );
 					break;
 				}
 
@@ -2920,8 +2108,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				$args_unsanitized = wp_parse_args( wp_unslash( $_REQUEST['params'] ) );
 
 				// Make sure we have data for all fields. Do not do a check for wp_locale though because, if it's blank, we'll default it 'en_US' later when the installation starts.
-				if ( empty( $args['wp_domain'] ) || empty( $args['wp_user'] ) || empty( $args_unsanitized['wp_password'] ) || empty( $args['wp_email'] ) || empty( $args['wp_version'] ) || empty( $args['wpcd_app_type'] ) ) {
-					$msg = __( 'Please fill out all the requested data - we cannot create a site without all the requested data!  Please close this screen and try again.', 'wpcd' );
+				if ( empty( $args['wp_domain'] ) || empty( $args['wp_user'] ) || empty( $args_unsanitized['wp_password'] ) || empty( $args['wp_email'] ) || empty( $args['wp_version'] ) || empty( $args['sstk_app_type'] ) ) {
+					$msg = __( 'Please fill out all the requested data - we cannot create a site without all the requested data!  Please close this screen and try again.', 'simple-stack' );
 					break;
 				}
 
@@ -2929,8 +2117,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				$result = $this->install_wp_validate();
 
 				if ( ! is_wp_error( $result ) ) {
-					$msg               = '<span class="wpcd_pre_install_text">' . __( 'Waiting for the installation to begin...<br />Do not exit this screen until you see a popup indicating that the installation is complete.', 'wpcd' ) . '</span>';
-					$msg              .= wpcd_get_loading_svg_code(); // add in the loading icon.
+					$msg               = '<span class="sstk_pre_install_text">' . __( 'Waiting for the installation to begin...<br />Do not exit this screen until you see a popup indicating that the installation is complete.', 'simple-stack' ) . '</span>';
+					$msg              .= sstk_get_loading_svg_code(); // add in the loading icon.
 					$result['post_id'] = sanitize_text_field( $_REQUEST['id'] );
 					$result['command'] = array( 'name' => $result['command'] );
 				}
@@ -2940,32 +2128,32 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			case 'update-status':
 				/* Check for missing parameters */
 				if ( ! isset( $_POST['params']['id'] ) ) {
-					wp_send_json_error( array( 'msg' => __( 'Missing required parameter.', 'wpcd' ) ) );
+					wp_send_json_error( array( 'msg' => __( 'Missing required parameter.', 'simple-stack' ) ) );
 					break;
 				}
 
 				/* Make sure we have a valid post type */
 				$id = sanitize_text_field( $_POST['params']['id'] ); // server_id.
-				if ( get_post_type( $id ) != 'wpcd_app_server' ) {
-					wp_send_json_error( array( 'msg' => __( 'Invalid post type.', 'wpcd' ) ) );
+				if ( get_post_type( $id ) != 'sstk_app_server' ) {
+					wp_send_json_error( array( 'msg' => __( 'Invalid post type.', 'simple-stack' ) ) );
 					break;
 				}
 
 				// Verify that the user is allowed to access the server .
-				if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
-					wp_send_json_error( array( 'msg' => __( 'You are not allowed to perform this operation on this server.', 'wpcd' ) ) );
+				if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
+					wp_send_json_error( array( 'msg' => __( 'You are not allowed to perform this operation on this server.', 'simple-stack' ) ) );
 					break;
 				}
 
-				$provider    = WPCD_SERVER()->get_server_provider( $id ); // provider.
-				$instance_id = WPCD_SERVER()->get_server_provider_instance_id( $id ); // instance id so the provider knows which one we're talking about.
+				$provider    = SSTK_SERVER()->get_server_provider( $id ); // provider.
+				$instance_id = SSTK_SERVER()->get_server_provider_instance_id( $id ); // instance id so the provider knows which one we're talking about.
 
-				$details = WPCD()->get_provider_api( $provider )->call( 'details', array( 'id' => $instance_id ) );
+				$details = SSTK()->get_provider_api( $provider )->call( 'details', array( 'id' => $instance_id ) );
 
 				if ( ! is_wp_error( $details ) ) {
 					$done = true;
-					update_post_meta( $id, 'wpcd_server_current_state', $details['status'] );
-					$msg    = __( 'Status sync completed.', 'wpcd' );
+					update_post_meta( $id, 'sstk_server_current_state', $details['status'] );
+					$msg    = __( 'Status sync completed.', 'simple-stack' );
 					$result = array(
 						'status' => $details['status'],
 						'done'   => $done,
@@ -2979,10 +2167,10 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			case 'delete-server-record':
 				// If for some reason this is called via CRON, do nothing and return.
 				// We're not doing anything to delete servers via cron right now.
-				// But we might later so adding this check now since we have it in the wpcd_app_delete_post() function.
-				if ( true === wp_doing_cron() || true === wpcd_is_doing_cron() ) {
+				// But we might later so adding this check now since we have it in the sstk_app_delete_post() function.
+				if ( true === wp_doing_cron() || true === sstk_is_doing_cron() ) {
 					$result = array(
-						'status' => __( 'You cannot delete a server record inside of a CRON process.', 'wpcd' ),
+						'status' => __( 'You cannot delete a server record inside of a CRON process.', 'simple-stack' ),
 						'done'   => false,
 					);
 					break;
@@ -2995,12 +2183,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				 * We're not deleting anything if the current user does not have permission to delete the server record
 				 * or if the current user id does not match the server author id.
 				 * Note: Changes to this permission logic might also need to be done in function
-				 * wpcd_app_server_delete_post() located in file class-wpcd-posts-app-server.php.
+				 * sstk_app_server_delete_post() located in file class-sstk-posts-app-server.php.
 				 */
-				if ( ! wpcd_is_admin() ) {
-					if ( ! wpcd_user_can( $user_id, 'delete_server', $delete_server_id ) && $post_author !== $user_id ) {
+				if ( ! sstk_is_admin() ) {
+					if ( ! sstk_user_can( $user_id, 'delete_server', $delete_server_id ) && $post_author !== $user_id ) {
 						$result = array(
-							'status' => __( "Sorry! you don't have permission to delete a server record.", 'wpcd' ),
+							'status' => __( "Sorry! you don't have permission to delete a server record.", 'simple-stack' ),
 							'done'   => false,
 						);
 						break;
@@ -3009,14 +2197,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 				// If we got here, ok to delete the server record and related child posts.
 				$deleted_server_record = wp_delete_post( $delete_server_id );
 				if ( $deleted_server_record ) {
-					wpcd_delete_child_posts( 'wpcd_app', $delete_server_id );
+					sstk_delete_child_posts( 'sstk_app', $delete_server_id );
 					$result = array(
-						'status' => __( 'Server record successfully deleted.', 'wpcd' ),
+						'status' => __( 'Server record successfully deleted.', 'simple-stack' ),
 						'done'   => true,
 					);
 				} else {
 					$result = array(
-						'status' => __( 'Failed! something went wrong during delete server record', 'wpcd' ),
+						'status' => __( 'Failed! something went wrong during delete server record', 'simple-stack' ),
 						'done'   => false,
 					);
 				}
@@ -3050,7 +2238,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Generates the instances' details that are required by other functions.
 	 *
-	 * @TODO: This probably should be moved to the class-wpcd-app.php file.
+	 * @TODO: This probably should be moved to the class-sstk-app.php file.
 	 * If we do that, we'll need to rethink the location parameter of how
 	 * we get the custom fields list.
 	 *
@@ -3066,19 +2254,19 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		 */
 
 		/* @TODO: We're running this through a filter and requesting a specific location but not sure that is the right thing to do. */
-		$custom_fields = apply_filters( "wpcd_{$this->get_app_name()}_create_wp_server_parms_custom_fields", WPCD_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-server-popup' ), $attributes, $attributes );
+		$custom_fields = apply_filters( "sstk_{$this->get_app_name()}_create_wp_server_parms_custom_fields", SSTK_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-server-popup' ), $attributes, $attributes );
 
 		/* Get data from server post */
 		$all_meta = get_post_meta( $id );
 		foreach ( $all_meta as $key => $value ) {
-			if ( 'wpcd_server_app_post_id' == $key ) {
+			if ( 'sstk_server_app_post_id' == $key ) {
 				continue;  // this key, if present, should not be added to the array since it shouldn't even be in the server cpt in the first place. But it might get there accidentally on certain operations.
 			}
 
-			// Any field that starts with "wpcd_server_" goes into the array.
-			if ( strpos( $key, 'wpcd_server_' ) === 0 ) {
-				$value = wpcd_maybe_unserialize( $value );
-				$attributes[ str_replace( 'wpcd_server_', '', $key ) ] = is_array( $value ) && count( $value ) === 1 ? $value[0] : $value;
+			// Any field that starts with "sstk_server_" goes into the array.
+			if ( strpos( $key, 'sstk_server_' ) === 0 ) {
+				$value = sstk_maybe_unserialize( $value );
+				$attributes[ str_replace( 'sstk_server_', '', $key ) ] = is_array( $value ) && count( $value ) === 1 ? $value[0] : $value;
 			}
 
 			// Any custom field with data goes into the array regardless of it's name prefix.
@@ -3087,7 +2275,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			}
 		}
 
-		$details = WPCD()->get_provider_api( $attributes['provider'] )->call( 'details', array( 'id' => $attributes['provider_instance_id'] ) );
+		$details = SSTK()->get_provider_api( $attributes['provider'] )->call( 'details', array( 'id' => $attributes['provider_instance_id'] ) );
 
 		// Merge post ids and server details into a single array.
 		$attributes = array_merge( $attributes, $details );
@@ -3109,22 +2297,22 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_REQUEST['params'] ) ) );
 			$id   = sanitize_text_field( $_REQUEST['id'] );  // Post ID of the server where the wp app is being installed.
 		} else {
-			// data is being passed in directly which means that the site is likely being provisioned by others such as via the WPCD woocommerce integration or the REST API or powertools bulk installs
+			// Data is being passed in directly by the REST API or another internal caller.
 			$id = $args['id'];
 		}
 
-		$app_type = $args['wpcd_app_type'];
+		$app_type = $args['sstk_app_type'];
 		// @codingStandardsIgnoreLine - added to ignore the misspelling in 'wordpress' below when linting with PHPcs.
 		if ( $app_type !== 'wordpress' ) {
 			return false;
 		}
 
-		// Get domain and check to make sure it's not a duplicate or otherwise in use in WPCD...
+		// Get domain and check to make sure it's not a duplicate or otherwise in use in SSTK...
 		$domain = sanitize_text_field( $args['wp_domain'] );
-		if ( ! defined( 'WPCD_ALLOW_DUPLICATE_DOMAINS' ) || ( defined( 'WPCD_ALLOW_DUPLICATE_DOMAINS' ) && ! WPCD_ALLOW_DUPLICATE_DOMAINS ) ) {
+		if ( ! defined( 'SSTK_ALLOW_DUPLICATE_DOMAINS' ) || ( defined( 'SSTK_ALLOW_DUPLICATE_DOMAINS' ) && ! SSTK_ALLOW_DUPLICATE_DOMAINS ) ) {
 			$existing_app_id = $this->get_app_id_by_domain_name( $domain );
 			if ( $existing_app_id > 0 ) {
-				return new \WP_Error( __( 'This domain already exists in our system.', 'wpcd' ) );
+				return new \WP_Error( __( 'This domain already exists in our system.', 'simple-stack' ) );
 			}
 		}
 
@@ -3146,24 +2334,24 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// Make sure our password does not contain any invalid characters that would cause BASH to throw up.
 		if ( false !== strpbrk( $args['wp_password'], "\;/|<>&()`'" ) || false !== strpbrk( $args['wp_password'], '"' ) || false !== strpbrk( $args['wp_password'], ' ' ) ) {
-			return new \WP_Error( __( 'The password for the site contains invalid characters.', 'wpcd' ) );
+			return new \WP_Error( __( 'The password for the site contains invalid characters.', 'simple-stack' ) );
 		}
 		// Make sure our email address field does not contain any invalid characters that would cause BASH or WP to throw up.  If it does, stop the process and return.
 		if ( $wp_email !== $args['wp_email'] ) {
 			// This comparison works for this purpose because we're comparing the sanitized email value to the orignal value.  If there are issues, the two will not be the same.
-			return new \WP_Error( __( 'The email address for the site contains invalid characters.', 'wpcd' ) );
+			return new \WP_Error( __( 'The email address for the site contains invalid characters.', 'simple-stack' ) );
 		}
 		// Make sure our user name field does not contain any invalid characters that would cause BASH or WP to throw up.  If it does, stop the process and return.
 		if ( false === validate_username( $args['wp_user'] ) ) {
-			return new \WP_Error( __( 'The user name for the site contains invalid characters.', 'wpcd' ) );
+			return new \WP_Error( __( 'The user name for the site contains invalid characters.', 'simple-stack' ) );
 		}
 
 		// Escape special chars in password with backslashes.
 		$wp_password_original = $wp_password;
-		$wp_password          = wpcd_escape_for_bash( $wp_password );
+		$wp_password          = sstk_escape_for_bash( $wp_password );
 
 		// remove https/http/www. to make the domain a consistent NAME.TLD and make it lowercase...
-		$domain                     = strtolower( wpcd_clean_domain( $domain ) );
+		$domain                     = strtolower( sstk_clean_domain( $domain ) );
 		$args['wp_domain']          = $domain;
 		$args['wp_original_domain'] = $args['wp_domain'];
 
@@ -3179,15 +2367,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		);
 
 		// Add custom fields into the $additional array - these fields are from the app-popup in wp-admin...
-		$custom_fields = apply_filters( "wpcd_{$this->get_app_name()}_install_wp_app_parms_custom_fields", WPCD_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-app-popup' ), $args, $additional );
-		foreach ( $custom_fields as $field ) {
-			if ( isset( $args[ $field['name'] ] ) ) {
-				$additional[ $field['name'] ] = escapeshellarg( $args[ $field['name'] ] );
-			}
-		}
-
-		// Add custom fields into the $additional array - these fields are from a WooCommerce order...
-		$custom_fields = apply_filters( "wpcd_{$this->get_app_name()}_install_wp_app_parms_custom_fields", WPCD_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-app-woocommerce' ), $args, $additional );
+		$custom_fields = apply_filters( "sstk_{$this->get_app_name()}_install_wp_app_parms_custom_fields", SSTK_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-app-popup' ), $args, $additional );
 		foreach ( $custom_fields as $field ) {
 			if ( isset( $args[ $field['name'] ] ) ) {
 				$additional[ $field['name'] ] = escapeshellarg( $args[ $field['name'] ] );
@@ -3196,27 +2376,27 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// Get any post-processing bash script urls from settings. Note that this will not end up in the site's postmeta.
 		$additional['post_processing_script_site'] = '';
-		if ( $this->wpcd_can_user_execute_bash_scripts() ) {
-			$post_process_script                       = wpcd_get_option( 'wpcd_wpapp_custom_script_after_site_create' );
+		if ( $this->sstk_can_user_execute_bash_scripts() ) {
+			$post_process_script                       = sstk_get_option( 'sstk_wpapp_custom_script_after_site_create' );
 			$additional['post_processing_script_site'] = $post_process_script;
 		}
 
 		// Get the secret key manager api key from settings. Note that this will not end up in the site's postmeta.
-		$secret_key_manager_api_key               = wpcd_get_option( 'wpcd_wpapp_custom_script_secrets_manager_api_key' );
+		$secret_key_manager_api_key               = sstk_get_option( 'sstk_wpapp_custom_script_secrets_manager_api_key' );
 		$additional['secret_key_manager_api_key'] = $secret_key_manager_api_key;
 
 		/**
 		 * Allow devs to hook into the array to add their own elements for use later - likely to be rarely used given that we now have the custom fields array.
-		 * Filter Name: wpcd_wordpress-app_install_wp_app_parms.
+		 * Filter Name: sstk_wordpress-app_install_wp_app_parms.
 		 */
-		$additional = apply_filters( "wpcd_{$this->get_app_name()}_install_wp_app_parms", $additional, $args );
+		$additional = apply_filters( "sstk_{$this->get_app_name()}_install_wp_app_parms", $additional, $args );
 
 		/**
 		 * Allow devs to validate data in a way that can terminate processing.
-		 * Filter Name: wpcd_wordpress-app_install_wp_app_parms_validate.
+		 * Filter Name: sstk_wordpress-app_install_wp_app_parms_validate.
 		 */
-		if ( ! apply_filters( "wpcd_{$this->get_app_name()}_install_wp_app_parms_validate", true, $additional, $args ) ) {
-			return new \WP_Error( __( 'There are some invalid data in this create site request. Please correct and try again.', 'wpcd' ) );
+		if ( ! apply_filters( "sstk_{$this->get_app_name()}_install_wp_app_parms_validate", true, $additional, $args ) ) {
+			return new \WP_Error( __( 'There are some invalid data in this create site request. Please correct and try again.', 'simple-stack' ) );
 		}
 
 		// command length should be <= 42.
@@ -3229,16 +2409,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$app_post_id                   = $this->add_wp_app_post( $id, $args, $additional );
 		$additional['new_app_post_id'] = $app_post_id;
 
-		update_post_meta( $app_post_id, 'wpcd_app_action_status', 'yet-to-be' );
-		update_post_meta( $app_post_id, 'wpcd_install_wp_command_name', $command );
-		update_post_meta( $app_post_id, 'wpcd_app_action_args', $additional );
+		update_post_meta( $app_post_id, 'sstk_app_action_status', 'yet-to-be' );
+		update_post_meta( $app_post_id, 'sstk_install_wp_command_name', $command );
+		update_post_meta( $app_post_id, 'sstk_app_action_args', $additional );
 
-		update_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action", 'install-wordpress' );
-		update_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action_status", 'in-progress' );
-		WPCD_SERVER()->add_deferred_action_history( $id, $this->get_app_name() );
+		update_post_meta( $id, "sstk_server_{$this->get_app_name()}_action", 'install-wordpress' );
+		update_post_meta( $id, "sstk_server_{$this->get_app_name()}_action_status", 'in-progress' );
+		SSTK_SERVER()->add_deferred_action_history( $id, $this->get_app_name() );
 
 		/* Give other addons and developers a chance to update the new app record now that we've added all our preliminary data to it. */
-		do_action( "wpcd_{$this->get_app_name()}_after_create_post", $app_post_id, $args, $additional );
+		do_action( "sstk_{$this->get_app_name()}_after_create_post", $app_post_id, $args, $additional );
 
 		return $additional;
 	}
@@ -3255,12 +2435,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// get the app for this post id where the app is in progress.
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app',
+				'post_type'   => 'sstk_app',
 				'post_status' => 'private',
 				'numberposts' => 1,
 				'meta_query'  => array(
 					array(
-						'key'   => 'wpcd_app_action_status',
+						'key'   => 'sstk_app_action_status',
 						'value' => 'yet-to-be',
 					),
 					array(
@@ -3278,8 +2458,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		$app_post_id = $posts[0];
-		$command     = get_post_meta( $app_post_id, 'wpcd_install_wp_command_name', true );
-		$args        = get_post_meta( $app_post_id, 'wpcd_app_action_args', true );
+		$command     = get_post_meta( $app_post_id, 'sstk_install_wp_command_name', true );
+		$args        = get_post_meta( $app_post_id, 'sstk_app_action_args', true );
 
 		// Get_post_meta seems to strips slashes which causes an issue with the password field if they contain that and certain other special chars.
 		$args['wp_password'] = escapeshellarg( $args['wp_password_original'] );
@@ -3293,7 +2473,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			$instance = $this->get_instance_details( $id );
 			$run_cmd  = $this->turn_script_into_command( $instance, 'install_wordpress_site.txt', $attributes );
 
-			do_action( 'wpcd_log_error', sprintf( 'attempting to run install_wp command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+			do_action( 'sstk_log_error', sprintf( 'attempting to run install_wp command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 			if ( ! empty( $run_cmd ) ) {
 				/* Now try to create the site */
@@ -3305,17 +2485,17 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 						if ( ! $this->is_command_running( $instance['post_id'], $command ) ) {
 							$this->set_command_started( $instance['post_id'], $command );
 							// if this is a long running command (which it is not), make sure it does not run again.
-							update_post_meta( $app_post_id, 'wpcd_app_action_status', 'in-progress' );
+							update_post_meta( $app_post_id, 'sstk_app_action_status', 'in-progress' );
 						}
 					}
 				);
 				if ( is_wp_error( $result ) ) {
-					do_action( 'wpcd_log_error', sprintf( 'Unable to run command %s on %s ', $run_cmd, print_r( $instance, true ) ), 'error', __FILE__, __LINE__, $instance, false );
+					do_action( 'sstk_log_error', sprintf( 'Unable to run command %s on %s ', $run_cmd, print_r( $instance, true ) ), 'error', __FILE__, __LINE__, $instance, false );
 
 					// if something went wrong, remove the 'temporary' meta so that another attempt will run.
-					delete_post_meta( $app_post_id, 'wpcd_app_action_status' );
-					delete_post_meta( $app_post_id, 'wpcd_install_wp_command_name' );
-					delete_post_meta( $app_post_id, 'wpcd_app_action_args' );
+					delete_post_meta( $app_post_id, 'sstk_app_action_status' );
+					delete_post_meta( $app_post_id, 'sstk_install_wp_command_name' );
+					delete_post_meta( $app_post_id, 'sstk_app_action_args' );
 
 				} else {
 					return true;
@@ -3328,7 +2508,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 
 	/**
-	 * Add an app record to the wpcd_app cpt for the
+	 * Add an app record to the sstk_app cpt for the
 	 * WP APP being installed.
 	 *
 	 * This is generally called from the install_wp_validate() method
@@ -3341,17 +2521,6 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return int|boolean Post if of the app or FALSE if the creation of the CPT records fail.
 	 */
 	public function add_wp_app_post( $server_id, $args, $additional ) {
-
-		/**
-		* If 'wc_user_id' is not set in the instance or is blank then use the current logged in user as the post author.
-		* 'wc_user_id' should be set if being called from front end.  If its blank or does not exist then this is being called
-		* from the wp-admin area.
-		*/
-		if ( ( isset( $args['wc_user_id'] ) && empty( $args['wc_user_id'] ) ) || ( ! isset( $args['wc_user_id'] ) ) ) {
-			// Do nothing there for now.
-		} else {
-			$post_author = $args['wc_user_id'];
-		}
 
 		/**
 		 * If we still don't have a post author, then check to see if a 'user_id' element is set and use that.
@@ -3399,22 +2568,21 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		 * $wp_version = $args['wp_version'];
 		 */
 		$title       = $args['wp_domain'];
-		$app_post_id = WPCD_POSTS_APP()->add_app( $this->get_app_name(), $server_id, $post_author, $title );
+		$app_post_id = SSTK_POSTS_APP()->add_app( $this->get_app_name(), $server_id, $post_author, $title );
 
 		if ( ! is_wp_error( $app_post_id ) && ! empty( $app_post_id ) ) {
 
 			/* Enable app delete protection flag if global option is enabled in settings. */
-			if ( wpcd_get_option( 'wordpress_app_sites_add_delete_protection' ) ) {
-				$this->set_delete_protection_flag( $app_post_id ); // This function is in the ancestor app class (file: class-wpcd-app.php).
+			if ( sstk_get_option( 'wordpress_app_sites_add_delete_protection' ) ) {
+				$this->set_delete_protection_flag( $app_post_id ); // This function is in the ancestor app class (file: class-sstk-app.php).
 			}
 
 			/**
-			 * Setup an array of fields and loop through them to add them to the wpcd_app cpt record using the array_map function.
+			 * Setup an array of fields and loop through them to add them to the sstk_app cpt record using the array_map function.
 			 * Note that we are passing in the $args variable to the anonymous function by REFERENCE via a USE parm.
-			 * In the VPN app we were using $instance but not sure that is needed here * its not passed into this function right now anyway.
 			*/
 			$appfields = array( 'domain', 'user', 'email', 'version', 'original_domain', 'site_package' );
-			$appfields = apply_filters( "wpcd_{$this->get_app_name()}_add_wp_app_post_fields", $appfields );
+			$appfields = apply_filters( "sstk_{$this->get_app_name()}_add_wp_app_post_fields", $appfields );
 			$x         = array_map(
 				function( $f ) use ( &$args, $app_post_id ) {
 					if ( isset( $args[ 'wp_' . $f ] ) ) {
@@ -3426,7 +2594,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			);
 
 			/* Now, lets loop through our custom fields and see if any of them needs to be added to the database. */
-			$custom_fields = apply_filters( "wpcd_{$this->get_app_name()}_add_wp_app_custom_post_fields", WPCD_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-app-popup' ), $args, $additional );
+			$custom_fields = apply_filters( "sstk_{$this->get_app_name()}_add_wp_app_custom_post_fields", SSTK_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-app-popup' ), $args, $additional );
 			foreach ( $custom_fields as $field ) {
 				if ( isset( $args[ $field['name'] ] ) ) {
 					update_post_meta( $app_post_id, $field['name'], $args[ $field['name'] ] );
@@ -3441,24 +2609,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			/* Add the password field to the CPT separately because it needs to be encrypted */
 			update_post_meta( $app_post_id, 'wpapp_password', $this::encrypt( $args['wp_password'] ) );
 
-			/**
-			 * Page caching is enabled by default for both NGINX and OLS so update the post meta to show that.
-			 * As of WPCD 5.0, we're retiring the wpapp_nginx_pagecache_status meta and using just
-			 * 'wpapp_pagecache_status' instead.
-			 */
+			// Page caching is enabled by default on OpenLiteSpeed.
 			$this->set_page_cache_status( $app_post_id, 'on' );
 
-			/**
-			 * Object caching is enabled by default for both NGINX and OLS in WPCD 5.5.2 and later.
-			 */
+			// Redis object caching is enabled when the service is installed.
 			if ( $this->is_redis_installed( $server_id ) ) {
 				$this->set_app_redis_installed_status( $app_post_id, true );
 			}
-
-			/**
-			 * Set Quotas
-			 */
-			$this->set_site_disk_quota( $app_post_id, wpcd_get_option( 'wordpress_app_sites_default_new_site_disk_quota' ) );
 
 			/* Everything good, return the post id of the new app record */
 			return $app_post_id;
@@ -3476,14 +2633,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Add temp domain to DNS when WP install is complete.
 	 *
-	 * Action Hook: wpcd_command_wordpress-app_completed_after_cleanup
+	 * Action Hook: sstk_command_wordpress-app_completed_after_cleanup
 	 *
 	 * @param int    $server_id      post id of server.
 	 * @param int    $app_id         post id of wp app.
 	 * @param string $name           command name executed for new site.
 	 * @param string $base_command   basename of command.
 	 */
-	public function wpcd_wpapp_install_complete( $server_id, $app_id, $name, $base_command ) {
+	public function sstk_wpapp_install_complete( $server_id, $app_id, $name, $base_command ) {
 
 		// If not installing an app, return.
 		if ( 'install_wp' <> $base_command ) {
@@ -3498,15 +2655,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		// Bail if not a WordPress app...
-		if ( 'wordpress-app' <> WPCD_WORDPRESS_APP()->get_app_type( $app_id ) ) {
+		if ( 'wordpress-app' <> SSTK_WORDPRESS_APP()->get_app_type( $app_id ) ) {
 			return;
 		}
 
 		// Get app instance array.
-		$instance = WPCD_WORDPRESS_APP()->get_app_instance_details( $app_id );
+		$instance = SSTK_WORDPRESS_APP()->get_app_instance_details( $app_id );
 
 		// Log what we're doing.
-		do_action( 'wpcd_log_error', 'Sending request to DNS module to add domain if applicable ' . print_r( $instance, true ), 'trace', __FILE__, __LINE__ );
+		do_action( 'sstk_log_error', 'Sending request to DNS module to add domain if applicable ' . print_r( $instance, true ), 'trace', __FILE__, __LINE__ );
 
 		// Do the DNS thing.
 		$this->handle_temp_dns_for_new_site( $server_id, $app_id );
@@ -3523,35 +2680,19 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// Maybe activate solidwp security.
 		$this->handle_solidwp_security_for_new_site( $app_id, $instance );
 
-		// Maybe activate logtivity.
-		$this->handle_logtivity_for_new_site( $app_id, $instance );
-
 		// Handle site package rules.
 		$this->handle_site_package_rules( $app_id );
 
 	}
 
 	/**
-	 * Execute the site package rules for a site after install is complete.
+	 * Execute the site package rules for a newly installed site.
 	 *
-	 * Warning: This only gets called automatically on new sites right now.
-	 * It does not get called when sites are cloned.
-	 * However, our WOOCOMMERCE module will manually force a to this for
-	 * products that use template sites.
-	 *
-	 * @param int  $app_id The post id of the app record.
-	 * @param int  $in_site_package_id Apply this site package to the site instead of reading it from post meta.
-	 * @param bool $is_subscription_switch Whether this is being called from a woocommerce subscription switch.
+	 * @param int $app_id The post id of the app record.
 	 */
-	public function handle_site_package_rules( $app_id, $in_site_package_id = 0, $is_subscription_switch = false ) {
+	public function handle_site_package_rules( $app_id ) {
 
-		if ( empty( $in_site_package_id ) ) {
-			// Get the site package from the app record.
-			$site_package_id = get_post_meta( $app_id, 'wpapp_site_package', true );
-		} else {
-			// Get the site package id from incoming args.
-			$site_package_id = $in_site_package_id;
-		}
+		$site_package_id = get_post_meta( $app_id, 'wpapp_site_package', true );
 
 		// Bail if no package id.
 		if ( empty( $site_package_id ) ) {
@@ -3588,41 +2729,41 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		// Set transient to indicate to others that something is still happening.
-		$transient_name = $app_id . 'wpcd_site_package_running';
+		$transient_name = 'sstk_site_package_running_' . $app_id;
 		set_transient( $transient_name, 'running', 120 );
 
 		// Get the class instance that will allow us to send dynamic commands to the server via ssh.
-		$ssh = new WPCD_WORDPRESS_TABS();
+		$ssh = new SSTK_WORDPRESS_TABS();
 
 		// Add any custom version label to wp-config as well as the tenant site.
 		// Will override any version label from template site.
-		$version_label = get_post_meta( $site_package_id, 'wpcd_site_package_app_version', true );
+		$version_label = get_post_meta( $site_package_id, 'sstk_site_package_app_version', true );
 		if ( ! empty( $version_label ) ) {
-			do_action( 'wpcd_wordpress-app_do_update_wpconfig_option', $app_id, 'WPCD_VERSION_LABEL', $version_label );
-			update_post_meta( $app_id, 'wpcd_app_std_site_version_label', $version_label );
+			do_action( 'sstk_wordpress-app_do_update_wpconfig_option', $app_id, 'SSTK_VERSION_LABEL', $version_label );
+			update_post_meta( $app_id, 'sstk_app_std_site_version_label', $version_label );
 		}
 
 		// Push custom wp-config.php data.
-		$keypairs = get_post_meta( $site_package_id, 'wpcd_wp_config_custom_data', true );
+		$keypairs = get_post_meta( $site_package_id, 'sstk_wp_config_custom_data', true );
 		if ( ! empty( $keypairs ) ) {
 			foreach ( $keypairs as $keypair ) {
 				switch ( $keypair[1] ) {
 					case 'true':
 						// Value is 'true' so need to pass boolean with 'raw' parameter to wp-cli.
-						do_action( 'wpcd_wordpress-app_do_update_wpconfig_option', $app_id, $keypair[0], true, 'yes' );
+						do_action( 'sstk_wordpress-app_do_update_wpconfig_option', $app_id, $keypair[0], true, 'yes' );
 						break;
 					case 'false':
 						// Value is 'false' so need to pass boolean with 'raw' parameter to wp-cli.
-						do_action( 'wpcd_wordpress-app_do_update_wpconfig_option', $app_id, $keypair[0], false, 'yes' );
+						do_action( 'sstk_wordpress-app_do_update_wpconfig_option', $app_id, $keypair[0], false, 'yes' );
 						break;
 					default:
-						do_action( 'wpcd_wordpress-app_do_update_wpconfig_option', $app_id, $keypair[0], $keypair[1], 'no' );
+						do_action( 'sstk_wordpress-app_do_update_wpconfig_option', $app_id, $keypair[0], $keypair[1], 'no' );
 				}
 			}
 		}
 
 		// Add custom site metas.
-		$keypairs = get_post_meta( $site_package_id, 'wpcd_site_package_site_meta', true );
+		$keypairs = get_post_meta( $site_package_id, 'sstk_site_package_site_meta', true );
 		if ( ! empty( $keypairs ) ) {
 			foreach ( $keypairs as $keypair ) {
 				update_post_meta( $app_id, $keypair[0], $keypair[1] );
@@ -3630,7 +2771,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		// Add or update wp options to tenant site.
-		$keypairs = get_post_meta( $site_package_id, 'wpcd_site_package_tenant_wp_option', true );
+		$keypairs = get_post_meta( $site_package_id, 'sstk_site_package_tenant_wp_option', true );
 		if ( ! empty( $keypairs ) ) {
 			foreach ( $keypairs as $keypair ) {
 				// Add option.  If it exists already, this might error.
@@ -3645,121 +2786,52 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			}
 		}
 
-		/**
-		 * Custom bash script: Before.
-		 * Bash scripts example output (in one long script - line breaks here for readability.):
-		 * export DOMAIN=test004.wpcd.cloud &&
-		 * sudo -E wget --no-check-certificate -O wpcd_site_package_script_new_subscription_before.sh "https://gist.githubusercontent.com/elindydotcom/4c9f96ac48199284227c0ad687aedf75/raw/5295a17b832d8bb3748e0970ba0857063fd63247/wpcd_subscription_switch_sample_script" > /dev/null 2>&1
-		 * && sudo -E dos2unix wpcd_site_package_script_new_subscription_before.sh > /dev/null 2>&1 &&
-		 * echo "Executing Product Package Subscription Switch Bash Custom Script..." &&
-		 * sudo -E bash ./wpcd_site_package_script_new_subscription_before.sh
-		 */
-		if ( WPCD_SITE_PACKAGE()->can_user_execute_bash_scripts() ) {
-			if ( false === $is_subscription_switch ) {
-				// Prepare export vars for bash scripts.
-				$exportvars = 'export DOMAIN=%s';
-				$exportvars = sprintf( $exportvars, $domain );
+		// Run the package's before script for new sites when enabled.
+		if ( SSTK_SITE_PACKAGE()->can_user_execute_bash_scripts() ) {
+			$script = get_post_meta( $site_package_id, 'sstk_bash_scripts_new_sites_before', true );
+			if ( ! empty( $script ) ) {
+				$command  = sprintf( 'export DOMAIN=%s', escapeshellarg( $domain ) ) . ' && ';
+				$command .= 'sudo -E wget --no-check-certificate -O sstk_site_package_script_new_site_before.sh "%s" > /dev/null 2>&1 ';
+				$command  = sprintf( $command, $script );
+				$command .= ' && sudo -E dos2unix sstk_site_package_script_new_site_before.sh > /dev/null 2>&1';
+				$command .= ' && echo "Executing Site Package New Site Bash Custom Script..." ';
+				$command .= ' && sudo -E bash ./sstk_site_package_script_new_site_before.sh';
 
-				// Call bash script for new sites.
-				$script = get_post_meta( $site_package_id, 'wpcd_bash_scripts_new_sites_before', true );
-				if ( ! empty( $script ) ) {
-					$command  = $exportvars . ' && ';
-					$command .= 'sudo -E wget --no-check-certificate -O wpcd_site_package_script_new_subscription_before.sh "%s" > /dev/null 2>&1 ';
-					$command  = sprintf( $command, $script );  // add the script name to the string.
-					$command .= ' && sudo -E dos2unix wpcd_site_package_script_new_subscription_before.sh > /dev/null 2>&1';
-					$command .= ' && echo "Executing Product Package New Site Bash Custom Script..." ';
-					$command .= ' && sudo -E bash ./wpcd_site_package_script_new_subscription_before.sh';
-
-					$action     = 'site_pkg_bash_new_site_package_before';
-					$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
-				}
+				$ssh->submit_generic_server_command( $server_id, 'site_pkg_bash_new_site_package_before', $command, true );
 			}
-
-			if ( true === $is_subscription_switch ) {
-				// Prepare export vars for bash scripts.
-				$exportvars = 'export DOMAIN=%s';
-				$exportvars = sprintf( $exportvars, $domain );
-
-				// Call bash script for new sites.
-				$script = get_post_meta( $site_package_id, 'wpcd_bash_scripts_subscription_switch_before', true );
-				if ( ! empty( $script ) ) {
-					$command  = $exportvars . ' && ';
-					$command .= 'sudo -E wget --no-check-certificate -O wpcd_package_script_subscription_switch_before.sh "%s" > /dev/null 2>&1 ';
-					$command  = sprintf( $command, $script );  // add the script name to the string.
-					$command .= ' && sudo -E dos2unix wpcd_package_script_subscription_switch_before.sh > /dev/null 2>&1';
-					$command .= ' && echo "Executing Product Package New Site Bash Custom Script..." ';
-					$command .= ' && sudo -E bash ./wpcd_package_script_subscription_switch_before.sh';
-
-					$action     = 'site_pkg_bash_new_site_package_before';
-					$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
-				}
-			}
-		}
-
-		// PHP Work Values.
-		$php_pm_max_children = get_post_meta( $site_package_id, 'wpcd_php_pm_max_children', true );
-		if ( ! empty( $php_pm_max_children ) ) {
-			// get rest of php worker values.
-			$php_pm                   = get_post_meta( $site_package_id, 'wpcd_php_pm', true );
-			$php_pm_max_children      = get_post_meta( $site_package_id, 'wpcd_php_pm_max_children', true );
-			$php_pm_start_servers     = get_post_meta( $site_package_id, 'wpcd_php_pm_start_servers', true );
-			$php_pm_min_spare_servers = get_post_meta( $site_package_id, 'wpcd_php_pm_min_spare_servers', true );
-			$php_pm_max_spare_servers = get_post_meta( $site_package_id, 'wpcd_php_pm_max_spare_servers', true );
-
-			// stick them all into an array.
-			$php_pm_args['pm']                   = $php_pm;
-			$php_pm_args['pm_max_children']      = $php_pm_max_children;
-			$php_pm_args['pm_start_servers']     = $php_pm_start_servers;
-			$php_pm_args['pm_min_spare_servers'] = $php_pm_min_spare_servers;
-			$php_pm_args['pm_max_spare_servers'] = $php_pm_max_spare_servers;
-
-			// Fire action hook.
-			do_action( 'wpcd_wordpress-app_do_change_php_workers', $app_id, $php_pm_args );
 		}
 
 		// Switch PHP version.
-		$new_php_version = get_post_meta( $site_package_id, 'wpcd_new_php_version', true );
+		$new_php_version = get_post_meta( $site_package_id, 'sstk_new_php_version', true );
 		if ( ! empty( $new_php_version ) ) {
 			// What is the version on the current site?
 			$current_php_version = $this->get_php_version_for_app( $app_id );
 			if ( (string) $new_php_version !== (string) $current_php_version ) {
 				// Call the action hook that will switch the php versions.
-				do_action( 'wpcd_wordpress-app_do_change_php_version', $app_id, $new_php_version );
+				do_action( 'sstk_wordpress-app_do_change_php_version', $app_id, $new_php_version );
 			}
 		}
 
 		// PHP Memory Limit.
-		$new_memory_limit = get_post_meta( $site_package_id, 'wpcd_php_memory_limit', true );
+		$new_memory_limit = get_post_meta( $site_package_id, 'sstk_php_memory_limit', true );
 		if ( ! empty( $new_memory_limit ) ) {
-			do_action( 'wpcd_wordpress-app_do_change_php_options', $app_id, 'memory_limit', $new_memory_limit . 'M' );
+			do_action( 'sstk_wordpress-app_do_change_php_options', $app_id, 'memory_limit', $new_memory_limit . 'M' );
 		}
 
 		// Max Execution Time.
-		$new_execution_time = get_post_meta( $site_package_id, 'wpcd_php_max_execution_time', true );
+		$new_execution_time = get_post_meta( $site_package_id, 'sstk_php_max_execution_time', true );
 		if ( ! empty( $new_execution_time ) ) {
-			do_action( 'wpcd_wordpress-app_do_change_php_options', $app_id, 'max_execution_time', $new_execution_time );
+			do_action( 'sstk_wordpress-app_do_change_php_options', $app_id, 'max_execution_time', $new_execution_time );
 		}
 
 		// Max Execution Time.
-		$new_input_vars = get_post_meta( $site_package_id, 'wpcd_php_max_input_vars', true );
+		$new_input_vars = get_post_meta( $site_package_id, 'sstk_php_max_input_vars', true );
 		if ( ! empty( $new_input_vars ) ) {
-			do_action( 'wpcd_wordpress-app_do_change_php_options', $app_id, 'max_input_vars', $new_input_vars );
-		}
-
-		// Get the list of plugins to deactivate.
-		$plugins_to_deactivate = get_post_meta( $site_package_id, 'wpcd_plugins_to_deactivate', true );
-		$plugins_to_deactivate = trim( preg_replace( '/\s+/', ' ', $plugins_to_deactivate ) );  // Strip line breaks and replace with space to make a single string of plugins separated by spaces.
-
-		// Deactivate plugins. This should not be necessary for new sites but might be called from WC in a subscription switch.
-		// So, for its better for sequencing to do it here and deactivate plugins before attempting to activate anything else.
-		if ( ! empty( $plugins_to_deactivate ) ) {
-			$command    = sprintf( 'sudo su - "%s" -c "wp --no-color plugin deactivate %s" ', $domain, $plugins_to_deactivate );
-			$action     = 'site_pkg_deactivate_plugins';
-			$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
+			do_action( 'sstk_wordpress-app_do_change_php_options', $app_id, 'max_input_vars', $new_input_vars );
 		}
 
 		// Get the list of repo plugins to install and activate.
-		$plugins_to_install_activate = get_post_meta( $site_package_id, 'wpcd_plugins_to_install_from_repo', true );
+		$plugins_to_install_activate = get_post_meta( $site_package_id, 'sstk_plugins_to_install_from_repo', true );
 		$plugins_to_install_activate = trim( preg_replace( '/\s+/', ' ', $plugins_to_install_activate ) );  // Strip line breaks and replace with space to make a single string of plugins separated by spaces.
 
 		// Install and activate repo plugins.
@@ -3770,7 +2842,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		// Get the list of custom url plugins to install and activate.
-		$plugins_to_install_activate = get_post_meta( $site_package_id, 'wpcd_plugins_to_install_from_url', true );
+		$plugins_to_install_activate = get_post_meta( $site_package_id, 'sstk_plugins_to_install_from_url', true );
 		$plugins_to_install_activate = trim( preg_replace( '/\s+/', ' ', $plugins_to_install_activate ) );
 
 		// Install and activate external/custom url plugins.
@@ -3780,20 +2852,8 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
 		}
 
-		// Get the list of pre-installed plugins to activate.
-		// This will really only apply if WC is in use with template sites.
-		$plugins_to_activate = get_post_meta( $site_package_id, 'wpcd_plugins_to_activate', true );
-		$plugins_to_activate = trim( preg_replace( '/\s+/', ' ', $plugins_to_activate ) );
-
-		// Activate plugins.
-		if ( ! empty( $plugins_to_activate ) ) {
-			$command    = sprintf( 'sudo su - "%s" -c "wp --no-color plugin activate %s" ', $domain, $plugins_to_activate );
-			$action     = 'site_pkg_activate_plugins';
-			$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
-		}
-
 		// Get the list of repo themes to install.
-		$themes_to_install = get_post_meta( $site_package_id, 'wpcd_themes_to_install_from_repo', true );
+		$themes_to_install = get_post_meta( $site_package_id, 'sstk_themes_to_install_from_repo', true );
 		$themes_to_install = trim( preg_replace( '/\s+/', ' ', $themes_to_install ) );
 
 		// Install repo themes.
@@ -3804,7 +2864,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		// Get the list of external themes to install.
-		$themes_to_install = get_post_meta( $site_package_id, 'wpcd_themes_to_install_from_url', true );
+		$themes_to_install = get_post_meta( $site_package_id, 'sstk_themes_to_install_from_url', true );
 		$themes_to_install = trim( preg_replace( '/\s+/', ' ', $themes_to_install ) );
 
 		// Install external themes.
@@ -3815,102 +2875,49 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		// Activate theme.
-		$theme_to_activate = get_post_meta( $site_package_id, 'wpcd_theme_to_activate', true );
+		$theme_to_activate = get_post_meta( $site_package_id, 'sstk_theme_to_activate', true );
 		if ( ! empty( $theme_to_activate ) ) {
 			$command    = sprintf( 'sudo su - "%s" -c "wp --no-color theme activate %s" ', $domain, $theme_to_activate );
 			$action     = 'site_pkg_activate_plugins';
 			$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
 		}
 
-		// Delete updraft folder.  Only handle on new sites since existing sites might have installed updraft and want to keep their local backups around while switching subscriptions.
-		if ( false === $is_subscription_switch ) {
-			$delete_updraft = get_post_meta( $site_package_id, 'wpcd_site_package_delete_updraft', true );
-			if ( true === (bool) $delete_updraft ) {
-				$command    = sprintf( 'sudo rm /var/www/%s/html/wp-content/updraft/*.zip && sudo rm /var/www/%s/html/wp-content/updraft/*.txt && sudo rm /var/www/%s/html/wp-content/updraft/*.gz && echo "Updraft Folder Contents Deleted." ', $domain, $domain, $domain );
-				$action     = 'site_pkg_delete_updraft_folder_contents';
-				$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
-			}
+		// Delete local Updraft backups when requested for a new site.
+		$delete_updraft = get_post_meta( $site_package_id, 'sstk_site_package_delete_updraft', true );
+		if ( true === (bool) $delete_updraft ) {
+			$command = sprintf( 'sudo rm /var/www/%s/html/wp-content/updraft/*.zip && sudo rm /var/www/%s/html/wp-content/updraft/*.txt && sudo rm /var/www/%s/html/wp-content/updraft/*.gz && echo "Updraft Folder Contents Deleted." ', $domain, $domain, $domain );
+			$ssh->submit_generic_server_command( $server_id, 'site_pkg_delete_updraft_folder_contents', $command, true );
 		}
 
-		// Delete debug.log  Only handle on new sites since existing sites might deliberately have it turned on and want to keep it around while switching subscriptions.
-		if ( false === $is_subscription_switch ) {
-			$delete_debug = get_post_meta( $site_package_id, 'wpcd_site_package_delete_debug', true );
-			if ( true === (bool) $delete_debug ) {
-				$command    = sprintf( 'sudo rm /var/www/%s/html/wp-content/debug.log && echo "Debug.log file Deleted." ', $domain );
-				$action     = 'site_pkg_delete_debug_log';
-				$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
-			}
+		// Delete debug.log when requested for a new site.
+		$delete_debug = get_post_meta( $site_package_id, 'sstk_site_package_delete_debug', true );
+		if ( true === (bool) $delete_debug ) {
+			$command = sprintf( 'sudo rm /var/www/%s/html/wp-content/debug.log && echo "Debug.log file Deleted." ', $domain );
+			$ssh->submit_generic_server_command( $server_id, 'site_pkg_delete_debug_log', $command, true );
 		}
 
 		// Activate SolidWP on the site.
-		if ( false === $is_subscription_switch ) {
-			$activate_solidwp_security = get_post_meta( $site_package_id, 'wpcd_site_package_activate_solidwp_security', true );
-			if ( true === (bool) $activate_solidwp_security ) {
-				do_action( 'wpcd_wordpress-app_do-activate_solidwp_security_for_site', $app_id, '' );
-			}
-		}
-
-		// Activate logtivity on the site.
-		if ( false === $is_subscription_switch ) {
-			$activate_logtivity = get_post_meta( $site_package_id, 'wpcd_site_package_activate_logtivity', true );
-			if ( true === (bool) $activate_logtivity ) {
-				do_action( 'wpcd_wordpress-app_do-activate_logtivity_for_site', $app_id, '' );
-			}
+		$activate_solidwp_security = get_post_meta( $site_package_id, 'sstk_site_package_activate_solidwp_security', true );
+		if ( true === (bool) $activate_solidwp_security ) {
+			do_action( 'sstk_wordpress-app_do-activate_solidwp_security_for_site', $app_id, '' );
 		}
 
 		// Disable HTTP Authentication.
-		if ( false === $is_subscription_switch ) {
-			$disable_http_auth = get_post_meta( $site_package_id, 'wpcd_site_package_disable_http_auth', true );
-			if ( true === (bool) $disable_http_auth ) {
-				do_action( 'wpcd_wordpress-app_do_site_disable_http_auth', $app_id );
-			}
+		$disable_http_auth = get_post_meta( $site_package_id, 'sstk_site_package_disable_http_auth', true );
+		if ( true === (bool) $disable_http_auth ) {
+			do_action( 'sstk_wordpress-app_do_site_disable_http_auth', $app_id );
 		}
 
-		// Apply categories/groups to site.
-		if ( false === $is_subscription_switch ) {
-			$groups = get_post_meta( $site_package_id, 'wpcd_site_package_apply_categories_new_sites', true ); // taxomomy_advanced fields stores multiple values in a single comma delimited row so this will return a comma delimited string.
-			if ( ! empty( $groups ) ) {
-				wp_set_post_terms( $app_id, $groups, 'wpcd_app_group', true );  // Luckily wp_post_terms accepts comma-delimited strings for post so no need to explode into array.
-			}
-		}
-		if ( true === $is_subscription_switch ) {
-			// Add subscription-switch specific groups.
-			$groups = get_post_meta( $site_package_id, 'wpcd_site_package_apply_categories_subscription_switch', true ); // taxomomy_advanced fields stores multiple values in a single comma delimited row so this will return a comma delimited string.
-			if ( ! empty( $groups ) ) {
-				wp_set_post_terms( $app_id, $groups, 'wpcd_app_group', true );  // Luckily wp_post_terms accepts comma-delimited strings for post so no need to explode into array.
-			}
-
-			// Remove groups - only happens for subscription switches.
-			$groups = get_post_meta( $site_package_id, 'wpcd_site_package_remove_categories_subscription_switch', true ); // taxomomy_advanced fields stores multiple values in a single comma delimited row so this will return a comma delimited string.
-			if ( ! empty( $groups ) ) {
-				$groups = explode( ',', $groups );
-				$groups = array_values( $groups );
-				foreach ( $groups as $key => $group ) {
-					wp_remove_object_terms( (int) $app_id, (int) $group, 'wpcd_app_group' );  // Casting to INT is very important otherwise this function doesn't work.
-				}
-			}
+		// Apply categories/groups to the new site.
+		$groups = get_post_meta( $site_package_id, 'sstk_site_package_apply_categories_new_sites', true );
+		if ( ! empty( $groups ) ) {
+			wp_set_post_terms( $app_id, $groups, 'sstk_app_group', true );
 		}
 
-		// Update expiration.
-		$expiration_in_minutes = (int) get_post_meta( $site_package_id, 'wpcd_site_package_expire_site_minutes', true );
-		if ( true === $is_subscription_switch ) {
-			// If switching expiration, only update the expiration date on the site if the package expiration field is zero or empty.
-			if ( empty( $expiration_in_minutes ) ) {
-				WPCD_APP_EXPIRATION()->clear_expiration( $app_id );
-			}
-		} else {
-			// New site.
-			if ( ! empty( $expiration_in_minutes ) ) {
-				WPCD_APP_EXPIRATION()->set_expiration( $app_id, $expiration_in_minutes );
-			}
-		}
-
-		// Create quota records.
-		if ( class_exists( 'WPCD_WooCommerce_Init' ) ) {
-			$quota_profile = (int) get_post_meta( $site_package_id, 'wpcd_site_package_quota_profile', true );
-			if ( ! empty( $quota_profile ) ) {
-				WPCD_POSTS_QUOTA_LIMITS()->create_limits( $quota_profile, $app_id );
-			}
+		// Set the initial expiration.
+		$expiration_in_minutes = (int) get_post_meta( $site_package_id, 'sstk_site_package_expire_site_minutes', true );
+		if ( ! empty( $expiration_in_minutes ) ) {
+			SSTK_APP_EXPIRATION()->set_expiration( $app_id, $expiration_in_minutes );
 		}
 
 		// Search and replace here - future use.
@@ -3919,34 +2926,18 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 		// Plugin & Theme updates here - future use.
 
-		/**
-		 * Custom bash script: After.
-		 * Bash scripts example output (in one long script - line breaks here for readability.):
-		 * export DOMAIN=test004.wpcd.cloud &&
-		 * sudo -E wget --no-check-certificate -O wpcd_site_package_script_new_subscription_after.sh "https://gist.githubusercontent.com/elindydotcom/4c9f96ac48199284227c0ad687aedf75/raw/5295a17b832d8bb3748e0970ba0857063fd63247/wpcd_subscription_switch_sample_script" > /dev/null 2>&1
-		 * && sudo -E dos2unix wpcd_site_package_script_new_subscription_after.sh > /dev/null 2>&1 &&
-		 * echo "Executing Product Package Subscription Switch Bash Custom Script..." &&
-		 * sudo -E bash ./wpcd_site_package_script_new_subscription_after.sh
-		 */
-		if ( WPCD_SITE_PACKAGE()->can_user_execute_bash_scripts() ) {
-			if ( false === $is_subscription_switch ) {
-				// Prepare export vars for bash scripts.
-				$exportvars = 'export DOMAIN=%s';
-				$exportvars = sprintf( $exportvars, $domain );
+		// Run the package's after script for new sites when enabled.
+		if ( SSTK_SITE_PACKAGE()->can_user_execute_bash_scripts() ) {
+			$script = get_post_meta( $site_package_id, 'sstk_bash_scripts_new_sites_after', true );
+			if ( ! empty( $script ) ) {
+				$command  = sprintf( 'export DOMAIN=%s', escapeshellarg( $domain ) ) . ' && ';
+				$command .= 'sudo -E wget --no-check-certificate -O sstk_site_package_script_new_site_after.sh "%s" > /dev/null 2>&1 ';
+				$command  = sprintf( $command, $script );
+				$command .= ' && sudo -E dos2unix sstk_site_package_script_new_site_after.sh > /dev/null 2>&1';
+				$command .= ' && echo "Executing Site Package New Site Bash Custom Script..." ';
+				$command .= ' && sudo -E bash ./sstk_site_package_script_new_site_after.sh';
 
-				// Call bash script for new sites.
-				$script = get_post_meta( $site_package_id, 'wpcd_bash_scripts_new_sites_after', true );
-				if ( ! empty( $script ) ) {
-					$command  = $exportvars . ' && ';
-					$command .= 'sudo -E wget --no-check-certificate -O wpcd_site_package_script_new_subscription_after.sh "%s" > /dev/null 2>&1 ';
-					$command  = sprintf( $command, $script );  // add the script name to the string.
-					$command .= ' && sudo -E dos2unix wpcd_site_package_script_new_subscription_after.sh > /dev/null 2>&1';
-					$command .= ' && echo "Executing Product Package New Site Bash Custom Script..." ';
-					$command .= ' && sudo -E bash ./wpcd_site_package_script_new_subscription_after.sh';
-
-					$action     = 'site_pkg_bash_new_site_package_after';
-					$raw_status = $ssh->submit_generic_server_command( $server_id, $action, $command, true );
-				}
+				$ssh->submit_generic_server_command( $server_id, 'site_pkg_bash_new_site_package_after', $command, true );
 			}
 		}
 		// If we get here then it means that we have completed the core site package rules.
@@ -3954,7 +2945,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		update_post_meta( $app_id, 'wpapp_site_package_core_rules_complete', true );
 
 		// Clear 'in-process' transient.
-		$transient_name = $app_id . 'wpcd_site_package_running';
+		$transient_name = 'sstk_site_package_running_' . $app_id;
 		delete_transient( $transient_name );
 
 	}
@@ -3962,7 +2953,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Add temp domain to DNS when WP install is complete.
 	 *
-	 * Called from function wpcd_wpapp_install_complete
+	 * Called from function sstk_wpapp_install_complete
 	 *
 	 * @param int $server_id      post id of server.
 	 * @param int $app_id         post id of wp app.
@@ -3970,21 +2961,21 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function handle_temp_dns_for_new_site( $server_id, $app_id ) {
 
 		// What's the IP of the server?
-		$ipv4 = WPCD_SERVER()->get_ipv4_address( $server_id );
+		$ipv4 = SSTK_SERVER()->get_ipv4_address( $server_id );
 
 		// What's the IPv6 of the server?
-		$ipv6 = WPCD_SERVER()->get_ipv6_address( $server_id );
+		$ipv6 = SSTK_SERVER()->get_ipv6_address( $server_id );
 
 		// What's the domain of the site?
 		$domain = $this->get_domain_name( $app_id );
 
 		// Add the DNS...
-		$dns_success = WPCD_DNS()->set_dns_for_domain( $domain, $ipv4, $ipv6 );
+		$dns_success = SSTK_DNS()->set_dns_for_domain( $domain, $ipv4, $ipv6 );
 
 		// Attempt to issue SSL..
 		if ( true === (bool) $dns_success ) {
-			if ( wpcd_get_option( 'wordpress_app_auto_issue_ssl' ) ) {
-				do_action( 'wpcd_wordpress-app_do_toggle_ssl_status_on', $app_id, 'ssl-status' );
+			if ( sstk_get_option( 'wordpress_app_auto_issue_ssl' ) ) {
+				do_action( 'sstk_wordpress-app_do_toggle_ssl_status_on', $app_id, 'ssl-status' );
 			}
 		}
 
@@ -3995,7 +2986,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Switch PHP version if necessary after a new site has been installed.
 	 *
-	 * Called from function wpcd_wpapp_install_complete
+	 * Called from function sstk_wpapp_install_complete
 	 *
 	 * @param int   $app_id        post id of app.
 	 * @param array $instance      Array passed by calling function containing details of the server and site. It's not used here yet and could be empty.
@@ -4003,20 +2994,20 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function handle_switch_php_version( $app_id, $instance ) {
 
 		// What's the default new php version?
-		$new_php_default_version = wpcd_get_option( 'wordpress_app_sites_set_php_version' );
+		$new_php_default_version = sstk_get_option( 'wordpress_app_sites_set_php_version' );
 
 		// if empty new default php version, bail.
 		if ( empty( $new_php_default_version ) ) {
 			return true;
 		}
 
-		// Bail if the new default php version is the wpcd app default.
+		// Bail if the new default php version is the sstk app default.
 		if ( (string) $this->get_wpapp_default_php_version() === (string) $new_php_default_version ) {
 			return true;
 		}
 
 		// Call the action hook that will switch the php versions.
-		do_action( 'wpcd_wordpress-app_do_change_php_version', $app_id, $new_php_default_version );
+		do_action( 'sstk_wordpress-app_do_change_php_version', $app_id, $new_php_default_version );
 
 		return true;
 
@@ -4025,16 +3016,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Disable page cache when WP install is complete.
 	 *
-	 * Called from function wpcd_wpapp_install_complete
+	 * Called from function sstk_wpapp_install_complete
 	 *
 	 * @param int   $app_id        post id of app.
 	 * @param array $instance      Array passed by calling function containing details of the server and site.
 	 */
 	public function handle_page_cache_for_new_site( $app_id, $instance ) {
 
-		if ( wpcd_get_option( 'wordpress_app_sites_disable_page_cache' ) ) {
-			$instance['action_hook'] = 'wpcd_wordpress-app_pending_log_toggle_page_cache';
-			WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'disable-page-cache', $app_id, $instance, 'ready', $app_id, __( 'Disable Page Cache For New Site', 'wpcd' ) );
+		if ( sstk_get_option( 'wordpress_app_sites_disable_page_cache' ) ) {
+			$instance['action_hook'] = 'sstk_wordpress-app_pending_log_toggle_page_cache';
+			SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'disable-page-cache', $app_id, $instance, 'ready', $app_id, __( 'Disable Page Cache For New Site', 'simple-stack' ) );
 		}
 
 	}
@@ -4042,33 +3033,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Remove redis object cache when WP install is complete.
 	 *
-	 * Called from function wpcd_wpapp_install_complete
+	 * Called from function sstk_wpapp_install_complete
 	 *
 	 * @param int   $app_id        post id of app.
 	 * @param array $instance      Array passed by calling function containing details of the server and site.
 	 */
 	public function handle_redis_object_cache_for_new_site( $app_id, $instance ) {
 
-		if ( wpcd_get_option( 'wordpress_app_sites_disable_redis_cache' ) ) {
-			$instance['action_hook'] = 'wpcd_wordpress-app_pending_log_toggle_redis_object_cache';
-			WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'disable-redis-object-cache', $app_id, $instance, 'ready', $app_id, __( 'Disable Redis Object Cache For New Site', 'wpcd' ) );
-		}
-
-	}
-
-	/**
-	 * Activate Logtivity when WP install is complete.
-	 *
-	 * Called from function wpcd_wpapp_install_complete
-	 *
-	 * @param int   $app_id        post id of app.
-	 * @param array $instance      Array passed by calling function containing details of the server and site.
-	 */
-	public function handle_logtivity_for_new_site( $app_id, $instance ) {
-
-		if ( wpcd_get_option( 'wordpress_app_sites_activate_logtivity' ) ) {
-			$instance['action_hook'] = 'wpcd_wordpress-app_pending_log_activate_logtivity';
-			WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'activate-logtivity', $app_id, $instance, 'ready', $app_id, __( 'Activate Logtivity On New Site', 'wpcd' ) );
+		if ( sstk_get_option( 'wordpress_app_sites_disable_redis_cache' ) ) {
+			$instance['action_hook'] = 'sstk_wordpress-app_pending_log_toggle_redis_object_cache';
+			SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'disable-redis-object-cache', $app_id, $instance, 'ready', $app_id, __( 'Disable Redis Object Cache For New Site', 'simple-stack' ) );
 		}
 
 	}
@@ -4076,16 +3050,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Activate SolidWP Security Pro when WP install is complete.
 	 *
-	 * Called from function wpcd_wpapp_install_complete
+	 * Called from function sstk_wpapp_install_complete
 	 *
 	 * @param int   $app_id        post id of app.
 	 * @param array $instance      Array passed by calling function containing details of the server and site.
 	 */
 	public function handle_solidwp_security_for_new_site( $app_id, $instance ) {
 
-		if ( wpcd_get_option( 'wordpress_app_sites_activate_solidwp_security' ) ) {
-			$instance['action_hook'] = 'wpcd_wordpress-app_pending_log_activate_solidwp_security';
-			WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'activate-solidwp-security', $app_id, $instance, 'ready', $app_id, __( 'Activate SolidWP Security Pro On New Site', 'wpcd' ) );
+		if ( sstk_get_option( 'wordpress_app_sites_activate_solidwp_security' ) ) {
+			$instance['action_hook'] = 'sstk_wordpress-app_pending_log_activate_solidwp_security';
+			SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'activate-solidwp-security', $app_id, $instance, 'ready', $app_id, __( 'Activate SolidWP Security Pro On New Site', 'simple-stack' ) );
 		}
 
 	}
@@ -4093,20 +3067,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Create the server instance on the basis of the inputs.
 	 *
-	 * NOTE: Changes to this function should also be checked
-	 * against changes to the wc_spinup_wpapp() function
-	 * in class-wordpress-woocommerce.php in the woocommerce
-	 * servers add-on.
 	 */
 	public function create_instance() {
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_REQUEST['params'] ) ) );
 
-		$webserver = '';
-		if ( ! empty( $args['webserver-type'] ) ) {
-			$webserver = sanitize_text_field( $args['webserver-type'] );
-		}
+		$webserver = $args['webserver-type'] ?? 'ols';
 		if ( empty( $webserver ) ) {
 			$webserver = 'ols';
+		}
+		if ( 'ols' !== $webserver ) {
+			return new \WP_Error( 'sstk_invalid_webserver_type', __( 'Simple Stack supports OpenLiteSpeed servers only.', 'simple-stack' ) );
 		}
 		$os       = sanitize_text_field( $args['os'] );
 		$provider = sanitize_text_field( $args['provider'] );
@@ -4119,7 +3089,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			$user = get_user_by( 'ID', $user_id );
 		}
 		$type    = sanitize_text_field( $args['server_type'] );
-		$version = sanitize_text_field( $args['script_version'] );
+		$version = $this->get_configured_scripts_version();
 
 		/* Make sure we have a server type */
 		if ( empty( $type ) ) {
@@ -4128,7 +3098,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		/* Generate the server name */
-		if ( wpcd_get_option( 'wordpress_app_use_extended_server_name' ) || empty( $args['name'] ) ) {
+		if ( sstk_get_option( 'wordpress_app_use_extended_server_name' ) || empty( $args['name'] ) ) {
 			if ( empty( $args['name'] ) ) {
 				$name = sanitize_title( sprintf( '%s-%s-%s', $provider, $user->user_nicename, get_gmt_from_date( '' ) ) );
 			} else {
@@ -4153,7 +3123,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		);
 
 		// Add custom fields into the $attributes array...
-		$custom_fields = apply_filters( "wpcd_{$this->get_app_name()}_create_wp_server_parms_custom_fields", WPCD_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-server-popup' ), $attributes, $args );
+		$custom_fields = apply_filters( "sstk_{$this->get_app_name()}_create_wp_server_parms_custom_fields", SSTK_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-server-popup' ), $attributes, $args );
 		foreach ( $custom_fields as $field ) {
 			if ( isset( $args[ $field['name'] ] ) ) {
 				$attributes[ $field['name'] ] = sanitize_text_field( $args[ $field['name'] ] );
@@ -4161,23 +3131,23 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		// Get any post-processing bash script urls from settings.
-		// This one will end up getting added to the servers' post meta but should be deleted afterwards in the wpcd_wpapp_core_prepare_server_completed() function located in traits/after-prepare-server.php.
+		// This one will end up getting added to the servers' post meta but should be deleted afterwards in the sstk_wpapp_core_prepare_server_completed() function located in traits/after-prepare-server.php.
 		$attributes['post_processing_script_server'] = '';
-		if ( $this->wpcd_can_user_execute_bash_scripts() ) {
-			$post_process_script                         = wpcd_get_option( 'wpcd_wpapp_custom_script_after_server_create' );
+		if ( $this->sstk_can_user_execute_bash_scripts() ) {
+			$post_process_script                         = sstk_get_option( 'sstk_wpapp_custom_script_after_server_create' );
 			$attributes['post_processing_script_server'] = $post_process_script;
 		}
 
 		// Get the secret key manager api key from settings.
-		// This one will end up getting added to the servers' post meta but should be deleted afterwards in the wpcd_wpapp_core_prepare_server_completed() function located in traits/after-prepare-server.php.
-		$secret_key_manager_api_key               = wpcd_get_option( 'wpcd_wpapp_custom_script_secrets_manager_api_key' );
+		// This one will end up getting added to the servers' post meta but should be deleted afterwards in the sstk_wpapp_core_prepare_server_completed() function located in traits/after-prepare-server.php.
+		$secret_key_manager_api_key               = sstk_get_option( 'sstk_wpapp_custom_script_secrets_manager_api_key' );
 		$attributes['secret_key_manager_api_key'] = $secret_key_manager_api_key;
 
 		/* Allow others to populate the attributes array which should get stored in the CPT automatically. */
-		$attributes = apply_filters( "wpcd_{$this->get_app_name()}_initial_server_attributes", $attributes, $args );
+		$attributes = apply_filters( "sstk_{$this->get_app_name()}_initial_server_attributes", $attributes, $args );
 
 		/* Create server */
-		$instance = WPCD_SERVER()->create_server( 'create', $attributes );  // fire up a new server.
+		$instance = SSTK_SERVER()->create_server( 'create', $attributes );  // fire up a new server.
 
 		/* Check for error */
 		if ( ( is_wp_error( $instance ) ) || ( ! $instance ) ) {
@@ -4187,7 +3157,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		/* If we have a valid post id, add custom fields data to the server post object */
 		$post_id = $instance['post_id'];
 		if ( ( ! empty( $post_id ) ) && ( ! is_wp_error( $post_id ) ) ) {
-			$custom_fields = apply_filters( "wpcd_{$this->get_app_name()}_create_wp_server_custom_post_fields", WPCD_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-server-popup' ), $attributes, $args );
+			$custom_fields = apply_filters( "sstk_{$this->get_app_name()}_create_wp_server_custom_post_fields", SSTK_CUSTOM_FIELDS()->get_fields_for_location( 'wordpress-app-new-server-popup' ), $attributes, $args );
 			foreach ( $custom_fields as $field ) {
 				if ( isset( $instance[ $field['name'] ] ) ) {
 					update_post_meta( $post_id, $field['name'], $instance[ $field['name'] ] );
@@ -4231,10 +3201,10 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			}
 
 			/* If we're here, then this is a field that's for the server record. */
-			update_post_meta( $post_id, 'wpcd_server_' . $key, $value );
+			update_post_meta( $post_id, 'sstk_server_' . $key, $value );
 		}
 
-		/* Restructure the server instance array to add the app data that is going into the wpcd_app CPT */
+		/* Restructure the server instance array to add the app data that is going into the sstk_app CPT */
 		if ( ! isset( $instance['apps'] ) ) {
 			$instance['apps'] = array();
 		}
@@ -4247,12 +3217,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		}
 
 		/* Schedule after-server-create commands (commands to run after the server has been instantiated for the first time) */
-		update_post_meta( $post_id, "wpcd_server_{$this->get_app_name()}_action", 'after-server-create-commands' );
-		/* update_post_meta( $post_id, 'wpcd_server_after_create_action_app_id', $app_post_id ); */  // No app so no app_post_id var.
-		update_post_meta( $post_id, "wpcd_server_{$this->get_app_name()}_action_status", 'in-progress' );
-		WPCD_SERVER()->add_deferred_action_history( $post_id, $this->get_app_name() );
+		update_post_meta( $post_id, "sstk_server_{$this->get_app_name()}_action", 'after-server-create-commands' );
+		/* update_post_meta( $post_id, 'sstk_server_after_create_action_app_id', $app_post_id ); */  // No app so no app_post_id var.
+		update_post_meta( $post_id, "sstk_server_{$this->get_app_name()}_action_status", 'in-progress' );
+		SSTK_SERVER()->add_deferred_action_history( $post_id, $this->get_app_name() );
 		if ( isset( $instance['init'] ) && true === $instance['init'] ) {
-			update_post_meta( $post_id, 'wpcd_server_init', '1' );
+			update_post_meta( $post_id, 'sstk_server_init', '1' );
 		}
 
 		return $instance;
@@ -4264,7 +3234,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Adds a welcome message to the GENERAL SETTINGS tab.
 	 *
-	 * Filter hook: wpcd_general_settings_after_welcome_message
+	 * Filter hook: sstk_general_settings_after_welcome_message
 	 *
 	 * @param array $meta_boxes current set of metaboxes defined on the settings screen.
 	 *
@@ -4273,61 +3243,61 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function welcome_message_settings( $meta_boxes ) {
 
 		$welcome_message  = '';
-		$welcome_message .= '<b>' . __( 'Here are the basic steps needed to build your first server and deploy your first WordPress server & site:', 'wpcd' ) . '</b>';
+		$welcome_message .= '<b>' . __( 'Here are the basic steps needed to build your first server and deploy your first WordPress server & site:', 'simple-stack' ) . '</b>';
 		$welcome_message .= '<br />';
 
 		$welcome_message .= '<ol>';
 		$welcome_message .= '<li>';
-		$welcome_message .= __( 'Double-check that your current web server where this plugin is installed has the appropriate timeouts as listed at the bottom of this screen. You will not be able to build your first server unless your web server timeouts are increased.', 'wpcd' );
+		$welcome_message .= __( 'Double-check that your current web server where this plugin is installed has the appropriate timeouts as listed at the bottom of this screen. You will not be able to build your first server unless your web server timeouts are increased.', 'simple-stack' );
 		$welcome_message .= '</li>';
 		$welcome_message .= '<li>';
-		$welcome_message .= __( 'Generate an API key in your server providers\' dashboard.', 'wpcd' );
+		$welcome_message .= __( 'Generate an API key in your server providers\' dashboard.', 'simple-stack' );
 		$welcome_message .= '</li>';
 		$welcome_message .= '<li>';
-		$welcome_message .= __( 'If you see the startup wizard notice at the top of this screen and your server provider is one of DigitalOcean, Linode, Vultr, UpCloud or Hetzner - use it to automatically connect to your server provider and setup your SSH keys.', 'wpcd' );
+		$welcome_message .= __( 'If you see the startup wizard notice at the top of this screen, use it to connect your Vultr or UpCloud account and set up your SSH keys.', 'simple-stack' );
 		$welcome_message .= '</li>';
 		$welcome_message .= '</ol>';
 
 		$welcome_message .= '';
-		$welcome_message .= '<b>' . __( 'If you cannot use the wizard or do not see the wizard notice:', 'wpcd' ) . '</b>';
+		$welcome_message .= '<b>' . __( 'If you cannot use the wizard or do not see the wizard notice:', 'simple-stack' ) . '</b>';
 		$welcome_message .= '<br />';
 
 		$welcome_message .= '<ol>';
 		$welcome_message .= '<li>';
-		$welcome_message .= __( 'Make sure you have created and uploaded an SSH key pair to your server providers\' dashboard.', 'wpcd' );
+		$welcome_message .= __( 'Make sure you have created and uploaded an SSH key pair to your server providers\' dashboard.', 'simple-stack' );
 		$welcome_message .= '</li>';
 		$welcome_message .= '<li>';
-		$welcome_message .= __( 'Add your cloud server provider API key and other credentials to the WPCLOUDDEPLOY → SETTINGS → CLOUD PROVIDERS tab.', 'wpcd' );
+		$welcome_message .= __( 'Add your cloud server provider API key and other credentials on the Simple Stack Providers screen.', 'simple-stack' );
 		$welcome_message .= '</li>';
 		$welcome_message .= '</ol>';
 
 		$welcome_message .= '';
-		$welcome_message .= '<b>' . __( 'Now you can deploy your first WordPress server & site:', 'wpcd' ) . '</b>';
+		$welcome_message .= '<b>' . __( 'Now you can deploy your first WordPress server & site:', 'simple-stack' ) . '</b>';
 		$welcome_message .= '<br />';
 
 		$welcome_message .= '<ol>';
 		$welcome_message .= '<li>';
-		$welcome_message .= __( 'Click on the ALL CLOUD SERVERS menu option and use the DEPLOY A NEW WordPress SERVER button to deploy a server.', 'wpcd' );
+		$welcome_message .= __( 'Click on the ALL CLOUD SERVERS menu option and use the DEPLOY A NEW WordPress SERVER button to deploy a server.', 'simple-stack' );
 		$welcome_message .= '</li>';
 		$welcome_message .= '<li>';
-		$welcome_message .= __( 'After the server is deployed, go back to the CLOUD SERVERS menu option and click the INSTALL WordPress button in the server list.', 'wpcd' );
+		$welcome_message .= __( 'After the server is deployed, go back to the CLOUD SERVERS menu option and click the INSTALL WordPress button in the server list.', 'simple-stack' );
 		$welcome_message .= '</li>';
 		$welcome_message .= '</ol>';
 		$welcome_message .= '<br />';
 		$welcome_message .= '&nbsp;&nbsp;&nbsp;&nbsp;';
-		$welcome_message .= sprintf( '<a style="padding: 10px; border: solid; border-width: 1px; text-decoration: none; color: white; background-color: #03114A; border-color: #03114A;" target="_blank" href="%s">' . __( 'Quick Start Guide', 'wpcd' ) . '</a>', 'https://wpclouddeploy.com/documentation/wpcloud-deploy/introduction-to-wpcloud-deploy/' );
+		$welcome_message .= sprintf( '<a style="padding: 10px; border: solid; border-width: 1px; text-decoration: none; color: white; background-color: #03114A; border-color: #03114A;" target="_blank" href="%s">' . __( 'Quick Start Guide', 'simple-stack' ) . '</a>', 'https://github.com/onedogsolutions/simple-stack/blob/main/README.md' );
 
-		$welcome_message = apply_filters( 'wpcd_settings_deploy_first_wp_site_text', $welcome_message );
+		$welcome_message = apply_filters( 'sstk_settings_deploy_first_wp_site_text', $welcome_message );
 
 		$meta_boxes[] = array(
-			'id'             => 'wpcd_deploy_your_first_wordpress_site',
-			'title'          => __( 'Deploy Your First WordPress Site', 'wpcd' ),
-			'settings_pages' => 'wpcd_settings',
+			'id'             => 'sstk_deploy_your_first_wordpress_site',
+			'title'          => __( 'Deploy Your First WordPress Site', 'simple-stack' ),
+			'settings_pages' => 'sstk_settings',
 			'tab'            => 'general',
 			'fields'         => array(
 				array(
 					'type' => 'heading',
-					'id'   => 'wpcd_deploy_your_first_wordpress_site_heading',
+					'id'   => 'sstk_deploy_your_first_wordpress_site_heading',
 					'name' => 'Deploy Your First WordPress Site',
 					'desc' => $welcome_message,
 				),
@@ -4346,7 +3316,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * **** The CPT creation process might be too early for
 	 * **** it to fire properly?
 	 *
-	 * Filter hook: wpcd_no_app_servers_found_msg
+	 * Filter hook: sstk_no_app_servers_found_msg
 	 *
 	 * @param string $msg message.
 	 *
@@ -4354,16 +3324,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function no_app_servers_found_msg( $msg ) {
 		$msg .= '<br />';
-		$msg .= __( 'To create a new server, first make sure you add your cloud provider credentials under the SETTINGS screen.', 'wpcd' );
+		$msg .= __( 'To create a new server, first make sure you add your cloud provider credentials under the SETTINGS screen.', 'simple-stack' );
 		$msg .= '<br />';
-		$msg .= __( 'Then, you can click the DEPLOY A NEW WordPress SERVER button at the top of this screen to create your first server.', 'wpcd' );
+		$msg .= __( 'Then, you can click the DEPLOY A NEW WordPress SERVER button at the top of this screen to create your first server.', 'simple-stack' );
 		return $msg;
 	}
 
 	/**
 	 * Return an instance of self.
 	 *
-	 * @return WPCD_WORDPRESS_APP
+	 * @return SSTK_WORDPRESS_APP
 	 */
 	public function get_this() {
 		return $this;
@@ -4375,10 +3345,10 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return WORDPRESS_SSH()
 	 */
 	public function ssh() {
-		if ( empty( WPCD()->classes['wpcd_wordpress_ssh'] ) ) {
-			WPCD()->classes['wpcd_wordpress_ssh'] = new WORDPRESS_SSH();
+		if ( empty( SSTK()->classes['sstk_wordpress_ssh'] ) ) {
+			SSTK()->classes['sstk_wordpress_ssh'] = new WORDPRESS_SSH();
 		}
-		return WPCD()->classes['wpcd_wordpress_ssh'];
+		return SSTK()->classes['sstk_wordpress_ssh'];
 	}
 
 	/**
@@ -4387,10 +3357,10 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return WORDPRESS_APP_SETTINGS()
 	 */
 	public function settings() {
-		if ( empty( WPCD()->classes['wpcd_app_wordpress_settings'] ) ) {
-			WPCD()->classes['wpcd_app_wordpress_settings'] = new WORDPRESS_APP_SETTINGS();
+		if ( empty( SSTK()->classes['sstk_app_wordpress_settings'] ) ) {
+			SSTK()->classes['sstk_app_wordpress_settings'] = new WORDPRESS_APP_SETTINGS();
 		}
-		return WPCD()->classes['wpcd_app_wordpress_settings'];
+		return SSTK()->classes['sstk_app_wordpress_settings'];
 	}
 
 
@@ -4403,9 +3373,9 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function set_server_memcached_installed_status( $server_id, $status ) {
 
 		if ( true === $status ) {
-			update_post_meta( $server_id, 'wpcd_wpapp_memcached_installed', 'yes' );
+			update_post_meta( $server_id, 'sstk_wpapp_memcached_installed', 'yes' );
 		} else {
-			update_post_meta( $server_id, 'wpcd_wpapp_memcached_installed', 'no' );
+			update_post_meta( $server_id, 'sstk_wpapp_memcached_installed', 'no' );
 		}
 
 	}
@@ -4417,16 +3387,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function is_memcached_installed( $id ) {
 		// What kind of id did we get?  App or server?
-		if ( 'wpcd_app' === get_post_type( $id ) ) {
+		if ( 'sstk_app' === get_post_type( $id ) ) {
 			$server_post = $this->get_server_by_app_id( $id );
 			if ( $server_post ) {
 				$server_id = $server_post->ID;
 			}
-		} elseif ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		} elseif ( 'sstk_app_server' === get_post_type( $id ) ) {
 			$server_id = $id;
 		}
 
-		$meta_status = get_post_meta( $server_id, 'wpcd_wpapp_memcached_installed', true );
+		$meta_status = get_post_meta( $server_id, 'sstk_wpapp_memcached_installed', true );
 
 		if ( 'yes' === $meta_status ) {
 			return true;
@@ -4477,9 +3447,9 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function set_server_redis_installed_status( $server_id, $status ) {
 
 		if ( true === $status ) {
-			update_post_meta( $server_id, 'wpcd_wpapp_redis_installed', 'yes' );
+			update_post_meta( $server_id, 'sstk_wpapp_redis_installed', 'yes' );
 		} else {
-			update_post_meta( $server_id, 'wpcd_wpapp_redis_installed', 'no' );
+			update_post_meta( $server_id, 'sstk_wpapp_redis_installed', 'no' );
 		}
 
 	}
@@ -4491,16 +3461,16 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function is_redis_installed( $id ) {
 		// What kind of id did we get?  App or server?
-		if ( 'wpcd_app' === get_post_type( $id ) ) {
+		if ( 'sstk_app' === get_post_type( $id ) ) {
 			$server_post = $this->get_server_by_app_id( $id );
 			if ( $server_post ) {
 				$server_id = $server_post->ID;
 			}
-		} elseif ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		} elseif ( 'sstk_app_server' === get_post_type( $id ) ) {
 			$server_id = $id;
 		}
 
-		$meta_status = get_post_meta( $server_id, 'wpcd_wpapp_redis_installed', true );
+		$meta_status = get_post_meta( $server_id, 'sstk_wpapp_redis_installed', true );
 
 		if ( 'yes' === $meta_status ) {
 			return true;
@@ -4544,7 +3514,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 	/**
 	 * Returns the installed status of a service on the server.
-	 * Services includes things like nginx, mariadb, memcached etc.
+	 * Services include OpenLiteSpeed, MariaDB, Redis and Memcached.
 	 *
 	 * @param int    $id  The post id of the server or app.
 	 * @param string $service    The name of the service.
@@ -4556,12 +3526,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		$server_id = null;
 
 		// What kind of id did we get?  App or server?
-		if ( 'wpcd_app' === get_post_type( $id ) ) {
+		if ( 'sstk_app' === get_post_type( $id ) ) {
 			$server_post = $this->get_server_by_app_id( $id );
 			if ( $server_post ) {
 				$server_id = $server_post->ID;
 			}
-		} elseif ( 'wpcd_app_server' === get_post_type( $id ) ) {
+		} elseif ( 'sstk_app_server' === get_post_type( $id ) ) {
 			$server_id = $id;
 		}
 
@@ -4602,51 +3572,51 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function wpapp_enqueue_scripts( $hook ) {
 		/*
 		 * The tabbed edit screens are retired (Phase 4), so the jQuery bundle that drove
-		 * them (wpcd-wpapp-admin-common.js and wpcd-wpapp-admin-app.js, both dependent on
+		 * them (sstk-wpapp-admin-common.js and sstk-wpapp-admin-app.js, both dependent on
 		 * select2 and magnific-popup) is no longer enqueued. The React client owns those
 		 * screens now and talks to the REST layer instead of admin-ajax.php.
 		 */
 		if ( in_array( $hook, array( 'edit.php' ) ) || in_array( $hook, array( 'post.php' ) ) ) {
 			$screen = get_current_screen();
-			if ( ( is_object( $screen ) && in_array( $screen->post_type, array( 'wpcd_app' ) ) ) || WPCD_WORDPRESS_APP_PUBLIC::is_apps_list_page() || WPCD_WORDPRESS_APP_PUBLIC::is_app_edit_page() ) {
-				wp_enqueue_style( 'wpcd-wpapp-admin-app-css', wpcd_url . 'includes/core/apps/wordpress-app/assets/css/wpcd-wpapp-admin-app.css', array(), wpcd_scripts_version );
+			if ( ( is_object( $screen ) && in_array( $screen->post_type, array( 'sstk_app' ) ) ) || SSTK_WORDPRESS_APP_PUBLIC::is_apps_list_page() || SSTK_WORDPRESS_APP_PUBLIC::is_app_edit_page() ) {
+				wp_enqueue_style( 'sstk-wpapp-admin-app-css', SSTK_URL . 'includes/core/apps/wordpress-app/assets/css/sstk-wpapp-admin-app.css', array(), SSTK_SCRIPTS_VERSION );
 
-				wp_enqueue_script( 'wpcd-wpapp-admin-post-type-wpcd-app', wpcd_url . 'includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-admin-post-type-wpcd-app.js', array( 'jquery' ), wpcd_scripts_version, true );
+				wp_enqueue_script( 'sstk-wpapp-admin-post-type-sstk-app', SSTK_URL . 'includes/core/apps/wordpress-app/assets/js/sstk-wpapp-admin-post-type-sstk-app.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, true );
 				wp_localize_script(
-					'wpcd-wpapp-admin-post-type-wpcd-app',
+					'sstk-wpapp-admin-post-type-sstk-app',
 					'params3',
 					apply_filters(
-						'wpcd_app_script_args',
+						'sstk_app_script_args',
 						array(
-							'nonce'                     => wp_create_nonce( 'wpcd-app' ),
+							'nonce'                     => wp_create_nonce( 'sstk-app' ),
 							'_action'                   => 'remove',
 							'passwordless_login_action' => 'passwordless_login',
 							'i10n'                      => array(
-								'remove_site_prompt' => __( 'Are you sure you would like to delete this site and data? This action is NOT reversible!', 'wpcd' ),
-								'install_wpapp'      => __( 'Install WordPress', 'wpcd' ),
+								'remove_site_prompt' => __( 'Are you sure you would like to delete this site and data? This action is NOT reversible!', 'simple-stack' ),
+								'install_wpapp'      => __( 'Install WordPress', 'simple-stack' ),
 							),
-							'install_wpapp_url'         => admin_url( 'edit.php?post_type=wpcd_app_server' ),
-							'bulk_actions_confirm'      => __( 'Are you sure you want to perform this bulk action?', 'wpcd' ),
+							'install_wpapp_url'         => admin_url( 'edit.php?post_type=sstk_app_server' ),
+							'bulk_actions_confirm'      => __( 'Are you sure you want to perform this bulk action?', 'simple-stack' ),
 						),
-						'wpcd-wpapp-admin-post-type-wpcd-app'
+						'sstk-wpapp-admin-post-type-sstk-app'
 					)
 				);
 			}
 		}
 
 		$screen     = get_current_screen();
-		$post_types = array( 'wpcd_app_server', 'wpcd_app', 'wpcd_team', 'wpcd_permission_type', 'wpcd_command_log', 'wpcd_ssh_log', 'wpcd_error_log', 'wpcd_pending_log', 'wpcd_app_update_log' );
+		$post_types = array( 'sstk_app_server', 'sstk_app', 'sstk_team', 'sstk_permission_type', 'sstk_command_log', 'sstk_ssh_log', 'sstk_error_log', 'sstk_pending_log' );
 
-		if ( ( is_object( $screen ) && in_array( $screen->post_type, $post_types ) ) || WPCD_WORDPRESS_APP_PUBLIC::is_public_page() ) {
+		if ( ( is_object( $screen ) && in_array( $screen->post_type, $post_types ) ) || SSTK_WORDPRESS_APP_PUBLIC::is_public_page() ) {
 
-			wp_enqueue_style( 'wpcd-wpapp-admin-app-css', wpcd_url . 'includes/core/apps/wordpress-app/assets/css/wpcd-wpapp-admin-app.css', array(), wpcd_scripts_version );
+			wp_enqueue_style( 'sstk-wpapp-admin-app-css', SSTK_URL . 'includes/core/apps/wordpress-app/assets/css/sstk-wpapp-admin-app.css', array(), SSTK_SCRIPTS_VERSION );
 
-			wp_enqueue_script( 'wpcd-admin-common', wpcd_url . 'includes/core/apps/wordpress-app/assets/js/wpcd-admin-common.js', array( 'jquery' ), wpcd_scripts_version, true );
+			wp_enqueue_script( 'sstk-admin-common', SSTK_URL . 'includes/core/apps/wordpress-app/assets/js/sstk-admin-common.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, true );
 			wp_localize_script(
-				'wpcd-admin-common',
+				'sstk-admin-common',
 				'readableCheck',
 				array(
-					'nonce'                    => wp_create_nonce( 'wpcd-admin' ),
+					'nonce'                    => wp_create_nonce( 'sstk-admin' ),
 					'action'                   => 'set_readable_check',
 					'check_again_action'       => 'readable_check_again',
 					'cron_check_action'        => 'set_cron_check',
@@ -4654,15 +3624,6 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 					'localhost_check_action'   => 'localhost_version_check',
 				)
 			);
-		}
-
-		// Enqueue CSS scripts for the SITE UPDATE & SITE HISTORY screens.
-		$screen     = get_current_screen();
-		$post_types = array( 'wpcd_app_update_log', 'wpcd_app_update_plan' );
-		if ( ( is_object( $screen ) && in_array( $screen->post_type, $post_types, true ) ) ) {
-
-			wp_enqueue_style( 'wpcd-wpapp-update-plans-css', wpcd_url . 'includes/core/apps/wordpress-app/assets/css/wpcd-wpapp-update-plans.css', array(), wpcd_scripts_version );
-
 		}
 
 	}
@@ -4697,21 +3658,21 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public static function wpapp_schedule_events() {
 		// Schedule nothing if our 'better cron' constant is true.
-		if ( defined( 'DISABLE_WPCD_CRON' ) && DISABLE_WPCD_CRON == true ) {
+		if ( defined( 'DISABLE_SSTK_CRON' ) && DISABLE_SSTK_CRON == true ) {
 			return;
 		}
 
 		// setup temporary script deletion.
-		wp_clear_scheduled_hook( 'wpcd_wordpress_file_watcher' );
-		wp_schedule_event( time(), 'every_minute', 'wpcd_wordpress_file_watcher' );
+		wp_clear_scheduled_hook( 'sstk_wordpress_file_watcher' );
+		wp_schedule_event( time(), 'sstk_every_minute', 'sstk_wordpress_file_watcher' );
 
 		// setup deferred instance actions schedule that acts on server records.
-		wp_clear_scheduled_hook( 'wpcd_wordpress_deferred_actions_for_server' );
-		wp_schedule_event( time(), 'every_minute', 'wpcd_wordpress_deferred_actions_for_server' );
+		wp_clear_scheduled_hook( 'sstk_wordpress_deferred_actions_for_server' );
+		wp_schedule_event( time(), 'sstk_every_minute', 'sstk_wordpress_deferred_actions_for_server' );
 
 		// setup actions schedule that acts on app records.
-		wp_clear_scheduled_hook( 'wpcd_wordpress_deferred_actions_for_apps' );
-		wp_schedule_event( time(), 'every_minute', 'wpcd_wordpress_deferred_actions_for_apps' );
+		wp_clear_scheduled_hook( 'sstk_wordpress_deferred_actions_for_apps' );
+		wp_schedule_event( time(), 'sstk_every_minute', 'sstk_wordpress_deferred_actions_for_apps' );
 	}
 
 	/**
@@ -4743,9 +3704,9 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * @return void
 	 */
 	public static function wpapp_clear_scheduled_events() {
-		wp_clear_scheduled_hook( 'wpcd_wordpress_file_watcher' );
-		wp_clear_scheduled_hook( 'wpcd_wordpress_deferred_actions_for_server' );
-		wp_clear_scheduled_hook( 'wpcd_wordpress_deferred_actions_for_apps' );
+		wp_clear_scheduled_hook( 'sstk_wordpress_file_watcher' );
+		wp_clear_scheduled_hook( 'sstk_wordpress_deferred_actions_for_server' );
+		wp_clear_scheduled_hook( 'sstk_wordpress_deferred_actions_for_apps' );
 	}
 
 	/**
@@ -4759,7 +3720,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function wpapp_schedule_events_for_new_site( $new_site, $args ) {
 
-		$plugin_name = wpcd_plugin;
+		$plugin_name = SSTK_PLUGIN;
 
 		// To check the plugin is active network-wide.
 		if ( is_plugin_active_for_network( $plugin_name ) ) {
@@ -4776,16 +3737,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Checks whether the specified directory is readable and .txt files can be accessible
 	 */
 	public function wpapp_admin_init_is_readable() {
-		if ( ! get_transient( 'wpcd_readable_check' ) ) {
-			/*
-			 * Resolve the directory from the configured script version instead of the
-			 * hard-coded `scripts/v1/` this method used to test. With v2 as the shipped
-			 * default, probing v1 would report "readable" for a folder nobody uses and
-			 * could report "unreadable" for the one that is actually in play.
-			 */
+		if ( ! get_transient( 'sstk_readable_check' ) ) {
+			/* Check the only provisioning script directory shipped by Simple Stack. */
 			$scripts_relative = $this->get_scripts_folder_relative() . $this->get_configured_scripts_version() . '/raw/';
-			$dir              = wpcd_path . $scripts_relative;
-			$url              = wpcd_url . $scripts_relative . '01-prepare_server.txt';
+			$dir              = SSTK_PATH . $scripts_relative;
+			$url              = SSTK_URL . $scripts_relative . '01-prepare_server.txt';
 
 			// Use CURL to check to see if the server is responding for a request for the file defined in the $url var above..
 			$curl_error = false;
@@ -4800,7 +3756,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			// Checks if directory is readable and .txt files can be accessible. Setting transient so that notice doesnt show at admin screens everytime.
 			if ( is_readable( $dir ) && ( ! $curl_error ) ) {
 
-				set_transient( 'wpcd_readable_check', 1, 12 * HOUR_IN_SECONDS );
+				set_transient( 'sstk_readable_check', 1, 12 * HOUR_IN_SECONDS );
 			}
 		}
 	}
@@ -4812,15 +3768,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function set_readable_check() {
 
 		/* Nonce check */
-		check_ajax_referer( 'wpcd-admin', 'nonce' );
+		check_ajax_referer( 'sstk-admin', 'nonce' );
 
 		/* Permission check - unsure that this is needed since the action is not destructive and might cause issues if the user sees the message and can't dismiss it because they're not an admin. */
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss readable check.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss readable check.', 'simple-stack' ) ) );
 		}
 
 		/* All checks passed so set the transient */
-		set_transient( 'wpcd_readable_check', 1, 12 * HOUR_IN_SECONDS );
+		set_transient( 'sstk_readable_check', 1, 12 * HOUR_IN_SECONDS );
 		wp_die();
 
 	}
@@ -4829,7 +3785,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Returns the metabox.io tab style to use for the main tabs in the WordPress app detail screen
 	 */
 	public function get_tab_style() {
-		$tab_style = ( ! empty( wpcd_get_early_option( 'wordpress_app_tab_style' ) ) ) ? wpcd_get_early_option( 'wordpress_app_tab_style' ) : 'left';
+		$tab_style = ( ! empty( sstk_get_early_option( 'wordpress_app_tab_style' ) ) ) ? sstk_get_early_option( 'wordpress_app_tab_style' ) : 'left';
 		return $tab_style;
 	}
 
@@ -4837,7 +3793,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * Returns the metabox.io tab style to use for the main tabs in the WordPress app server screen
 	 */
 	public function get_tab_style_server() {
-		$tab_style = ( ! empty( wpcd_get_early_option( 'wordpress_app_server_tab_style' ) ) ) ? wpcd_get_early_option( 'wordpress_app_server_tab_style' ) : 'left';
+		$tab_style = ( ! empty( sstk_get_early_option( 'wordpress_app_server_tab_style' ) ) ) ? sstk_get_early_option( 'wordpress_app_server_tab_style' ) : 'left';
 		return $tab_style;
 	}
 
@@ -4848,23 +3804,23 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function readable_check_again() {
 
 		/* Nonce check */
-		check_ajax_referer( 'wpcd-admin', 'nonce' );
+		check_ajax_referer( 'sstk-admin', 'nonce' );
 
 		/* Permission check - unsure that this is needed since the action is not destructive and might cause issues if the user sees the message and can't dismiss it because they're not an admin. */
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - do readable check again.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - do readable check again.', 'simple-stack' ) ) );
 		}
 
 		$this->wpapp_admin_init_is_readable();
 
-		if ( get_transient( 'wpcd_readable_check' ) ) {
+		if ( get_transient( 'sstk_readable_check' ) ) {
 			$return = array(
-				'message' => __( 'Readable check successful!', 'wpcd' ),
+				'message' => __( 'Readable check successful!', 'simple-stack' ),
 			);
 			wp_send_json_success( $return );
 		} else {
 			$return = array(
-				'message' => __( 'Readable check failed!', 'wpcd' ),
+				'message' => __( 'Readable check failed!', 'simple-stack' ),
 			);
 			wp_send_json_error( $return );
 		}
@@ -4882,12 +3838,12 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 */
 	public function get_passwordless_login_link_for_display( $app_id, $label ) {
 		$return = sprintf(
-			'<a class="wpcd_action_passwordless_login" data-wpcd-id="%d" data-wpcd-domain="%s" href="">%s</a>',
+			'<a class="sstk_action_passwordless_login" data-sstk-id="%d" data-sstk-domain="%s" href="">%s</a>',
 			$app_id,
 			$this->get_domain_name( $app_id ),
 			esc_html( $label ),
 		);
-		return apply_filters( 'wpcd_wordpress-app_passwordless_login_link', $return, $app_id );
+		return apply_filters( 'sstk_wordpress-app_passwordless_login_link', $return, $app_id );
 	}
 
 
@@ -4899,11 +3855,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function passwordless_login() {
 
 		/* Nonce check */
-		check_ajax_referer( 'wpcd-app', 'nonce' );
+		check_ajax_referer( 'sstk-app', 'nonce' );
 
 		/* Permission check - unsure that this is needed since the action is not destructive and might cause issues if the user sees the message and can't dismiss it because they're not an admin. */
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action.', 'simple-stack' ) ) );
 		}
 
 		/**
@@ -4924,7 +3880,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 		// Bail if no app/server details.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action );
+			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action );
 			return new \WP_Error( $message );
 		}
 
@@ -4943,14 +3899,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'passwordless_login.txt' );
 
 		if ( ! $success ) {
 			/* Translators: %1$s is the action; %2$s is the result of the ssh call. */
-			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result );
+			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result );
 			return new \WP_Error( $message );
 		} else {
 			// grab the very last line in the results that should contain the url.
@@ -4971,119 +3927,97 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 *
 	 * @return void
 	 */
-	public function wpapp_wpcd_app_table_filtering() {
+	public function wpapp_sstk_app_table_filtering() {
 
 		global $typenow, $pagenow;
 
-		$post_type = 'wpcd_app';
+		$post_type = 'sstk_app';
 
-		if ( ( is_admin() && 'edit.php' === $pagenow && $typenow == $post_type ) || WPCD_WORDPRESS_APP_PUBLIC::is_apps_list_page() ) {
+		if ( ( is_admin() && 'edit.php' === $pagenow && $typenow == $post_type ) || SSTK_WORDPRESS_APP_PUBLIC::is_apps_list_page() ) {
 
 			// APP STATUS.
 			$app_status_options = array(
-				'on'  => __( 'Enabled', 'wpcd' ),
-				'off' => __( 'Disabled', 'wpcd' ),
+				'on'  => __( 'Enabled', 'simple-stack' ),
+				'off' => __( 'Disabled', 'simple-stack' ),
 			);
-			$app_status         = $this->generate_meta_dropdown( 'wpapp_site_status', __( 'App Status', 'wpcd' ), $app_status_options );
-			echo wpcd_kses_select( $app_status );
+			$app_status         = $this->generate_meta_dropdown( 'wpapp_site_status', __( 'App Status', 'simple-stack' ), $app_status_options );
+			echo sstk_kses_select( $app_status );
 
 			// PHP VERSION.
 			$php_version_options = array(
-				'7.4' => '7.4',
-				'7.3' => '7.3',
-				'7.2' => '7.2',
-				'7.1' => '7.1',
-				'5.6' => '5.6',
-				'8.0' => '8.0',
-				'8.1' => '8.1',
-				'8.2' => '8.2',
 				'8.3' => '8.3',
+				'8.4' => '8.4',
+				'8.5' => '8.5',
 			);
-			$php_version         = $this->generate_meta_dropdown( 'wpapp_php_version', __( 'PHP Version', 'wpcd' ), $php_version_options );
-			echo wpcd_kses_select( $php_version );
+			$php_version         = $this->generate_meta_dropdown( 'wpapp_php_version', __( 'PHP Version', 'simple-stack' ), $php_version_options );
+			echo sstk_kses_select( $php_version );
 
 			// CACHE.
 			$cache_options  = array(
-				'on'  => __( 'Enabled', 'wpcd' ),
-				'off' => __( 'Disabled', 'wpcd' ),
+				'on'  => __( 'Enabled', 'simple-stack' ),
+				'off' => __( 'Disabled', 'simple-stack' ),
 			);
-			$php_page_cache = $this->generate_meta_dropdown( 'wpapp_page_cache_status', __( 'Page Cache', 'wpcd' ), $cache_options );
-			echo wpcd_kses_select( $php_page_cache );
+			$php_page_cache = $this->generate_meta_dropdown( 'wpapp_page_cache_status', __( 'Page Cache', 'simple-stack' ), $cache_options );
+			echo sstk_kses_select( $php_page_cache );
 
-			$php_object_cache = $this->generate_meta_dropdown( 'wpapp_object_cache_status', __( 'Object Cache', 'wpcd' ), $cache_options );
-			echo wpcd_kses_select( $php_object_cache );
+			$php_object_cache = $this->generate_meta_dropdown( 'wpapp_object_cache_status', __( 'Object Cache', 'simple-stack' ), $cache_options );
+			echo sstk_kses_select( $php_object_cache );
 
 			// SITE NEEDS UPDATES.
 			$updates_options    = array(
-				'yes' => __( 'Yes', 'wpcd' ),
-				'no'  => __( 'No', 'wpcd' ),
+				'yes' => __( 'Yes', 'simple-stack' ),
+				'no'  => __( 'No', 'simple-stack' ),
 			);
-			$site_needs_updates = $this->generate_meta_dropdown( 'wpapp_sites_needs_updates', __( 'Site Needs Updates', 'wpcd' ), $updates_options );
-			echo wpcd_kses_select( $site_needs_updates );
+			$site_needs_updates = $this->generate_meta_dropdown( 'wpapp_sites_needs_updates', __( 'Site Needs Updates', 'simple-stack' ), $updates_options );
+			echo sstk_kses_select( $site_needs_updates );
 
 			/* Stuff only the admin should see. */
-			if ( wpcd_is_admin() ) {
+			if ( sstk_is_admin() ) {
 
 				/**
 				 * Filters for site expiration status.
 				 */
 				$expiration_options = array(
-					'1' => __( 'Expired', 'wpcd' ),
-					'0' => __( 'Not Expired (Marked)', 'wpcd' ),
+					'1' => __( 'Expired', 'simple-stack' ),
+					'0' => __( 'Not Expired (Marked)', 'simple-stack' ),
 				);
-				$expiration         = $this->generate_meta_dropdown( 'wpcd_app_expired_status', __( 'Expiration Status', 'wpcd' ), $expiration_options );
+				$expiration         = $this->generate_meta_dropdown( 'sstk_app_expired_status', __( 'Expiration Status', 'simple-stack' ), $expiration_options );
 
-				echo wpcd_kses_select( $expiration );
+				echo sstk_kses_select( $expiration );
 
 				/**
-				 * Filters specific to WooCommerce
+				 * Filters specific to Multi-tenant
 				 */
-				if ( true === wpcd_is_wc_module_enabled() || true === wpcd_is_mt_enabled() ) {
+				if ( true === sstk_is_mt_enabled() ) {
 
 					// TEMPLATE FLAGS.
 					$template_flag_options = array(
-						'1' => __( 'Yes', 'wpcd' ),
-						'0' => __( 'No', 'wpcd' ),
+						'1' => __( 'Yes', 'simple-stack' ),
+						'0' => __( 'No', 'simple-stack' ),
 					);
-					$is_template           = $this->generate_meta_dropdown( 'wpapp_is_template', __( 'Template', 'wpcd' ), $template_flag_options );
-					echo wpcd_kses_select( $is_template );
+					$is_template           = $this->generate_meta_dropdown( 'wpapp_is_template', __( 'Template', 'simple-stack' ), $template_flag_options );
+					echo sstk_kses_select( $is_template );
 
 				}
 
 				/**
 				 * Filters specific to Multi-tenant
 				 */
-				if ( true === wpcd_is_mt_enabled() ) {
+				if ( true === sstk_is_mt_enabled() ) {
 
 					// MT SITE TYPE.
-					$mt_site_type = WPCD_POSTS_APP()->generate_meta_dropdown( 'wpcd_app', 'wpcd_app_mt_site_type', __( 'MT Site Type', 'wpcd' ) );
-					echo wpcd_kses_select( $mt_site_type );
+					$mt_site_type = SSTK_POSTS_APP()->generate_meta_dropdown( 'sstk_app', 'sstk_app_mt_site_type', __( 'MT Site Type', 'simple-stack' ) );
+					echo sstk_kses_select( $mt_site_type );
 
 					// MT VERSION.
-					$mt_site_type = WPCD_POSTS_APP()->generate_meta_dropdown( 'wpcd_app', 'wpcd_app_mt_version', __( 'MT Version', 'wpcd' ) );
-					echo wpcd_kses_select( $mt_site_type );
+					$mt_site_type = SSTK_POSTS_APP()->generate_meta_dropdown( 'sstk_app', 'sstk_app_mt_version', __( 'MT Version', 'simple-stack' ) );
+					echo sstk_kses_select( $mt_site_type );
 
 					// MT PARENT ID.
-					$mt_parent_id = WPCD_POSTS_APP()->generate_meta_dropdown( 'wpcd_app', 'wpcd_app_mt_parent', __( 'MT Parent Template', 'wpcd' ) );
-					echo wpcd_kses_select( $mt_parent_id );
+					$mt_parent_id = SSTK_POSTS_APP()->generate_meta_dropdown( 'sstk_app', 'sstk_app_mt_parent', __( 'MT Parent Template', 'simple-stack' ) );
+					echo sstk_kses_select( $mt_parent_id );
 				}
 
-				/**
-				 * Filters specific to WooCommerce
-				 */
-				if ( true === wpcd_is_wc_module_enabled() ) {
-					// IS WOOCOMMERCE ORDER?
-					$selected_value      = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_app_is_wc', FILTER_UNSAFE_RAW ) ); // Get existing value selected, if any.
-					$html_output_for_wc  = '<select name="wpcd_app_is_wc" id="filter-by-wpcd_app_is_wc">';
-					$html_output_for_wc .= '<option>' . __( 'Is WC Order?', 'wpcd' ) . '</option>';
-					if ( '1' === $selected_value ) {
-						$html_output_for_wc .= '<option value="1" selected="selected">' . __( 'Yes', 'wpcd' ) . '</option>';
-					} else {
-						$html_output_for_wc .= '<option value="1">' . __( 'Yes', 'wpcd' ) . '</option>';
-					}
-					$html_output_for_wc .= ' </select>';
-					echo wpcd_kses_select( $html_output_for_wc );
-				}
 			}
 		}
 	}
@@ -5095,11 +4029,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 *
 	 * @param  object $query query.
 	 */
-	public function wpapp_wpcd_app_parse_query( $query ) {
+	public function wpapp_sstk_app_parse_query( $query ) {
 		global $pagenow;
 
 		$filter_action = sanitize_text_field( filter_input( INPUT_GET, 'filter_action', FILTER_UNSAFE_RAW ) );
-		if ( ( ( is_admin() && $query->is_main_query() && 'edit.php' === $pagenow ) || wpcd_is_public_apps_list_query( $query ) ) && 'wpcd_app' === $query->query['post_type'] && ! empty( $filter_action ) ) {
+		if ( ( ( is_admin() && $query->is_main_query() && 'edit.php' === $pagenow ) || sstk_is_public_apps_list_query( $query ) ) && 'sstk_app' === $query->query['post_type'] && ! empty( $filter_action ) ) {
 			$qv = &$query->query_vars;
 
 			// APP STATUS.
@@ -5244,7 +4178,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 					$qv['meta_query'][] = array(
 						'relation' => 'OR',
 						array(
-							'key'     => 'wpcd_site_needs_updates',
+							'key'     => 'sstk_site_needs_updates',
 							'value'   => $wpapp_sites_needs_updates,
 							'compare' => '=',
 						),
@@ -5252,7 +4186,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 				} else {
 					$qv['meta_query'][] = array(
-						'key'     => 'wpcd_site_needs_updates',
+						'key'     => 'sstk_site_needs_updates',
 						'value'   => $wpapp_sites_needs_updates,
 						'compare' => '=',
 					);
@@ -5260,15 +4194,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			}
 
 			// SITE EXPIRATION.
-			if ( isset( $_GET['wpcd_app_expired_status'] ) && ! empty( $_GET['wpcd_app_expired_status'] ) ) {
-				$wpapp_site_expired_status = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_app_expired_status', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_app_expired_status'] ) && ! empty( $_GET['sstk_app_expired_status'] ) ) {
+				$wpapp_site_expired_status = sanitize_text_field( filter_input( INPUT_GET, 'sstk_app_expired_status', FILTER_UNSAFE_RAW ) );
 
 				if ( '0' === $wpapp_site_expired_status || '1' === $wpapp_site_expired_status ) {
 
 					$qv['meta_query'][] = array(
 						'relation' => 'OR',
 						array(
-							'key'     => 'wpcd_app_expired_status',
+							'key'     => 'sstk_app_expired_status',
 							'value'   => $wpapp_site_expired_status,
 							'type'    => 'NUMERIC',
 							'compare' => '=',
@@ -5276,7 +4210,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 					);
 				} else {
 					$qv['meta_query'][] = array(
-						'key'     => 'wpcd_app_expired_status',
+						'key'     => 'sstk_app_expired_status',
 						'value'   => $wpapp_site_expired_status,
 						'compare' => '=',
 					);
@@ -5293,7 +4227,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 					$qv['meta_query'][] = array(
 						'relation' => 'OR',
 						array(
-							'key'     => 'wpcd_is_template_site',
+							'key'     => 'sstk_is_template_site',
 							'value'   => $wpapp_template_flag,
 							'compare' => '=',
 						),
@@ -5301,7 +4235,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 
 				} else {
 					$qv['meta_query'][] = array(
-						'key'     => 'wpcd_is_template_site',
+						'key'     => 'sstk_is_template_site',
 						'value'   => $wpapp_template_flag,
 						'compare' => '=',
 					);
@@ -5309,13 +4243,13 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			}
 
 			// MT Site Type.
-			if ( isset( $_GET['wpcd_app_mt_site_type'] ) && ! empty( $_GET['wpcd_app_mt_site_type'] ) ) {
-				$wpapp_mt_site_type = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_app_mt_site_type', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_app_mt_site_type'] ) && ! empty( $_GET['sstk_app_mt_site_type'] ) ) {
+				$wpapp_mt_site_type = sanitize_text_field( filter_input( INPUT_GET, 'sstk_app_mt_site_type', FILTER_UNSAFE_RAW ) );
 
 				if ( ! empty( $wpapp_mt_site_type ) ) {
 					$qv['meta_query'][] = array(
 						array(
-							'key'     => 'wpcd_app_mt_site_type',
+							'key'     => 'sstk_app_mt_site_type',
 							'value'   => $wpapp_mt_site_type,
 							'compare' => '=',
 						),
@@ -5324,14 +4258,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			}
 
 			// MT Version.
-			if ( isset( $_GET['wpcd_app_mt_version'] ) && ! empty( $_GET['wpcd_app_mt_version'] ) ) {
-				$wpcd_app_mt_version = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_app_mt_version', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_app_mt_version'] ) && ! empty( $_GET['sstk_app_mt_version'] ) ) {
+				$sstk_app_mt_version = sanitize_text_field( filter_input( INPUT_GET, 'sstk_app_mt_version', FILTER_UNSAFE_RAW ) );
 
-				if ( ! empty( $wpcd_app_mt_version ) ) {
+				if ( ! empty( $sstk_app_mt_version ) ) {
 					$qv['meta_query'][] = array(
 						array(
-							'key'     => 'wpcd_app_mt_version',
-							'value'   => $wpcd_app_mt_version,
+							'key'     => 'sstk_app_mt_version',
+							'value'   => $sstk_app_mt_version,
 							'compare' => '=',
 						),
 					);
@@ -5339,41 +4273,23 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 			}
 
 			// MT Parent.
-			if ( isset( $_GET['wpcd_app_mt_parent'] ) && ! empty( $_GET['wpcd_app_mt_parent'] ) ) {
-				$wpcd_app_mt_parent = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_app_mt_parent', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_app_mt_parent'] ) && ! empty( $_GET['sstk_app_mt_parent'] ) ) {
+				$sstk_app_mt_parent = sanitize_text_field( filter_input( INPUT_GET, 'sstk_app_mt_parent', FILTER_UNSAFE_RAW ) );
 
-				if ( ! empty( $wpcd_app_mt_parent ) ) {
+				if ( ! empty( $sstk_app_mt_parent ) ) {
 					$qv['meta_query'][] = array(
 						array(
-							'key'     => 'wpcd_app_mt_parent',
-							'value'   => $wpcd_app_mt_parent,
+							'key'     => 'sstk_app_mt_parent',
+							'value'   => $sstk_app_mt_parent,
 							'compare' => '=',
 						),
 					);
 				}
 			}
 
-			// IS WOOCOMMERCE ORDER?
-			if ( wpcd_is_admin() ) {
-				if ( isset( $_GET['wpcd_app_is_wc'] ) && ! empty( $_GET['wpcd_app_is_wc'] ) ) {
-					$wpapp_is_wc = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_app_is_wc', FILTER_UNSAFE_RAW ) );
-
-					if ( '1' === $wpapp_is_wc ) {
-
-						$qv['meta_query'][] = array(
-							'relation' => 'OR',
-							array(
-								'key'     => 'wpapp_wc_subscription_id',
-								'value'   => '',
-								'compare' => '!=',
-							),
-						);
-					}
-				}
-			}
 		}
 
-		if ( ( ( is_admin() && $query->is_main_query() && 'edit.php' === $pagenow ) || wpcd_is_public_apps_list_query( $query ) ) && 'wpcd_app' === $query->query['post_type'] && ! empty( $_GET['wpapp_php_version'] ) && empty( $filter_action ) ) {
+		if ( ( ( is_admin() && $query->is_main_query() && 'edit.php' === $pagenow ) || sstk_is_public_apps_list_query( $query ) ) && 'sstk_app' === $query->query['post_type'] && ! empty( $_GET['wpapp_php_version'] ) && empty( $filter_action ) ) {
 
 			$qv               = &$query->query_vars;
 			$qv['meta_query'] = array();
@@ -5433,30 +4349,30 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Runs when the APP cleanup function is being called.
 	 *
-	 * Action Hook: wpcd_cleanup_app_after
+	 * Action Hook: sstk_cleanup_app_after
 	 *
 	 * @param int $app_id app id.
 	 */
-	public function wpcd_cleanup_app_after( $app_id ) {
+	public function sstk_cleanup_app_after( $app_id ) {
 
-		update_post_meta( $app_id, 'wpcd_app_wordpress-app_action_status', '' );
-		update_post_meta( $app_id, 'wpcd_app_wordpress-app_action', '' );
-		update_post_meta( $app_id, 'wpcd_app_wordpress-app_action_args', '' );
+		update_post_meta( $app_id, 'sstk_app_wordpress-app_action_status', '' );
+		update_post_meta( $app_id, 'sstk_app_wordpress-app_action', '' );
+		update_post_meta( $app_id, 'sstk_app_wordpress-app_action_args', '' );
 
 	}
 
 	/**
 	 * Runs when the SERVER cleanup function is being called.
 	 *
-	 * Action Hook: wpcd_cleanup_server_after
+	 * Action Hook: sstk_cleanup_server_after
 	 *
 	 * @param int $server_id server id.
 	 */
-	public function wpcd_cleanup_server_after( $server_id ) {
+	public function sstk_cleanup_server_after( $server_id ) {
 
-		delete_post_meta( $server_id, 'wpcd_server_wordpress-app_action' );
-		delete_post_meta( $server_id, 'wpcd_server_wordpress-app_action_status' );
-		delete_post_meta( $server_id, 'wpcd_server_wordpress-app_action_args' );
+		delete_post_meta( $server_id, 'sstk_server_wordpress-app_action' );
+		delete_post_meta( $server_id, 'sstk_server_wordpress-app_action_status' );
+		delete_post_meta( $server_id, 'sstk_server_wordpress-app_action_args' );
 	}
 
 	/**
@@ -5468,15 +4384,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function set_cron_check() {
 
 		/* Nonce check */
-		check_ajax_referer( 'wpcd-admin', 'nonce' );
+		check_ajax_referer( 'sstk-admin', 'nonce' );
 
 		/* Permission check - unsure that this is needed since the action is not destructive and might cause issues if the user sees the message and can't dismiss it because they're not an admin. */
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss cron check.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss cron check.', 'simple-stack' ) ) );
 		}
 
 		/* Permissions passed - set transient. */
-		set_transient( 'wpcd_cron_check', 1, 12 * HOUR_IN_SECONDS );
+		set_transient( 'sstk_cron_check', 1, 12 * HOUR_IN_SECONDS );
 		wp_die();
 
 	}
@@ -5490,15 +4406,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function php_version_check() {
 
 		/* Nonce check */
-		check_ajax_referer( 'wpcd-admin', 'nonce' );
+		check_ajax_referer( 'sstk-admin', 'nonce' );
 
 		/* Permission check - unsure that this is needed since the action is not destructive and might cause issues if the user sees the message and can't dismiss it because they're not an admin. */
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss php version check.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss php version check.', 'simple-stack' ) ) );
 		}
 
 		/* Permissions passed - set transient. */
-		set_transient( 'wpcd_php_version_check', 1, 24 * HOUR_IN_SECONDS );
+		set_transient( 'sstk_php_version_check', 1, 24 * HOUR_IN_SECONDS );
 		wp_die();
 
 	}
@@ -5512,15 +4428,15 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function localhost_version_check() {
 
 		/* Nonce check */
-		check_ajax_referer( 'wpcd-admin', 'nonce' );
+		check_ajax_referer( 'sstk-admin', 'nonce' );
 
 		/* Permission check - unsure that this is needed since the action is not destructive and might cause issues if the user sees the message and can't dismiss it because they're not an admin. */
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss localhost check.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - dismiss localhost check.', 'simple-stack' ) ) );
 		}
 
 		/* Permissions passed - set transient. */
-		set_transient( 'wpcd_localhost_check', 1, 24 * HOUR_IN_SECONDS );
+		set_transient( 'sstk_localhost_check', 1, 24 * HOUR_IN_SECONDS );
 		wp_die();
 
 	}
@@ -5532,30 +4448,30 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * It does this by checking a variety of metas that
 	 * variously indicates something is going on with the server.
 	 *
-	 * Filter Hook: wpcd_is_server_available_for_commands
+	 * Filter Hook: sstk_is_server_available_for_commands
 	 *
 	 * @param boolean $is_available   Current boolean that indicates whether the server is available.
 	 * @param int     $server_id      Server id to check.
 	 *
 	 * @return boolean
 	 */
-	public function wpcd_is_server_available_for_commands( $is_available, $server_id ) {
+	public function sstk_is_server_available_for_commands( $is_available, $server_id ) {
 
 		// Only need to check if server is unavailable if $is_available is true - we're not going to override it if it's already false!
 		if ( true === $is_available ) {
-			if ( ( ! empty( get_post_meta( $server_id, 'wpcd_server_wordpress-app_action', true ) ) ) || ( ! empty( get_post_meta( $server_id, 'wpcd_server_wordpress-app_action_status', true ) ) ) ) {
+			if ( ( ! empty( get_post_meta( $server_id, 'sstk_server_wordpress-app_action', true ) ) ) || ( ! empty( get_post_meta( $server_id, 'sstk_server_wordpress-app_action_status', true ) ) ) ) {
 				return false;
 			}
 		}
 
 		// Is aptget running?
-		if ( $this->wpcd_is_aptget_running( $server_id ) ) {
+		if ( $this->sstk_is_aptget_running( $server_id ) ) {
 			return false;
 		}
 
 		// Ok, so far the server is still available for commands.  Lets check the app records.
 		$args = array(
-			'post_type'      => 'wpcd_app',
+			'post_type'      => 'sstk_app',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
@@ -5564,7 +4480,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 					'value' => $server_id,
 				),
 				array(
-					'key'   => 'wpcd_app_wordpress-app_action_status',
+					'key'   => 'sstk_app_wordpress-app_action_status',
 					'value' => 'in-progress',
 				),
 			),
@@ -5586,11 +4502,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 *
 	 * @return boolean
 	 */
-	public function wpcd_is_aptget_running( $server_id ) {
+	public function sstk_is_aptget_running( $server_id ) {
 
 		$is_running = false;
 
-		$transient_name = $server_id . 'wpcd_server_aptget_status';
+		$transient_name = 'sstk_server_aptget_status_' . $server_id;
 		$running_status = get_transient( $transient_name );
 		if ( 'running' === $running_status ) {
 			$is_running = true;
@@ -5604,7 +4520,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 * This function checks to see if commands can be run
 	 * on the site.
 	 *
-	 * Filter Hook: wpcd_is_site_available_for_commands [hook not used anywhere - for future use - this function is called directly for now.]
+	 * Filter Hook: sstk_is_site_available_for_commands [hook not used anywhere - for future use - this function is called directly for now.]
 	 *
 	 * @param boolean $is_available   Current boolean that indicates whether the server is available.
 	 * @param int     $app_id App id to check.
@@ -5614,7 +4530,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	public function is_site_available_for_commands( $is_available, $app_id ) {
 
 		if ( true === $is_available ) {
-			if ( true === $this->wpcd_is_site_package_running( $app_id ) ) {
+			if ( true === $this->sstk_is_site_package_running( $app_id ) ) {
 				return false;
 			}
 		}
@@ -5629,11 +4545,11 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 *
 	 * @return boolean
 	 */
-	public function wpcd_is_site_package_running( $app_id ) {
+	public function sstk_is_site_package_running( $app_id ) {
 
 		$is_running = false;
 
-		$transient_name = $app_id . 'wpcd_site_package_running';
+		$transient_name = 'sstk_site_package_running_' . $app_id;
 		$running_status = get_transient( $transient_name );
 		if ( 'running' === $running_status ) {
 			$is_running = true;
@@ -5645,14 +4561,14 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	/**
 	 * Return whether or not bash scripts can be run in site packages.
 	 *
-	 * You might not want to run them if WPCD is installed in a shared sites
+	 * You might not want to run them if SSTK is installed in a shared sites
 	 * environment (saas).
 	 *
 	 * @param int $user_id User id running site packages - not used yet.
 	 */
-	public function wpcd_can_user_execute_bash_scripts( $user_id = 0 ) {
+	public function sstk_can_user_execute_bash_scripts( $user_id = 0 ) {
 
-		if ( ! defined( 'WPCD_CUSTOM_SCRIPTS_NO_BASH' ) || ( defined( 'WPCD_CUSTOM_SCRIPTS_NO_BASH' ) && false === (bool) WPCD_CUSTOM_SCRIPTS_NO_BASH ) ) {
+		if ( ! defined( 'SSTK_CUSTOM_SCRIPTS_NO_BASH' ) || ( defined( 'SSTK_CUSTOM_SCRIPTS_NO_BASH' ) && false === (bool) SSTK_CUSTOM_SCRIPTS_NO_BASH ) ) {
 			return true;
 		}
 
@@ -5665,7 +4581,7 @@ class WPCD_WORDPRESS_APP extends WPCD_APP {
 	 *
 	 * @param string $controller_name Name of controller.
 	 *
-	 * @return WPCD_REST_API_Controller_Base
+	 * @return SSTK_REST_API_Controller_Base
 	 */
 	public function get_rest_controller( string $controller_name ) {
 		return $this->rest_controllers[ $controller_name ];

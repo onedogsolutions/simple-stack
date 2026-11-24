@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
  * This JS file is loaded for both the WordPress APP wp-admin SERVERS and APPS screen.
  */
@@ -16,13 +17,13 @@
     function init() {
 
         // clicking an action
-        $('body').on('click', '.wpcd_app_action input[type="checkbox"], .wpcd_app_action button', function(e) {
+        $('body').on('click', '.sstk_app_action input[type="checkbox"], .sstk_app_action button', function(e) {
 
             var $action = $(this);
-            var id = $(this).attr('data-wpcd-id');
+            var id = $(this).attr('data-sstk-id');
 
             // if a confirmation prompt exists, show it.
-            var $confirm_msg = $(this).attr('data-wpcd-confirmation-prompt');
+            var $confirm_msg = $(this).attr('data-sstk-confirmation-prompt');
             if (typeof $confirm_msg !== 'undefined' && $confirm_msg !== '' && !confirm($confirm_msg)) {
                 e.preventDefault();
                 return;
@@ -34,10 +35,10 @@
             // let's see if the element specifies any other fields it is dependent on for values.
             // add those values as additional params to the request
             var additional_params = [];
-            var fields = $(this).attr('data-wpcd-fields');
+            var fields = $(this).attr('data-sstk-fields');
             if (typeof fields !== 'undefined' && fields !== '') {
                 $.each(JSON.parse(fields), function(index, field) {
-                    additional_params.push($(field).attr('data-wpcd-name') + '=' + encodeURIComponent($(field).val()));
+                    additional_params.push($(field).attr('data-sstk-name') + '=' + encodeURIComponent($(field).val()));
                 });
             }
 
@@ -54,12 +55,12 @@
             if (typeof $show_log_console !== 'undefined') {
 
                 // Add the console element to the body
-                $('body').append($('<a class="wpcd_app_log_console" href="' + ajaxurl + '?nonce=' + params.nonce + '&_action=show-log-console&action=' + params.action + '"></a>'));
-                var $a = $('body').parent().find('a.wpcd_app_log_console');
+                $('body').append($('<a class="sstk_app_log_console" href="' + ajaxurl + '?nonce=' + params.nonce + '&_action=show-log-console&action=' + params.action + '"></a>'));
+                var $a = $('body').parent().find('a.sstk_app_log_console');
                 
                 var prependTo = null;
-                if( typeof wpcd_wpapp_params != 'undefined' && wpcd_wpapp_params.is_public ) {
-                    prependTo = $('#wpcd_public_wrapper');
+                if( typeof sstk_wpapp_params != 'undefined' && sstk_wpapp_params.is_public ) {
+                    prependTo = $('#sstk_public_wrapper');
                 }
 
                 $a.magnificPopup({
@@ -68,12 +69,12 @@
                     prependTo : prependTo,
                     callbacks: {
                         ajaxContentAdded: function() {
-                            $('.wpcd-log-console').html($initial_console_message);
+                            $('.sstk-log-console').html($initial_console_message);
                             // hide the close button...
                             hide_console_close_button();
 
                             // clicking the close button on the console
-                            $('.wpcd-log-close-button, .wpcd-log-close-button a, a.wpcd-log-close-button').on('click', function(e) {
+                            $('.sstk-log-close-button, .sstk-log-close-button a, a.sstk-log-close-button').on('click', function(e) {
                                 e.preventDefault();
                                 $a.magnificPopup('close');
                                 location.reload();
@@ -90,26 +91,26 @@
             // Setup form data as necessary
             var formData = new FormData();
             formData.append('action', params.action);
-            formData.append('_action', $(this).attr('data-wpcd-action'));
+            formData.append('_action', $(this).attr('data-sstk-action'));
             formData.append('nonce', params.nonce);
             formData.append('id', id);
             formData.append('params', additional_params.join('&'));
 
             // Some actions may need extra data.
-            switch ($(this).attr('data-wpcd-action')) {
+            switch ($(this).attr('data-sstk-action')) {
                 case 'sftp-set-key':
                     // certain data from the sFTP tab in the site detail screen
-                    formData.append('file', $('.wpcd_app_setkey input[type="file"]')[0].files[0]);
+                    formData.append('file', $('.sstk_app_setkey input[type="file"]')[0].files[0]);
                     break;
                 case 'site-user-set-key':
                     // certain data from the SITE / SYSTEM USERS tab in the site detail screen
-                    formData.append('file', $('.wpcd_app_site_user_setkey input[type="file"]')[0].files[0]);
+                    formData.append('file', $('.sstk_app_site_user_setkey input[type="file"]')[0].files[0]);
                     break;
                 case 'server-ssh-keys-save':
                     // certain data from the server detail KEYS tab needs to be sent in individual array items because php parse_args will mangle them.
-                    formData.append('ssh-private-key', $('#wpcd_app_action_server-ssh-keys-private-key')[0].value);
-                    formData.append('ssh-public-key', $('#wpcd_app_action_server-ssh-keys-public-key')[0].value);
-                    formData.append('ssh-private-key-password', $('#wpcd_app_action_server-ssh-keys-private-key-password')[0].value);
+                    formData.append('ssh-private-key', $('#sstk_app_action_server-ssh-keys-private-key')[0].value);
+                    formData.append('ssh-public-key', $('#sstk_app_action_server-ssh-keys-public-key')[0].value);
+                    formData.append('ssh-private-key-password', $('#sstk_app_action_server-ssh-keys-private-key-password')[0].value);
                     break;
             }
 
@@ -167,9 +168,9 @@
                         // long running commands.
                         var $object = { post_id: id, command: { name: data.data.result.command } };
                         interval = setInterval(function() {
-                            $currentConsole = $('.wpcd-log-console'); // get reference to the console window
+                            $currentConsole = $('.sstk-log-console'); // get reference to the console window
                             $currentConsoleHTML = $currentConsole.html(); // get the current html text inside the console.
-                            $('.wpcd-log-console').html($currentConsoleHTML + '<p>' + params.l10n.checking_for_logs + '</p>'); // add message to window showing user that we're checking for logs
+                            $('.sstk-log-console').html($currentConsoleHTML + '<p>' + params.l10n.checking_for_logs + '</p>'); // add message to window showing user that we're checking for logs
                             fetchLogs($object, true);
                         }, params.refresh_seconds * 1000); // params.refresh_seconds is likely set to 30 seconds - server cron is 60 seconds so no point in polling too much sooner than 60 seconds
                     } else if (data.data && data.data.result && data.data.result.email_fields) {
@@ -181,7 +182,7 @@
                         $('#' + app_action_prefix + '-smtp-user').val(data.data.result.email_fields.smtp_user);
                         $('#' + app_action_prefix + '-smtp-password').val(data.data.result.email_fields.smtp_pass);
 
-                        if (app_action_prefix === 'wpcd_app_action_email-gateway') {
+                        if (app_action_prefix === 'sstk_app_action_email-gateway') {
                             $('#' + app_action_prefix + '-smtp-domain').val(data.data.result.email_fields.domain);
                             $('#' + app_action_prefix + '-smtp-note').val(data.data.result.email_fields.note);
                             $('#' + app_action_prefix + '-smtp-hostname').val(data.data.result.email_fields.hostname1);
@@ -189,7 +190,7 @@
                             $('#' + app_action_prefix + '-smtp-usestarttls').val(data.data.result.email_fields.usestarttls);
                         }
 
-                        if (app_action_prefix === 'wpcd_app_action_monit') {
+                        if (app_action_prefix === 'sstk_app_action_monit') {
                             $('#' + app_action_prefix + '-smtp-port').val(data.data.result.email_fields.smtp_port);
                         }
 
@@ -238,7 +239,7 @@
                     return;
                 }
                 if (!data.success) {
-                    $('.wpcd-log-console').html(data.data.msg);
+                    $('.sstk-log-console').html(data.data.msg);
                 } else if (data.data.result) {
                     if (data.data.result.done) {
                         clearInterval(interval);
@@ -251,12 +252,12 @@
                         show_console_close_button();
                     }
                     if (data.data.result.logs) {
-                        $('.wpcd-log-console').html(data.data.result.logs);
+                        $('.sstk-log-console').html(data.data.result.logs);
                     } else {
-                        $('.wpcd-log-console').html($('.wpcd-log-console').html() + '<p>' + params.l10n.no_progress_data_in_logs + '</p>');
+                        $('.sstk-log-console').html($('.sstk-log-console').html() + '<p>' + params.l10n.no_progress_data_in_logs + '</p>');
                     }
                     // auto scroll to the end.
-                    $('.wpcd-log-console').scrollTop($('.wpcd-log-console')[0].scrollHeight);
+                    $('.sstk-log-console').scrollTop($('.sstk-log-console')[0].scrollHeight);
                 }
             },
             error: function(event, xhr, settings, thrownError) {
@@ -272,12 +273,12 @@
 
     // hide the close button on the terminal/console
     function hide_console_close_button() {
-        $('.wpcd-log-close-wrap').hide();
+        $('.sstk-log-close-wrap').hide();
     }
 
     // show the close button on the terminal/console
     function show_console_close_button() {
-        $('.wpcd-log-close-wrap').show();
+        $('.sstk-log-close-wrap').show();
     }
 
 })(jQuery, params);

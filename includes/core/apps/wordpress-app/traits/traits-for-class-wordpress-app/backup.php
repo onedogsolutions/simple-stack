@@ -1,17 +1,18 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains functions common to backups at the server and site/domain lelvel
  * Used only by the class-wordpress.php file which defines the
- * WPCD_WORDPRESS_APP class.
+ * SSTK_WORDPRESS_APP class.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_wpapp_backup_functions.
+ * Trait sstk_wpapp_backup_functions.
  */
-trait wpcd_wpapp_backup_functions {
+trait sstk_wpapp_backup_functions {
 
 	/**
 	 * Return global credentials and buckets if the ones on this id are blank.
@@ -26,29 +27,29 @@ trait wpcd_wpapp_backup_functions {
 		$creds['s3_endpoint']            = '';
 
 		// Get data from the current server.
-		$key    = $this->get_server_meta_by_app_id( $id, 'wpcd_wpapp_backup_aws_key', true );
-		$secret = self::decrypt( $this->get_server_meta_by_app_id( $id, 'wpcd_wpapp_backup_aws_secret', true ) );
-		$bucket = $this->get_server_meta_by_app_id( $id, 'wpcd_wpapp_backup_aws_bucket', true );
-		$region = $this->get_server_meta_by_app_id( $id, 'wpcd_wpapp_backup_aws_region', true );
-		$endpoint = $this->get_server_meta_by_app_id( $id, 'wpcd_wpapp_backup_s3_endpoint', true );
+		$key    = $this->get_server_meta_by_app_id( $id, 'sstk_wpapp_backup_aws_key', true );
+		$secret = self::decrypt( $this->get_server_meta_by_app_id( $id, 'sstk_wpapp_backup_aws_secret', true ) );
+		$bucket = $this->get_server_meta_by_app_id( $id, 'sstk_wpapp_backup_aws_bucket', true );
+		$region = $this->get_server_meta_by_app_id( $id, 'sstk_wpapp_backup_aws_region', true );
+		$endpoint = $this->get_server_meta_by_app_id( $id, 'sstk_wpapp_backup_s3_endpoint', true );
 
 		// If keys are empty on the app, use global keys.
 		if ( empty( $key ) ) {
 			// get the global creds.
-			$key    = wpcd_get_option( 'wordpress_app_aws_access_key' );
-			$secret = self::decrypt( wpcd_get_option( 'wordpress_app_aws_secret_key' ) );
+			$key    = sstk_get_option( 'wordpress_app_aws_access_key' );
+			$secret = self::decrypt( sstk_get_option( 'wordpress_app_aws_secret_key' ) );
 		}
 		// If bucket is empty on the app, use global bucket.
 		if ( empty( $bucket ) ) {
-			$bucket = wpcd_get_option( 'wordpress_app_aws_bucket' );
+			$bucket = sstk_get_option( 'wordpress_app_aws_bucket' );
 		}
 		// If region is empty on the app, use global region.
 		if ( empty( $region ) ) {
-			$region = wpcd_get_option( 'wordpress_app_aws_region' );
+			$region = sstk_get_option( 'wordpress_app_aws_region' );
 		}
 		// if endpoint is empty on the app, use global endpoint.
 		if ( empty( $endpoint ) ) {
-			$endpoint = wpcd_get_option( 'wordpress_app_s3_endpoint' );
+			$endpoint = sstk_get_option( 'wordpress_app_s3_endpoint' );
 		}
 		// If region is still empty default to us-east-1, unless endpoint is set.
 		if ( empty( $region ) ) {

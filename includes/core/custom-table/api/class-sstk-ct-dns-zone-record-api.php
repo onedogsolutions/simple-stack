@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 /**
  * Class DNS Record API
  */
-class WPCD_CT_DNS_Zone_Record_API extends WPCD_Custom_Table_API {
+class SSTK_CT_DNS_Zone_Record_API extends SSTK_Custom_Table_API {
 	
 	/**
 	 * Model Name
@@ -51,7 +52,7 @@ class WPCD_CT_DNS_Zone_Record_API extends WPCD_Custom_Table_API {
 	public function permission_query_join( $user_id = null, $item_id = '' ) {
 		global $wpdb;
 		
-		$dns_provider_api = WPCD_Custom_Table_API::get('dns_provider');
+		$dns_provider_api = SSTK_Custom_Table_API::get('dns_provider');
 		$meta_table = $this->get_meta_table_name();
 		
 		$q = ' INNER JOIN ' . $dns_provider_api->get_table_name() . ' p ON p.ID = zone.parent_id 
@@ -92,7 +93,7 @@ class WPCD_CT_DNS_Zone_Record_API extends WPCD_Custom_Table_API {
 			return array();
 		} elseif ( 2 == $should_add ) {
 			
-			$dns_zone_table = WPCD_MB_Custom_Table::get('dns_zone')->get_table_name();
+			$dns_zone_table = SSTK_MB_Custom_Table::get('dns_zone')->get_table_name();
 			$joins = $wpdb->prepare( " INNER JOIN {$dns_zone_table} as zone on t1.parent_id = zone.id and zone.id = %d", $parent_id );
 			
 			$joins .= $this->permission_query_join();

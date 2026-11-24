@@ -270,17 +270,9 @@ then
 	}
 
 	backup_webserver () {
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			echo "Backing up NGINX configuration..."
-			cd /etc/nginx
-			tar -czf /root/.wp-backup2/$domain/"$domain"_"$date"_nginx.tar.gz $(ls sites-enabled/$domain sites-enabled/"$domain"_* htpasswd/$domain htpasswd/"$domain"_* 2>/dev/null)
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			echo "Backing up OLS configuration..."
-			cd /usr/local/lsws/conf/
-			tar -czf /root/.wp-backup2/$domain/"$domain"_"$date"_ols.tar.gz $(ls vhosts/${domain}/* 2>/dev/null)
-		fi
+		echo "Backing up OpenLiteSpeed configuration..."
+		cd /usr/local/lsws/conf/
+		tar -czf /root/.wp-backup2/$domain/"$domain"_"$date"_ols.tar.gz $(ls vhosts/${domain}/* 2>/dev/null)
 	}
 
 	backup_database () {
@@ -390,7 +382,7 @@ then
 	fi
 
 	# If /var/www/$domain exists, let the user know before overwriting
-	if [[ -d /var/www/$domain || -e /etc/nginx/sites-enabled/$domain || -e /etc/nginx/sites-available/$domain || -e /etc/php/5.6/fpm/pool.d/$domain.conf || -e /etc/php/7.1/fpm/pool.d/$domain.conf || -e /etc/php/7.2/fpm/pool.d/$domain.conf || -e /etc/php/7.3/fpm/pool.d/$domain.conf || -e /etc/php/7.4/fpm/pool.d/$domain.conf || -e /etc/php/8.0/fpm/pool.d/$domain.conf || -e /etc/php/8.1/fpm/pool.d/$domain.conf || -e /etc/php/8.2/fpm/pool.d/$domain.conf || -e /etc/php/8.3/fpm/pool.d/$domain.conf || -d ${VHDIR}/$domain ]]
+	if [[ -d /var/www/$domain || -d ${VHDIR}/$domain ]]
 	then
 		# we do the following to allow bypassing this check if the user sets $overwrite to "yes"
 		if [[ "$overwrite" != "yes" ]]
@@ -452,11 +444,8 @@ then
 		echo "Disabling object cache if applicable..."		
 		cd /var/www/$domain/html/
 		rm -f wp-content/object-cache.php
-		if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			su - $user_name -c "wp litespeed-option set object false 2>/dev/null"
-			su - $user_name -c "wp cache flush 2>/dev/null"
-		fi
+		su - $user_name -c "wp litespeed-option set object false 2>/dev/null"
+		su - $user_name -c "wp cache flush 2>/dev/null"
 		su - $user_name -c "wp plugin uninstall --deactivate redis-cache 2>/dev/null"
 		# reset object cache
 		su - $user_name -c "wp cache flush"
@@ -467,13 +456,7 @@ then
 	if grep -qs "webserver" <<< "$restore";
 	then
 		# Cleanup stage
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			gf_remove_nginx_site "$domain"
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			gf_remove_ols_site "$domain"
-		fi
+		gf_remove_ols_site "$domain" || exit 1
 		userdel $user_name
 
 		echo "Setting up system user..."
@@ -485,73 +468,12 @@ then
 		mkdir -p $domain/temp
 		cd $domain/temp
 		tar xzf ../../"$backup"_"${g_webserver_type}".tar.gz
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			gf_restore_nginx_site "$domain"
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			gf_restore_ols_site "$domain"
-		fi
+		gf_restore_ols_site "$domain" || exit 1
 		cd ..
 		rm -rf temp
 
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			# Configure SSL for restored sites which had it enabled, except if we are dealing with a wildcard multisite
-			if ! grep -q 'server_name \.' /etc/nginx/sites-enabled/$domain && grep -qs "listen 443" /etc/nginx/sites-enabled/$domain* -l;
-			then
-				grep "server_name" $(grep "listen 443" /etc/nginx/sites-enabled/$domain* -l) -m 1 | cut -d "_" -f 2 | cut -d " " -f 2 | while read line ;
-				do
-					# if the system doesn't have a cert or the system has a cert which includes www subdomain
-					# set up cert with www subdomain
-					if [[ ! -e /etc/letsencrypt/live/$line/cert.pem ]] || openssl x509 -in /etc/letsencrypt/live/$line/cert.pem -noout -text | grep -qs www.$line;
-					then
-						# the following five lines are needed because certbot will try to test the current nginx config before modifying it
-						# since there is a chance that a certificate referenced in the config isn't present in the system, nginx -t can fail
-						# if it fails, certbot will not continue.
-						# so we remove all the SSL stuff from the configuration to make certbot happy
-						conf_location=$(grep "server_name $line" /etc/nginx/sites-enabled/$domain* -l)
-						if grep -qs "managed by Certbot" $conf_location;
-						then
-							sed -i -n '/if ($host/q;p' $conf_location
-							sed -i '$ d' $conf_location
-							sed -i '/server {/a listen 80;\nlisten [::]:80;' $conf_location
-							sed -i '/managed by Certbot/d' $conf_location
-						fi
-						certbot --non-interactive -q --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $line -d www.$line
-					else
-						# if the system has a cert which doesn't contain the www subdomain
-						# set up cert without www subdomain
-						certbot --non-interactive -q --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $line
-					fi
-				done
-			fi
-
-			# If we are dealing with a multisite wildcard which had HTTPS enabled...
-			if grep -q 'server_name \.' /etc/nginx/sites-enabled/$domain && grep -q 'listen 443' /etc/nginx/sites-enabled/$domain;
-			then
-				for sitedomain in $(su - $user_name -c "wp site list --field=domain")
-				do
-					su - $user_name -c "wp --skip-plugins option update home http://$sitedomain --url=https://$sitedomain/"
-					su - $user_name -c "wp --skip-plugins option update siteurl http://$sitedomain --url=https://$sitedomain/"
-				done
-				if grep -qs "managed by Certbot" /etc/nginx/sites-enabled/$domain;
-				then
-					sed -i -n '/listen 80/q;p' /etc/nginx/sites-enabled/$domain
-					sed -i '$ d' /etc/nginx/sites-enabled/$domain
-					sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/$domain
-					sed -i '/managed by Certbot/d' /etc/nginx/sites-enabled/$domain
-				fi
-				certbot delete --cert-name $domain --noninteractive > /dev/null 2>&1
-				systemctl restart nginx
-				echo "This multisite had wildcard SSL enabled."
-				echo "HTTPS has been disabled, it can be configured using 13-multisite.sh"
-			fi
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			gf_disable_https_redirect_ols_htaccess "$domain" # Remove existing https any redirects.
-			gf_enable_certbot_ols_site "$domain" "register_unsafely"  # This function call echoes any success/failure messages so no need to handle here.
-		fi
+		gf_disable_https_redirect_ols_htaccess "$domain" || exit 1
+		gf_enable_certbot_ols_site "$domain" "register_unsafely"
 	fi
 
 
@@ -978,21 +900,11 @@ then
 	echo
 	echo "The following sites have orphaned backups:"
 	cd /root/.wp-backup2/
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sort <<< "$(ls /root/.wp-backup2/; ls /etc/nginx/sites-enabled/; ls /etc/nginx/sites-available/)" | uniq -u | grep -v '^default$\|^monit$\|^monitorix$' |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sort <<< "$(ls /root/.wp-backup2/; ls ${VHDIR}/)" | grep -v 'Example$' |uniq -u |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done
-	fi
+	sort <<< "$(ls /root/.wp-backup2/; ls ${VHDIR}/)" | grep -v 'Example$' | uniq -u |
+	while read -r line
+	do
+		find $line -maxdepth 0 2>/dev/null
+	done
 	exit
 fi
 
@@ -1001,21 +913,11 @@ if [[ $action == "wp2_remove_orphaned_backups" || $action == "13" ]]
 then
 	echo
 	cd /root/.wp-backup2/
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sort <<< "$(ls /root/.wp-backup2/; ls /etc/nginx/sites-enabled/; ls /etc/nginx/sites-available/)" | uniq -u | grep -v '^default$\|^monit$\|^monitorix$' |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done | xargs rm -rf
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sort <<< "$(ls /root/.wp-backup2/; ls ${VHDIR}/)" | grep -v 'Example$' |uniq -u |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done | xargs rm -rf
-	fi
+	sort <<< "$(ls /root/.wp-backup2/; ls ${VHDIR}/)" | grep -v 'Example$' | uniq -u |
+	while read -r line
+	do
+		find $line -maxdepth 0 2>/dev/null
+	done | xargs rm -rf
 	echo "Orphaned backups have been removed"
 	exit
 fi

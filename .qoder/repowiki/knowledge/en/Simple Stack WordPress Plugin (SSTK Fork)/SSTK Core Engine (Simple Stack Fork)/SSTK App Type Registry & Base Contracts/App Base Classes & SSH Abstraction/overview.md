@@ -1,1 +1,1 @@
-Base classes that define the app lifecycle, script/token handling, REST command callbacks, and SSH/SFTP transport used by every WPCD application provider.
+Base classes that define the app lifecycle, script/token handling, REST command callbacks, and SSH/SFTP transport used by every SSTK application provider.

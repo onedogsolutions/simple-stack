@@ -22,7 +22,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s scheduled reboot functionality for WordPress App servers. It covers how to configure maintenance windows, implement zero-downtime reboot strategies, and automate regular reboots. It also documents the reboot script execution environment, pre-reboot checks, graceful service shutdowns, and post-reboot verification processes. Finally, it provides examples for setting up regular maintenance schedules, handling emergency reboots, integrating with external monitoring systems, and best practices for minimizing disruption during reboots.
+This document explains Simple Stack’s scheduled reboot functionality for WordPress App servers. It covers how to configure maintenance windows, implement zero-downtime reboot strategies, and automate regular reboots. It also documents the reboot script execution environment, pre-reboot checks, graceful service shutdowns, and post-reboot verification processes. Finally, it provides examples for setting up regular maintenance schedules, handling emergency reboots, integrating with external monitoring systems, and best practices for minimizing disruption during reboots.
 
 ## Project Structure
 The scheduled reboot feature spans both PHP logic in the WordPress App tabs and shell scripts executed on the server:
@@ -297,6 +297,6 @@ Operational tips:
 - [power.php:403-416](file://includes/core/apps/wordpress-app/tabs-server/power.php#L403-L416)
 
 ## Conclusion
-SimpleStack’s scheduled reboot feature provides a robust, extensible mechanism for managing server maintenance. By combining PHP orchestration, secure remote script execution, OS-level scheduling, and callback integrations, administrators can plan maintenance windows, implement graceful shutdowns, and integrate with external monitoring systems. Following the best practices outlined here will help minimize service disruption and improve operational reliability.
+Simple Stack’s scheduled reboot feature provides a robust, extensible mechanism for managing server maintenance. By combining PHP orchestration, secure remote script execution, OS-level scheduling, and callback integrations, administrators can plan maintenance windows, implement graceful shutdowns, and integrate with external monitoring systems. Following the best practices outlined here will help minimize service disruption and improve operational reliability.
 
 [No sources needed since this section summarizes without analyzing specific files]

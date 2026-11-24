@@ -1,5 +1,6 @@
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 ################################################################################# 
-# wpcd_mt_upgrade_site_post_upgrade_script.sh
+# sstk_mt_upgrade_site_post_upgrade_script.sh
 # This is run when an existing multi-tenant site is upgraded (or downgraded to a new version).
 #
 # If used, this file should be in the root folder of your template site.
@@ -24,7 +25,7 @@
 # Another example - automatically remove items from the trash after 7 days.
 #    su - "$user_name" -c "wp --skip-plugins --no-color config set EMPTY_TRASH_DAYS 7"
 #
-# Add meta values to store in the file /etc/wpcd/$domain/$domain. You can then retrieve these later.
+# Add meta values to store in the file /etc/simple-stack/$domain/$domain. You can then retrieve these later.
 #    gf_set_domain_metadata "MT_TAG_VERSION" $git_tag $domain
 #
 # Other ideas of things you can do:

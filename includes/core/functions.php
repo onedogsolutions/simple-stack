@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * This file contains general or helper functions for WPCD
+ * This file contains general or helper functions for SSTK
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -23,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @returns array|false $posts array of posts or boolean false
  */
-function wpcd_get_child_posts( $post_type, $post_id ) {
+function sstk_get_child_posts( $post_type, $post_id ) {
 
 	// exit immediately if nothing provided..
 	if ( empty( $post_id ) || empty( $post_type ) ) {
@@ -60,12 +61,12 @@ function wpcd_get_child_posts( $post_type, $post_id ) {
  *
  * @returns boolean true always
  */
-function wpcd_delete_child_posts( $post_type, $post_id ) {
+function sstk_delete_child_posts( $post_type, $post_id ) {
 
-	$posts_to_delete = wpcd_get_child_posts( $post_type, $post_id );
+	$posts_to_delete = sstk_get_child_posts( $post_type, $post_id );
 
 	// Delete all the posts based on custom meta value.
-	do_action( 'wpcd_get_child_posts_for_delete', $posts_to_delete, $post_type );
+	do_action( 'sstk_get_child_posts_for_delete', $posts_to_delete, $post_type );
 
 	if ( ! empty( $posts_to_delete ) ) {
 		foreach ( $posts_to_delete as $post ) {
@@ -88,7 +89,7 @@ function wpcd_delete_child_posts( $post_type, $post_id ) {
  *
  * @return string
  */
-function wpcd_get_the_title( $post = 0 ) {
+function sstk_get_the_title( $post = 0 ) {
 
 	$post = get_post( $post );
 
@@ -103,7 +104,7 @@ function wpcd_get_the_title( $post = 0 ) {
  *
  * @param array $data data.
  */
-function wpcd_maybe_unserialize( $data, $allowed_classes = array( 'allowed_classes' => false ) ) {
+function sstk_maybe_unserialize( $data, $allowed_classes = array( 'allowed_classes' => false ) ) {
 	$output = $data;
 	if ( is_serialized( $data ) && ! is_array( $data ) ) {
 		$output = unserialize( $data, $allowed_classes );
@@ -133,7 +134,7 @@ function wpcd_maybe_unserialize( $data, $allowed_classes = array( 'allowed_class
  * Get the value of an option.
  *
  * @param string $option_id The option whose value you want to retrieve.
- * @param string $domain The metabox.io settings page that holds the option - optional and will default to 'wpcd_settings.
+ * @param string $domain The metabox.io settings page that holds the option - optional and will default to 'sstk_settings.
  *
  * $domain is a way of grouping options.  Apps can create their own options
  * pages if they want.  So this routine needs to allow retrieval from those
@@ -141,7 +142,7 @@ function wpcd_maybe_unserialize( $data, $allowed_classes = array( 'allowed_class
  *
  * @returns boolean true always
  */
-function wpcd_get_option( $option_id, $domain = 'wpcd_settings' ) {
+function sstk_get_option( $option_id, $domain = 'sstk_settings' ) {
 
 	if ( function_exists( 'rwmb_meta' ) ) {
 		$value = rwmb_meta( $option_id, array( 'object_type' => 'setting' ), $domain );
@@ -153,14 +154,14 @@ function wpcd_get_option( $option_id, $domain = 'wpcd_settings' ) {
 }
 
 /**
- * This is the same as the wpcd_get_option function above.  But it
+ * This is the same as the sstk_get_option function above.  But it
  * goes directly to the WordPress options function instead.
  * sometimes you need this because the metabox.io stuff isn't loaded yet.
  *
  * @param int    $option_id option_id.
  * @param string $domain domain.
  */
-function wpcd_get_early_option( $option_id, $domain = 'wpcd_settings' ) {
+function sstk_get_early_option( $option_id, $domain = 'sstk_settings' ) {
 	$options = get_option( $domain );
 
 	// if the value does not exist, return false.
@@ -182,7 +183,7 @@ function wpcd_get_early_option( $option_id, $domain = 'wpcd_settings' ) {
  *
  * @return bool
  */
-function wpcd_set_option( $option_id, $option_value, $domain = 'wpcd_settings' ) {
+function sstk_set_option( $option_id, $option_value, $domain = 'sstk_settings' ) {
 
 	// Retrieve our options array.
 	$options = get_option( $domain );
@@ -198,12 +199,12 @@ function wpcd_set_option( $option_id, $option_value, $domain = 'wpcd_settings' )
 /**
  * Get short product name that will be used for white labelling.
  *
- * The WPCD_SHORT_NAME constant for the product name can be defined in wp-config.php.
+ * The SSTK_SHORT_NAME constant for the product name can be defined in wp-config.php.
  */
-function wpcd_get_short_product_name() {
-	$product_name = 'WPCloudDeploy';
-	if ( defined( 'WPCD_SHORT_NAME' ) ) {
-		$product_name = WPCD_SHORT_NAME;
+function sstk_get_short_product_name() {
+	$product_name = 'Simple Stack';
+	if ( defined( 'SSTK_SHORT_NAME' ) ) {
+		$product_name = SSTK_SHORT_NAME;
 	}
 
 	return $product_name;
@@ -212,27 +213,27 @@ function wpcd_get_short_product_name() {
 /**
  * Get longer product name that will be used for white labelling.
  *
- * The WPCD_LONG_NAME constant for the product name can be defined in wp-config.php.
+ * The SSTK_LONG_NAME constant for the product name can be defined in wp-config.php.
  */
-function wpcd_get_long_product_name() {
-	$product_name = 'WPCloudDeploy';
-	if ( defined( 'WPCD_LONG_NAME' ) ) {
-		$product_name = WPCD_LONG_NAME;
+function sstk_get_long_product_name() {
+	$product_name = 'Simple Stack';
+	if ( defined( 'SSTK_LONG_NAME' ) ) {
+		$product_name = SSTK_LONG_NAME;
 	}
 
 	return $product_name;
 }
 
 /**
- * Return whether or not WPCD is being called via it's better cron process.
+ * Return whether or not SSTK is being called via it's better cron process.
  *
  * @since 5.0
  *
  * @return bool
  */
-function wpcd_is_doing_cron() {
+function sstk_is_doing_cron() {
 
-	if ( defined( 'WPCD_DOING_CORE_CRON' ) && WPCD_DOING_CORE_CRON ) {
+	if ( defined( 'SSTK_DOING_CORE_CRON' ) && SSTK_DOING_CORE_CRON ) {
 		return true;
 	}
 
@@ -243,10 +244,10 @@ function wpcd_is_doing_cron() {
  * Returns the timeout for long running commands.
  * Defaults to 25 minutes if not already set.
  *
- * Default changed from 15 min to 25 min in WPCD 5.0.
+ * Default changed from 15 min to 25 min in SSTK 5.0.
  */
-function wpcd_get_long_running_command_timeout() {
-	$timeout = wpcd_get_option( 'long-command-timeout' );
+function sstk_get_long_running_command_timeout() {
+	$timeout = sstk_get_option( 'long-command-timeout' );
 	if ( empty( $timeout ) ) {
 		$timeout = 25;  // default timeout is 25 minutes.
 	}
@@ -266,10 +267,10 @@ function wpcd_get_long_running_command_timeout() {
  */
 function check_ajax_admin_nonce( $action = false ) {
 	$nonce  = isset( $_REQUEST['nonce'] ) ? $_REQUEST['nonce'] : '';
-	$action = empty( $action ) ? 'wpcd-admin-nonce' : $action;
+	$action = empty( $action ) ? 'sstk-admin-nonce' : $action;
 
 	if ( ! wp_verify_nonce( $nonce, $action ) ) {
-		wp_send_json_error( esc_js( __( 'Wrong Nonce', 'wpcd' ) ) );
+		wp_send_json_error( esc_js( __( 'Wrong Nonce', 'simple-stack' ) ) );
 	}
 }
 
@@ -280,10 +281,10 @@ function check_ajax_admin_nonce( $action = false ) {
  */
 function check_ajax_front_end_nonce( $action = false ) {
 	$nonce  = isset( $_REQUEST['nonce'] ) ? $_REQUEST['nonce'] : '';
-	$action = empty( $action ) ? 'wpcd-frontend-nonce' : $action;
+	$action = empty( $action ) ? 'sstk-frontend-nonce' : $action;
 
 	if ( ! wp_verify_nonce( $nonce, $action ) ) {
-		wp_send_json_error( esc_js( __( 'Wrong Nonce', 'wpcd' ) ) );
+		wp_send_json_error( esc_js( __( 'Wrong Nonce', 'simple-stack' ) ) );
 	}
 }
 
@@ -314,7 +315,7 @@ function dos2unix_strings( $s ) {
  *
  * @return string $s normalized line endings.
  */
-function wpcd_get_last_lines_from_string( $s, $n = 1, $breaktype = "\n" ) {
+function sstk_get_last_lines_from_string( $s, $n = 1, $breaktype = "\n" ) {
 	$lines = explode( "\n", $s );
 
 	$lines = array_slice( $lines, -$n );
@@ -334,7 +335,7 @@ function wpcd_get_last_lines_from_string( $s, $n = 1, $breaktype = "\n" ) {
  *
  * @return string
  */
-function wpcd_delete_all_between( $beginning, $end, $string ) {
+function sstk_delete_all_between( $beginning, $end, $string ) {
 	$beginning_pos = strpos( $string, $beginning );
 	$end_pos       = strpos( $string, $end );
 	if ( $beginning_pos === false || $end_pos === false ) {
@@ -343,7 +344,7 @@ function wpcd_delete_all_between( $beginning, $end, $string ) {
 
 	$text_to_delete = substr( $string, $beginning_pos, ( $end_pos + strlen( $end ) ) - $beginning_pos );
 
-	return wpcd_delete_all_between( $beginning, $end, str_replace( $text_to_delete, '', $string ) ); // recursion to ensure all occurrences are replaced.
+	return sstk_delete_all_between( $beginning, $end, str_replace( $text_to_delete, '', $string ) ); // recursion to ensure all occurrences are replaced.
 }
 
 /**
@@ -356,7 +357,7 @@ function wpcd_delete_all_between( $beginning, $end, $string ) {
  * @param string $end the ending of data to keep.
  * @return string
  */
-function wpcd_get_string_between( $string, $start, $end ) {
+function sstk_get_string_between( $string, $start, $end ) {
 	$string = ' ' . $string;
 	$ini    = strpos( $string, $start );
 	if ( $ini == 0 ) {
@@ -376,46 +377,262 @@ function wpcd_get_string_between( $string, $start, $end ) {
  *
  * @return array of strings broken by line endings.
  */
-function wpcd_split_lines_into_array( $string ) {
+function sstk_split_lines_into_array( $string ) {
 	return preg_split( "/\r\n|\n|\r/", $string );
 }
 
 /**
- * Takes a string and finds matching key-value pairs, replacing the value with a new value..
+ * Determine whether an array key names a credential.
  *
- * The keys and values in a pair in the string must not be separated by spaces.
- * Thus something like this is valid: export action=backup domain=test088.wpvix.com site=test088.wpvix.com.
- * In this example the keys are 'action=', 'domain=' and 'site='.
- * The values are 'backup', 'test088.wpvix.com and 'test088.wpvix.com' respectively.
- * notice that there is no space between the key= and the value.
+ * @param string $key The array key.
  *
- * Note: Only the first occurrence will be replaced.
+ * @return bool
+ */
+function sstk_is_secret_key( $key ) {
+	if ( ! is_string( $key ) ) {
+		return false;
+	}
+
+	return 1 === preg_match( '/pass|secret|token|private|authorization|credential|^key$|_key$|api_?key/i', $key );
+}
+
+/**
+ * Collect exact credential values from a nested array or object.
  *
- * @param array  $pairs key-value array eg: array( 'wp_password=' => '(***private***)', 'aws_access_key_id=' => '(***private***)', 'aws_secret_access_key=' => '(***private***)'  ).
- * @param string $ihaystack The haystack to search for the key-value pairs.
+ * @param mixed $data  Data that might contain credentials.
+ * @param int   $depth Current recursion depth.
+ *
+ * @return array
+ */
+function sstk_collect_secret_values( $data, $depth = 0 ) {
+	if ( $depth > 25 ) {
+		return array();
+	}
+
+	if ( is_object( $data ) ) {
+		$data = get_object_vars( $data );
+	}
+
+	if ( ! is_array( $data ) ) {
+		return array();
+	}
+
+	$secrets = array();
+
+	foreach ( $data as $key => $value ) {
+		if ( is_string( $key ) && sstk_is_secret_key( $key ) ) {
+			if ( is_scalar( $value ) || null === $value ) {
+				$secrets[] = (string) $value;
+			} else {
+				$secrets = array_merge( $secrets, sstk_collect_secret_values( $value, $depth + 1 ) );
+			}
+			continue;
+		}
+
+		if ( is_array( $value ) || is_object( $value ) ) {
+			$secrets = array_merge( $secrets, sstk_collect_secret_values( $value, $depth + 1 ) );
+		}
+	}
+
+	return array_values( array_unique( array_filter( $secrets, 'strlen' ) ) );
+}
+
+/**
+ * Recursively redact credentials from an array, object or scalar.
+ *
+ * Boolean and null values under credential-shaped keys are presence signals, not
+ * credential material, so they remain unchanged.
+ *
+ * @param mixed  $data    Data to redact.
+ * @param array  $secrets Exact secret values to remove from free text.
+ * @param string $mask    Replacement used for credential values.
+ * @param int    $depth   Current recursion depth.
+ *
+ * @return mixed
+ */
+function sstk_redact_secrets( $data, $secrets = array(), $mask = '(***private***)', $depth = 0 ) {
+	if ( $depth > 25 ) {
+		return $mask;
+	}
+
+	if ( is_object( $data ) ) {
+		$data = get_object_vars( $data );
+	}
+
+	if ( is_array( $data ) ) {
+		$clean = array();
+
+		foreach ( $data as $key => $value ) {
+			$is_presence_flag = is_bool( $value ) || null === $value;
+
+			if ( is_string( $key ) && sstk_is_secret_key( $key ) && ! $is_presence_flag ) {
+				$clean[ $key ] = $mask;
+				continue;
+			}
+
+			$clean[ $key ] = sstk_redact_secrets( $value, $secrets, $mask, $depth + 1 );
+		}
+
+		return $clean;
+	}
+
+	if ( is_string( $data ) ) {
+		return sstk_redact_secret_text( $data, $secrets, $mask );
+	}
+
+	return $data;
+}
+
+/**
+ * Remove credential material embedded in a free-text string.
+ *
+ * @param string $text    The string to scrub.
+ * @param array  $secrets Exact secret values to remove.
+ * @param string $mask    Replacement used for credential values.
  *
  * @return string
  */
-function wpcd_replace_key_value_paired_strings( $pairs, $ihaystack ) {
-	$haystack = $ihaystack;
-	foreach ( $pairs as $key => $value ) {
+function sstk_redact_secret_text( $text, $secrets = array(), $mask = '(***private***)' ) {
+	if ( ! is_string( $text ) || '' === $text ) {
+		return $text;
+	}
 
-		// Search for the string.
-		$pos = strpos( $haystack, $key );
-		if ( $pos !== false ) {
+	$mask          = (string) $mask;
+	$value_pattern = '\x22[^\x22]*\x22|\x27[^\x27]*\x27|[^\s;&|]+';
 
-			// we have a match.
-			$startpos = $pos + strlen( $key );  // Starting position of character after the match.
-			// find the position of the next space.
-			$spaceloc = strpos( $haystack, ' ', $startpos );
-
-			// if the difference in positions between the space and the start position of the string we're searching for is > 0 .
-			if ( ( $spaceloc - $startpos - 1 ) > 0 ) {
-				$haystack = substr_replace( $haystack, $value, $startpos, ( $spaceloc - $startpos ) );
+	$text = preg_replace_callback(
+		'/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----/s',
+		function () use ( $mask ) {
+			return $mask;
+		},
+		$text
+	);
+	$text = preg_replace_callback(
+		'/\b([a-z][a-z0-9+.-]*:\/\/)[^\s\/?#@]+@/i',
+		function ( $matches ) use ( $mask ) {
+			return $matches[1] . $mask . '@';
+		},
+		$text
+	);
+	$text = preg_replace_callback(
+		'/\b((?:proxy-)?authorization)(\s*(?:=>|=|:)\s*)(?:(?:bearer|basic|token)\s+)?[^\r\n,;]+/i',
+		function ( $matches ) use ( $mask ) {
+			return $matches[1] . $matches[2] . $mask;
+		},
+		$text
+	);
+	$text = preg_replace_callback(
+		'/(\[([A-Za-z_][A-Za-z0-9_.-]*)\]\s*=>\s*)([^\r\n]*)/',
+		function ( $matches ) use ( $mask ) {
+			if ( ! sstk_is_secret_key( $matches[2] ) ) {
+				return $matches[0];
 			}
+
+			return $matches[1] . $mask;
+		},
+		$text
+	);
+
+	$quoted_assignment = '/([\x22\x27])([A-Za-z_][A-Za-z0-9_.-]*)\1(\s*(?:=>|=|:)\s*)(' . $value_pattern . ')/i';
+	$text              = preg_replace_callback(
+		$quoted_assignment,
+		function ( $matches ) use ( $mask ) {
+			if ( ! sstk_is_secret_key( $matches[2] ) ) {
+				return $matches[0];
+			}
+
+			return $matches[1] . $matches[2] . $matches[1] . $matches[3] . $mask;
+		},
+		$text
+	);
+
+	$assignment = '/(?<![\w-])((?:--)?[A-Za-z_][A-Za-z0-9_-]*)(\s*(?:=>|=|:)\s*)(' . $value_pattern . ')/i';
+	$text       = preg_replace_callback(
+		$assignment,
+		function ( $matches ) use ( $mask ) {
+			if ( ! sstk_is_secret_key( ltrim( $matches[1], '-' ) ) ) {
+				return $matches[0];
+			}
+
+			return $matches[1] . $matches[2] . $mask;
+		},
+		$text
+	);
+	$text = preg_replace_callback(
+		'/(?<![\w-])(--[A-Za-z_][A-Za-z0-9_-]*)(\s+)(' . $value_pattern . ')/i',
+		function ( $matches ) use ( $mask ) {
+			if ( ! sstk_is_secret_key( ltrim( $matches[1], '-' ) ) ) {
+				return $matches[0];
+			}
+
+			return $matches[1] . $matches[2] . $mask;
+		},
+		$text
+	);
+
+	if ( ! is_array( $secrets ) ) {
+		$secrets = array( $secrets );
+	}
+
+	$replacements = array();
+	foreach ( $secrets as $secret ) {
+		if ( ! is_scalar( $secret ) ) {
+			continue;
+		}
+
+		$secret = (string) $secret;
+		if ( strlen( $secret ) < 4 || '' === trim( $secret ) || in_array( strtolower( $secret ), array( 'true', 'false', 'none', 'null', 'on', 'off', 'yes', 'no' ), true ) ) {
+			continue;
+		}
+
+		$replacements[ $secret ] = strlen( $secret );
+	}
+
+	if ( ! empty( $replacements ) ) {
+		uasort(
+			$replacements,
+			function ( $left, $right ) {
+				return $right <=> $left;
+			}
+		);
+
+		foreach ( array_keys( $replacements ) as $secret ) {
+			$text = str_replace( $secret, $mask, $text );
 		}
 	}
-	return $haystack;
+
+	return $text;
+}
+
+/**
+ * Find configured key/value assignments and replace every matching value.
+ *
+ * @param array  $pairs     Assignment names and their replacement values.
+ * @param string $ihaystack The text to search.
+ *
+ * @return string
+ */
+function sstk_replace_key_value_paired_strings( $pairs, $ihaystack ) {
+	$haystack      = (string) $ihaystack;
+	$value_pattern = '\x22[^\x22]*\x22|\x27[^\x27]*\x27|[^\s;&|]+';
+
+	foreach ( $pairs as $key => $replacement ) {
+		$key = rtrim( (string) $key, '=' );
+		if ( '' === $key ) {
+			continue;
+		}
+
+		$pattern  = '/(?<![\w-])(' . preg_quote( $key, '/' ) . ')(\s*=\s*)(' . $value_pattern . ')/i';
+		$haystack = preg_replace_callback(
+			$pattern,
+			function ( $matches ) use ( $replacement ) {
+				return $matches[1] . $matches[2] . $replacement;
+			},
+			$haystack
+		);
+	}
+
+	return sstk_redact_secret_text( $haystack );
 }
 
 /**
@@ -436,7 +653,7 @@ function wpcd_replace_key_value_paired_strings( $pairs, $ihaystack ) {
  * @return string
  * @throws \RangeException RangeException.
  */
-function wpcd_random_str( int $length = 64, string $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#!$-[]{}' ) : string {
+function sstk_random_str( int $length = 64, string $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#!$-[]{}' ) : string {
 	if ( $length < 1 ) {
 		throw new \RangeException( 'Length must be a positive integer' );
 	}
@@ -453,8 +670,8 @@ function wpcd_random_str( int $length = 64, string $keyspace = '0123456789abcdef
  *
  * @param int $length Length of password - default 32.
  */
-function wpcd_generate_default_password( $length = 32 ) {
-	return wpcd_random_str( $length, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-' );
+function sstk_generate_default_password( $length = 32 ) {
+	return sstk_random_str( $length, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-' );
 }
 
 /**
@@ -462,8 +679,8 @@ function wpcd_generate_default_password( $length = 32 ) {
  *
  * @param int $length Length of password - default 32.
  */
-function wpcd_generate_alpha_numeric_string( $length = 32 ) {
-	return wpcd_random_str( $length, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
+function sstk_generate_alpha_numeric_string( $length = 32 ) {
+	return sstk_random_str( $length, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
 }
 
 /**
@@ -479,7 +696,7 @@ function wpcd_generate_alpha_numeric_string( $length = 32 ) {
  * @param string $haystack The string to check.
  * @param string $needle What are we searching for.
  */
-function wpcd_str_starts_with( $haystack, $needle ) {
+function sstk_str_starts_with( $haystack, $needle ) {
 	$length = strlen( $needle );
 	return substr( $haystack, 0, $length ) === $needle;
 }
@@ -497,7 +714,7 @@ function wpcd_str_starts_with( $haystack, $needle ) {
  * @param string $haystack The string to check.
  * @param string $needle What are we searching for.
  */
-function wpcd_str_ends_with( $haystack, $needle ) {
+function sstk_str_ends_with( $haystack, $needle ) {
 	$length = strlen( $needle );
 	if ( ! $length ) {
 		return true;
@@ -519,7 +736,7 @@ function wpcd_str_ends_with( $haystack, $needle ) {
  *
  * @return boolean.
  */
-function wpcd_str_contains( string $haystack, string $needle ): bool {
+function sstk_str_contains( string $haystack, string $needle ): bool {
 	return strlen( $needle ) === 0 || strpos( $haystack, $needle ) !== false;
 }
 
@@ -530,7 +747,7 @@ function wpcd_str_contains( string $haystack, string $needle ): bool {
  *
  * @param string $text Text string to search.
  */
-function wpcd_locate_first_number_in_string( $text ) {
+function sstk_locate_first_number_in_string( $text ) {
 	preg_match( '/\d/', $text, $m, PREG_OFFSET_CAPTURE );
 	if ( sizeof( $m ) ) {
 		return $m[0][1]; // 24 in your example.
@@ -542,12 +759,12 @@ function wpcd_locate_first_number_in_string( $text ) {
 
 /**
  * Given a filename/path of the format:
- * "/var/log/nginx/access.log"
+ * "/usr/local/lsws/logs/access.log"
  * return just the "access" word.
  *
  * @param string $file_name file name.
  */
-function wpcd_get_log_file_without_extension( $file_name ) {
+function sstk_get_log_file_without_extension( $file_name ) {
 	$return_name = substr( strrchr( $file_name, '/' ), 1 );
 	$return_name = str_replace( '.log', '', $return_name );
 	return $return_name;
@@ -560,7 +777,7 @@ function wpcd_get_log_file_without_extension( $file_name ) {
  *
  * @return array or null
  */
-function wpcd_get_dir_list( $directory ) {
+function sstk_get_dir_list( $directory ) {
 
 	if ( empty( $directory ) ) {
 		return;
@@ -574,33 +791,36 @@ function wpcd_get_dir_list( $directory ) {
 }
 
 /**
- * Given a number such as 7.4 or 74, return the
- * OLS php service name such as lsphp74.
+ * Convert a supported PHP version to its OpenLiteSpeed LSPHP service name.
  *
- * @param string $version PHP version to handle.
+ * @param string $version PHP version: 8.3, 8.4 or 8.5.
  *
- * @return string
+ * @return string|false LSPHP service name, or false for an unsupported version.
  */
-function wpcd_convert_php_version_to_ols_service( $version ) {
-	// Strip periods.
-	$version = str_replace( '.', '', $version );
-	return 'lsphp' . $version;
+function sstk_convert_php_version_to_ols_service( $version ) {
+	$version = (string) $version;
+	if ( ! in_array( $version, array( '8.3', '8.4', '8.5' ), true ) ) {
+		return false;
+	}
+
+	return 'lsphp' . str_replace( '.', '', $version );
 }
 
 /**
- * Given an ols php service such as lsphp74, return 7.4
+ * Convert a supported OpenLiteSpeed LSPHP service name to a dotted PHP version.
  *
- * @param string $phpservice OLS PHP Service name- eg: lsphp81.
+ * @param string $phpservice LSPHP service name: lsphp83, lsphp84 or lsphp85.
  *
- * @return string.
+ * @return string|false Dotted PHP version, or false for an unsupported service.
  */
-function wpcd_convert_ols_phpservice_to_php_version( $phpservice ) {
+function sstk_convert_ols_phpservice_to_php_version( $phpservice ) {
+	$versions = array(
+		'lsphp83' => '8.3',
+		'lsphp84' => '8.4',
+		'lsphp85' => '8.5',
+	);
 
-	// Get last two characters of phpservice.
-	$version = mb_substr( $phpservice, -2 );
-	$version = mb_substr( $version, 0, 1 ) . '.' . mb_substr( $version, 1, 1 );  // Reminder: First character position is 0, not 1.
-	return $version;
-
+	return isset( $versions[ $phpservice ] ) ? $versions[ $phpservice ] : false;
 }
 
 /**
@@ -609,7 +829,7 @@ function wpcd_convert_ols_phpservice_to_php_version( $phpservice ) {
  *
  * @return int post_id.
  */
-function wpcd_get_form_submission_post_id() {
+function sstk_get_form_submission_post_id() {
 	$post_id = null;
 	if ( isset( $_GET['post'] ) ) {
 		$post_id = intval( $_GET['post'] );
@@ -625,13 +845,13 @@ function wpcd_get_form_submission_post_id() {
  *
  * @return int author_id
  */
-function wpcd_get_form_submission_post_author() {
+function sstk_get_form_submission_post_author() {
 
 	$author_id = 0;
 
-	$post_id = wpcd_get_form_submission_post_id();
+	$post_id = sstk_get_form_submission_post_id();
 
-	return wpcd_get_post_author( $post_id );
+	return sstk_get_post_author( $post_id );
 
 }
 
@@ -643,7 +863,7 @@ function wpcd_get_form_submission_post_author() {
  *
  * @return int author_id.
  */
-function wpcd_get_post_author( $post_id ) {
+function sstk_get_post_author( $post_id ) {
 
 	$author_id = 0;
 
@@ -663,7 +883,7 @@ function wpcd_get_post_author( $post_id ) {
  *
  * @return array of roles.
  */
-function wpcd_get_roles_ids() {
+function sstk_get_roles_ids() {
 	global $wp_roles;
 	foreach ( $wp_roles->roles as $key => $role ) {
 		$roles[] = $key;
@@ -676,7 +896,7 @@ function wpcd_get_roles_ids() {
  *
  * @return array of roles.
  */
-function wpcd_get_roles() {
+function sstk_get_roles() {
 	global $wp_roles;
 	$roles = array();
 	foreach ( $wp_roles->roles as $key => $role ) {
@@ -694,11 +914,11 @@ function wpcd_get_roles() {
  *
  * @return boolean
  */
-function wpcd_user_can( $user_id, $permission_name, $post_id ) {
+function sstk_user_can( $user_id, $permission_name, $post_id ) {
 
 	global $wpdb;
 
-	if ( wpcd_is_admin( $user_id ) ) {
+	if ( sstk_is_admin( $user_id ) ) {
 		return true;
 	}
 
@@ -706,16 +926,16 @@ function wpcd_user_can( $user_id, $permission_name, $post_id ) {
 		return false;
 	}
 
-	$permission_id = wpcd_get_permission_id_from_name( $permission_name );
+	$permission_id = sstk_get_permission_id_from_name( $permission_name );
 
 	if ( empty( $permission_id ) ) {
 		return false;
 	}
 
-	$teams = get_post_meta( $post_id, 'wpcd_assigned_teams', false );
+	$teams = get_post_meta( $post_id, 'sstk_assigned_teams', false );
 
 	if ( count( $teams ) ) {
-		$table_name = $wpdb->prefix . 'permission_assignments';
+		$table_name = $wpdb->prefix . 'sstk_permission_assignments';
 
 		$teams_placeholder = implode( ', ', array_fill( 0, count( $teams ), '%d' ) );
 		$query_fields      = array_merge( $teams, array( $user_id, $permission_id, 1 ) );
@@ -735,24 +955,24 @@ function wpcd_user_can( $user_id, $permission_name, $post_id ) {
 }
 
 /**
- * To get permision id by permission name for wpcd_permission_type post type
+ * To get permision id by permission name for sstk_permission_type post type
  *
  * @param  string $permission_name permission name.
  *
  * @return int
  */
-function wpcd_get_permission_id_from_name( $permission_name ) {
+function sstk_get_permission_id_from_name( $permission_name ) {
 	if ( empty( $permission_name ) ) {
 		return 0;
 	}
 
 	$args      = array(
-		'post_type'   => 'wpcd_permission_type',
+		'post_type'   => 'sstk_permission_type',
 		'post_status' => 'private',
 		'fields'      => 'ids',
 		'meta_query'  => array(
 			array(
-				'key'     => 'wpcd_permission_name',
+				'key'     => 'sstk_permission_name',
 				'value'   => $permission_name,
 				'compare' => '=',
 			),
@@ -778,7 +998,7 @@ function wpcd_get_permission_id_from_name( $permission_name ) {
  *
  * @return array post ids or blank array
  */
-function wpcd_get_posts_by_permission( $permission_name, $post_type, $post_status = 'private', $user_id = '' ) {
+function sstk_get_posts_by_permission( $permission_name, $post_type, $post_status = 'private', $user_id = '' ) {
 
 	// Pick up current user id - we'll need it later.
 	if ( empty( $user_id ) ) {
@@ -788,7 +1008,7 @@ function wpcd_get_posts_by_permission( $permission_name, $post_type, $post_statu
 	// array need to be return.
 	$post__in = array();
 
-	if ( wpcd_is_admin( $user_id ) ) {
+	if ( sstk_is_admin( $user_id ) ) {
 		// get all posts since user is an admin!
 		$posts = get_posts(
 			array(
@@ -805,13 +1025,13 @@ function wpcd_get_posts_by_permission( $permission_name, $post_type, $post_statu
 			return array();
 		}
 
-		$permission_id = wpcd_get_permission_id_from_name( $permission_name );
-		$table_name    = $wpdb->prefix . 'permission_assignments';
+		$permission_id = sstk_get_permission_id_from_name( $permission_name );
+		$table_name    = $wpdb->prefix . 'sstk_permission_assignments';
 
 		$get_teams_sql = $wpdb->prepare( "SELECT team_id FROM {$table_name} WHERE user_id = %d AND permission_type_id = %d AND granted = %d", array( $user_id, $permission_id, 1 ) );
 		$results       = $wpdb->get_results( $get_teams_sql );
 
-		$meta_key = 'wpcd_assigned_teams';
+		$meta_key = 'sstk_assigned_teams';
 
 		$post_status = ( $post_status == 'all' ) ? 'private' : $post_status;
 
@@ -845,7 +1065,7 @@ function wpcd_get_posts_by_permission( $permission_name, $post_type, $post_statu
 				$post__in[] = $post_id;
 			}
 
-			if ( wpcd_user_can( $user_id, $permission_name, $post_id ) ) {
+			if ( sstk_user_can( $user_id, $permission_name, $post_id ) ) {
 				$post__in[] = $post_id;
 			}
 		}
@@ -865,20 +1085,20 @@ function wpcd_get_posts_by_permission( $permission_name, $post_type, $post_statu
  *
  * We're pulling from the items in the APP:WordPress - Security tab in SETTINGS, subtab FEATURES - SERVERS.
  *
- * There is a related function named wpcd_can_author_view_server_tab in /traits/traits-for-class-wordpress-app/tabs-security.php.
+ * There is a related function named sstk_can_author_view_server_tab in /traits/traits-for-class-wordpress-app/tabs-security.php.
  * It handles similar security for server tabs.  Changes and fixes here should probably be considered for that function as well.
  *
- * There is also a very similar to the wpcd_can_author_view_site_feature function
+ * There is also a very similar to the sstk_can_author_view_site_feature function
  * below and changes made here might need to be made there as well.
  *
  * @param int    $id             The id of the cpt record for the server.
  * @param string $feature_name   The name of the feature we're checking. eg: email_metabox.
  * @param int    $user_id        The userid to check.
  */
-function wpcd_can_author_view_server_feature( $id, $feature_name, $user_id = 0 ) {
+function sstk_can_author_view_server_feature( $id, $feature_name, $user_id = 0 ) {
 
 	/* If user is admin then, return true. */
-	if ( wpcd_is_admin( $user_id ) ) {
+	if ( sstk_is_admin( $user_id ) ) {
 		return true;
 	}
 
@@ -895,10 +1115,10 @@ function wpcd_can_author_view_server_feature( $id, $feature_name, $user_id = 0 )
 
 	// Setup other variables.
 	$post_author = $post->post_author;
-	$server_type = get_post_meta( $id, 'wpcd_server_server-type', true );
+	$server_type = get_post_meta( $id, 'sstk_server_server-type', true );
 
 	// If we're not checking a wp-app server post return true.
-	if ( $post->post_type != 'wpcd_app_server' ) {
+	if ( $post->post_type != 'sstk_app_server' ) {
 		return true;
 	}
 
@@ -909,19 +1129,19 @@ function wpcd_can_author_view_server_feature( $id, $feature_name, $user_id = 0 )
 
 	// Check the true/false items in the APP:WordPress - Security tab, subtab FEATURES - SERVERS in SETTINGS.
 	// These items let us know which features should be turned off even if the user is the owner/author of the server.
-	if ( true === (bool) get_post_meta( $id, 'wpcd_wpapp_is_staging', true ) ) {
+	if ( true === (bool) get_post_meta( $id, 'sstk_wpapp_is_staging', true ) ) {
 		// This is a staging server but we're not really setting or using this so nothing to do.
 		// The concept of a staging server is for future use.
 	} else {
 		// We have a very long settings key so we construct it in pieces.
-		$wpcd_id_prefix       = 'wpcd_wpapp_server_security_exception';
+		$sstk_id_prefix       = 'sstk_wpapp_server_security_exception';
 		$context_tab_short_id = 'live-servers';
 		$owner_key            = 'server-owner';
 		$feature_key          = $feature_name;
-		$setting_key          = "{$wpcd_id_prefix}_{$context_tab_short_id}_{$owner_key}_{$feature_key}";  // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
+		$setting_key          = "{$sstk_id_prefix}_{$context_tab_short_id}_{$owner_key}_{$feature_key}";  // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
 
 		// Get option value.
-		$exception_flag = (bool) wpcd_get_early_option( $setting_key );
+		$exception_flag = (bool) sstk_get_early_option( $setting_key );
 		if ( true === $exception_flag ) {
 			return false;
 		}
@@ -929,17 +1149,17 @@ function wpcd_can_author_view_server_feature( $id, $feature_name, $user_id = 0 )
 
 	// And...still here so check the roles in the APP:WordPress - Security tab, subtab FEATURES - SERVERS in SETTINGS.
 	// These items let us know which features should be turned off based on roles, even if the user is the owner/author of the server.
-	if ( true === (bool) get_post_meta( $id, 'wpcd_wpapp_is_staging', true ) ) {
+	if ( true === (bool) get_post_meta( $id, 'sstk_wpapp_is_staging', true ) ) {
 		// This is a staging server but we're not really setting or using this concept.  So there is nothing to do here.
 		// The concept of a staging server is for future use.
 	} else {
 		// We have a very long settings key so we construct it in pieces.
-		$prefix               = 'wpcd_wpapp_server_security_exception';
+		$prefix               = 'sstk_wpapp_server_security_exception';
 		$context_tab_short_id = 'live-servers';
 		$feature_key          = $feature_name;
-		$setting_key          = "{$wpcd_id_prefix}_{$context_tab_short_id}_{$feature_key}_roles"; // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
+		$setting_key          = "{$sstk_id_prefix}_{$context_tab_short_id}_{$feature_key}_roles"; // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
 
-		$banned_roles = wpcd_get_early_option( $setting_key );
+		$banned_roles = sstk_get_early_option( $setting_key );
 
 		if ( is_array( $banned_roles ) ) {
 			$user_data = get_userdata( $user_id );
@@ -958,20 +1178,20 @@ function wpcd_can_author_view_server_feature( $id, $feature_name, $user_id = 0 )
  * Takes a feature id and checks to see if it is excluded from being
  * used by the the author of the ID passed into this function.
  *
- * There is a related function named wpcd_can_author_view_site_tab in /traits/traits-for-class-wordpress-app/tabs-security.php.
+ * There is a related function named sstk_can_author_view_site_tab in /traits/traits-for-class-wordpress-app/tabs-security.php.
  * It handles similar security for site tabs.  Changes and fixes here should probably be considered for that function as well.
  *
- * This is also very similar to the wpcd_can_author_view_server_feature function
+ * This is also very similar to the sstk_can_author_view_server_feature function
  * above and changes made here might need to be made there as well.
  *
  * @param int    $id             The id of the cpt record for the server.
  * @param string $feature_name   The name of the tab we're checking.
  * @param int    $user_id        The userid to check.
  */
-function wpcd_can_author_view_site_feature( $id, $feature_name, $user_id = 0 ) {
+function sstk_can_author_view_site_feature( $id, $feature_name, $user_id = 0 ) {
 
 	/* If user is admin then, return true. */
-	if ( wpcd_is_admin( $user_id ) ) {
+	if ( sstk_is_admin( $user_id ) ) {
 		return true;
 	}
 
@@ -990,7 +1210,7 @@ function wpcd_can_author_view_site_feature( $id, $feature_name, $user_id = 0 ) {
 	$post_author = $post->post_author;
 
 	// If we're not checking an app post return true.
-	if ( $post->post_type != 'wpcd_app' ) {
+	if ( $post->post_type != 'sstk_app' ) {
 		return true;
 	}
 
@@ -1001,7 +1221,7 @@ function wpcd_can_author_view_site_feature( $id, $feature_name, $user_id = 0 ) {
 
 	// We now know the user is the author of the site post.  Are they also the author of the server post?
 	$both        = false;
-	$server_post = WPCD()->get_server_by_app_id( $id );
+	$server_post = SSTK()->get_server_by_app_id( $id );
 	if ( $server_post ) {
 		if ( $user_id === (int) $server_post->post_author ) {
 			$both = true;
@@ -1009,24 +1229,24 @@ function wpcd_can_author_view_site_feature( $id, $feature_name, $user_id = 0 ) {
 	}
 
 	// Staging or live site?
-	if ( true === WPCD()->is_staging_site( $id ) ) {
+	if ( true === SSTK()->is_staging_site( $id ) ) {
 		$context_tab_short_id = 'staging-sites';
 	} else {
 		$context_tab_short_id = 'live-sites';
 	}
 
 	// We have a very long settings key so we construct it in pieces.
-	$wpcd_id_prefix = 'wpcd_wpapp_site_security_exception';
+	$sstk_id_prefix = 'sstk_wpapp_site_security_exception';
 	$feature_key    = $feature_name;
 	if ( true === $both ) {
 		$owner_key = 'site-and-server-owner';
 	} else {
 		$owner_key = 'site-owner';
 	}
-	$setting_key = "{$wpcd_id_prefix}_{$context_tab_short_id}_{$owner_key}_{$feature_key}";  // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
+	$setting_key = "{$sstk_id_prefix}_{$context_tab_short_id}_{$owner_key}_{$feature_key}";  // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
 
 	// Get option value.
-	$exception_flag = (bool) wpcd_get_early_option( $setting_key );
+	$exception_flag = (bool) sstk_get_early_option( $setting_key );
 	if ( true === $exception_flag ) {
 		return false;
 	}
@@ -1034,11 +1254,11 @@ function wpcd_can_author_view_site_feature( $id, $feature_name, $user_id = 0 ) {
 	// And...still here so check the roles in the APP:WordPress - Security tab in SETTINGS.
 	// These items let us know which tabs should be turned off based on roles, even if the user is the owner/author of the server.
 	// Just as before, we have a very long settings key so we construct it in pieces.
-	$prefix      = 'wpcd_wpapp_site_security_exception';
+	$prefix      = 'sstk_wpapp_site_security_exception';
 	$feature_key = $feature_name;
-	$setting_key = "{$wpcd_id_prefix}_{$context_tab_short_id}_{$feature_key}_roles"; // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
+	$setting_key = "{$sstk_id_prefix}_{$context_tab_short_id}_{$feature_key}_roles"; // See the class-wordpress-app-settings.php file for how this is key is constructed and used. Function: all_server_features_security_fields.
 
-	$banned_roles = wpcd_get_early_option( $setting_key );
+	$banned_roles = sstk_get_early_option( $setting_key );
 
 	if ( is_array( $banned_roles ) ) {
 		$user_data = get_userdata( $user_id );
@@ -1059,7 +1279,7 @@ function wpcd_can_author_view_site_feature( $id, $feature_name, $user_id = 0 ) {
  *
  * @return array key-value array of postid=>post_title
  */
-function wpcd_post_ids_to_key_value_array( $post_ids ) {
+function sstk_post_ids_to_key_value_array( $post_ids ) {
 
 	$return = array();
 
@@ -1075,30 +1295,14 @@ function wpcd_post_ids_to_key_value_array( $post_ids ) {
 }
 
 /**
- * Whether we're going to allow the data sync options
- * to be enabled on a site.
- */
-function wpcd_data_sync_allowed() {
-	$allow = false;
-
-	// It's completely disabled in the wp-config.php file.
-	if ( defined( 'WPCD_DISABLE_DATA_SYNC' ) && WPCD_DISABLE_DATA_SYNC ) {
-		return false;
-	}
-
-	// If we get here then all good.
-	return true;
-}
-
-/**
  * Whether we're going to allow the manual email notifications options
  * to be enabled on a site.
  */
-function wpcd_email_notifications_allowed() {
+function sstk_email_notifications_allowed() {
 	$allow = false;
 
 	// It's completely disabled in the wp-config.php file.
-	if ( defined( 'WPCD_DISABLE_EMAIL_NOTIFICATIONS' ) && WPCD_DISABLE_EMAIL_NOTIFICATIONS ) {
+	if ( defined( 'SSTK_DISABLE_EMAIL_NOTIFICATIONS' ) && SSTK_DISABLE_EMAIL_NOTIFICATIONS ) {
 		return false;
 	}
 
@@ -1112,7 +1316,7 @@ function wpcd_email_notifications_allowed() {
  * @param  array $array array.
  * @return array
  */
-function wpcd_filter_input_numeric_array( array &$array ) {
+function sstk_filter_input_numeric_array( array &$array ) {
 	array_walk_recursive(
 		$array,
 		function ( &$value ) {
@@ -1131,7 +1335,7 @@ function wpcd_filter_input_numeric_array( array &$array ) {
  *
  * @return boolean
  */
-function wpcd_check_user_is_team_manager( $user_id, $team_id = 0 ) {
+function sstk_check_user_is_team_manager( $user_id, $team_id = 0 ) {
 
 	if ( empty( $user_id ) ) {
 		return false;
@@ -1139,16 +1343,16 @@ function wpcd_check_user_is_team_manager( $user_id, $team_id = 0 ) {
 
 	// return true if passed $user_id is a team manager in passed $team_id.
 	if ( ! empty( $team_id ) ) {
-		$wpcd_permission_rule = get_post_meta( $team_id, 'wpcd_permission_rule', true );
+		$sstk_permission_rule = get_post_meta( $team_id, 'sstk_permission_rule', true );
 
-		foreach ( $wpcd_permission_rule as $rule ) {
-			if ( array_key_exists( 'wpcd_team_manager', $rule ) && $rule['wpcd_team_member'] == $user_id ) {
+		foreach ( $sstk_permission_rule as $rule ) {
+			if ( array_key_exists( 'sstk_team_manager', $rule ) && $rule['sstk_team_member'] == $user_id ) {
 				return true;
 			}
 		}
 	} else {
 		$args  = array(
-			'post_type'   => 'wpcd_team',
+			'post_type'   => 'sstk_team',
 			'post_status' => 'private',
 			'numberposts' => -1,
 			'fields'      => 'ids',
@@ -1157,14 +1361,14 @@ function wpcd_check_user_is_team_manager( $user_id, $team_id = 0 ) {
 
 		if ( $teams ) {
 			foreach ( $teams as $team ) {
-				$wpcd_permission_rule[] = get_post_meta( $team, 'wpcd_permission_rule', true );
+				$sstk_permission_rule[] = get_post_meta( $team, 'sstk_permission_rule', true );
 			}
 
-			if ( $wpcd_permission_rule ) {
-				foreach ( $wpcd_permission_rule as $rules ) {
+			if ( $sstk_permission_rule ) {
+				foreach ( $sstk_permission_rule as $rules ) {
 					if ( $rules ) {
 						foreach ( $rules as $rule ) {
-							if ( array_key_exists( 'wpcd_team_manager', $rule ) && $rule['wpcd_team_member'] == $user_id ) {
+							if ( array_key_exists( 'sstk_team_manager', $rule ) && $rule['sstk_team_member'] == $user_id ) {
 								return true;
 							}
 						}
@@ -1186,10 +1390,10 @@ function wpcd_check_user_is_team_manager( $user_id, $team_id = 0 ) {
  *
  * @return array
  */
-function wpcd_get_team_manager_posts( $user_id, $post_status = 'private' ) {
+function sstk_get_team_manager_posts( $user_id, $post_status = 'private' ) {
 	$post_status = ( $post_status == 'all' ) ? 'private' : $post_status;
 	$args        = array(
-		'post_type'   => 'wpcd_team',
+		'post_type'   => 'sstk_team',
 		'post_status' => $post_status,
 		'numberposts' => -1,
 		'fields'      => 'ids',
@@ -1204,14 +1408,14 @@ function wpcd_get_team_manager_posts( $user_id, $post_status = 'private' ) {
 				$post__in[] = $team;
 			}
 
-			$wpcd_permission_rule[ $team ] = get_post_meta( $team, 'wpcd_permission_rule', true );
+			$sstk_permission_rule[ $team ] = get_post_meta( $team, 'sstk_permission_rule', true );
 		}
 
-		if ( $wpcd_permission_rule ) {
-			foreach ( $wpcd_permission_rule as $team_id => $rules ) {
+		if ( $sstk_permission_rule ) {
+			foreach ( $sstk_permission_rule as $team_id => $rules ) {
 				if ( $rules ) {
 					foreach ( $rules as $rule ) {
-						if ( array_key_exists( 'wpcd_team_manager', $rule ) && $rule['wpcd_team_member'] == $user_id ) {
+						if ( array_key_exists( 'sstk_team_manager', $rule ) && $rule['sstk_team_member'] == $user_id ) {
 
 							if ( in_array( $team_id, $post__in ) ) {
 								continue;
@@ -1238,7 +1442,7 @@ function wpcd_get_team_manager_posts( $user_id, $post_status = 'private' ) {
  * @param  integer $user_id user id.
  * @return boolean
  */
-function wpcd_is_admin( $user_id = 0 ) {
+function sstk_is_admin( $user_id = 0 ) {
 
 	if ( empty( $user_id ) ) {
 		$user_id = get_current_user_id();
@@ -1251,18 +1455,18 @@ function wpcd_is_admin( $user_id = 0 ) {
 }
 
 /**
- * Checks that the current user can manage wpcd
+ * Checks that the current user can manage sstk
  *
  * @param  integer $user_id user id.
  * @return boolean
  */
-function wpcd_is_manager( $user_id = 0 ) {
+function sstk_is_manager( $user_id = 0 ) {
 
 	if ( empty( $user_id ) ) {
 		$user_id = get_current_user_id();
 	}
 
-	if ( user_can( $user_id, 'wpcd_manage_all' ) ) {
+	if ( user_can( $user_id, 'sstk_manage_all' ) ) {
 		return true;
 	}
 	return false;
@@ -1275,22 +1479,22 @@ function wpcd_is_manager( $user_id = 0 ) {
  *
  * @return boolean
  */
-function wpcd_can_current_user_delete_app( $post_id ) {
+function sstk_can_current_user_delete_app( $post_id ) {
 
 	// Short circuit: If admin, then just return true.
-	if ( wpcd_is_admin() ) {
+	if ( sstk_is_admin() ) {
 		return true;
 	}
 
 	// get state of delete protect flag.
-	$wpcd_app_delete_protection = get_post_meta( $post_id, 'wpcd_app_delete_protection', true );
+	$sstk_app_delete_protection = get_post_meta( $post_id, 'sstk_app_delete_protection', true );
 
 	// get user id and post object.
 	$user_id = get_current_user_id();
 	$post    = get_post( $post_id );
 
 	// do checks.
-	if ( ( $post->post_type == 'wpcd_app' && ! wpcd_user_can( $user_id, 'delete_app_record', $post->ID ) && $post->post_author != $user_id ) || ( $post->post_type == 'wpcd_app' && ! empty( $wpcd_app_delete_protection ) ) ) {
+	if ( ( $post->post_type == 'sstk_app' && ! sstk_user_can( $user_id, 'delete_app_record', $post->ID ) && $post->post_author != $user_id ) || ( $post->post_type == 'sstk_app' && ! empty( $sstk_app_delete_protection ) ) ) {
 		return false;
 	} else {
 		return true;
@@ -1305,10 +1509,10 @@ function wpcd_can_current_user_delete_app( $post_id ) {
  *
  * @return boolean
  */
-function wpcd_is_app_delete_protected( $post_id ) {
+function sstk_is_app_delete_protected( $post_id ) {
 
-	$wpcd_app_delete_protection = get_post_meta( $post_id, 'wpcd_app_delete_protection', true );
-	if ( empty( $wpcd_app_delete_protection ) ) {
+	$sstk_app_delete_protection = get_post_meta( $post_id, 'sstk_app_delete_protection', true );
+	if ( empty( $sstk_app_delete_protection ) ) {
 		return false;
 	} else {
 		return true;
@@ -1322,7 +1526,7 @@ function wpcd_is_app_delete_protected( $post_id ) {
  * @param  string $domain domain.
  * @return string
  */
-function wpcd_clean_domain( $domain ) {
+function sstk_clean_domain( $domain ) {
 	if ( empty( $domain ) ) {
 		return '';
 	}
@@ -1341,7 +1545,7 @@ function wpcd_clean_domain( $domain ) {
  *
  * @return string
  */
-function wpcd_clean_alpha_numeric_dashes( $instr ) {
+function sstk_clean_alpha_numeric_dashes( $instr ) {
 
 	if ( empty( $instr ) ) {
 		return '';
@@ -1360,7 +1564,7 @@ function wpcd_clean_alpha_numeric_dashes( $instr ) {
  *
  * @return string
  */
-function wpcd_clean_alpha_numeric_dashes_periods_underscores( $instr ) {
+function sstk_clean_alpha_numeric_dashes_periods_underscores( $instr ) {
 
 	if ( empty( $instr ) ) {
 		return '';
@@ -1379,7 +1583,7 @@ function wpcd_clean_alpha_numeric_dashes_periods_underscores( $instr ) {
  *
  * @return string
  */
-function wpcd_clean_numeric( $instr ) {
+function sstk_clean_numeric( $instr ) {
 	return preg_replace( '/\D+/', '', $instr ); // Uppercase "D" stands for "non-digit".
 }
 
@@ -1390,7 +1594,7 @@ function wpcd_clean_numeric( $instr ) {
  *
  * @return string
  */
-function wpcd_replace_linebreaks_with_space( $instr ) {
+function sstk_replace_linebreaks_with_space( $instr ) {
 	return trim( preg_replace( '/\s+/', ' ', $instr ) );
 }
 
@@ -1401,7 +1605,7 @@ function wpcd_replace_linebreaks_with_space( $instr ) {
  *
  * @return string
  */
-function wpcd_replace_linebreaks_with_comma( $instr ) {
+function sstk_replace_linebreaks_with_comma( $instr ) {
 	return trim( preg_replace( '/\s+/', ',', $instr ) );
 }
 
@@ -1413,7 +1617,7 @@ function wpcd_replace_linebreaks_with_comma( $instr ) {
  *
  * @return array List of user ids
  */
-function wpcd_get_users_in_team( $post_id ) {
+function sstk_get_users_in_team( $post_id ) {
 
 	if ( empty( $post_id ) ) {
 		return array();
@@ -1421,18 +1625,18 @@ function wpcd_get_users_in_team( $post_id ) {
 
 	$users = array();
 
-	$teams = get_post_meta( $post_id, 'wpcd_assigned_teams', false );
+	$teams = get_post_meta( $post_id, 'sstk_assigned_teams', false );
 	$users = array();
 	if ( $teams ) {
 		foreach ( $teams as $team ) {
-			$rules = get_post_meta( $team, 'wpcd_permission_rule', true );
+			$rules = get_post_meta( $team, 'sstk_permission_rule', true );
 			if ( $rules ) {
 				foreach ( $rules as $rule ) {
-					if ( in_array( $rule['wpcd_team_member'], $users ) ) {
+					if ( in_array( $rule['sstk_team_member'], $users ) ) {
 						continue;
 					}
 
-					$users[] = $rule['wpcd_team_member'];
+					$users[] = $rule['sstk_team_member'];
 				}
 			}
 		}
@@ -1447,10 +1651,10 @@ function wpcd_get_users_in_team( $post_id ) {
  *
  * @param string $label The text to be used inside the summary attribute - default to 'help'.
  */
-function wpcd_get_html5_detail_element_summary_text( $label = '' ) {
+function sstk_get_html5_detail_element_summary_text( $label = '' ) {
 
 	if ( empty( $label ) ) {
-		$label = __( 'Help', 'wpcd' );
+		$label = __( 'Help', 'simple-stack' );
 	}
 
 	return sprintf( '<summary>%s</summary>', $label );
@@ -1466,7 +1670,7 @@ function wpcd_get_html5_detail_element_summary_text( $label = '' ) {
  *
  * @return string the icon code.
  */
-function wpcd_get_loading_svg_code( $type = 1 ) {
+function sstk_get_loading_svg_code( $type = 1 ) {
 
 	$code = '';
 
@@ -1490,24 +1694,10 @@ function wpcd_get_loading_svg_code( $type = 1 ) {
 			break;
 	}
 
-	$code = apply_filters( 'wpcd_get_loading_svg_code', $code, $type );
+	$code = apply_filters( 'sstk_get_loading_svg_code', $code, $type );
 
 	return $code;
 
-}
-
-
-if ( ! function_exists( 'wpcd_is_woocommerce_activated' ) ) {
-	/**
-	 * Check if WooCommerce is activated
-	 */
-	function wpcd_is_woocommerce_activated() {
-		if ( class_exists( 'woocommerce' ) ) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 }
 
 /**
@@ -1517,7 +1707,7 @@ if ( ! function_exists( 'wpcd_is_woocommerce_activated' ) ) {
  *
  * @return int | false
  */
-function wpcd_get_transient_remaining_time_in_mins( $key ) {
+function sstk_get_transient_remaining_time_in_mins( $key ) {
 	if ( true === (bool) wp_using_ext_object_cache() ) {
 		// External object cache in use - we cannot get expiration data so return false.
 		return false;
@@ -1529,7 +1719,7 @@ function wpcd_get_transient_remaining_time_in_mins( $key ) {
 /**
  * Return an array of font-awesome pro classes.
  */
-function wpcd_get_some_fa_classes() {
+function sstk_get_some_fa_classes() {
 	return array(
 		'fad fa-alicorn',
 		'fad fa-badger-honey',
@@ -1598,8 +1788,8 @@ function wpcd_get_some_fa_classes() {
 /**
  * Returns a random font-awesome pro class from a pre-defined array of classes.
  */
-function wpcd_get_random_fa_class() {
-	return wpcd_get_some_fa_classes()[ array_rand( wpcd_get_some_fa_classes() ) ];
+function sstk_get_random_fa_class() {
+	return sstk_get_some_fa_classes()[ array_rand( sstk_get_some_fa_classes() ) ];
 }
 
 /**
@@ -1609,7 +1799,7 @@ function wpcd_get_random_fa_class() {
  *
  * @param string $thestring the string.
  */
-function wpcd_escape_for_bash( $thestring ) {
+function sstk_escape_for_bash( $thestring ) {
 	return preg_replace( '/([^A-Za-z0-9\s])/', '\\\\$1', $thestring );
 }
 
@@ -1625,8 +1815,8 @@ function wpcd_escape_for_bash( $thestring ) {
  *
  * @return string
  */
-function wpcd_get_documentation_link( $link_option_key, $default_link ) {
-	$link = wpcd_get_early_option( $link_option_key );
+function sstk_get_documentation_link( $link_option_key, $default_link ) {
+	$link = sstk_get_early_option( $link_option_key );
 	if ( ! empty( $link ) ) {
 		return $link;
 	} else {
@@ -1642,8 +1832,8 @@ function wpcd_get_documentation_link( $link_option_key, $default_link ) {
  *
  * @return boolean
  */
-function wpcd_is_public_servers_list_query( $query ) {
-	return isset( $query->query['wpcd_app_server_front'] ) && $query->query['wpcd_app_server_front'];
+function sstk_is_public_servers_list_query( $query ) {
+	return isset( $query->query['sstk_app_server_front'] ) && $query->query['sstk_app_server_front'];
 }
 
 /**
@@ -1653,8 +1843,8 @@ function wpcd_is_public_servers_list_query( $query ) {
  *
  * @return boolean
  */
-function wpcd_is_public_apps_list_query( $query ) {
-	return isset( $query->query['wpcd_app_front'] ) && $query->query['wpcd_app_front'];
+function sstk_is_public_apps_list_query( $query ) {
+	return isset( $query->query['sstk_app_front'] ) && $query->query['sstk_app_front'];
 }
 
 /**
@@ -1668,7 +1858,7 @@ function wpcd_is_public_apps_list_query( $query ) {
  *
  * @return boolean
  */
-function wpcd_user_can_edit_app_server( $server_id = null, $user_id = null, $type = 'server' ) {
+function sstk_user_can_edit_app_server( $server_id = null, $user_id = null, $type = 'server' ) {
 
 	if ( null === $server_id ) {
 		global $post;
@@ -1683,13 +1873,13 @@ function wpcd_user_can_edit_app_server( $server_id = null, $user_id = null, $typ
 		return false;
 	}
 
-	if ( wpcd_is_admin() ) {
+	if ( sstk_is_admin() ) {
 		return true;
 	}
 
 	$post_author = get_post( $server_id )->post_author;
 
-	return ! ( ! wpcd_user_can( $user_id, 'view_' . $type, $server_id ) && $post_author != $user_id );
+	return ! ( ! sstk_user_can( $user_id, 'view_' . $type, $server_id ) && $post_author != $user_id );
 }
 
 /**
@@ -1699,7 +1889,7 @@ function wpcd_user_can_edit_app_server( $server_id = null, $user_id = null, $typ
  *
  * @return string|int
  */
-function wpcd_get_current_page_server_id() {
+function sstk_get_current_page_server_id() {
 
 	$id = '';
 	if ( is_admin() ) {
@@ -1723,7 +1913,7 @@ function wpcd_get_current_page_server_id() {
  * Takes a string and wraps it with a span and a class.
  *
  * For example, if we get a string such as "Domain:" we might
- * return <span class="wpcd-column-label-domain">Domain:</span>.
+ * return <span class="sstk-column-label-domain">Domain:</span>.
  *
  * @param string $string The string to wrap.
  * @param string $hint A portion of the class name eg: "Domain".
@@ -1731,9 +1921,9 @@ function wpcd_get_current_page_server_id() {
  *
  * @return string
  */
-function wpcd_wrap_string_with_span_and_class( $string, $hint, $prefix ) {
+function sstk_wrap_string_with_span_and_class( $string, $hint, $prefix ) {
 
-	$class = "wpcd-{$prefix}-{$hint}";
+	$class = "sstk-{$prefix}-{$hint}";
 	return '<span class="' . $class . '">' . $string . '</span>';
 
 }
@@ -1742,7 +1932,7 @@ function wpcd_wrap_string_with_span_and_class( $string, $hint, $prefix ) {
  * Takes a string and wraps it with a div and a class.
  *
  * For example, if we get a string such as "Domain:" we might
- * return <div class="wpcd-column-label-domain">Domain:</div>.
+ * return <div class="sstk-column-label-domain">Domain:</div>.
  *
  * @param string $string The string to wrap.
  * @param string $hint A portion of the class name eg: "Domain".
@@ -1750,9 +1940,9 @@ function wpcd_wrap_string_with_span_and_class( $string, $hint, $prefix ) {
  *
  * @return string
  */
-function wpcd_wrap_string_with_div_and_class( $string, $hint, $prefix ) {
+function sstk_wrap_string_with_div_and_class( $string, $hint, $prefix ) {
 
-	$class = "wpcd-{$prefix}-{$hint}";
+	$class = "sstk-{$prefix}-{$hint}";
 	return '<div class="' . $class . '">' . $string . '</div>';
 
 }
@@ -1770,7 +1960,7 @@ function wpcd_wrap_string_with_div_and_class( $string, $hint, $prefix ) {
  *
  * @return int.
  */
-function wpcd_get_post_id_from_global() {
+function sstk_get_post_id_from_global() {
 	$post_id = null;
 	if ( isset( $_GET['post'] ) ) {
 		$post_id = intval( $_GET['post'] );
@@ -1794,18 +1984,18 @@ function wpcd_get_post_id_from_global() {
  *
  * @return string
  */
-function wpcd_wrap_clipboard_copy( $data_string, $break = true, $br_tag = false ) {
+function sstk_wrap_clipboard_copy( $data_string, $break = true, $br_tag = false ) {
 
 	if ( true === $break ) {
-		$return = '<div class="wpcd-click-to-copy">';
+		$return = '<div class="sstk-click-to-copy">';
 	} else {
-		$return = '<span class="wpcd-click-to-copy">';
+		$return = '<span class="sstk-click-to-copy">';
 	}
-	$return .= '<span class="wpcd-click-to-copy-text">' . $data_string . '</span>';
+	$return .= '<span class="sstk-click-to-copy-text">' . $data_string . '</span>';
 	if ( true === $br_tag ) {
 		$return .= '<br/>';
 	}
-	$return .= '<span data-label="' . __( 'Copied', 'wpcd' ) . '" class="wpcd-click-to-copy-label wpcd-copy-hidden">' . __( 'Click to copy', 'wpcd' ) . '</span>';
+	$return .= '<span data-label="' . __( 'Copied', 'simple-stack' ) . '" class="sstk-click-to-copy-label sstk-copy-hidden">' . __( 'Click to copy', 'simple-stack' ) . '</span>';
 
 	if ( true === $break ) {
 		$return .= '</div>';
@@ -1823,7 +2013,7 @@ function wpcd_wrap_clipboard_copy( $data_string, $break = true, $br_tag = false 
  *
  * @since 5.0
  */
-function wpcd_generate_uuid() {
+function sstk_generate_uuid() {
 
 	// Generate 16 bytes (128 bits) of random data or use the data passed into the function.
 	$data = $data ?? random_bytes( 16 );
@@ -1840,31 +2030,16 @@ function wpcd_generate_uuid() {
 
 }
 
+
 /**
- * Return whether our woocommerce module is enabled or not.
+ * Return whether GIT is enabled for SSTK.
  *
  * @since 5.3
  *
  * @return bool
  */
-function wpcd_is_wc_module_enabled() {
-	if ( class_exists( 'WPCD_WooCommerce_Init' ) ) {
-		return true;
-	} else {
-		return false;
-	}
-
-}
-
-/**
- * Return whether GIT is enabled for WPCD.
- *
- * @since 5.3
- *
- * @return bool
- */
-function wpcd_is_git_enabled() {
-	if ( class_exists( 'WPCD_GitControl_Init' ) ) {
+function sstk_is_git_enabled() {
+	if ( class_exists( 'SSTK_GitControl_Init' ) ) {
 		return true;
 	} else {
 		return false;
@@ -1872,14 +2047,14 @@ function wpcd_is_git_enabled() {
 }
 
 /**
- * Return whether Multi-Tenant is enabled for WPCD.
+ * Return whether Multi-Tenant is enabled for SSTK.
  *
  * @since 5.3
  *
  * @return bool
  */
-function wpcd_is_mt_enabled() {
-	if ( class_exists( 'WPCD_Multitenant_Init' ) ) {
+function sstk_is_mt_enabled() {
+	if ( class_exists( 'SSTK_Multitenant_Init' ) ) {
 		return true;
 	} else {
 		return false;
@@ -1889,9 +2064,9 @@ function wpcd_is_mt_enabled() {
 /**
  * Returns TRUE if the custom tables for providers and DNS are enabled.
  */
-function wpcd_is_custom_dns_provider_tables_enabled() {
+function sstk_is_custom_dns_provider_tables_enabled() {
 
-	if ( defined( 'WPCD_CUSTOM_DNS_PROVIDER_TABLES' ) && true === WPCD_CUSTOM_DNS_PROVIDER_TABLES ) {
+	if ( defined( 'SSTK_CUSTOM_DNS_PROVIDER_TABLES' ) && true === SSTK_CUSTOM_DNS_PROVIDER_TABLES ) {
 		return true;
 	}
 
@@ -1906,7 +2081,7 @@ function wpcd_is_custom_dns_provider_tables_enabled() {
  *
  * @return boolean
  */
-function wpcd_user_has_role( $user_id, $role_name ) {
+function sstk_user_has_role( $user_id, $role_name ) {
 	$user_meta  = get_userdata( $user_id );
 	$user_roles = $user_meta->roles;
 	return in_array( $role_name, $user_roles );
@@ -1920,8 +2095,8 @@ function wpcd_user_has_role( $user_id, $role_name ) {
  *
  * @return array
  */
-function wpcd_get_all_providers_by_permission( $user_id = null ) {
-	$provider = WPCD_Custom_Table_API::get( 'provider' );
+function sstk_get_all_providers_by_permission( $user_id = null ) {
+	$provider = SSTK_Custom_Table_API::get( 'provider' );
 	$result   = $provider->get_items_by_permission( array(), $user_id );
 	return isset( $result['items'] ) ? $result['items'] : array();
 }
@@ -1933,8 +2108,8 @@ function wpcd_get_all_providers_by_permission( $user_id = null ) {
  *
  * @return array
  */
-function wpcd_get_all_dns_providers_by_permission( $user_id = null ) {
-	$dns_provider = WPCD_Custom_Table_API::get( 'dns_provider' );
+function sstk_get_all_dns_providers_by_permission( $user_id = null ) {
+	$dns_provider = SSTK_Custom_Table_API::get( 'dns_provider' );
 	$result       = $dns_provider->get_items_by_permission( array(), $user_id );
 	return isset( $result['items'] ) ? $result['items'] : array();
 }
@@ -1946,8 +2121,8 @@ function wpcd_get_all_dns_providers_by_permission( $user_id = null ) {
  *
  * @return array
  */
-function wpcd_get_all_user_dns_zones( $user_id = null ) {
-	$dns_zone = WPCD_Custom_Table_API::get( 'dns_zone' );
+function sstk_get_all_user_dns_zones( $user_id = null ) {
+	$dns_zone = SSTK_Custom_Table_API::get( 'dns_zone' );
 	$result   = $dns_zone->get_items_by_permission( array(), $user_id );
 	return $result;
 }
@@ -1959,12 +2134,12 @@ function wpcd_get_all_user_dns_zones( $user_id = null ) {
  *
  * @return array
  */
-function wpcd_get_zone_records_by_zone_id( $zone_id ) {
+function sstk_get_zone_records_by_zone_id( $zone_id ) {
 
 	$results = array();
 	if ( $zone_id ) {
 
-		$zone_record = WPCD_Custom_Table_API::get( 'dns_zone_record' );
+		$zone_record = SSTK_Custom_Table_API::get( 'dns_zone_record' );
 		$results     = $zone_record->get_items_by_parent_id( $zone_id, ARRAY_A );
 	}
 	return ( is_array( $results ) ) ? $results : array();
@@ -1975,9 +2150,9 @@ function wpcd_get_zone_records_by_zone_id( $zone_id ) {
  *
  * @return array
  */
-function wpcd_get_default_dns_zone() {
+function sstk_get_default_dns_zone() {
 
-	$dns_zone = WPCD_Custom_Table_API::get( 'dns_zone' );
+	$dns_zone = SSTK_Custom_Table_API::get( 'dns_zone' );
 	$result   = $dns_zone->get_default();
 
 	return $result;
@@ -1991,14 +2166,14 @@ function wpcd_get_default_dns_zone() {
  *
  * @return array
  */
-function wpcd_get_dns_provider_by_zone_id( $zone_id = null ) {
+function sstk_get_dns_provider_by_zone_id( $zone_id = null ) {
 
 	$dns_provider_item = array();
-	$dns_zone          = WPCD_Custom_Table_API::get( 'dns_zone' );
+	$dns_zone          = SSTK_Custom_Table_API::get( 'dns_zone' );
 	$zone              = $dns_zone->get_by_id( $zone_id );
 
 	if ( $zone && $zone->parent_id ) {
-		$dns_provider      = WPCD_Custom_Table_API::get( 'dns_provider' );
+		$dns_provider      = SSTK_Custom_Table_API::get( 'dns_provider' );
 		$dns_provider_item = (array) $dns_provider->get_by_id( $zone->parent_id );
 	}
 
@@ -2007,34 +2182,34 @@ function wpcd_get_dns_provider_by_zone_id( $zone_id = null ) {
 
 /*
 // Functions in this section are for testing only.
-function wpcd_test_01( $attributes ) {
-	error_log( 'wpcd_server_wordpress-app_server_created action_hook has fired' );
+function sstk_test_01( $attributes ) {
+	error_log( 'sstk_server_wordpress-app_server_created action_hook has fired' );
 }
-add_action( 'wpcd_server_wordpress-app_server_created', 'wpcd_test_01', 10, 1 );
+add_action( 'sstk_server_wordpress-app_server_created', 'sstk_test_01', 10, 1 );
 
-function wpcd_test_02( $attributes ) {
-	error_log( 'wpcd_server_wordpress-app_prepare_server_command_done hook as fired' );
+function sstk_test_02( $attributes ) {
+	error_log( 'sstk_server_wordpress-app_prepare_server_command_done hook as fired' );
 }
-add_action( 'wpcd_server_wordpress-app_prepare_server_command_done', 'wpcd_test_02', 10, 1 );
+add_action( 'sstk_server_wordpress-app_prepare_server_command_done', 'sstk_test_02', 10, 1 );
 
-function wpcd_test_initial_server_attributes( $attributes, $args ) {
+function sstk_test_initial_server_attributes( $attributes, $args ) {
 	$attributes['test_attribute'] = 'test';
 	return $attributes;
 }
-add_filter( "wpcd_wordpress-app_initial_server_attributes", 'wpcd_test_initial_server_attributes', 10, 2 );
+add_filter( "sstk_wordpress-app_initial_server_attributes", 'sstk_test_initial_server_attributes', 10, 2 );
 
-function wpcd_test_create_popup_after_form_option() {
+function sstk_test_create_popup_after_form_option() {
 
 	return ;
 
 	?>
 
-	<div class="wpcd-create-popup-label-wrap"><label class="wpcd-create-popup-label" for="namex"> <?php echo __('Name of Serverx', 'wpcd') ?>  </label></div>
-	<div class="wpcd-create-popup-input-wrap">
-		<input type="text" name="namex" placeholder="<?php _e('Name of serverx', 'wpcd' ); ?>" class="wpcd_server_namex">
+	<div class="sstk-create-popup-label-wrap"><label class="sstk-create-popup-label" for="namex"> <?php echo __('Name of Serverx', 'simple-stack') ?>  </label></div>
+	<div class="sstk-create-popup-input-wrap">
+		<input type="text" name="namex" placeholder="<?php _e('Name of serverx', 'simple-stack' ); ?>" class="sstk_server_namex">
 	</div>
 
 	<?php
 }
-add_action( "wpcd_wordpress-app_create_popup_after_form_open", 'wpcd_test_create_popup_after_form_option', 10 );
+add_action( "sstk_wordpress-app_create_popup_after_form_open", 'sstk_test_create_popup_after_form_option', 10 );
 */

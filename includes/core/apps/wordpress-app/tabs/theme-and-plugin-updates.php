@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Update plugins and themes tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,52 +11,52 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES
+ * Class SSTK_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES
  */
-class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 		// Add bulk action option to the site list to update themes and plugins.
-		add_filter( 'bulk_actions-edit-wpcd_app', array( $this, 'wpcd_add_new_bulk_actions_site' ) );
+		add_filter( 'bulk_actions-edit-sstk_app', array( $this, 'sstk_add_new_bulk_actions_site' ) );
 
 		// Action hook to handle bulk actions for site.
-		add_filter( 'handle_bulk_actions-edit-wpcd_app', array( $this, 'wpcd_bulk_action_handler_sites' ), 10, 3 );
+		add_filter( 'handle_bulk_actions-edit-sstk_app', array( $this, 'sstk_bulk_action_handler_sites' ), 10, 3 );
 
 		// Allow the update themes/plugins action to be triggered via an action hook.  Will primarily be used by Bulk Actions.
-		add_action( 'wpcd_wordpress-update-themes-and-plugins', array( $this, 'update_site' ), 10, 2 );
+		add_action( 'sstk_wordpress-update-themes-and-plugins', array( $this, 'update_site' ), 10, 2 );
 
 		/* Pending Logs Background Task: Trigger plugin and theme updates */
 		add_action( 'pending_log_update_themes_and_plugins', array( $this, 'pending_log_update_themes_and_plugins' ), 10, 3 );
 
 		/* Handle callback success and tag the pending log record as successful */
-		add_action( 'wpcd_app_wordpress-app_update_themes_and_plugins_successful', array( $this, 'handle_update_themes_and_plugins_success' ), 10, 3 );
+		add_action( 'sstk_app_wordpress-app_update_themes_and_plugins_successful', array( $this, 'handle_update_themes_and_plugins_success' ), 10, 3 );
 
 		/* Handle callback failure and tag the pending log record as failed */
-		add_action( 'wpcd_app_wordpress-app_update_themes_and_plugins_failed', array( $this, 'handle_update_themes_and_plugins_failed' ), 10, 3 );
+		add_action( 'sstk_app_wordpress-app_update_themes_and_plugins_failed', array( $this, 'handle_update_themes_and_plugins_failed' ), 10, 3 );
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -76,16 +77,16 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 			$success = (bool) $this->is_ssh_successful( $logs, 'reliable_updates.txt' );
 
 			if ( true === $success ) {
-				do_action( 'wpcd_app_wordpress-app_update_themes_and_plugins_successful', $id, $action, $success );
+				do_action( 'sstk_app_wordpress-app_update_themes_and_plugins_successful', $id, $action, $success );
 			} else {
-				do_action( 'wpcd_app_wordpress-app_update_themes_and_plugins_failed', $id, $action, $success );
+				do_action( 'sstk_app_wordpress-app_update_themes_and_plugins_failed', $id, $action, $success );
 			}
 		}
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -114,7 +115,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Site Updates', 'wpcd' ),
+				'label' => __( 'Site Updates', 'simple-stack' ),
 				'icon'  => 'fad fa-snowplow',
 			);
 		}
@@ -130,11 +131,11 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -149,16 +150,16 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'update-everything', 'update-themes-and-plugins', 'update-themes', 'update-plugins', 'update-wordpress' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -202,10 +203,10 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Returns an array of actions that is valid for the bulk actions menu.
 	 * It's basically the same as the get_valid_actions() function above but
-	 * with the actions prefixed by "wpcd_sites_".
+	 * with the actions prefixed by "sstk_sites_".
 	 */
 	public function get_valid_bulk_actions() {
-		return array( 'wpcd_sites_update_everything', 'wpcd_sites_update_themes_and_plugins', 'wpcd_sites_update_allthemes', 'wpcd_sites_update_allplugins', 'wpcd_sites_update_wordpress' );
+		return array( 'sstk_sites_update_everything', 'sstk_sites_update_themes_and_plugins', 'sstk_sites_update_allthemes', 'sstk_sites_update_allplugins', 'sstk_sites_update_wordpress' );
 	}
 
 	/**
@@ -231,7 +232,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the domain we're working on.
@@ -240,7 +241,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 		// If no domain then return error.
 		if ( empty( $domain ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the domain name for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the domain name for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get an array of credentials and buckets.
@@ -252,11 +253,11 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 
 		// Now, fill in all the other items that the bash script needs to run properly.
 		$args['update_type']      = '1';
-		$args['api_userid']       = escapeshellarg( wpcd_get_option( 'wordpress_app_hcti_api_user_id' ) );
-		$args['api_key']          = escapeshellarg( wpcd_get_option( 'wordpress_app_hcti_api_key' ) );
-		$args['excluded_plugins'] = escapeshellarg( wpcd_get_option( 'wordpress_app_plugin_updates_excluded_list' ) );
-		$args['excluded_themes']  = escapeshellarg( wpcd_get_option( 'wordpress_app_theme_updates_excluded_list' ) );
-		$threshold                = wpcd_get_option( 'wordpress_app_tandc_updates_pixel_threshold' );
+		$args['api_userid']       = escapeshellarg( sstk_get_option( 'wordpress_app_hcti_api_user_id' ) );
+		$args['api_key']          = escapeshellarg( sstk_get_option( 'wordpress_app_hcti_api_key' ) );
+		$args['excluded_plugins'] = escapeshellarg( sstk_get_option( 'wordpress_app_plugin_updates_excluded_list' ) );
+		$args['excluded_themes']  = escapeshellarg( sstk_get_option( 'wordpress_app_theme_updates_excluded_list' ) );
+		$threshold                = sstk_get_option( 'wordpress_app_tandc_updates_pixel_threshold' );
 		if ( ! empty( $threshold ) ) {
 			$args['threshold'] = escapeshellarg( $threshold );
 		} else {
@@ -264,7 +265,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 		}
 
 		// If we don't have an api user id or key for the htci service, then make the update_type 2 (which allows for optional rollbacks).
-		if ( empty( wpcd_get_option( 'wordpress_app_hcti_api_user_id' ) ) && empty( wpcd_get_option( 'wordpress_app_hcti_api_key' ) ) ) {
+		if ( empty( sstk_get_option( 'wordpress_app_hcti_api_user_id' ) ) && empty( sstk_get_option( 'wordpress_app_hcti_api_key' ) ) ) {
 			$args['update_type'] = '2';
 		}
 
@@ -295,13 +296,13 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -333,219 +334,219 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Start new card.
-		$fields[] = wpcd_start_full_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_full_card( $this->get_tab_slug() );
 
 		// We got here so ok to show fields related to updating the site.
-		$doc_link = 'https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/theme-plugin-updates/';
-		$desc     = __( 'Update Themes & Plugins is an experimental feature. Please make sure you read our documentation before using it.', 'wpcd' );
+		$doc_link = 'https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md';
+		$desc     = __( 'Update Themes & Plugins is an experimental feature. Please make sure you read our documentation before using it.', 'simple-stack' );
 		$desc    .= '<br />';
 		$desc    .= '<br />';
-		$desc    .= sprintf( '<a href="%s">%s</a>', wpcd_get_documentation_link( 'wordpress-app-doc-link-theme-plugin-updates', apply_filters( 'wpcd_documentation_links', $doc_link ) ), __( 'View Documentation', 'wpcd' ) );
+		$desc    .= sprintf( '<a href="%s">%s</a>', sstk_get_documentation_link( 'wordpress-app-doc-link-theme-plugin-updates', apply_filters( 'sstk_documentation_links', $doc_link ) ), __( 'View Documentation', 'simple-stack' ) );
 
 		$fields[] = array(
-			'name' => __( 'About Updating Themes & Plugins', 'wpcd' ),
+			'name' => __( 'About Updating Themes & Plugins', 'simple-stack' ),
 			'tab'  => 'theme-and-plugin-updates',
 			'type' => 'heading',
 			'desc' => $desc,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Update Everything
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Update Everything', 'wpcd' ),
+			'name' => __( 'Update Everything', 'simple-stack' ),
 			'tab'  => 'theme-and-plugin-updates',
 			'type' => 'heading',
-			'desc' => __( 'Update WordPress, all themes and all plugins - except those specifically excluded in the settings screen.', 'wpcd' ),
+			'desc' => __( 'Update WordPress, all themes and all plugins - except those specifically excluded in the settings screen.', 'simple-stack' ),
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_update_everything',
+			'id'         => 'sstk_app_update_everything',
 			'name'       => '',
 			'tab'        => 'theme-and-plugin-updates',
 			'type'       => 'button',
-			'std'        => __( 'Update Everything', 'wpcd' ),
+			'std'        => __( 'Update Everything', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'update-everything',
+				'data-sstk-action'              => 'update-everything',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to run all updates for this site?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to run all updates for this site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Update All Themes and All Plugins
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Update Themes and Plugins', 'wpcd' ),
+			'name' => __( 'Update Themes and Plugins', 'simple-stack' ),
 			'tab'  => 'theme-and-plugin-updates',
 			'type' => 'heading',
-			'desc' => __( 'Update all themes and all plugins only - except those specifically excluded in the settings screen.', 'wpcd' ),
+			'desc' => __( 'Update all themes and all plugins only - except those specifically excluded in the settings screen.', 'simple-stack' ),
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_update_themes_and_plugins',
+			'id'         => 'sstk_app_update_themes_and_plugins',
 			'name'       => '',
 			'tab'        => 'theme-and-plugin-updates',
 			'type'       => 'button',
-			'std'        => __( 'Update', 'wpcd' ),
+			'std'        => __( 'Update', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'update-themes-and-plugins',
+				'data-sstk-action'              => 'update-themes-and-plugins',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to run all theme & plugin updates for this site?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to run all theme & plugin updates for this site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Update Themes Only
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Update Themes', 'wpcd' ),
+			'name' => __( 'Update Themes', 'simple-stack' ),
 			'tab'  => 'theme-and-plugin-updates',
 			'type' => 'heading',
-			'desc' => __( 'Update all themes only - except those specifically excluded in the settings screen.', 'wpcd' ),
+			'desc' => __( 'Update all themes only - except those specifically excluded in the settings screen.', 'simple-stack' ),
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_update_themes',
+			'id'         => 'sstk_app_update_themes',
 			'name'       => '',
 			'tab'        => 'theme-and-plugin-updates',
 			'type'       => 'button',
-			'std'        => __( 'Update Themes', 'wpcd' ),
+			'std'        => __( 'Update Themes', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'update-themes',
+				'data-sstk-action'              => 'update-themes',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to update all themes for this site?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to update all themes for this site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Update Plugins Only
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Update Plugins', 'wpcd' ),
+			'name' => __( 'Update Plugins', 'simple-stack' ),
 			'tab'  => 'theme-and-plugin-updates',
 			'type' => 'heading',
-			'desc' => __( 'Update all plugins only - except those specifically excluded in the settings screen.', 'wpcd' ),
+			'desc' => __( 'Update all plugins only - except those specifically excluded in the settings screen.', 'simple-stack' ),
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_update_plugins',
+			'id'         => 'sstk_app_update_plugins',
 			'name'       => '',
 			'tab'        => 'theme-and-plugin-updates',
 			'type'       => 'button',
-			'std'        => __( 'Update Plugins', 'wpcd' ),
+			'std'        => __( 'Update Plugins', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'update-plugins',
+				'data-sstk-action'              => 'update-plugins',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to update all plugins for this site?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to update all plugins for this site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Update WordPress Only
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Update WordPress', 'wpcd' ),
+			'name' => __( 'Update WordPress', 'simple-stack' ),
 			'tab'  => 'theme-and-plugin-updates',
 			'type' => 'heading',
-			'desc' => __( 'Update WordPress Only.', 'wpcd' ),
+			'desc' => __( 'Update WordPress Only.', 'simple-stack' ),
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_update_wordpress',
+			'id'         => 'sstk_app_update_wordpress',
 			'name'       => '',
 			'tab'        => 'theme-and-plugin-updates',
 			'type'       => 'button',
-			'std'        => __( 'Update WordPress', 'wpcd' ),
+			'std'        => __( 'Update WordPress', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'update-wordpress',
+				'data-sstk-action'              => 'update-wordpress',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to update WordPress on this site?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to update WordPress on this site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to update your site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $fields;
 
@@ -554,18 +555,18 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Add new bulk options in site list screen.
 	 *
-	 * Filter Hook: bulk_actions-edit-wpcd_app
+	 * Filter Hook: bulk_actions-edit-sstk_app
 	 *
 	 * @param array $bulk_array bulk array.
 	 */
-	public function wpcd_add_new_bulk_actions_site( $bulk_array ) {
+	public function sstk_add_new_bulk_actions_site( $bulk_array ) {
 
-		if ( wpcd_is_admin() ) {
-			$bulk_array['wpcd_sites_update_themes_and_plugins'] = __( 'Update All Themes and Plugins', 'wpcd' );
-			$bulk_array['wpcd_sites_update_allthemes']          = __( 'Update All Themes', 'wpcd' );
-			$bulk_array['wpcd_sites_update_allplugins']         = __( 'Update All Plugins', 'wpcd' );
-			$bulk_array['wpcd_sites_update_wordpress']          = __( 'Update WordPress', 'wpcd' );
-			$bulk_array['wpcd_sites_update_everything']         = __( 'Update All Themes, Plugins & WordPress', 'wpcd' );
+		if ( sstk_is_admin() ) {
+			$bulk_array['sstk_sites_update_themes_and_plugins'] = __( 'Update All Themes and Plugins', 'simple-stack' );
+			$bulk_array['sstk_sites_update_allthemes']          = __( 'Update All Themes', 'simple-stack' );
+			$bulk_array['sstk_sites_update_allplugins']         = __( 'Update All Plugins', 'simple-stack' );
+			$bulk_array['sstk_sites_update_wordpress']          = __( 'Update WordPress', 'simple-stack' );
+			$bulk_array['sstk_sites_update_everything']         = __( 'Update All Themes, Plugins & WordPress', 'simple-stack' );
 			return $bulk_array;
 		}
 
@@ -576,22 +577,22 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Handle bulk actions for sites.
 	 *
-	 * Action Hook: handle_bulk_actions-edit-wpcd_app
+	 * Action Hook: handle_bulk_actions-edit-sstk_app
 	 *
 	 * @param string $redirect_url  redirect url.
-	 * @param string $action        bulk action slug/id - this is not the WPCD action key.
+	 * @param string $action        bulk action slug/id - this is not the SSTK action key.
 	 * @param array  $post_ids      all post ids.
 	 */
-	public function wpcd_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
+	public function sstk_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
 		// Let's remove query args first for redirect url.
-		$redirect_url = remove_query_arg( array( 'wpcd_update_themes_and_plugins' ), $redirect_url );
+		$redirect_url = remove_query_arg( array( 'sstk_update_themes_and_plugins' ), $redirect_url );
 
 		// Lets make sure we're an admin otherwise return an error.
-		if ( ! wpcd_is_admin() ) {
-			do_action( 'wpcd_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
+		if ( ! sstk_is_admin() ) {
+			do_action( 'sstk_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
 
 			// Show error message to user at the top of the admin list as a dismissible notice.
-			wpcd_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'wpcd' ), 'error' );
+			sstk_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'simple-stack' ), 'error' );
 
 			return $redirect_url;
 		}
@@ -604,14 +605,14 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 					$args['action_hook'] = 'pending_log_update_themes_and_plugins';
 					$args['action']      = $action;
 
-					// Remove the 'wpcd_sites_' from the action string - we'll use it in the message we print in the pending logs table.
-					$printed_action = str_replace( 'wpcd_sites_', '', $action );
+					// Remove the 'sstk_sites_' from the action string - we'll use it in the message we print in the pending logs table.
+					$printed_action = str_replace( 'sstk_sites_', '', $action );
 					/* Translators: %s is an internal action name. */
-					WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'update-themes-and-plugins', $app_id, $args, 'ready', $app_id, sprintf( __( 'Update themes and plugins From Bulk Operation. Scope of Updates: %s', 'wpcd' ), $printed_action ) );
+					SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, 'update-themes-and-plugins', $app_id, $args, 'ready', $app_id, sprintf( __( 'Update themes and plugins From Bulk Operation. Scope of Updates: %s', 'simple-stack' ), $printed_action ) );
 				}
 
 				// Add message to be displayed in admin header.
-				wpcd_global_add_admin_notice( __( 'Updates have been scheduled for the selected sites. You can view the progress in the PENDING TASKS screen.', 'wpcd' ), 'success' );
+				sstk_global_add_admin_notice( __( 'Updates have been scheduled for the selected sites. You can view the progress in the PENDING TASKS screen.', 'simple-stack' ), 'success' );
 
 			}
 		}
@@ -622,7 +623,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Update themes and plugins - triggered via pending logs background process.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
 	 * Action Hook: pending_log_update_themes_and_plugins
 	 *
@@ -633,15 +634,15 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	public function pending_log_update_themes_and_plugins( $task_id, $app_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data   = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
-		$action = $data['action']; // This element is set by the wpcd_bulk_action_handler_sites() function above.
+		$data   = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$action = $data['action']; // This element is set by the sstk_bulk_action_handler_sites() function above.
 
 		if ( ! empty( $action ) ) {
-			// Remove the 'wpcd' prefix from the action in the $data array - this element is set by the wpcd_bulk_action_handler_sites() function above.
-			$action = str_replace( 'wpcd_sites_', '', $action );
+			// Remove the 'simple-stack' prefix from the action in the $data array - this element is set by the sstk_bulk_action_handler_sites() function above.
+			$action = str_replace( 'sstk_sites_', '', $action );
 			if ( ! empty( $action ) ) {
 				/* Update themes and plugins */
-				do_action( 'wpcd_wordpress-update-themes-and-plugins', $action, $app_id );
+				do_action( 'sstk_wordpress-update-themes-and-plugins', $action, $app_id );
 			} else {
 				$this->handle_update_themes_and_plugins_failed( $app_id, $action, array() );
 			}
@@ -654,7 +655,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Handle theme and plugin updates successful
 	 *
-	 * Action Hook: wpcd_app_wordpress-app_update_themes_and_plugins_failed || wpcd_app_wordpress-app_update_themes_and_plugins_failed
+	 * Action Hook: sstk_app_wordpress-app_update_themes_and_plugins_failed || sstk_app_wordpress-app_update_themes_and_plugins_failed
 	 *
 	 * @param int     $app_id               Post id of app.
 	 * @param string  $action               What action were we running.
@@ -667,7 +668,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Handle theme and plugin updates failed
 	 *
-	 * Action Hook: wpcd_app_wordpress-app_update_themes_and_plugins_failed || wpcd_app_wordpress-app_update_themes_and_plugins_failed
+	 * Action Hook: sstk_app_wordpress-app_update_themes_and_plugins_failed || sstk_app_wordpress-app_update_themes_and_plugins_failed
 	 *
 	 * @param int     $app_id               Post id of app.
 	 * @param string  $action               What action were we running.
@@ -695,7 +696,7 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Bail if not a WordPress app...
-		if ( 'wordpress-app' !== WPCD_WORDPRESS_APP()->get_app_type( $app_id ) ) {
+		if ( 'wordpress-app' !== SSTK_WORDPRESS_APP()->get_app_type( $app_id ) ) {
 			return;
 		}
 
@@ -707,22 +708,22 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 		// Get server instance array.
 		$instance = $this->get_app_instance_details( $app_id );
 
-		if ( 'wpcd_app' === get_post_type( $app_id ) ) {
+		if ( 'sstk_app' === get_post_type( $app_id ) ) {
 
 				// Now check the pending tasks table for a record where the key=$app_id and type='update-themes-and-plugins' and state='in-process'
 				// We are depending on the fact that there should only be one process running on a server a time and in this case it should be in-process.
-				$posts = WPCD_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $app_id, 'in-process', 'update-themes-and-plugins' );
+				$posts = SSTK_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $app_id, 'in-process', 'update-themes-and-plugins' );
 
 			if ( $posts ) {
 				// Grab our data array from pending tasks record...
 				$task_id = $posts[0]->ID;
-				$data    = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+				$data    = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 				// And mark it as successful or failed.
 				if ( 'failed' === $success ) {
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
 				} else {
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 				}
 			}
 		}
@@ -731,4 +732,4 @@ class WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES();
+new SSTK_WORDPRESS_TABS_THEME_AND_PLUGIN_UPDATES();

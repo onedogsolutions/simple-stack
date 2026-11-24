@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * SFTP Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,21 +11,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SFTP
+ * Class SSTK_WORDPRESS_TABS_SFTP
  */
-class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SFTP extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_SFTP constructor.
+	 * SSTK_WORDPRESS_TABS_SFTP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
 		// Action to trigger insert of delete request into pending logs for all sFTP users for a site before a site is deleted..
-		add_action( 'wpcd_before_remove_site_action', array( $this, 'prep_direct_delete_all_sftp_users_for_site' ), 10, 1 );
+		add_action( 'sstk_before_remove_site_action', array( $this, 'prep_direct_delete_all_sftp_users_for_site' ), 10, 1 );
 
 		/* Pending Logs Background Task: Trigger direct delete of an sFTP user. */
 		add_action( 'pending_log_direct_delete_sftp_user', array( $this, 'pending_log_direct_delete_sftp_user' ), 10, 3 );
@@ -55,7 +56,7 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'sFTP', 'wpcd' ),
+				'label' => __( 'sFTP', 'simple-stack' ),
 				'icon'  => 'fad fa-exchange',
 			);
 		}
@@ -71,11 +72,11 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -90,15 +91,15 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'sftp-get-passwd', 'sftp-add-user', 'sftp-remove-user', 'sftp-change-password', 'sftp-remove-password', 'sftp-remove-key', 'sftp-set-key' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -165,58 +166,58 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 		$fields = array();
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// add user.
 		$fields[] = array(
-			'name' => __( 'Add an sFTP User', 'wpcd' ),
+			'name' => __( 'Add an sFTP User', 'simple-stack' ),
 			'tab'  => 'sftp',
 			'type' => 'heading',
 		);
 		$fields[] = array(
-			'name'       => __( 'User Name', 'wpcd' ),
-			'id'         => 'wpcd_app_user1',
+			'name'       => __( 'User Name', 'simple-stack' ),
+			'id'         => 'sstk_app_user1',
 			'tab'        => 'sftp',
 			'type'       => 'text',
-			'std'        => strtolower( wpcd_generate_alpha_numeric_string( 12 ) ),
+			'std'        => strtolower( sstk_generate_alpha_numeric_string( 12 ) ),
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'user',
+				'data-sstk-name' => 'user',
 			),
 		);
 		$fields[] = array(
-			'name'       => __( 'Password', 'wpcd' ),
-			'id'         => 'wpcd_app_pass1',
+			'name'       => __( 'Password', 'simple-stack' ),
+			'id'         => 'sstk_app_pass1',
 			'tab'        => 'sftp',
 			'type'       => 'password',
-			'std'        => wpcd_generate_default_password(),
+			'std'        => sstk_generate_default_password(),
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'pass',
+				'data-sstk-name' => 'pass',
 			),
-			'class'      => 'wpcd_app_pass_toggle',
+			'class'      => 'sstk_app_pass_toggle',
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_add_button',
+			'id'         => 'sstk_app_action_add_button',
 			'tab'        => 'sftp',
 			'type'       => 'button',
-			'std'        => __( 'Add New User', 'wpcd' ),
+			'std'        => __( 'Add New User', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action' => 'sftp-add-user',
+				'data-sstk-action' => 'sftp-add-user',
 				// the id.
-				'data-wpcd-id'     => $id,
+				'data-sstk-id'     => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => json_encode( array( '#wpcd_app_user1', '#wpcd_app_pass1' ) ),
+				'data-sstk-fields' => json_encode( array( '#sstk_app_user1', '#sstk_app_pass1' ) ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// remove user.
 		$users = $this->get_sftp_users( $id );
@@ -227,247 +228,247 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Remove an sFTP User', 'wpcd' ),
+			'name' => __( 'Remove an sFTP User', 'simple-stack' ),
 			'tab'  => 'sftp',
 			'type' => 'heading',
 		);
 		$fields[] = array(
-			'name'        => __( 'User Name', 'wpcd' ),
-			'id'          => 'wpcd_app_user2',
+			'name'        => __( 'User Name', 'simple-stack' ),
+			'id'          => 'sstk_app_user2',
 			'tab'         => 'sftp',
 			'type'        => 'select',
-			'placeholder' => __( 'Select a User', 'wpcd' ),
+			'placeholder' => __( 'Select a User', 'simple-stack' ),
 			'options'     => $users['users'],
 			'save_field'  => false,
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'user',
+				'data-sstk-name' => 'user',
 			),
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_remove_button',
+			'id'         => 'sstk_app_action_remove_button',
 			'tab'        => 'sftp',
 			'type'       => 'button',
-			'std'        => __( 'Remove User', 'wpcd' ),
+			'std'        => __( 'Remove User', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'sftp-remove-user',
+				'data-sstk-action'              => 'sftp-remove-user',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => json_encode( array( '#wpcd_app_user2' ) ),
+				'data-sstk-fields'              => json_encode( array( '#sstk_app_user2' ) ),
 				// confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you want to remove this user?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you want to remove this user?', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// change password - - show only those users who do not have a public key.
 		$fields[] = array(
-			'name' => __( 'Change Password for an sFTP User', 'wpcd' ),
+			'name' => __( 'Change Password for an sFTP User', 'simple-stack' ),
 			'tab'  => 'sftp',
 			'type' => 'heading',
 		);
 		$fields[] = array(
-			'name'        => __( 'User Name', 'wpcd' ),
-			'id'          => 'wpcd_app_user3',
+			'name'        => __( 'User Name', 'simple-stack' ),
+			'id'          => 'sstk_app_user3',
 			'tab'         => 'sftp',
 			'type'        => 'select',
-			'placeholder' => __( 'Select a User', 'wpcd' ),
+			'placeholder' => __( 'Select a User', 'simple-stack' ),
 			'options'     => $users['pass'],
 			'save_field'  => false,
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'user',
+				'data-sstk-name' => 'user',
 				// the id, important for showing the password.
-				'data-wpcd-id'   => $id,
+				'data-sstk-id'   => $id,
 			),
 		);
 		$fields[] = array(
-			'name'       => __( 'Password', 'wpcd' ),
-			'id'         => 'wpcd_app_pass3',
+			'name'       => __( 'Password', 'simple-stack' ),
+			'id'         => 'sstk_app_pass3',
 			'tab'        => 'sftp',
 			'type'       => 'password',
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'pass',
+				'data-sstk-name' => 'pass',
 			),
-			'class'      => 'wpcd_app_pass_toggle',
+			'class'      => 'sstk_app_pass_toggle',
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_changepass_button',
+			'id'         => 'sstk_app_action_changepass_button',
 			'tab'        => 'sftp',
 			'type'       => 'button',
-			'std'        => __( 'Change Password', 'wpcd' ),
+			'std'        => __( 'Change Password', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action' => 'sftp-change-password',
+				'data-sstk-action' => 'sftp-change-password',
 				// the id.
-				'data-wpcd-id'     => $id,
+				'data-sstk-id'     => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => json_encode( array( '#wpcd_app_user3', '#wpcd_app_pass3' ) ),
+				'data-sstk-fields' => json_encode( array( '#sstk_app_user3', '#sstk_app_pass3' ) ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// set key.
 		$fields[] = array(
-			'name' => __( 'Set public key for an sFTP User', 'wpcd' ),
+			'name' => __( 'Set public key for an sFTP User', 'simple-stack' ),
 			'tab'  => 'sftp',
 			'type' => 'heading',
 		);
 		$fields[] = array(
-			'name'        => __( 'User Name', 'wpcd' ),
-			'id'          => 'wpcd_app_user6',
+			'name'        => __( 'User Name', 'simple-stack' ),
+			'id'          => 'sstk_app_user6',
 			'tab'         => 'sftp',
 			'type'        => 'select',
-			'placeholder' => __( 'Select a User', 'wpcd' ),
+			'placeholder' => __( 'Select a User', 'simple-stack' ),
 			'options'     => $users['users'],
 			'save_field'  => false,
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'user',
+				'data-sstk-name' => 'user',
 			),
 		);
 		$fields[] = array(
-			'name'             => __( 'Public Key File', 'wpcd' ),
-			'id'               => 'wpcd_app_file6',
+			'name'             => __( 'Public Key File', 'simple-stack' ),
+			'id'               => 'sstk_app_file6',
 			'tab'              => 'sftp',
 			'type'             => 'file',
 			'max_file_uploads' => 1,
-			'placeholder'      => __( 'Select a key', 'wpcd' ),
+			'placeholder'      => __( 'Select a key', 'simple-stack' ),
 			'save_field'       => false,
-			'class'            => 'wpcd_app_setkey',
+			'class'            => 'sstk_app_setkey',
 			'attributes'       => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'user',
+				'data-sstk-name' => 'user',
 			),
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_setkey_button',
+			'id'         => 'sstk_app_action_setkey_button',
 			'tab'        => 'sftp',
 			'type'       => 'button',
-			'std'        => __( 'Set Public Key', 'wpcd' ),
+			'std'        => __( 'Set Public Key', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action' => 'sftp-set-key',
+				'data-sstk-action' => 'sftp-set-key',
 				// the id.
-				'data-wpcd-id'     => $id,
+				'data-sstk-id'     => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => json_encode( array( '#wpcd_app_user6' ) ),
+				'data-sstk-fields' => json_encode( array( '#sstk_app_user6' ) ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// remove password - show only those users who have a public key.
 		$fields[] = array(
-			'name' => __( 'Remove password for an sFTP User', 'wpcd' ),
+			'name' => __( 'Remove password for an sFTP User', 'simple-stack' ),
 			'tab'  => 'sftp',
 			'type' => 'heading',
 		);
 		$fields[] = array(
-			'name'        => __( 'User Name', 'wpcd' ),
-			'id'          => 'wpcd_app_user4',
+			'name'        => __( 'User Name', 'simple-stack' ),
+			'id'          => 'sstk_app_user4',
 			'tab'         => 'sftp',
 			'type'        => 'select',
-			'placeholder' => __( 'Select a User', 'wpcd' ),
+			'placeholder' => __( 'Select a User', 'simple-stack' ),
 			'options'     => $users['keys'],
 			'save_field'  => false,
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'user',
+				'data-sstk-name' => 'user',
 			),
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_removepass_button',
+			'id'         => 'sstk_app_action_removepass_button',
 			'tab'        => 'sftp',
 			'type'       => 'button',
-			'std'        => __( 'Remove Password', 'wpcd' ),
+			'std'        => __( 'Remove Password', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'sftp-remove-password',
+				'data-sstk-action'              => 'sftp-remove-password',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => json_encode( array( '#wpcd_app_user4' ) ),
+				'data-sstk-fields'              => json_encode( array( '#sstk_app_user4' ) ),
 				// confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you want to remove this user\'s password?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you want to remove this user\'s password?', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		// remove key - show only those users who have a public key.
 		$fields[] = array(
-			'name' => __( 'Remove public key for an sFTP User', 'wpcd' ),
+			'name' => __( 'Remove public key for an sFTP User', 'simple-stack' ),
 			'tab'  => 'sftp',
 			'type' => 'heading',
 		);
 		$fields[] = array(
-			'name'        => __( 'User Name', 'wpcd' ),
-			'id'          => 'wpcd_app_user5',
+			'name'        => __( 'User Name', 'simple-stack' ),
+			'id'          => 'sstk_app_user5',
 			'tab'         => 'sftp',
 			'type'        => 'select',
-			'placeholder' => __( 'Select a User', 'wpcd' ),
+			'placeholder' => __( 'Select a User', 'simple-stack' ),
 			'options'     => $users['keys'],
 			'save_field'  => false,
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'user',
+				'data-sstk-name' => 'user',
 			),
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_removekey_button',
+			'id'         => 'sstk_app_action_removekey_button',
 			'tab'        => 'sftp',
 			'type'       => 'button',
-			'std'        => __( 'Remove Public Key', 'wpcd' ),
+			'std'        => __( 'Remove Public Key', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'sftp-remove-key',
+				'data-sstk-action'              => 'sftp-remove-key',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => json_encode( array( '#wpcd_app_user5' ) ),
+				'data-sstk-fields'              => json_encode( array( '#sstk_app_user5' ) ),
 				// confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you want to remove this user\'s key?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you want to remove this user\'s key?', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $fields;
 	}
@@ -539,7 +540,7 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Grab the arguments sent from the front-end JS */
@@ -555,7 +556,7 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 			if ( in_array( $user, $ftp_users['users'] ) ) {
 				// good to go.
 			} else {
-				return new \WP_Error( __( 'You are not authorized to perform an operation on this user!', 'wpcd' ) );
+				return new \WP_Error( __( 'You are not authorized to perform an operation on this user!', 'simple-stack' ) );
 			}
 		}
 		/* End verify that user is a part of the site. */
@@ -686,20 +687,20 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 				break;
 		}
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
 		// Certain actions need special checks in the $result var.
 		if ( 'sftp-add-user' === $action ) {
 			if ( strpos( $result, 'already exists. Use a different user name.' ) !== false ) {
 				// User already exists so error out and return...
-				return new \WP_Error( __( 'A user with this name already exists and is likely associated with another site.  Please use a different user name', 'wpcd' ) );
+				return new \WP_Error( __( 'A user with this name already exists and is likely associated with another site.  Please use a different user name', 'simple-stack' ) );
 			}
 		}
 
 		$success = $this->is_ssh_successful( $result, 'add_remove_sftp.txt', $action );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		switch ( $action ) {
@@ -822,7 +823,7 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 		}
 
 		// if there is no password, this is definitely an error.
-		return new \WP_Error( sprintf( __( 'Password for user %s not found!', 'wpcd' ), $user ) );
+		return new \WP_Error( sprintf( __( 'Password for user %s not found!', 'simple-stack' ), $user ) );
 	}
 
 	/**
@@ -831,14 +832,14 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 	 * through our normal script execution process.
 	 * This is why we call it a 'direct' delete.
 	 *
-	 * Action Hook: wpcd_before_remove_site_action
+	 * Action Hook: sstk_before_remove_site_action
 	 *
 	 * @param int $id post id for site.
 	 */
 	public function prep_direct_delete_all_sftp_users_for_site( $id ) {
 
 		// Do not do this if the option is set to ignore it.
-		if ( true === boolval( wpcd_get_option( 'wordpress_app_do_not_delete_sftp_users_on_site_delete' ) ) ) {
+		if ( true === boolval( sstk_get_option( 'wordpress_app_do_not_delete_sftp_users_on_site_delete' ) ) ) {
 			return;
 		}
 
@@ -858,7 +859,7 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 					$args['sftp_user']   = $sftp_user;
 					$args['server_id']   = $server_id;
 					$args['domain']      = $domain; // Storing this because it will be unavailable after the site has been deleted.
-					WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $id, 'direct-delete-sftp-user', $id, $args, 'ready', $id, __( 'Schedule delete of sFTP user because site is being deleted.', 'wpcd' ) );
+					SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $id, 'direct-delete-sftp-user', $id, $args, 'ready', $id, __( 'Schedule delete of sFTP user because site is being deleted.', 'simple-stack' ) );
 				}
 			}
 		}
@@ -867,7 +868,7 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Direct delete of an sFTP user - triggered via pending logs background process.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
 	 * Action Hook: pending_log_direct_delete_sftp_user
 	 *
@@ -878,7 +879,7 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 	public function pending_log_direct_delete_sftp_user( $task_id, $id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data      = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data      = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 		$server_id = $data['pending_task_associated_server_id'];
 		$action    = 'direct-delete-sftp-user';  // The ssh execution function expects an action name so we're going to give it one.
 
@@ -889,10 +890,10 @@ class WPCD_WORDPRESS_TABS_SFTP extends WPCD_WORDPRESS_TABS {
 		// Ignoring errors because what's the point?  The site is already been deleted.
 
 		/* Mark the task complete */
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_SFTP();
+new SSTK_WORDPRESS_TABS_SFTP();

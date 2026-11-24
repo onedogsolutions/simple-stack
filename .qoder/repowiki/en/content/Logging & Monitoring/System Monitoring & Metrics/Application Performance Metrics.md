@@ -5,8 +5,8 @@
 - [class-wordpress-app.php](file://includes/core/apps/wordpress-app/class-wordpress-app.php)
 - [statistics.php (site)](file://includes/core/apps/wordpress-app/tabs/statistics.php)
 - [statistics.php (server)](file://includes/core/apps/wordpress-app/tabs-server/statistics.php)
-- [class-wpcd-server-statistics.php](file://includes/core/class-wpcd-server-statistics.php)
-- [wpcd-wpapp-server-chart.js](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js)
+- [class-sstk-server-statistics.php](file://includes/core/class-sstk-server-statistics.php)
+- [sstk-wpapp-server-chart.js](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js)
 - [cache.php](file://includes/core/apps/wordpress-app/tabs/cache.php)
 - [services.php (server)](file://includes/core/apps/wordpress-app/tabs-server/services.php)
 </cite>
@@ -23,7 +23,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how SimpleStack collects and presents WordPress application performance metrics, focusing on the Statistics tabs for both sites and servers. It covers:
+This document explains how Simple Stack collects and presents WordPress application performance metrics, focusing on the Statistics tabs for both sites and servers. It covers:
 - What metrics are collected (disk usage, network traffic via VNSTAT, memory via VMSTAT, process load via TOP).
 - How data is gathered from remote servers over SSH and stored as post meta.
 - How the server-side statistics are formatted and visualized with charts.
@@ -47,17 +47,17 @@ SiteStats["Site Statistics Tab"]
 ServerStats["Server Statistics Tab"]
 end
 subgraph "PHP Layer"
-WPApp["WPCD_WORDPRESS_APP<br/>loads tabs"]
-SiteTab["WPCD_WORDPRESS_TABS_STATISTICS<br/>(site)"]
-SrvTab["WPCD_WORDPRESS_TABS_SERVER_STATISTICS<br/>(server)"]
-StatsFmt["WPCD_SERVER_STATISTICS<br/>formatting helpers"]
+WPApp["SSTK_WORDPRESS_APP<br/>loads tabs"]
+SiteTab["SSTK_WORDPRESS_TABS_STATISTICS<br/>(site)"]
+SrvTab["SSTK_WORDPRESS_TABS_SERVER_STATISTICS<br/>(server)"]
+StatsFmt["SSTK_SERVER_STATISTICS<br/>formatting helpers"]
 end
 subgraph "Remote Server"
 SSH["SSH Execution"]
 Cmds["Commands: df, vnstat, vmstat -s, top"]
 end
 subgraph "Frontend"
-JSChart["wpcd-wpapp-server-chart.js<br/>renders charts"]
+JSChart["sstk-wpapp-server-chart.js<br/>renders charts"]
 end
 SiteStats --> SiteTab
 ServerStats --> SrvTab
@@ -73,8 +73,8 @@ StatsFmt --> JSChart
 - [class-wordpress-app.php:289-393](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L289-L393)
 - [statistics.php (site):15-94](file://includes/core/apps/wordpress-app/tabs/statistics.php#L15-L94)
 - [statistics.php (server):15-90](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L15-L90)
-- [class-wpcd-server-statistics.php:36-125](file://includes/core/class-wpcd-server-statistics.php#L36-L125)
-- [wpcd-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L1-L120)
+- [class-sstk-server-statistics.php:36-125](file://includes/core/class-sstk-server-statistics.php#L36-L125)
+- [sstk-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L1-L120)
 
 **Section sources**
 - [class-wordpress-app.php:289-393](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L289-L393)
@@ -93,8 +93,8 @@ Key responsibilities:
 **Section sources**
 - [statistics.php (site):15-356](file://includes/core/apps/wordpress-app/tabs/statistics.php#L15-L356)
 - [statistics.php (server):15-432](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L15-L432)
-- [class-wpcd-server-statistics.php:15-258](file://includes/core/class-wpcd-server-statistics.php#L15-L258)
-- [wpcd-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L1-L120)
+- [class-sstk-server-statistics.php:15-258](file://includes/core/class-sstk-server-statistics.php#L15-L258)
+- [sstk-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L1-L120)
 
 ## Architecture Overview
 The flow from user interaction to metric visualization:
@@ -126,9 +126,9 @@ UI->>CH : Render charts
 **Diagram sources**
 - [statistics.php (server):102-125](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L102-L125)
 - [statistics.php (server):383-426](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L383-L426)
-- [class-wpcd-server-statistics.php:36-125](file://includes/core/class-wpcd-server-statistics.php#L36-L125)
-- [class-wpcd-server-statistics.php:127-172](file://includes/core/class-wpcd-server-statistics.php#L127-L172)
-- [class-wpcd-server-statistics.php:206-254](file://includes/core/class-wpcd-server-statistics.php#L206-L254)
+- [class-sstk-server-statistics.php:36-125](file://includes/core/class-sstk-server-statistics.php#L36-L125)
+- [class-sstk-server-statistics.php:127-172](file://includes/core/class-sstk-server-statistics.php#L127-L172)
+- [class-sstk-server-statistics.php:206-254](file://includes/core/class-sstk-server-statistics.php#L206-L254)
 
 ## Detailed Component Analysis
 
@@ -211,22 +211,22 @@ Key methods:
 
 ```mermaid
 classDiagram
-class WPCD_SERVER_STATISTICS {
-+wpcd_app_server_get_formatted_disk_statistics(post_id) array
-+wpcd_app_server_get_formatted_vnstat_data(post_id) array
+class SSTK_SERVER_STATISTICS {
++sstk_app_server_get_formatted_disk_statistics(post_id) array
++sstk_app_server_get_formatted_vnstat_data(post_id) array
 +convert_to_numeric_data(data) float
-+wpcd_app_server_get_formatted_vmstat_data(post_id) array
++sstk_app_server_get_formatted_vmstat_data(post_id) array
 }
 ```
 
 **Diagram sources**
-- [class-wpcd-server-statistics.php:36-125](file://includes/core/class-wpcd-server-statistics.php#L36-L125)
-- [class-wpcd-server-statistics.php:127-172](file://includes/core/class-wpcd-server-statistics.php#L127-L172)
-- [class-wpcd-server-statistics.php:174-204](file://includes/core/class-wpcd-server-statistics.php#L174-L204)
-- [class-wpcd-server-statistics.php:206-254](file://includes/core/class-wpcd-server-statistics.php#L206-L254)
+- [class-sstk-server-statistics.php:36-125](file://includes/core/class-sstk-server-statistics.php#L36-L125)
+- [class-sstk-server-statistics.php:127-172](file://includes/core/class-sstk-server-statistics.php#L127-L172)
+- [class-sstk-server-statistics.php:174-204](file://includes/core/class-sstk-server-statistics.php#L174-L204)
+- [class-sstk-server-statistics.php:206-254](file://includes/core/class-sstk-server-statistics.php#L206-L254)
 
 **Section sources**
-- [class-wpcd-server-statistics.php:15-258](file://includes/core/class-wpcd-server-statistics.php#L15-L258)
+- [class-sstk-server-statistics.php:15-258](file://includes/core/class-sstk-server-statistics.php#L15-L258)
 
 ### Frontend Chart Rendering
 Responsibilities:
@@ -238,7 +238,7 @@ Implementation highlights:
 - Hides/shows sections based on user interactions.
 
 **Section sources**
-- [wpcd-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L1-L120)
+- [sstk-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L1-L120)
 
 ### Cache Controls and Guidance
 While not part of the Statistics tabs, the cache tab and server services tab provide guidance and controls for enabling object caches (Redis/Memcached), which directly impact WordPress performance.
@@ -263,15 +263,15 @@ WPApp["class-wordpress-app.php"] --> SiteTab["tabs/statistics.php"]
 WPApp --> SrvTab["tabs-server/statistics.php"]
 SrvTab --> SSH["execute_ssh()"]
 SrvTab --> Meta["Post Meta"]
-Meta --> Fmt["class-wpcd-server-statistics.php"]
-Fmt --> JS["wpcd-wpapp-server-chart.js"]
+Meta --> Fmt["class-sstk-server-statistics.php"]
+Fmt --> JS["sstk-wpapp-server-chart.js"]
 ```
 
 **Diagram sources**
 - [class-wordpress-app.php:289-393](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L289-L393)
 - [statistics.php (server):383-426](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L383-L426)
-- [class-wpcd-server-statistics.php:36-125](file://includes/core/class-wpcd-server-statistics.php#L36-L125)
-- [wpcd-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L1-L120)
+- [class-sstk-server-statistics.php:36-125](file://includes/core/class-sstk-server-statistics.php#L36-L125)
+- [sstk-wpapp-server-chart.js:1-120](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L1-L120)
 
 **Section sources**
 - [class-wordpress-app.php:289-393](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L289-L393)
@@ -309,6 +309,6 @@ Operational tips:
 - [statistics.php (server):383-426](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L383-L426)
 
 ## Conclusion
-SimpleStack’s Statistics tabs provide practical, system-level insights into WordPress hosting environments. While they do not instrument WordPress core functions or third-party plugins for query timing or plugin overhead, they offer essential infrastructure metrics and clear pathways to enable object caching. By regularly collecting and reviewing these metrics, administrators can establish baselines, detect anomalies, and make informed decisions to optimize WordPress performance at the server and application layers.
+Simple Stack’s Statistics tabs provide practical, system-level insights into WordPress hosting environments. While they do not instrument WordPress core functions or third-party plugins for query timing or plugin overhead, they offer essential infrastructure metrics and clear pathways to enable object caching. By regularly collecting and reviewing these metrics, administrators can establish baselines, detect anomalies, and make informed decisions to optimize WordPress performance at the server and application layers.
 
 [No sources needed since this section summarizes without analyzing specific files]

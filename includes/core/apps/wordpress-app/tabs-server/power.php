@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Power Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,34 +11,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_POWER.
+ * Class SSTK_WORDPRESS_TABS_SERVER_POWER.
  */
-class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_POWER extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
 		// Add bulk action option to the server list screen to soft reboot.
-		add_filter( 'bulk_actions-edit-wpcd_app_server', array( $this, 'wpcd_add_new_bulk_actions_server' ) );
+		add_filter( 'bulk_actions-edit-sstk_app_server', array( $this, 'sstk_add_new_bulk_actions_server' ) );
 
 		// Action hook to handle bulk actions for server. For example to soft reboot the server.
-		add_filter( 'handle_bulk_actions-edit-wpcd_app_server', array( $this, 'wpcd_bulk_action_handler_server_app' ), 10, 3 );
+		add_filter( 'handle_bulk_actions-edit-sstk_app_server', array( $this, 'sstk_bulk_action_handler_server_app' ), 10, 3 );
 
-		// Allow the reboot_soft action to be triggered via an action hook.  Will primarily be used by the woocommerce add-ons & Bulk Actions.
-		add_action( 'wpcd_wordpress-reboot_soft', array( $this, 'reboot_soft' ), 10, 2 );
+		// Allow the soft reboot action to be triggered via an action hook.
+		add_action( 'sstk_wordpress-reboot_soft', array( $this, 'reboot_soft' ), 10, 2 );
 
 		/* Pending Logs Background Task: Trigger server reboot - soft */
-		add_action( 'wpcd_pending_log_soft_reboot', array( $this, 'pending_log_soft_reboot' ), 10, 3 );
+		add_action( 'sstk_pending_log_soft_reboot', array( $this, 'pending_log_soft_reboot' ), 10, 3 );
 
 		/* Handle callback success and tag the pending log record as successful */
-		add_action( 'wpcd_server_wordpress-app_soft_reboot_action_successful', array( $this, 'handle_soft_reboot_success' ), 10, 3 );
+		add_action( 'sstk_server_wordpress-app_soft_reboot_action_successful', array( $this, 'handle_soft_reboot_success' ), 10, 3 );
 
 	}
 
@@ -66,7 +67,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Power', 'wpcd' ),
+				'label' => __( 'Power', 'simple-stack' ),
 				'icon'  => 'fad fa-plug',
 			);
 		}
@@ -81,13 +82,13 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the POWER tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -117,16 +118,16 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'server-reboot-soft', 'server-schedule-reboot-soft', 'server-reboot-hard-provider', 'server-graceful-shutdown', 'server-hard-shutdown', 'server-turn-on' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -184,18 +185,18 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		 * Soft Reboot
 		 */
 
-		$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_one_third_card( $this->get_tab_slug() ); // Start new card.
 
-		$desc  = __( 'Send a reboot command to the server - this will be the equivalent of typing "reboot" on the command line.', 'wpcd' );
+		$desc  = __( 'Send a reboot command to the server - this will be the equivalent of typing "reboot" on the command line.', 'simple-stack' );
 		$desc .= '<br/>';
-		$desc .= __( 'If this does not work, you can try using other power options below. Or you might need to log into the server provider\'s console to use the power options there.', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc .= __( 'If this does not work, you can try using other power options below. Or you might need to log into the server provider\'s console to use the power options there.', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to restart this server?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to restart this server?', 'simple-stack' );
 
 		$actions['server-reboot-soft-header'] = array(
-			'label'          => '<i class="fa-duotone fa-plug-circle-check"></i> ' . __( 'Soft Restart', 'wpcd' ),
+			'label'          => '<i class="fa-duotone fa-plug-circle-check"></i> ' . __( 'Soft Restart', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -206,26 +207,26 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_restart_icon( __( '%s Restart', 'wpcd' ) ),
+				'std'                 => sstk_apply_restart_icon( __( '%s Restart', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 				'desc'                => '',
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Provider Restart / Hard Reboot.
 		 */
 
-		$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_one_third_card( $this->get_tab_slug() ); // Start new card.
 
-		$desc = __( 'Use the server provider api to attempt to restart the server.  This is usually the equivalent of pulling the power plug while the server is running. So use only as a last resort.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Use the server provider api to attempt to restart the server.  This is usually the equivalent of pulling the power plug while the server is running. So use only as a last resort.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$actions['server-reboot-hard-provider-header'] = array(
-			'label'          => '<i class="fa-duotone fa-plug-circle-bolt"></i> ' . __( 'Hard Provider API Restart', 'wpcd' ),
+			'label'          => '<i class="fa-duotone fa-plug-circle-bolt"></i> ' . __( 'Hard Provider API Restart', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -236,30 +237,30 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_restart_icon( __( '%s Hard Restart', 'wpcd' ) ),
+				'std'                 => sstk_apply_restart_icon( __( '%s Hard Restart', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Graceful Poweroff
 		 */
 
-		$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_one_third_card( $this->get_tab_slug() ); // Start new card.
 
-		$desc  = __( 'Send a shutdown command to the server - this will be the equivalent of typing "shutdown" on the command line.', 'wpcd' );
+		$desc  = __( 'Send a shutdown command to the server - this will be the equivalent of typing "shutdown" on the command line.', 'simple-stack' );
 		$desc .= '<br/>';
-		$desc .= __( 'If this does not work, you can try using other power options below. Or you might need to log into the server provider\'s console to use the power options there.', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc .= __( 'If this does not work, you can try using other power options below. Or you might need to log into the server provider\'s console to use the power options there.', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to turn off this server?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to turn off this server?', 'simple-stack' );
 
 		$actions['server-shutdown-soft-header'] = array(
-			'label'          => '<i class="fa-duotone fa-power-off"></i> ' . __( 'Graceful Powerdown', 'wpcd' ),
+			'label'          => '<i class="fa-duotone fa-power-off"></i> ' . __( 'Graceful Powerdown', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $desc,
@@ -270,31 +271,31 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_power_icon( __( '%s Graceful Shutdown', 'wpcd' ) ),
+				'std'                 => sstk_apply_power_icon( __( '%s Graceful Shutdown', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 				'desc'                => '',
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Schedule Soft Reboot
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		$actions['server-reboot-schedule-soft-header'] = array(
-			'label'          => '<i class="fa-duotone fa-calendar-days"></i> ' . __( 'Schedule A Soft Restart', 'wpcd' ),
+			'label'          => '<i class="fa-duotone fa-calendar-days"></i> ' . __( 'Schedule A Soft Restart', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'You can schedule a soft restart at a future time using these options. The date and time specified is in the timezone of the server - usually UTC.', 'wpcd' ),
+				'desc' => __( 'You can schedule a soft restart at a future time using these options. The date and time specified is in the timezone of the server - usually UTC.', 'simple-stack' ),
 			),
 		);
 
 		$actions['server-schedule-reboot-soft-date'] = array(
-			'label'          => __( 'Reboot Date', 'wpcd' ),
+			'label'          => __( 'Reboot Date', 'simple-stack' ),
 			'raw_attributes' => array(
 				'js_options'     => array(
 					'dateFormat'      => 'yy-mm-dd',
@@ -303,13 +304,13 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 				// Display inline?
 				'inline'         => false,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'reboot_date',
+				'data-sstk-name' => 'reboot_date',
 				'columns'        => 4,
 			),
 			'type'           => 'date',
 		);
 		$actions['server-schedule-reboot-soft-time'] = array(
-			'label'          => __( 'Reboot Time', 'wpcd' ),
+			'label'          => __( 'Reboot Time', 'simple-stack' ),
 			'raw_attributes' => array(
 				'js_options'     => array(
 					'stepMinute'      => 5,
@@ -319,7 +320,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 				// Display inline?
 				'inline'         => false,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'reboot_time',
+				'data-sstk-name' => 'reboot_time',
 				'columns'        => 4,
 			),
 			'type'           => 'time',
@@ -329,29 +330,29 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_power_icon( __( '%s Schedule Restart', 'wpcd' ) ),
-				'confirmation_prompt' => __( 'Are you sure you would like to schedule this server to be restarted?', 'wpcd' ),
-				'data-wpcd-fields'    => wp_json_encode( array( '#wpcd_app_action_server-schedule-reboot-soft-date', '#wpcd_app_action_server-schedule-reboot-soft-time' ) ),
+				'std'                 => sstk_apply_power_icon( __( '%s Schedule Restart', 'simple-stack' ) ),
+				'confirmation_prompt' => __( 'Are you sure you would like to schedule this server to be restarted?', 'simple-stack' ),
+				'data-sstk-fields'    => wp_json_encode( array( '#sstk_app_action_server-schedule-reboot-soft-date', '#sstk_app_action_server-schedule-reboot-soft-time' ) ),
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Forced Poweroff via the Cloud Providers' API
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to turn off this server? In some cases it will be like pulling the powercord while the server is turned on which could result in loss of data!', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to turn off this server? In some cases it will be like pulling the powercord while the server is turned on which could result in loss of data!', 'simple-stack' );
 
 		$actions['server-shutdown-hard-header'] = array(
-			'label'          => '<i class="fa-duotone fa-plug-circle-xmark"></i> ' . __( 'Hard Powerdown', 'wpcd' ),
+			'label'          => '<i class="fa-duotone fa-plug-circle-xmark"></i> ' . __( 'Hard Powerdown', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Send a shutdown command to the server using the providers API - in some cases this will be the equivalent of ripping the powercord out of the socket.', 'wpcd' ),
+				'desc' => __( 'Send a shutdown command to the server using the providers API - in some cases this will be the equivalent of ripping the powercord out of the socket.', 'simple-stack' ),
 			),
 		);
 
@@ -359,61 +360,61 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 			'label'          => '',
 			'raw_attributes' => array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'                 => wpcd_apply_power_icon( __( '%s Hard Shutdown', 'wpcd' ) ),
+				'std'                 => sstk_apply_power_icon( __( '%s Hard Shutdown', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Turn on the server
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to turn on this server?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to turn on this server?', 'simple-stack' );
 
 		$actions['server-turn-on-header'] = array(
-			'label'          => '<i class="fa-duotone fa-plug-circle-plus"></i> ' . __( 'Power On', 'wpcd' ),
+			'label'          => '<i class="fa-duotone fa-plug-circle-plus"></i> ' . __( 'Power On', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Turn on the server.', 'wpcd' ),
+				'desc' => __( 'Turn on the server.', 'simple-stack' ),
 			),
 		);
 
 		$actions['server-turn-on'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => wpcd_apply_power_icon( __( '%s Power On', 'wpcd' ) ),
+				'std'                 => sstk_apply_power_icon( __( '%s Power On', 'simple-stack' ) ),
 				'confirmation_prompt' => $confirmation_prompt,
-				'desc'                => __( 'If this does not work you might need to log into the server provider\'s console to use the power options there.', 'wpcd' ),
+				'desc'                => __( 'If this does not work you might need to log into the server provider\'s console to use the power options there.', 'simple-stack' ),
 			),
 			'type'           => 'button',
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * After reboot instructions.
 		 */
 
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-		$instructions  = __( 'After a power-on or reboot event, the server status should update automatically if CALLBACKS have been installed on the server.', 'wpcd' );
-		$instructions .= '<br />' . __( 'If callbacks are not installed you can check the status of the reboot by going to the ALL CLOUD SERVERS list and clicking on the UPDATE REMOTE STATE link for the server.  In this case the server will not be available for further operations until you click that link to update the server status.', 'wpcd' );
+		$instructions  = __( 'After a power-on or reboot event, the server status should update automatically if CALLBACKS have been installed on the server.', 'simple-stack' );
+		$instructions .= '<br />' . __( 'If callbacks are not installed you can check the status of the reboot by going to the ALL CLOUD SERVERS list and clicking on the UPDATE REMOTE STATE link for the server.  In this case the server will not be available for further operations until you click that link to update the server status.', 'simple-stack' );
 
 		$actions['server-reboot-notes-header'] = array(
-			'label'          => '<i class="fa-duotone fa-note"></i> ' . __( 'After-restart Instructions', 'wpcd' ),
+			'label'          => '<i class="fa-duotone fa-note"></i> ' . __( 'After-restart Instructions', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $instructions,
 			),
 		);
 
-		$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		return $actions;
 
@@ -433,14 +434,14 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Execute command for reboot */
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => 'sudo service mysql stop; sudo echo "sudo reboot" |at now + 1 minutes ' ) );
 
 		/* Update server meta to show operation in progress */
-		update_post_meta( $id, 'wpcd_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
+		update_post_meta( $id, 'sstk_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
 
 		/**
 		 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
@@ -448,10 +449,10 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		 * So there is no corresponding action hook for failure.
 		*/
 		$success = true;
-		do_action( "wpcd_server_{$this->get_app_name()}_soft_reboot_action_successful", $id, $action, $success );
+		do_action( "sstk_server_{$this->get_app_name()}_soft_reboot_action_successful", $id, $action, $success );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'A REBOOT command has been sent to the server. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'wpcd' ) );
+		return new \WP_Error( __( 'A REBOOT command has been sent to the server. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'simple-stack' ) );
 
 	}
 
@@ -469,12 +470,12 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Get the provider object */
-		$provider     = WPCD_SERVER()->get_server_provider( $id );
-		$provider_api = WPCD()->get_provider_api( $provider );
+		$provider     = SSTK_SERVER()->get_server_provider( $id );
+		$provider_api = SSTK()->get_provider_api( $provider );
 
 		/* Call the restart function on the api */
 		if ( $provider_api && is_object( $provider_api ) ) {
@@ -482,7 +483,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		}
 
 		/* Update server meta to show operation in progress */
-		update_post_meta( $id, 'wpcd_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
+		update_post_meta( $id, 'sstk_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
 
 		/**
 		 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
@@ -490,10 +491,10 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		 * So there is no corresponding action hook for failure.
 		*/
 		$success = true;
-		do_action( "wpcd_server_{$this->get_app_name()}_soft_reboot_provider_action_successful", $id, $action, $success );
+		do_action( "sstk_server_{$this->get_app_name()}_soft_reboot_provider_action_successful", $id, $action, $success );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'We have requested a hard reboot via the server provider API. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'wpcd' ) );
+		return new \WP_Error( __( 'We have requested a hard reboot via the server provider API. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'simple-stack' ) );
 
 	}
 
@@ -513,7 +514,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Sanitize arguments array.
@@ -521,7 +522,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 
 		// Bail if either date or time is empty...
 		if ( empty( $args['reboot_date'] ) || empty( $args['reboot_time'] ) ) {
-			return new \WP_Error( __( 'Both date and time must be provided.', 'wpcd' ) );
+			return new \WP_Error( __( 'Both date and time must be provided.', 'simple-stack' ) );
 		}
 
 		// Now lets make sure we escape all the arguments so it's safe for the command line.
@@ -537,17 +538,17 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		$run_cmd = $this->turn_script_into_command( $instance, 'schedule_server_reboot.txt', array_merge( $args, array( 'action' => $action ) ) );
 
 		// phpcs:ignore
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'debug', __FILE__, __LINE__, $instance, false ); //PHPcs warning normally issued because of print_r
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'debug', __FILE__, __LINE__, $instance, false ); //PHPcs warning normally issued because of print_r
 
 		// Execute command and check result.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'schedule_server_reboot.txt' );
 		if ( ! $success ) {
 			/* translators: %1$s is replaced with the internal action name; %2$s is replaced with the result of the call, usually an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s : %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s : %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			$success = array(
-				'msg'     => __( 'Server restart has been scheduled!', 'wpcd' ),
+				'msg'     => __( 'Server restart has been scheduled!', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 		}
@@ -570,14 +571,14 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Execute command for reboot */
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => 'sudo service mysql stop; sudo echo "sudo shutdown" |at now + 1 minutes ' ) );
 
 		/* Update server meta to show operation in progress */
-		update_post_meta( $id, 'wpcd_server_current_state', 'off' );  // @TODO: 'off' should be a constant from the main PROVIDER ancestor class.
+		update_post_meta( $id, 'sstk_server_current_state', 'off' );  // @TODO: 'off' should be a constant from the main PROVIDER ancestor class.
 
 		/**
 		 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
@@ -585,10 +586,10 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		 * So there is no corresponding action hook for failure.
 		*/
 		$success = true;
-		do_action( "wpcd_server_{$this->get_app_name()}_graceful_shutdown_action_successful", $id, $action, $success );
+		do_action( "sstk_server_{$this->get_app_name()}_graceful_shutdown_action_successful", $id, $action, $success );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'A SHUTDOWN command has been sent to the server. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'wpcd' ) );
+		return new \WP_Error( __( 'A SHUTDOWN command has been sent to the server. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'simple-stack' ) );
 
 	}
 
@@ -606,12 +607,12 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Get the provider object */
-		$provider     = WPCD_SERVER()->get_server_provider( $id );
-		$provider_api = WPCD()->get_provider_api( $provider );
+		$provider     = SSTK_SERVER()->get_server_provider( $id );
+		$provider_api = SSTK()->get_provider_api( $provider );
 
 		/* Call the restart function on the api */
 		if ( $provider_api && is_object( $provider_api ) ) {
@@ -619,7 +620,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		}
 
 		/* Update server meta to show operation in progress */
-		update_post_meta( $id, 'wpcd_server_current_state', 'off' );  // @TODO: 'off' should be a constant from the main PROVIDER ancestor class.
+		update_post_meta( $id, 'sstk_server_current_state', 'off' );  // @TODO: 'off' should be a constant from the main PROVIDER ancestor class.
 
 		/**
 		 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
@@ -627,10 +628,10 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		 * So there is no corresponding action hook for failure.
 		*/
 		$success = true;
-		do_action( "wpcd_server_{$this->get_app_name()}_hard_shutdown_provider_action_successful", $id, $action, $success );
+		do_action( "sstk_server_{$this->get_app_name()}_hard_shutdown_provider_action_successful", $id, $action, $success );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'We have requested a hard shutdown via the server provider API. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'wpcd' ) );
+		return new \WP_Error( __( 'We have requested a hard shutdown via the server provider API. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'simple-stack' ) );
 	}
 
 	/**
@@ -647,12 +648,12 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Get the provider object */
-		$provider     = WPCD_SERVER()->get_server_provider( $id );
-		$provider_api = WPCD()->get_provider_api( $provider );
+		$provider     = SSTK_SERVER()->get_server_provider( $id );
+		$provider_api = SSTK()->get_provider_api( $provider );
 
 		/* Call the restart function on the api */
 		if ( $provider_api && is_object( $provider_api ) ) {
@@ -660,7 +661,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		}
 
 		/* Update server meta to show operation in progress */
-		update_post_meta( $id, 'wpcd_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
+		update_post_meta( $id, 'sstk_server_current_state', 'in-progress' );  // @TODO: 'in-progress' should be a constant from the main PROVIDER ancestor class.
 
 		/**
 		 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
@@ -668,10 +669,10 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		 * So there is no corresponding action hook for failure.
 		*/
 		$success = true;
-		do_action( "wpcd_server_{$this->get_app_name()}_power_on_provider_action_successful", $id, $action, $success );
+		do_action( "sstk_server_{$this->get_app_name()}_power_on_provider_action_successful", $id, $action, $success );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'We have requested a power-on event via the server provider API. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'wpcd' ) );
+		return new \WP_Error( __( 'We have requested a power-on event via the server provider API. If this does not restart the server then you will need to log into your server provider dashboard and use their tools to restart the server.', 'simple-stack' ) );
 
 	}
 
@@ -680,10 +681,10 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 	 *
 	 * @param array $bulk_array bulk array.
 	 */
-	public function wpcd_add_new_bulk_actions_server( $bulk_array ) {
+	public function sstk_add_new_bulk_actions_server( $bulk_array ) {
 
-		if ( wpcd_is_admin() ) {
-			$bulk_array['wpcd_soft_reboot'] = __( 'Restart Server (Soft Reboot)', 'wpcd' );
+		if ( sstk_is_admin() ) {
+			$bulk_array['sstk_soft_reboot'] = __( 'Restart Server (Soft Reboot)', 'simple-stack' );
 			return $bulk_array;
 		}
 
@@ -693,34 +694,34 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 	 * Handle bulk actions for server.
 	 *
 	 * @param string $redirect_url  redirect url.
-	 * @param string $action        bulk action slug/id - this is not the WPCD action key.
+	 * @param string $action        bulk action slug/id - this is not the SSTK action key.
 	 * @param array  $post_ids      all post ids.
 	 */
-	public function wpcd_bulk_action_handler_server_app( $redirect_url, $action, $post_ids ) {
+	public function sstk_bulk_action_handler_server_app( $redirect_url, $action, $post_ids ) {
 		// Let's remove query args first for redirect url.
-		$redirect_url = remove_query_arg( array( 'wpcd_soft_reboot' ), $redirect_url );
+		$redirect_url = remove_query_arg( array( 'sstk_soft_reboot' ), $redirect_url );
 
 		// Lets make sure we're an admin otherwise return an error.
-		if ( ! wpcd_is_admin() ) {
-			do_action( 'wpcd_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
+		if ( ! sstk_is_admin() ) {
+			do_action( 'sstk_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
 
 			// Show error message to user at the top of the admin list as a dismissible notice.
-			wpcd_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'wpcd' ), 'error' );
+			sstk_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'simple-stack' ), 'error' );
 
 			return $redirect_url;
 		}
 
 		// Schedule Server Reboot.
-		if ( 'wpcd_soft_reboot' === $action ) {
+		if ( 'sstk_soft_reboot' === $action ) {
 
 			if ( ! empty( $post_ids ) ) {
 				foreach ( $post_ids as $server_id ) {
-					$args['action_hook'] = 'wpcd_pending_log_soft_reboot';
-					WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $server_id, 'soft-reboot-server', $server_id, $args, 'ready', $server_id, __( 'Schedule a Server Reboot From Bulk Operation', 'wpcd' ) );
+					$args['action_hook'] = 'sstk_pending_log_soft_reboot';
+					SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $server_id, 'soft-reboot-server', $server_id, $args, 'ready', $server_id, __( 'Schedule a Server Reboot From Bulk Operation', 'simple-stack' ) );
 				}
 
 				// Add message to be displayed in admin header.
-				wpcd_global_add_admin_notice( __( 'A soft reboot has been scheduled for the selected servers. You can view the progress in the PENDING TASKS screen.', 'wpcd' ), 'success' );
+				sstk_global_add_admin_notice( __( 'A soft reboot has been scheduled for the selected servers. You can view the progress in the PENDING TASKS screen.', 'simple-stack' ), 'success' );
 
 			}
 
@@ -733,9 +734,9 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Soft reboot a single server - triggered via pending logs background process.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_pending_log_soft_reboot
+	 * Action Hook: sstk_pending_log_soft_reboot
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $server_id  Id of server on which this action apply.
@@ -744,10 +745,10 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 	public function pending_log_soft_reboot( $task_id, $server_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		/* Soft reboot the designated server */
-		do_action( 'wpcd_wordpress-reboot_soft', $server_id, 'server-reboot-soft' );
+		do_action( 'sstk_wordpress-reboot_soft', $server_id, 'server-reboot-soft' );
 
 	}
 
@@ -768,7 +769,7 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Bail if not a WordPress app...
-		if ( 'wordpress-app' !== WPCD_WORDPRESS_APP()->get_server_type( $server_id ) ) {
+		if ( 'wordpress-app' !== SSTK_WORDPRESS_APP()->get_server_type( $server_id ) ) {
 			return;
 		}
 
@@ -778,21 +779,21 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Get server instance array.
-		$instance = WPCD_WORDPRESS_APP()->get_instance_details( $server_id );
+		$instance = SSTK_WORDPRESS_APP()->get_instance_details( $server_id );
 
-		if ( 'wpcd_app_server' === get_post_type( $server_id ) ) {
+		if ( 'sstk_app_server' === get_post_type( $server_id ) ) {
 
 				// Now check the pending tasks table for a record where the key=$server_id and type='soft-reboot-server' and state='in-process'
 				// We are depending on the fact that there should only be one process running on a server a time and in this case it should be in-process.
-				$posts = WPCD_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $server_id, 'in-process', 'soft-reboot-server' );
+				$posts = SSTK_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $server_id, 'in-process', 'soft-reboot-server' );
 
 			if ( $posts ) {
 
 				// Grab our data array from pending tasks record...
 				$task_id = $posts[0]->ID;
-				$data    = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+				$data    = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
-				WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+				SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 
 			}
 		}
@@ -801,4 +802,4 @@ class WPCD_WORDPRESS_TABS_SERVER_POWER extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_POWER();
+new SSTK_WORDPRESS_TABS_SERVER_POWER();

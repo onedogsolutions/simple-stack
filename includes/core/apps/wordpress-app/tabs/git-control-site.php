@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Backup tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,22 +11,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE
+ * Class SSTK_WORDPRESS_TABS_GIT_CONTROL_SITE
  */
-class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_GIT_CONTROL_SITE extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		/* add_filter( 'wpcd_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		/* add_filter( 'sstk_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
 
 		// Command completed hook.
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 		/**
 		 * Hooks and filters to handle GitHub Webhooks
@@ -33,29 +34,29 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		add_action( 'rest_api_init', array( $this, 'register_github_webhook_endpoint' ) );  // Register the webhook endpoint.
 
 		// Git clone to site action triggered from pending log.
-		add_action( 'wpcd_pending_log_git_clone_to_site', array( $this, 'wpcd_pending_log_git_clone_to_site' ), 10, 3 );
+		add_action( 'sstk_pending_log_git_clone_to_site', array( $this, 'sstk_pending_log_git_clone_to_site' ), 10, 3 );
 
 		// Allow the git clone to site action to be triggered via an action hook.
-		add_action( 'wpcd_git_clone_to_site', array( $this, 'git_clone_to_site' ), 10, 3 );
+		add_action( 'sstk_git_clone_to_site', array( $this, 'git_clone_to_site' ), 10, 3 );
 
 		// Git check action triggered from pending log.
-		add_action( 'wpcd_pending_log_git_checkout', array( $this, 'wpcd_pending_log_git_checkout' ), 10, 3 );
+		add_action( 'sstk_pending_log_git_checkout', array( $this, 'sstk_pending_log_git_checkout' ), 10, 3 );
 
 		// Allow the git checkout action to be triggered via an action hook.
-		add_action( 'wpcd_git_checkout', array( $this, 'git_checkout_branch' ), 10, 3 );
+		add_action( 'sstk_git_checkout', array( $this, 'git_checkout_branch' ), 10, 3 );
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the site cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -78,10 +79,10 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			if ( true === $success ) {
 				$this->set_git_status( $id, true );
 
-				$msg = __( 'Git was initialized for this site.', 'wpcd' );
+				$msg = __( 'Git was initialized for this site.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			} else {
-				$msg = __( 'An attempt to initialize git for this site failed.', 'wpcd' );
+				$msg = __( 'An attempt to initialize git for this site failed.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			}
 		}
@@ -104,15 +105,15 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 
 				}
 
 				// Log the attempt.
-				$msg = __( 'Repo was cloned to this site without initializing git.', 'wpcd' );
+				$msg = __( 'Repo was cloned to this site without initializing git.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			} else {
 
@@ -120,15 +121,15 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
 
 				}
 
 				// Log the failure.
-				$msg = __( 'An attempt to clone a repo to this site failed.', 'wpcd' );
+				$msg = __( 'An attempt to clone a repo to this site failed.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			}
 
@@ -162,15 +163,15 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 
 				}
 
 				// Log the attempt.
-				$msg = __( 'Git checkout complete.', 'wpcd' );
+				$msg = __( 'Git checkout complete.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			} else {
 
@@ -178,15 +179,15 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
 
 				}
 
 				// Log the failure.
-				$msg = __( 'An attempt to checkout a branch failed.', 'wpcd' );
+				$msg = __( 'An attempt to checkout a branch failed.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			}
 
@@ -218,10 +219,10 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				$this->git_add_tag_history( $id, $new_tag, $new_tag_desc );
 
 				/* Translators: %s is a git tag name. */
-				$msg = sprintf( __( 'Tag/Version %s was created.', 'wpcd' ), $new_tag );
+				$msg = sprintf( __( 'Tag/Version %s was created.', 'simple-stack' ), $new_tag );
 				$this->git_add_to_site_log( $id, $msg );
 			} else {
-				$msg = __( 'An attempt to create a new git tag/version was not successful.', 'wpcd' );
+				$msg = __( 'An attempt to create a new git tag/version was not successful.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			}
 
@@ -248,10 +249,10 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				$this->git_add_tag_history( $id, $new_tag, __( 'Tag pull request - tag was not present on local machine.' ) );
 
 				/* Translators: %s is a git tag name. */
-				$msg = sprintf( __( 'Tag/Version %s was pulled.', 'wpcd' ), $new_tag );
+				$msg = sprintf( __( 'Tag/Version %s was pulled.', 'simple-stack' ), $new_tag );
 				$this->git_add_to_site_log( $id, $msg );
 			} else {
-				$msg = __( 'An attempt to pull a new tag/version was not successful.', 'wpcd' );
+				$msg = __( 'An attempt to pull a new tag/version was not successful.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			}
 
@@ -277,10 +278,10 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				$this->git_add_tag_history( $id, $new_tag, __( 'Tag pull request - tag was not present on local machine.' ) );
 
 				/* Translators: %s is a git tag name. */
-				$msg = sprintf( __( 'Tag/Version %s was pulled and applied to the site files.', 'wpcd' ), $new_tag );
+				$msg = sprintf( __( 'Tag/Version %s was pulled and applied to the site files.', 'simple-stack' ), $new_tag );
 				$this->git_add_to_site_log( $id, $msg );
 			} else {
-				$msg = __( 'An attempt to pull and apply a new tag/version was not successful.', 'wpcd' );
+				$msg = __( 'An attempt to pull and apply a new tag/version was not successful.', 'simple-stack' );
 				$this->git_add_to_site_log( $id, $msg );
 			}
 
@@ -289,9 +290,9 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		}
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -320,7 +321,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Git', 'wpcd' ),
+				'label' => __( 'Git', 'simple-stack' ),
 				'icon'  => 'fa-duotone fa-code-fork',
 			);
 		}
@@ -336,11 +337,11 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -355,9 +356,9 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
 			/* Translators: %1 is the action; %2 is a file name */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %1$s in file %2$s', 'wpcd' ), $action, __FILE__ ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %1$s in file %2$s', 'simple-stack' ), $action, __FILE__ ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -384,7 +385,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -509,10 +510,10 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		 * Show Init buttons or warning if git is not installed on server or site.
 		 */
 		if ( false === $git_server_status ) {
-			$header_msg = __( 'Git is not installed on this server. To use git on this site, you must install git on the server first. Please see the GIT tab on the server screen.', 'wpcd' );
+			$header_msg = __( 'Git is not installed on this server. To use git on this site, you must install git on the server first. Please see the GIT tab on the server screen.', 'simple-stack' );
 			$fields[]   = array(
 				'id'   => 'git-site-control-header',
-				'name' => __( 'Git', 'wpcd' ),
+				'name' => __( 'Git', 'simple-stack' ),
 				'desc' => $header_msg,
 				'type' => 'heading',
 				'tab'  => $this->get_tab_slug(),
@@ -520,12 +521,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		} else {
 			// Git installed on server. If git is not installed on site, show site specific message.
 			if ( false === $git_site_status ) {
-				$header_msg  = __( 'Git is not activated for this site - activate it below.', 'wpcd' );
+				$header_msg  = __( 'Git is not activated for this site - activate it below.', 'simple-stack' );
 				$header_msg .= '<br />';
-				$header_msg .= __( 'Note: fields left blank will attempt to pull defaults from the server or from global settings.', 'wpcd' );
+				$header_msg .= __( 'Note: fields left blank will attempt to pull defaults from the server or from global settings.', 'simple-stack' );
 				$fields[]    = array(
 					'id'   => 'git-site-control-header',
-					'name' => __( 'Git', 'wpcd' ),
+					'name' => __( 'Git', 'simple-stack' ),
 					'desc' => $header_msg,
 					'type' => 'heading',
 					'tab'  => $this->get_tab_slug(),
@@ -543,21 +544,21 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				}
 			} else {
 				// Git has been initialized for this site.
-				$header_msg  = __( 'Git is active on this site.', 'wpcd' );
+				$header_msg  = __( 'Git is active on this site.', 'simple-stack' );
 				$header_msg .= '<br />';
 				$header_msg .= $this->get_formatted_git_remote_repo_for_display( $id );
 				$header_msg .= $this->get_formatted_git_branch_for_display( $id );
 
 				$fields[] = array(
 					'id'   => 'git-site-control-header',
-					'name' => __( 'Git', 'wpcd' ),
+					'name' => __( 'Git', 'simple-stack' ),
 					'desc' => $header_msg,
 					'type' => 'heading',
 					'tab'  => $this->get_tab_slug(),
 				);
 
 				// Get additional fields for each section.
-				if ( true === (bool) wpcd_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
+				if ( true === (bool) sstk_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
 					$fields = array_merge( $fields, $this->get_fields_for_git_sync( $id ) );
 					$fields = array_merge( $fields, $this->get_fields_for_git_checkout( $id ) );
 					$fields = array_merge( $fields, $this->get_fields_for_git_new_branch( $id ) );
@@ -601,13 +602,13 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-init-fields-remote-repo',
-			'name'       => __( 'Remote Repo URL', 'wpcd' ),
+			'name'       => __( 'Remote Repo URL', 'simple-stack' ),
 			'std'        => ! empty( $git_settings['git_remote_url'] ) ? $git_settings['git_remote_url'] : '',
-			'desc'       => __( 'URL to your git repository on GitHub.', 'wpcd' ),
+			'desc'       => __( 'URL to your git repository on GitHub.', 'simple-stack' ),
 			'columns'    => 12,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_remote_url',
+				'data-sstk-name' => 'git_remote_url',
 			),
 			'type'       => 'url',
 			'tab'        => $this->get_tab_slug(),
@@ -616,13 +617,13 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-init-fields-email',
-			'name'       => __( 'Email Address', 'wpcd' ),
+			'name'       => __( 'Email Address', 'simple-stack' ),
 			'std'        => $git_settings['git_user_email'],
-			'desc'       => __( 'Email address used by your git provider.', 'wpcd' ),
+			'desc'       => __( 'Email address used by your git provider.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_user_email',
+				'data-sstk-name' => 'git_user_email',
 			),
 			'type'       => 'email',
 			'tab'        => $this->get_tab_slug(),
@@ -630,14 +631,14 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		);
 		$actions[] = array(
 			'id'          => 'git-site-control-init-fields-display-name',
-			'name'        => __( 'Display Name', 'wpcd' ),
+			'name'        => __( 'Display Name', 'simple-stack' ),
 			'std'         => $git_settings['git_display_name'],
-			'placeholder' => __( 'The display name used for your user account at your git provider.', 'wpcd' ),
-			'desc'        => __( 'eg: john smith', 'wpcd' ),
+			'placeholder' => __( 'The display name used for your user account at your git provider.', 'simple-stack' ),
+			'desc'        => __( 'eg: john smith', 'simple-stack' ),
 			'columns'     => 6,
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_display_name',
+				'data-sstk-name' => 'git_display_name',
 			),
 			'type'        => 'text',
 			'tab'         => $this->get_tab_slug(),
@@ -645,14 +646,14 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		);
 		$actions[] = array(
 			'id'          => 'git-site-control-init-fields-user-name',
-			'name'        => __( 'User Name', 'wpcd' ),
+			'name'        => __( 'User Name', 'simple-stack' ),
 			'std'         => $git_settings['git_user_name'],
-			'placeholder' => __( 'The user name used for your account at your git provider.', 'wpcd' ),
-			'desc'        => __( 'eg: janesmith', 'wpcd' ),
+			'placeholder' => __( 'The user name used for your account at your git provider.', 'simple-stack' ),
+			'desc'        => __( 'eg: janesmith', 'simple-stack' ),
 			'columns'     => 6,
 			'attributes'  => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_user_name',
+				'data-sstk-name' => 'git_user_name',
 			),
 			'type'        => 'text',
 			'tab'         => $this->get_tab_slug(),
@@ -660,14 +661,14 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		);
 		$actions[] = array(
 			'id'         => 'git-site-control-init-fields-token',
-			'name'       => __( 'API Token', 'wpcd' ),
+			'name'       => __( 'API Token', 'simple-stack' ),
 			'std'        => $this->decrypt( $git_settings['git_token'] ),
-			'desc'       => __( 'API Token for your git account at your git provider.', 'wpcd' ),
-			'tooltip'    => __( 'API tokens must provide read-write privileges for your repos. Generate one on GitHub under the settings area of your account.', 'wpcd' ),
+			'desc'       => __( 'API Token for your git account at your git provider.', 'simple-stack' ),
+			'tooltip'    => __( 'API tokens must provide read-write privileges for your repos. Generate one on GitHub under the settings area of your account.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_token',
+				'data-sstk-name' => 'git_token',
 			),
 			'spellcheck' => 'false',
 			'type'       => 'text',
@@ -675,16 +676,16 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			'save_field' => false,
 		);
 
-		if ( true === (bool) wpcd_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
+		if ( true === (bool) sstk_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-branch',
-				'name'       => __( 'Branch', 'wpcd' ),
+				'name'       => __( 'Branch', 'simple-stack' ),
 				'std'        => $git_settings['git_branch'],
-				'desc'       => __( 'The default branch for your repos - eg: main or master.', 'wpcd' ),
+				'desc'       => __( 'The default branch for your repos - eg: main or master.', 'simple-stack' ),
 				'columns'    => 6,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_branch',
+					'data-sstk-name' => 'git_branch',
 				),
 				'type'       => 'text',
 				'tab'        => $this->get_tab_slug(),
@@ -692,14 +693,14 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			);
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-git-ignore-link',
-				'name'       => __( 'GitIgnore File Link', 'wpcd' ),
+				'name'       => __( 'GitIgnore File Link', 'simple-stack' ),
 				'std'        => $git_settings['git_ignore_url'],
-				'desc'       => __( 'Link to a text file containing git ignore contents.', 'wpcd' ),
-				'tooltip'    => __( 'A raw gist is a good place to locate this file.', 'wpcd' ),
+				'desc'       => __( 'Link to a text file containing git ignore contents.', 'simple-stack' ),
+				'tooltip'    => __( 'A raw gist is a good place to locate this file.', 'simple-stack' ),
 				'columns'    => 6,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_ignore_url',
+					'data-sstk-name' => 'git_ignore_url',
 				),
 				'type'       => 'url',
 				'tab'        => $this->get_tab_slug(),
@@ -707,14 +708,14 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			);
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-pre-process-file-link',
-				'name'       => __( 'Pre-Processing Script Link', 'wpcd' ),
+				'name'       => __( 'Pre-Processing Script Link', 'simple-stack' ),
 				'std'        => $git_settings['git_pre_processing_script_link'],
-				'desc'       => __( 'Link to bash script that will execute before initializing a site with git.', 'wpcd' ),
-				'tooltip'    => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'wpcd' ),
+				'desc'       => __( 'Link to bash script that will execute before initializing a site with git.', 'simple-stack' ),
+				'tooltip'    => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'simple-stack' ),
 				'columns'    => 6,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_pre_processing_script_link',
+					'data-sstk-name' => 'git_pre_processing_script_link',
 				),
 				'type'       => 'url',
 				'tab'        => $this->get_tab_slug(),
@@ -722,14 +723,14 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			);
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-post-process-file-link',
-				'name'       => __( 'Post-Processing Script Link', 'wpcd' ),
+				'name'       => __( 'Post-Processing Script Link', 'simple-stack' ),
 				'std'        => $git_settings['git_post_processing_script_link'],
-				'desc'       => __( 'Link to bash script that will execute after initializing a site with git.', 'wpcd' ),
-				'tooltip'    => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'wpcd' ),
+				'desc'       => __( 'Link to bash script that will execute after initializing a site with git.', 'simple-stack' ),
+				'tooltip'    => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'simple-stack' ),
 				'columns'    => 6,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_post_processing_script_link',
+					'data-sstk-name' => 'git_post_processing_script_link',
 				),
 				'type'       => 'url',
 				'tab'        => $this->get_tab_slug(),
@@ -737,13 +738,13 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			);
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-git-ignore-folders',
-				'name'       => __( 'Ignore Folders', 'wpcd' ),
+				'name'       => __( 'Ignore Folders', 'simple-stack' ),
 				'std'        => $git_settings['git_exclude_folders'],
-				'desc'       => __( 'A comma-separated list of folders to add to git ignore.', 'wpcd' ),
+				'desc'       => __( 'A comma-separated list of folders to add to git ignore.', 'simple-stack' ),
 				'columns'    => 6,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_exclude_folders',
+					'data-sstk-name' => 'git_exclude_folders',
 				),
 				'type'       => 'text',
 				'tab'        => $this->get_tab_slug(),
@@ -751,13 +752,13 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			);
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-git-ignore-files',
-				'name'       => __( 'Ignore Files', 'wpcd' ),
+				'name'       => __( 'Ignore Files', 'simple-stack' ),
 				'std'        => $git_settings['git_exclude_files'],
-				'desc'       => __( 'A comma-separated list of files to add to git ignore.', 'wpcd' ),
+				'desc'       => __( 'A comma-separated list of files to add to git ignore.', 'simple-stack' ),
 				'columns'    => 6,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_exclude_files',
+					'data-sstk-name' => 'git_exclude_files',
 				),
 				'type'       => 'text',
 				'tab'        => $this->get_tab_slug(),
@@ -765,18 +766,18 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			);
 		}
 
-		if ( true === (bool) wpcd_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
+		if ( true === (bool) sstk_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-init-action',
 				'name'       => '',
-				'std'        => __( 'Initialize Git on this site', 'wpcd' ),
-				'desc'       => __( 'This action is not reversible - please make a site backup if you\'re unsure about doing this!', 'wpcd' ),
+				'std'        => __( 'Initialize Git on this site', 'simple-stack' ),
+				'desc'       => __( 'This action is not reversible - please make a site backup if you\'re unsure about doing this!', 'simple-stack' ),
 				'columns'    => 4,
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'git-site-control-init-site',
+					'data-sstk-action'              => 'git-site-control-init-site',
 					// fields that contribute data for this action.
-					'data-wpcd-fields'              => wp_json_encode(
+					'data-sstk-fields'              => wp_json_encode(
 						array(
 							'#git-site-control-init-fields-remote-repo',
 							'#git-site-control-init-fields-email',
@@ -791,31 +792,31 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 							'#git-site-control-init-fields-git-ignore-files',
 						)
 					),
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to initialize this site with GIT?  Files from your remote repo will be merged into this site. This action is not reversible!', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to initialize this site with GIT?  Files from your remote repo will be merged into this site. This action is not reversible!', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to initialize site to use git...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to initialize site to use git...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
 				'type'       => 'button',
 				'tab'        => $this->get_tab_slug(),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 			$actions[] = array(
 				'id'         => 'git-site-control-init-fields-clone-only',
 				'name'       => '',
-				'std'        => __( 'Clone Without Init', 'wpcd' ),
-				'desc'       => __( 'Clone files from remote repo without initializing git.', 'wpcd' ),
-				'tooltip'    => __( 'Clone files from remote repo without initializing git on the site. Files from the repo will be copied over the existing files on the site.', 'wpcd' ),
+				'std'        => __( 'Clone Without Init', 'simple-stack' ),
+				'desc'       => __( 'Clone files from remote repo without initializing git.', 'simple-stack' ),
+				'tooltip'    => __( 'Clone files from remote repo without initializing git on the site. Files from the repo will be copied over the existing files on the site.', 'simple-stack' ),
 				'columns'    => 4,
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'git-site-control-clone-only',
+					'data-sstk-action'              => 'git-site-control-clone-only',
 					// fields that contribute data for this action.
-					'data-wpcd-fields'              => wp_json_encode(
+					'data-sstk-fields'              => wp_json_encode(
 						array(
 							'#git-site-control-init-fields-remote-repo',
 							'#git-site-control-init-fields-email',
@@ -830,16 +831,16 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 							'#git-site-control-init-fields-git-ignore-files',
 						)
 					),
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to copy files from your repo to this site?  This action is not reversible!', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to copy files from your repo to this site?  This action is not reversible!', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to copy sites from your remote repo to this site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to copy sites from your remote repo to this site...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
 				'type'       => 'button',
 				'tab'        => $this->get_tab_slug(),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 		}
@@ -847,15 +848,15 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-init-fields-credentials-only',
 			'name'       => '',
-			'std'        => __( 'Save Credentials', 'wpcd' ),
-			'desc'       => __( 'Save credentials for site without fully initializing git.', 'wpcd' ),
-			'tooltip'    => __( 'Save and setup the server to connect to the repo using the provided credentials. You can then clone the site later if you wish.', 'wpcd' ),
+			'std'        => __( 'Save Credentials', 'simple-stack' ),
+			'desc'       => __( 'Save credentials for site without fully initializing git.', 'simple-stack' ),
+			'tooltip'    => __( 'Save and setup the server to connect to the repo using the provided credentials. You can then clone the site later if you wish.', 'simple-stack' ),
 			'columns'    => 4,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-credentials-only',
+				'data-sstk-action'              => 'git-site-control-credentials-only',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-init-fields-remote-repo',
 						'#git-site-control-init-fields-email',
@@ -872,13 +873,13 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 						*/
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to setup git credentials for this site?  This action is not reversible!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to setup git credentials for this site?  This action is not reversible!', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -898,12 +899,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Get existing settings.
 		$git_settings = $this->get_git_settings( $id );
 
-		$header_msg  = __( 'Sync your current branch with your remote repo. This can change the files on your site.', 'wpcd' );
+		$header_msg  = __( 'Sync your current branch with your remote repo. This can change the files on your site.', 'simple-stack' );
 		$header_msg .= '<br />';
 		$header_msg .= $this->get_formatted_git_branch_for_display( $id );
 		$actions[]   = array(
 			'id'   => 'git-site-control-sync-fields-header',
-			'name' => __( 'Git Sync', 'wpcd' ),
+			'name' => __( 'Git Sync', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -911,12 +912,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-sync-fields-commit-message',
-			'name'       => __( 'Commit Message', 'wpcd' ),
-			'tooltip'    => __( 'Enter a commit message to be used if changes need to be committed first before pulling and pushing from the remote repo.', 'wpcd' ),
+			'name'       => __( 'Commit Message', 'simple-stack' ),
+			'tooltip'    => __( 'Enter a commit message to be used if changes need to be committed first before pulling and pushing from the remote repo.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_commit_msg',
+				'data-sstk-name' => 'git_commit_msg',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -925,51 +926,51 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-sync-fields-sync-action',
-			'name'       => __( 'Sync', 'wpcd' ),
-			'tooltip'    => __( 'This action will 1. Commit local changes. 2. Pull and merge from remote repo and 3. Push changes back to remote repo.', 'wpcd' ),
-			'std'        => __( 'Sync With Remote Repo', 'wpcd' ),
+			'name'       => __( 'Sync', 'simple-stack' ),
+			'tooltip'    => __( 'This action will 1. Commit local changes. 2. Pull and merge from remote repo and 3. Push changes back to remote repo.', 'simple-stack' ),
+			'std'        => __( 'Sync With Remote Repo', 'simple-stack' ),
 			'columns'    => 3,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-sync-fields-sync',
+				'data-sstk-action'              => 'git-site-control-sync-fields-sync',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-sync-fields-commit-message',
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to sync your current site files with your remote repo?  This action is not reversible!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to sync your current site files with your remote repo?  This action is not reversible!', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		$actions[] = array(
 			'id'         => 'git-site-control-sync-fields-commit-action',
-			'name'       => __( 'Commit', 'wpcd' ),
-			'tooltip'    => __( 'This action will 1. Commit local changes. & 2. Push changes back to remote repo.', 'wpcd' ),
-			'std'        => __( 'Commit & Push', 'wpcd' ),
+			'name'       => __( 'Commit', 'simple-stack' ),
+			'tooltip'    => __( 'This action will 1. Commit local changes. & 2. Push changes back to remote repo.', 'simple-stack' ),
+			'std'        => __( 'Commit & Push', 'simple-stack' ),
 			'columns'    => 3,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-sync-fields-commit-and-push',
+				'data-sstk-action'              => 'git-site-control-sync-fields-commit-and-push',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-sync-fields-commit-message',
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to commit your current site changes and push them to your remote repo?  This action is not reversible!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to commit your current site changes and push them to your remote repo?  This action is not reversible!', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -989,12 +990,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Get existing settings.
 		$git_settings = $this->get_git_settings( $id );
 
-		$header_msg  = __( 'Checkout a different branch or tag (version). This can change the files on your site.', 'wpcd' );
+		$header_msg  = __( 'Checkout a different branch or tag (version). This can change the files on your site.', 'simple-stack' );
 		$header_msg .= '<br />';
 		$header_msg .= $this->get_formatted_git_branch_for_display( $id );
 		$actions[]   = array(
 			'id'   => 'git-site-control-checkout-fields-header',
-			'name' => __( 'Git Checkout Branch or tag (Version)', 'wpcd' ),
+			'name' => __( 'Git Checkout Branch or tag (Version)', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1002,12 +1003,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-checkout-branch',
-			'name'       => __( 'Branch or Tag', 'wpcd' ),
-			'desc'       => __( 'Enter the branch or tag to be checked out, eg: dev or main.', 'wpcd' ),
-			'tooltip'    => __( 'If you choose a TAG to checkout, chances are that your HEAD will be left in a DETACHED state. If you do not know what this means, do not checkout a tag or version.', 'wpcd' ),
+			'name'       => __( 'Branch or Tag', 'simple-stack' ),
+			'desc'       => __( 'Enter the branch or tag to be checked out, eg: dev or main.', 'simple-stack' ),
+			'tooltip'    => __( 'If you choose a TAG to checkout, chances are that your HEAD will be left in a DETACHED state. If you do not know what this means, do not checkout a tag or version.', 'simple-stack' ),
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_branch',
+				'data-sstk-name' => 'git_branch',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1017,26 +1018,26 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-checkout-fields-action',
 			'name'       => '',
-			'std'        => __( 'Checkout', 'wpcd' ),
+			'std'        => __( 'Checkout', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-checkout-branch',
+				'data-sstk-action'              => 'git-site-control-checkout-branch',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-checkout-branch',
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to checkout this branch or tag? Changes from the remote repo will be merged with the local site files. If you chose a TAG to checkout, chances are that your HEAD will be left in a DETACHED state. If you do not know what this means, do not check out a tag or version.', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to checkout this branch or tag? Changes from the remote repo will be merged with the local site files. If you chose a TAG to checkout, chances are that your HEAD will be left in a DETACHED state. If you do not know what this means, do not check out a tag or version.', 'simple-stack' ),
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to checkout a branch or tag...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to checkout a branch or tag...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1057,12 +1058,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Get existing settings.
 		$git_settings = $this->get_git_settings( $id );
 
-		$header_msg  = __( 'Create new branch and checkout.', 'wpcd' );
+		$header_msg  = __( 'Create new branch and checkout.', 'simple-stack' );
 		$header_msg .= '<br />';
 		$header_msg .= $this->get_formatted_git_branch_for_display( $id );
 		$actions[]   = array(
 			'id'   => 'git-site-control-checkout-fields-header',
-			'name' => __( 'Git Create Branch', 'wpcd' ),
+			'name' => __( 'Git Create Branch', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1070,12 +1071,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-create-branch-source-branch',
-			'name'       => __( 'Source Branch', 'wpcd' ),
-			'desc'       => __( 'Enter the branch we\'ll be using as the source of the new branch.', 'wpcd' ),
+			'name'       => __( 'Source Branch', 'simple-stack' ),
+			'desc'       => __( 'Enter the branch we\'ll be using as the source of the new branch.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_branch',
+				'data-sstk-name' => 'git_branch',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1084,12 +1085,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-create-branch-new-branch',
-			'name'       => __( 'New Branch', 'wpcd' ),
-			'desc'       => __( 'Enter the name of the branch to create.', 'wpcd' ),
+			'name'       => __( 'New Branch', 'simple-stack' ),
+			'desc'       => __( 'Enter the name of the branch to create.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_new_branch',
+				'data-sstk-name' => 'git_new_branch',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1099,24 +1100,24 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-create-branch-fields-action',
 			'name'       => '',
-			'std'        => __( 'Create & Checkout New Branch', 'wpcd' ),
+			'std'        => __( 'Create & Checkout New Branch', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-create-new-branch',
+				'data-sstk-action'              => 'git-site-control-create-new-branch',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-create-branch-source-branch',
 						'#git-site-control-create-branch-new-branch',
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to checkout this branch? Changes from the remote repo will be merged with the local site files.', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to checkout this branch? Changes from the remote repo will be merged with the local site files.', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1137,14 +1138,14 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Get existing settings.
 		$git_settings = $this->get_git_settings( $id );
 
-		$header_msg  = __( 'Create new tag or version.', 'wpcd' );
+		$header_msg  = __( 'Create new tag or version.', 'simple-stack' );
 		$header_msg .= '<br />';
-		$header_msg .= __( 'A new version folder will be created for this tag.', 'wpcd' );
+		$header_msg .= __( 'A new version folder will be created for this tag.', 'simple-stack' );
 		$header_msg .= '<br />';
 		$header_msg .= $this->get_formatted_git_branch_for_display( $id );
 		$actions[]   = array(
 			'id'   => 'git-site-control-create-tag-header',
-			'name' => __( 'Create New Tag (Version)', 'wpcd' ),
+			'name' => __( 'Create New Tag (Version)', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1152,12 +1153,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-create-tag-name',
-			'name'       => __( 'New Tag', 'wpcd' ),
-			'desc'       => __( 'Enter the name for the new tag eg: v1.1.2.  No spaces or special chars.', 'wpcd' ),
+			'name'       => __( 'New Tag', 'simple-stack' ),
+			'desc'       => __( 'Enter the name for the new tag eg: v1.1.2.  No spaces or special chars.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_tag',
+				'data-sstk-name' => 'git_tag',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1166,12 +1167,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-create-tag-desc',
-			'name'       => __( 'Description', 'wpcd' ),
-			'desc'       => __( 'Enter a few words about this tag.', 'wpcd' ),
+			'name'       => __( 'Description', 'simple-stack' ),
+			'desc'       => __( 'Enter a few words about this tag.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_tag_desc',
+				'data-sstk-name' => 'git_tag_desc',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1181,27 +1182,27 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-create-tag-action',
 			'name'       => '',
-			'std'        => __( 'Create New Tag', 'wpcd' ),
+			'std'        => __( 'Create New Tag', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-create-tag',
+				'data-sstk-action'              => 'git-site-control-create-tag',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-create-tag-name',
 						'#git-site-control-create-tag-desc',
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to create a new tag or version?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to create a new tag or version?', 'simple-stack' ),
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to create a new tag...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to create a new tag...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1223,12 +1224,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$git_settings = $this->get_git_settings( $id );
 
 		// Left column header.
-		$header_msg  = __( 'Fetch Tag and create a version folder without overwriting existing site files.', 'wpcd' );
+		$header_msg  = __( 'Fetch Tag and create a version folder without overwriting existing site files.', 'simple-stack' );
 		$header_msg .= '<br />';
 		$header_msg .= $this->get_formatted_git_branch_for_display( $id );
 		$actions[]   = array(
 			'id'      => 'git-site-control-pull-tag-header',
-			'name'    => __( 'Fetch Existing Tag (Version) From Repo', 'wpcd' ),
+			'name'    => __( 'Fetch Existing Tag (Version) From Repo', 'simple-stack' ),
 			'desc'    => $header_msg,
 			'columns' => 6,
 			'type'    => 'heading',
@@ -1236,13 +1237,13 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Right column header.
-		$header_msg  = __( 'Fetch Tag and apply to site - site files WILL be changed!', 'wpcd' );
+		$header_msg  = __( 'Fetch Tag and apply to site - site files WILL be changed!', 'simple-stack' );
 		$header_msg .= '<br />';
-		$header_msg .= __( 'Note that this tag will write files to your CURRENT branch. So if you are using an older tag or a tag from a different branch you will want to be very very careful!', 'wpcd' );
+		$header_msg .= __( 'Note that this tag will write files to your CURRENT branch. So if you are using an older tag or a tag from a different branch you will want to be very very careful!', 'simple-stack' );
 		$header_msg .= '<br />';
 		$actions[]   = array(
 			'id'      => 'git-site-control-fetch-and-apply-tag-header',
-			'name'    => __( 'Fetch And Apply Tag (Version)', 'wpcd' ),
+			'name'    => __( 'Fetch And Apply Tag (Version)', 'simple-stack' ),
 			'desc'    => $header_msg,
 			'columns' => 6,
 			'type'    => 'heading',
@@ -1252,12 +1253,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// field in left column.
 		$actions[] = array(
 			'id'         => 'git-site-control-pull-tag-name',
-			'name'       => __( 'Tag To Fetch', 'wpcd' ),
-			'desc'       => __( 'Enter the name for the tag to fetch eg: v1.1.2.  No spaces or special chars.', 'wpcd' ),
+			'name'       => __( 'Tag To Fetch', 'simple-stack' ),
+			'desc'       => __( 'Enter the name for the tag to fetch eg: v1.1.2.  No spaces or special chars.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_tag',
+				'data-sstk-name' => 'git_tag',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1267,12 +1268,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// field in right column.
 		$actions[] = array(
 			'id'         => 'git-site-control-fetch-and-apply-tag-name',
-			'name'       => __( 'Tag To Fetch', 'wpcd' ),
-			'desc'       => __( 'Enter the name for the tag to fetch eg: v1.1.2.  No spaces or special chars.', 'wpcd' ),
+			'name'       => __( 'Tag To Fetch', 'simple-stack' ),
+			'desc'       => __( 'Enter the name for the tag to fetch eg: v1.1.2.  No spaces or special chars.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_tag',
+				'data-sstk-name' => 'git_tag',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1283,27 +1284,27 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-pull-tag-action',
 			'name'       => '',
-			'std'        => __( 'Fetch Tag / Version', 'wpcd' ),
+			'std'        => __( 'Fetch Tag / Version', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-pull-tag',
+				'data-sstk-action'              => 'git-site-control-pull-tag',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-pull-tag-name',
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to fetch this tag or version from the remote repo?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to fetch this tag or version from the remote repo?', 'simple-stack' ),
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to pull tag/version from remote repo...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to pull tag/version from remote repo...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1311,27 +1312,27 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-fetch-and-apply-tag-action',
 			'name'       => '',
-			'std'        => __( 'Fetch & Apply', 'wpcd' ),
+			'std'        => __( 'Fetch & Apply', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-fetch-and-apply-tag',
+				'data-sstk-action'              => 'git-site-control-fetch-and-apply-tag',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode(
+				'data-sstk-fields'              => wp_json_encode(
 					array(
 						'#git-site-control-fetch-and-apply-tag-name',
 					)
 				),
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to apply this tag / version to your files? Your site files will be overwritten!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to apply this tag / version to your files? Your site files will be overwritten!', 'simple-stack' ),
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to pull tag/version from remote repo and overwrite site files...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to pull tag/version from remote repo and overwrite site files...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1351,66 +1352,66 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$fields[] = array(
 			'id'   => 'git-site-control-misc-header',
-			'name' => __( 'Misc', 'wpcd' ),
+			'name' => __( 'Misc', 'simple-stack' ),
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
 		);
 		$fields[] = array(
 			'id'         => 'git-site-control-remove-git-action',
 			'name'       => '',
-			'std'        => __( 'Remove Git', 'wpcd' ),
-			'desc'       => __( 'Remove git from this site.', 'wpcd' ),
-			'tooltip'    => __( 'This will attempt to remove git files from the site. WPCD will no longer track this site as being git enabled.', 'wpcd' ),
+			'std'        => __( 'Remove Git', 'simple-stack' ),
+			'desc'       => __( 'Remove git from this site.', 'simple-stack' ),
+			'tooltip'    => __( 'This will attempt to remove git files from the site. Simple Stack will no longer track this site as being git enabled.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-remove-git',
-				'data-wpcd-id'                  => $id,
+				'data-sstk-action'              => 'git-site-control-remove-git',
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to remove git from this site? This action is not reversible!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to remove git from this site? This action is not reversible!', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 		$fields[] = array(
 			'id'         => 'git-site-control-reset-metas-action',
 			'name'       => '',
-			'std'        => __( 'Reset metas', 'wpcd' ),
-			'desc'       => __( 'Remove git related metas from this site.', 'wpcd' ),
-			'tooltip'    => __( 'This will NOT remove git from the site on the server!', 'wpcd' ),
+			'std'        => __( 'Reset metas', 'simple-stack' ),
+			'desc'       => __( 'Remove git related metas from this site.', 'simple-stack' ),
+			'tooltip'    => __( 'This will NOT remove git from the site on the server!', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-remove-metas',
-				'data-wpcd-id'                  => $id,
+				'data-sstk-action'              => 'git-site-control-remove-metas',
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to reset the git related metas for this site? This action is not reversible!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to reset the git related metas for this site? This action is not reversible!', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		$fields[] = array(
 			'id'         => 'git-site-control-delete-all-tag-folders-action',
 			'name'       => '',
-			'std'        => __( 'Delete All Tag Folders', 'wpcd' ),
-			'desc'       => __( 'Remove all Tag folders', 'wpcd' ),
-			'tooltip'    => __( 'Whenever you create or pull a tag, we create a new folder for it. This will delete all those folders.', 'wpcd' ),
+			'std'        => __( 'Delete All Tag Folders', 'simple-stack' ),
+			'desc'       => __( 'Remove all Tag folders', 'simple-stack' ),
+			'tooltip'    => __( 'Whenever you create or pull a tag, we create a new folder for it. This will delete all those folders.', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-delete-all-tag-folders',
-				'data-wpcd-id'                  => $id,
+				'data-sstk-action'              => 'git-site-control-delete-all-tag-folders',
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to delete all the tag /version folders for this site? This action is not reversible unless you repull your tags from the remote repo.', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to delete all the tag /version folders for this site? This action is not reversible unless you repull your tags from the remote repo.', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1427,11 +1428,11 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_fields_for_git_push_to_deploy_handle_actions( $id ) {
 
-		$header_msg = __( 'What should we do when we get a webhook notice from your git provider (GitHub)?', 'wpcd' );
+		$header_msg = __( 'What should we do when we get a webhook notice from your git provider (GitHub)?', 'simple-stack' );
 
 		$actions[] = array(
 			'id'   => 'git-site-control-push-to-deploy-actions-header',
-			'name' => __( 'Push-To-Deploy Actions', 'wpcd' ),
+			'name' => __( 'Push-To-Deploy Actions', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1439,13 +1440,13 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-push-to-deploy-actions-branches',
-			'name'       => __( 'Which branches should trigger a deploy?', 'wpcd' ),
-			'desc'       => __( 'Enter branches separated by commas.', 'wpcd' ),
-			'std'        => get_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_branches', true ),
+			'name'       => __( 'Which branches should trigger a deploy?', 'simple-stack' ),
+			'desc'       => __( 'Enter branches separated by commas.', 'simple-stack' ),
+			'std'        => get_post_meta( $id, 'sstk_app_git_push_to_deploy_action_branches', true ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_push_to_deploy_action_branches',
+				'data-sstk-name' => 'git_push_to_deploy_action_branches',
 			),
 			'type'       => 'text',
 			'tab'        => $this->get_tab_slug(),
@@ -1454,18 +1455,18 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'         => 'git-site-control-push-to-deploy-actions-types',
-			'name'       => __( 'What should we do?', 'wpcd' ),
-			'desc'       => __( 'What should we do when our push-to-deploy webhook is triggered for this site?', 'wpcd' ),
-			'std'        => get_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_type', true ),
+			'name'       => __( 'What should we do?', 'simple-stack' ),
+			'desc'       => __( 'What should we do when our push-to-deploy webhook is triggered for this site?', 'simple-stack' ),
+			'std'        => get_post_meta( $id, 'sstk_app_git_push_to_deploy_action_type', true ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'git_push_to_deploy_action_type',
+				'data-sstk-name' => 'git_push_to_deploy_action_type',
 			),
 			'type'       => 'select',
 			'options'    => array(
-				'fetch'    => __( 'Fetch (Copy Changes To Site - will not pull or merge if this site has an integrated git repo)', 'wpcd' ),
-				'checkout' => __( 'Checkout (Will checkout files to the local repo for the site and sync the site files to it)', 'wpcd' ),
+				'fetch'    => __( 'Fetch (Copy Changes To Site - will not pull or merge if this site has an integrated git repo)', 'simple-stack' ),
+				'checkout' => __( 'Checkout (Will checkout files to the local repo for the site and sync the site files to it)', 'simple-stack' ),
 			),
 			'tab'        => $this->get_tab_slug(),
 			'save_field' => false,
@@ -1474,22 +1475,22 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-push-to-deploy-action',
 			'name'       => '',
-			'std'        => __( 'Save Actions', 'wpcd' ),
+			'std'        => __( 'Save Actions', 'simple-stack' ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action' => 'git-site-control-push-to-deploy-action',
+				'data-sstk-action' => 'git-site-control-push-to-deploy-action',
 				// fields that contribute data for this action.
-				'data-wpcd-fields' => wp_json_encode(
+				'data-sstk-fields' => wp_json_encode(
 					array(
 						'#git-site-control-push-to-deploy-actions-branches',
 						'#git-site-control-push-to-deploy-actions-types',
 					)
 				),
-				'data-wpcd-id'     => $id,
+				'data-sstk-id'     => $id,
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1506,25 +1507,25 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_fields_for_git_push_to_deploy_keys( $id ) {
 
-		$header_msg = __( 'Add these values in the webooks area of your git provider (GitHub).', 'wpcd' );
+		$header_msg = __( 'Add these values in the webooks area of your git provider (GitHub).', 'simple-stack' );
 
-		$return  = '<div class="wpcd_git_push_to_deploy_data">';
-		$return .= '<div class="wpcd_git_push_to_deploy_inner_wrap">';
+		$return  = '<div class="sstk_git_push_to_deploy_data">';
+		$return .= '<div class="sstk_git_push_to_deploy_inner_wrap">';
 
-		$return     .= '<div class="wpcd_git_push_to_deploy_data_label_item">';
-			$return .= __( 'Webhook URL:', 'wpcd' );
+		$return     .= '<div class="sstk_git_push_to_deploy_data_label_item">';
+			$return .= __( 'Webhook URL:', 'simple-stack' );
 		$return     .= '</div>';
 
-		$return     .= '<div class="wpcd_git_push_to_deploy_data_value_item">';
-			$return .= wpcd_wrap_clipboard_copy( get_post_meta( $id, 'wpcd_app_git_push_to_deploy_webhook_url', true ), false, false );
+		$return     .= '<div class="sstk_git_push_to_deploy_data_value_item">';
+			$return .= sstk_wrap_clipboard_copy( get_post_meta( $id, 'sstk_app_git_push_to_deploy_webhook_url', true ), false, false );
 		$return     .= '</div>';
 
-		$return     .= '<div class="wpcd_git_push_to_deploy_data_label_item">';
-			$return .= __( 'Webhook Secret:', 'wpcd' );
+		$return     .= '<div class="sstk_git_push_to_deploy_data_label_item">';
+			$return .= __( 'Webhook Secret:', 'simple-stack' );
 		$return     .= '</div>';
 
-		$return     .= '<div class="wpcd_git_push_to_deploy_data_value_item">';
-			$return .= wpcd_wrap_clipboard_copy( $this->decrypt( get_post_meta( $id, 'wpcd_app_git_push_to_deploy_secret_key', true ) ), false, false );
+		$return     .= '<div class="sstk_git_push_to_deploy_data_value_item">';
+			$return .= sstk_wrap_clipboard_copy( $this->decrypt( get_post_meta( $id, 'sstk_app_git_push_to_deploy_secret_key', true ) ), false, false );
 		$return     .= '</div>';
 
 		$return .= '</div>';
@@ -1532,7 +1533,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'   => 'git-site-control-push-to-deploy-header',
-			'name' => __( 'Push-To-Deploy Keys', 'wpcd' ),
+			'name' => __( 'Push-To-Deploy Keys', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1550,18 +1551,18 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$actions[] = array(
 			'id'         => 'git-site-control-push-to-deploy-reset-keys-action',
 			'name'       => '',
-			'std'        => __( 'Reset Keys', 'wpcd' ),
+			'std'        => __( 'Reset Keys', 'simple-stack' ),
 			'columns'    => 6,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'git-site-control-push-to-deploy-reset-keys',
-				'data-wpcd-id'                  => $id,
+				'data-sstk-action'              => 'git-site-control-push-to-deploy-reset-keys',
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to reset the URL & Secret key for your webhook? You will have to update this everywhere it\'s used.', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to reset the URL & Secret key for your webhook? You will have to update this everywhere it\'s used.', 'simple-stack' ),
 			),
 			'type'       => 'button',
 			'tab'        => $this->get_tab_slug(),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -1581,16 +1582,16 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Get existing settings.
 		$git_settings = $this->get_git_settings( $id );
 
-		$header_msg = __( 'These were the values used when this site was linked with your git repo.', 'wpcd' );
+		$header_msg = __( 'These were the values used when this site was linked with your git repo.', 'simple-stack' );
 
-		$return  = '<div class="wpcd_git_initial_settings_data">';
-		$return .= '<div class="wpcd_git_initial_settings_data_inner_wrap">';
+		$return  = '<div class="sstk_git_initial_settings_data">';
+		$return .= '<div class="sstk_git_initial_settings_data_inner_wrap">';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'Remote Repo:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'Remote Repo:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return .= '<div class="sstk_git_initial_settings_data_value_item">';
 				// phpcs:disable
 				if ( ! empty( $git_settings['git_remote_url'] ) ) {
 			$return .= esc_html( $git_settings['git_remote_url'] );
@@ -1598,69 +1599,69 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				// phpcs:enable
 			$return .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'Initial Branch:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'Initial Branch:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= esc_html( $git_settings['git_branch'] );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'User Display Name:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'User Display Name:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= $git_settings['git_display_name'];
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'User Name:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'User Name:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= esc_html( $git_settings['git_user_name'] );
 			$return     .= '</div>';
 
-		if ( true === (bool) wpcd_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
+		if ( true === (bool) sstk_get_early_option( 'wordpress_app_git_enable_advanced' ) ) {
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'Pre-Processing Script Link:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'Pre-Processing Script Link:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= esc_html( $git_settings['git_pre_processing_script_link'] );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'Post-Processing Script Link:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'Post-Processing Script Link:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= esc_html( $git_settings['git_post_processing_script_link'] );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'Ignore Folders:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'Ignore Folders:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= esc_html( $git_settings['git_exclude_folders'] );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'Ignore Files:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'Ignore Files:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= esc_html( $git_settings['git_exclude_files'] );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_label_item">';
-				$return .= __( 'Git Ignore Link:', 'wpcd' );
+			$return     .= '<div class="sstk_git_initial_settings_data_label_item">';
+				$return .= __( 'Git Ignore Link:', 'simple-stack' );
 			$return     .= '</div>';
 
-			$return     .= '<div class="wpcd_git_initial_settings_data_value_item">';
+			$return     .= '<div class="sstk_git_initial_settings_data_value_item">';
 				$return .= esc_html( $git_settings['git_ignore_url'] );
 			$return     .= '</div>';
 		}
@@ -1670,7 +1671,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'   => 'git-site-control-view-settings-header',
-			'name' => __( 'Git Initial Settings', 'wpcd' ),
+			'name' => __( 'Git Initial Settings', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1698,21 +1699,21 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_fields_for_git_tag_list( $id ) {
 
-		$header_msg = __( 'These are the tags/versions that we are aware of. If you have created tags on the remote repo but not fetched them on this screen we will not be aware of them.', 'wpcd' );
+		$header_msg = __( 'These are the tags/versions that we are aware of. If you have created tags on the remote repo but not fetched them on this screen we will not be aware of them.', 'simple-stack' );
 
-		$return  = '<div class="wpcd_git_tag_list">';
-		$return .= '<div class="wpcd_git_tag_list_inner_wrap">';
+		$return  = '<div class="sstk_git_tag_list">';
+		$return .= '<div class="sstk_git_tag_list_inner_wrap">';
 
 		$tags = $this->get_git_tag_history( $id );
 
 		foreach ( array_reverse( $tags ) as $tag => $tag_array ) {
 
-			$return .= '<div class="wpcd_git_tag_value">';
+			$return .= '<div class="sstk_git_tag_value">';
 			$return .= $tag;
 			$return .= '</div>';
 
-			$return .= '<div class="wpcd_git_tag_label_desc">';
-			$return .= ! empty( $tag_array['desc'] ) ? $tag_array['desc'] : __( 'No description available', 'wpcd' );
+			$return .= '<div class="sstk_git_tag_label_desc">';
+			$return .= ! empty( $tag_array['desc'] ) ? $tag_array['desc'] : __( 'No description available', 'simple-stack' );
 			$return .= '</div>';
 
 		}
@@ -1721,7 +1722,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'   => 'git-site-control-list-tags',
-			'name' => __( 'Current Tags', 'wpcd' ),
+			'name' => __( 'Current Tags', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1749,21 +1750,21 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_fields_for_git_history( $id ) {
 
-		$header_msg = __( 'Git History Log. Only the latest 25 items are shown.', 'wpcd' );
+		$header_msg = __( 'Git History Log. Only the latest 25 items are shown.', 'simple-stack' );
 
-		$return  = '<div class="wpcd_git_logs_list">';
-		$return .= '<div class="wpcd_git_logs_list_inner_wrap">';
+		$return  = '<div class="sstk_git_logs_list">';
+		$return .= '<div class="sstk_git_logs_list_inner_wrap">';
 
 		$logs = $this->get_git_log_history( $id );
 
 		foreach ( array_reverse( $logs ) as $log => $log_array ) {
 
-			$return .= '<div class="wpcd_git_log_label">';
+			$return .= '<div class="sstk_git_log_label">';
 			$return .= $log_array['reporting_time_human_utc'];
 			$return .= '</div>';
 
-			$return .= '<div class="wpcd_git_log_value">';
-			$return .= ! empty( $log_array['msg'] ) ? $log_array['msg'] : __( 'Empty log entry', 'wpcd' );
+			$return .= '<div class="sstk_git_log_value">';
+			$return .= ! empty( $log_array['msg'] ) ? $log_array['msg'] : __( 'Empty log entry', 'simple-stack' );
 			$return .= '</div>';
 
 		}
@@ -1772,7 +1773,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$actions[] = array(
 			'id'   => 'git-site-control-logs',
-			'name' => __( 'History', 'wpcd' ),
+			'name' => __( 'History', 'simple-stack' ),
 			'desc' => $header_msg,
 			'type' => 'heading',
 			'tab'  => $this->get_tab_slug(),
@@ -1827,7 +1828,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_git_settings( $id ) {
 
-		$settings = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_app_git_settings', true ) );
+		$settings = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_app_git_settings', true ) );
 
 		if ( empty( $settings ) ) {
 			$fields = $this->get_git_default_field_names();
@@ -1848,16 +1849,16 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function get_global_git_defaults() {
 
 		$defaults = array(
-			'git_user_email'                  => wpcd_get_option( 'wordpress_app_git_email_address' ),
-			'git_display_name'                => wpcd_get_option( 'wordpress_app_git_display_name' ),
-			'git_user_name'                   => wpcd_get_option( 'wordpress_app_git_user_name' ),
-			'git_token'                       => wpcd_get_option( 'wordpress_app_git_token' ),
-			'git_branch'                      => wpcd_get_option( 'wordpress_app_git_branch' ),
-			'git_ignore_url'                  => wpcd_get_option( 'wordpress_app_git_ignore_link' ),
-			'git_pre_processing_script_link'  => wpcd_get_option( 'wordpress_app_git_pre_processing_script_link' ),
-			'git_post_processing_script_link' => wpcd_get_option( 'wordpress_app_git_post_processing_script_link' ),
-			'git_exclude_folders'             => wpcd_get_option( 'wordpress_app_git_ignore_folders' ),
-			'git_exclude_files'               => wpcd_get_option( 'wordpress_app_git_ignore_files' ),
+			'git_user_email'                  => sstk_get_option( 'wordpress_app_git_email_address' ),
+			'git_display_name'                => sstk_get_option( 'wordpress_app_git_display_name' ),
+			'git_user_name'                   => sstk_get_option( 'wordpress_app_git_user_name' ),
+			'git_token'                       => sstk_get_option( 'wordpress_app_git_token' ),
+			'git_branch'                      => sstk_get_option( 'wordpress_app_git_branch' ),
+			'git_ignore_url'                  => sstk_get_option( 'wordpress_app_git_ignore_link' ),
+			'git_pre_processing_script_link'  => sstk_get_option( 'wordpress_app_git_pre_processing_script_link' ),
+			'git_post_processing_script_link' => sstk_get_option( 'wordpress_app_git_post_processing_script_link' ),
+			'git_exclude_folders'             => sstk_get_option( 'wordpress_app_git_ignore_folders' ),
+			'git_exclude_files'               => sstk_get_option( 'wordpress_app_git_ignore_files' ),
 		);
 
 		return $defaults;
@@ -1877,7 +1878,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$server_id = $this->get_server_id_by_app_id( $id );
 		if ( $server_id ) {
-			$defaults = wpcd_maybe_unserialize( get_post_meta( $server_id, 'wpcd_wpapp_git_defaults', true ) );
+			$defaults = sstk_maybe_unserialize( get_post_meta( $server_id, 'sstk_wpapp_git_defaults', true ) );
 		}
 
 		if ( empty( $defaults ) ) {
@@ -1936,7 +1937,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -1944,7 +1945,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Make sure we have a REPO name before doing anything else.
 		if ( empty( $args['git_remote_url'] ) ) {
 			/* Translators: %s is the label name for a field that should not be blank. */
-			return new \WP_Error( __( 'The repo name/url should not be blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'The repo name/url should not be blank.', 'simple-stack' ) );
 		}
 
 		// Merge our incoming git settings with global and server defaults.
@@ -1969,7 +1970,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Note that we will create a new array just for saving so that we can encrypt the token without affecting later processing that needs an unencrypted token.
 		$git_settings_for_saving              = $git_settings;
 		$git_settings_for_saving['git_token'] = $this->encrypt( $git_settings_for_saving['git_token'] );
-		update_post_meta( $id, 'wpcd_app_git_settings', $git_settings_for_saving );
+		update_post_meta( $id, 'sstk_app_git_settings', $git_settings_for_saving );
 		$this->set_git_branch( $id, $git_settings['git_branch'] );
 
 		// Create a push-to-deploy url and save it. It doesn't matter if the git init is succesful, this is a reusable value.
@@ -1977,16 +1978,16 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		// Certain settings should not be blank.  Loop through those and error out if they're blank.
 		$non_blank_fields = array(
-			'git_user_email'   => __( 'Email Address', 'wpcd' ),
-			'git_display_name' => __( 'Display Name', 'wpcd' ),
-			'git_user_name'    => __( 'User Name', 'wpcd' ),
-			'git_token'        => __( 'API Token', 'wpcd' ),
-			'git_branch'       => __( 'Branch', 'wpcd' ),
+			'git_user_email'   => __( 'Email Address', 'simple-stack' ),
+			'git_display_name' => __( 'Display Name', 'simple-stack' ),
+			'git_user_name'    => __( 'User Name', 'simple-stack' ),
+			'git_token'        => __( 'API Token', 'simple-stack' ),
+			'git_branch'       => __( 'Branch', 'simple-stack' ),
 		);
 		foreach ( $non_blank_fields as $field => $display_name ) {
 			if ( empty( $git_settings[ $field ] ) ) {
 				/* Translators: %s is the label name for a field that should not be blank. */
-				return new \WP_Error( sprintf( __( 'The field %s should not be blank. We could not find a value in the server or global defaults.', 'wpcd' ), $display_name ) );
+				return new \WP_Error( sprintf( __( 'The field %s should not be blank. We could not find a value in the server or global defaults.', 'simple-stack' ), $display_name ) );
 			}
 		}
 
@@ -2018,7 +2019,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -2029,7 +2030,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Clone files from repo to site without initializing the site with git.
 	 *
-	 * Action Hook: wpcd_git_clone_to_site (optional)
+	 * Action Hook: sstk_git_clone_to_site (optional)
 	 *
 	 * @param string $action The action to be performed (this matches the string required in the bash scripts if bash scripts are used - in this case 'git_clone_to_site').
 	 * @param int    $id id.
@@ -2041,7 +2042,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		if ( ! empty( $in_args ) ) {
@@ -2054,7 +2055,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Make sure we have a REPO name before doing anything else.
 		if ( empty( $args['git_remote_url'] ) ) {
 			/* Translators: %s is the label name for a field that should not be blank. */
-			return new \WP_Error( __( 'The repo name/url should not be blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'The repo name/url should not be blank.', 'simple-stack' ) );
 		}
 
 		// Merge our incoming git settings with global and server defaults.
@@ -2079,20 +2080,20 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Note that we will create a new array just for saving so that we can encrypt the token without affecting later processing that needs an unencrypted token.
 		$git_settings_for_saving              = $git_settings;
 		$git_settings_for_saving['git_token'] = $this->encrypt( $git_settings_for_saving['git_token'] );
-		update_post_meta( $id, 'wpcd_app_git_settings', $git_settings_for_saving );
+		update_post_meta( $id, 'sstk_app_git_settings', $git_settings_for_saving );
 
 		// Certain settings should not be blank.  Loop through those and error out if they're blank.
 		$non_blank_fields = array(
-			'git_user_email'   => __( 'Email Address', 'wpcd' ),
-			'git_display_name' => __( 'Display Name', 'wpcd' ),
-			'git_user_name'    => __( 'User Name', 'wpcd' ),
-			'git_token'        => __( 'API Token', 'wpcd' ),
-			'git_branch'       => __( 'Branch', 'wpcd' ),
+			'git_user_email'   => __( 'Email Address', 'simple-stack' ),
+			'git_display_name' => __( 'Display Name', 'simple-stack' ),
+			'git_user_name'    => __( 'User Name', 'simple-stack' ),
+			'git_token'        => __( 'API Token', 'simple-stack' ),
+			'git_branch'       => __( 'Branch', 'simple-stack' ),
 		);
 		foreach ( $non_blank_fields as $field => $display_name ) {
 			if ( empty( $git_settings[ $field ] ) ) {
 				/* Translators: %s is the label name for a field that should not be blank. */
-				return new \WP_Error( sprintf( __( 'The field %s should not be blank. We could not find a value in the server or global defaults.', 'wpcd' ), $display_name ) );
+				return new \WP_Error( sprintf( __( 'The field %s should not be blank. We could not find a value in the server or global defaults.', 'simple-stack' ), $display_name ) );
 			}
 		}
 
@@ -2124,7 +2125,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -2135,7 +2136,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Checkout a branch or tag.
 	 *
-	 * Action Hook: wpcd_git_checkout (optional)
+	 * Action Hook: sstk_git_checkout (optional)
 	 *
 	 * @param string $action The action to be performed (this matches the string required in the bash scripts if bash scripts are used - in this case 'git_clone_to_site').
 	 * @param int    $id id.
@@ -2147,7 +2148,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		if ( ! empty( $in_args ) ) {
@@ -2159,7 +2160,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		// Make sure we have a branch name before doing anything else.
 		if ( empty( $args['git_branch'] ) ) {
-			return new \WP_Error( __( 'The branch or tag should not be blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'The branch or tag should not be blank.', 'simple-stack' ) );
 		}
 
 		// sanitize the fields to allow them to be used safely on the bash command line.
@@ -2202,7 +2203,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -2222,26 +2223,26 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
 
 		// Make sure we have a tag name before doing anything else.
 		if ( empty( $args['git_tag'] ) ) {
-			return new \WP_Error( __( 'The tag name should not be blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'The tag name should not be blank.', 'simple-stack' ) );
 		}
 
 		// Make sure the sanitized tag name and the provided tag name are the same.
 		$sanitized_tag = $this->sanitize_tag( $args['git_tag'] );
 		if ( $sanitized_tag !== $args['git_tag'] ) {
 			/* Translators: %s is the suggested tag name. */
-			return new \WP_Error( sprintf( __( 'The tag provided is invalid. Maybe it should be %s', 'wpcd' ), $sanitized_tag ) );
+			return new \WP_Error( sprintf( __( 'The tag provided is invalid. Maybe it should be %s', 'simple-stack' ), $sanitized_tag ) );
 		}
 
 		// Make sure we have a description.
 		if ( empty( $args['git_tag_desc'] ) ) {
-			return new \WP_Error( __( 'The tag description should not be blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'The tag description should not be blank.', 'simple-stack' ) );
 		}
 
 		// Sanitize the fields to allow them to be used safely on the bash command line.
@@ -2285,7 +2286,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -2309,21 +2310,21 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
 
 		// Make sure we have a tag name before doing anything else.
 		if ( empty( $args['git_tag'] ) ) {
-			return new \WP_Error( __( 'The tag name should not be blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'The tag name should not be blank.', 'simple-stack' ) );
 		}
 
 		// Make sure the sanitized tag name and the provided tag name are the same.
 		$sanitized_tag = $this->sanitize_tag( $args['git_tag'] );
 		if ( $sanitized_tag !== $args['git_tag'] ) {
 			/* Translators: %s is the suggested tag name. */
-			return new \WP_Error( sprintf( __( 'The tag provided is invalid. Maybe it should be %s', 'wpcd' ), $sanitized_tag ) );
+			return new \WP_Error( sprintf( __( 'The tag provided is invalid. Maybe it should be %s', 'simple-stack' ), $sanitized_tag ) );
 		}
 
 		// Sanitize the fields to allow them to be used safely on the bash command line.
@@ -2366,7 +2367,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -2386,7 +2387,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -2394,7 +2395,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Make sure we have a REPO name before doing anything else.
 		if ( empty( $args['git_remote_url'] ) ) {
 			/* Translators: %s is the label name for a field that should not be blank. */
-			return new \WP_Error( __( 'The repo name/url should not be blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'The repo name/url should not be blank.', 'simple-stack' ) );
 		}
 
 		// Merge our incoming git settings with global and server defaults.
@@ -2419,19 +2420,19 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Note that we will create a new array just for saving so that we can encrypt the token without affecting later processing that needs an unencrypted token.
 		$git_settings_for_saving              = $git_settings;
 		$git_settings_for_saving['git_token'] = $this->encrypt( $git_settings_for_saving['git_token'] );
-		update_post_meta( $id, 'wpcd_app_git_settings', $git_settings_for_saving );
+		update_post_meta( $id, 'sstk_app_git_settings', $git_settings_for_saving );
 
 		// Certain settings should not be blank.  Loop through those and error out if they're blank.
 		$non_blank_fields = array(
-			'git_user_email'   => __( 'Email Address', 'wpcd' ),
-			'git_display_name' => __( 'Display Name', 'wpcd' ),
-			'git_user_name'    => __( 'User Name', 'wpcd' ),
-			'git_token'        => __( 'API Token', 'wpcd' ),
+			'git_user_email'   => __( 'Email Address', 'simple-stack' ),
+			'git_display_name' => __( 'Display Name', 'simple-stack' ),
+			'git_user_name'    => __( 'User Name', 'simple-stack' ),
+			'git_token'        => __( 'API Token', 'simple-stack' ),
 		);
 		foreach ( $non_blank_fields as $field => $display_name ) {
 			if ( empty( $git_settings[ $field ] ) ) {
 				/* Translators: %s is the label name for a field that should not be blank. */
-				return new \WP_Error( sprintf( __( 'The field %s should not be blank. We could not find a value in the server or global defaults.', 'wpcd' ), $display_name ) );
+				return new \WP_Error( sprintf( __( 'The field %s should not be blank. We could not find a value in the server or global defaults.', 'simple-stack' ), $display_name ) );
 			}
 		}
 
@@ -2455,21 +2456,21 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		);
 
 		// log.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'git_control_site.txt' );
 		if ( ! $success ) {
 			// Log the attempt.
-			$this->git_add_to_site_log( $id, __( 'Attempt to setup credentials for the site was not successful.', 'wpcd' ) );
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			$this->git_add_to_site_log( $id, __( 'Attempt to setup credentials for the site was not successful.', 'simple-stack' ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			// Action successful Update metas and log.
 			update_post_meta( $id, 'wpapp_git_initial_credentials_only_valid', 1 );
 
 			// Log it.
-			$this->git_add_to_site_log( $id, __( 'Credentials were setup for this site without initializing git.', 'wpcd' ) );
+			$this->git_add_to_site_log( $id, __( 'Credentials were setup for this site without initializing git.', 'simple-stack' ) );
 
 		}
 
@@ -2490,7 +2491,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -2502,7 +2503,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$domain = get_post_meta( $id, 'wpapp_domain', true );
 		if ( empty( $domain ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the domain for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the domain for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Validation for each action type.
@@ -2514,17 +2515,17 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			case 'git_commit_and_push':
 				if ( empty( $args['git_commit_msg'] ) ) {
 					/* Translators: %s is the action name. */
-					return new \WP_Error( sprintf( __( 'Unable to execute this request because the commit message is empty. (action %s)', 'wpcd' ), $action ) );
+					return new \WP_Error( sprintf( __( 'Unable to execute this request because the commit message is empty. (action %s)', 'simple-stack' ), $action ) );
 				}
 				break;
 			case 'git_new_branch':
 				if ( empty( $args['git_branch'] ) ) {
 					/* Translators: %s is the action name. */
-					return new \WP_Error( sprintf( __( 'Unable to execute this request because you did not supply a source branch. (action %s)', 'wpcd' ), $action ) );
+					return new \WP_Error( sprintf( __( 'Unable to execute this request because you did not supply a source branch. (action %s)', 'simple-stack' ), $action ) );
 				}
 				if ( empty( $args['git_new_branch'] ) ) {
 					/* Translators: %s is the action name. */
-					return new \WP_Error( sprintf( __( 'Unable to execute this request because you did not supply a name for the new branch. (action %s)', 'wpcd' ), $action ) );
+					return new \WP_Error( sprintf( __( 'Unable to execute this request because you did not supply a name for the new branch. (action %s)', 'simple-stack' ), $action ) );
 				}
 
 				// Make sure we have a good branch name.
@@ -2567,7 +2568,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		}
 
 		// log.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -2576,52 +2577,52 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 			// Log the attempt.
 			switch ( $action ) {
 				case 'git_domain_remove':
-					$this->git_add_to_site_log( $id, __( 'Attempt to remove git for the site was not successful.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Attempt to remove git for the site was not successful.', 'simple-stack' ) );
 					break;
 				case 'git_sync':
-					$this->git_add_to_site_log( $id, __( 'Attempt to sync site with remote repo was not successful.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Attempt to sync site with remote repo was not successful.', 'simple-stack' ) );
 					break;
 				case 'git_commit_and_push':
-					$this->git_add_to_site_log( $id, __( 'Attempt to commit and push to remote repo was not successful.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Attempt to commit and push to remote repo was not successful.', 'simple-stack' ) );
 					break;
 				case 'git_new_branch':
-					$this->git_add_to_site_log( $id, __( 'Attempt to create a new branch was not successful.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Attempt to create a new branch was not successful.', 'simple-stack' ) );
 					break;
 				case 'git_remove_all_version_folders':
-					$this->git_add_to_site_log( $id, __( 'Attempt to all tag/version folders was not successful.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Attempt to all tag/version folders was not successful.', 'simple-stack' ) );
 					break;
 			}
 
 			/* Translators: %1s is the action name; %2s is a long result string or array. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			// Action successful - log it and do some other actions (depending on the action string).
 			switch ( $action ) {
 				case 'git_domain_remove':
 					// Log it.
-					$this->git_add_to_site_log( $id, __( 'Git was removed from this site.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Git was removed from this site.', 'simple-stack' ) );
 					// Remove git meta.
 					$this->set_git_status( $id, false );
 					break;
 				case 'git_sync':
 					// Log it.
-					$this->git_add_to_site_log( $id, __( 'Site was synced with remote repo.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Site was synced with remote repo.', 'simple-stack' ) );
 					break;
 				case 'git_commit_and_push':
 					// Log it.
-					$this->git_add_to_site_log( $id, __( 'Site changes were committed and pushed to remote repo.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'Site changes were committed and pushed to remote repo.', 'simple-stack' ) );
 					break;
 				case 'git_new_branch':
 					// Log it.
 					/* Translators: %s is the git branch that was created. */
-					$this->git_add_to_site_log( $id, sprintf( __( 'Branch %s was created and checked out.', 'wpcd' ), $original_args['git_new_branch'] ) );
+					$this->git_add_to_site_log( $id, sprintf( __( 'Branch %s was created and checked out.', 'simple-stack' ), $original_args['git_new_branch'] ) );
 
 					// And update the current branch.
 					$this->set_git_branch( $id, $original_args['git_new_branch'] );
 					break;
 				case 'git_remove_all_version_folders':
 					// Log it.
-					$this->git_add_to_site_log( $id, __( 'All tag/version folders were deleted from this site.', 'wpcd' ) );
+					$this->git_add_to_site_log( $id, __( 'All tag/version folders were deleted from this site.', 'simple-stack' ) );
 					break;
 			}
 		}
@@ -2642,7 +2643,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -2650,18 +2651,18 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Make sure we have at least one branch.
 		if ( empty( $args['git_push_to_deploy_action_branches'] ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because no branch was specified.  At least one branch must be specified. (action %s)', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because no branch was specified.  At least one branch must be specified. (action %s)', 'simple-stack' ), $action ) );
 		}
 
 		// Make sure the action to be performed is valid.
 		if ( ! in_array( $args['git_push_to_deploy_action_type'], array( 'fetch', 'checkout' ), true ) ) {
 			/* Translators: %s is the action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because the push-to-deploy action is not valid - it should be fetch or checkout. (action %s)', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because the push-to-deploy action is not valid - it should be fetch or checkout. (action %s)', 'simple-stack' ), $action ) );
 		}
 
 		// Save to metas.
-		update_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_branches', $args['git_push_to_deploy_action_branches'] );
-		update_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_type', $args['git_push_to_deploy_action_type'] );
+		update_post_meta( $id, 'sstk_app_git_push_to_deploy_action_branches', $args['git_push_to_deploy_action_branches'] );
+		update_post_meta( $id, 'sstk_app_git_push_to_deploy_action_type', $args['git_push_to_deploy_action_type'] );
 
 		return true;
 
@@ -2692,7 +2693,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function git_add_to_site_log( $id, $msg ) {
 
 		// Get current logs.
-		$logs = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_app_git_history', true ) );
+		$logs = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_app_git_history', true ) );
 
 		// Make sure we have something in the logs array otherwise create a blank one.
 		if ( empty( $logs ) ) {
@@ -2703,7 +2704,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Add to array.
-		$key          = wpcd_generate_uuid();
+		$key          = sstk_generate_uuid();
 		$logs[ $key ] = array(
 			'reporting_time'           => time(),
 			'reporting_time_human'     => date( 'Y-m-d H:i:s', time() ),
@@ -2718,7 +2719,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Push back to database.
-		return update_post_meta( $id, 'wpcd_app_git_history', $logs );
+		return update_post_meta( $id, 'sstk_app_git_history', $logs );
 
 	}
 
@@ -2731,7 +2732,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_git_log_history( $id ) {
 		// Get current tag list.
-		$logs = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_app_git_history', true ) );
+		$logs = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_app_git_history', true ) );
 
 		// Make sure we have something in the logs array otherwise create a blank one.
 		if ( empty( $logs ) ) {
@@ -2754,7 +2755,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function git_add_tag_history( $id, $new_tag, $new_tag_desc ) {
 
 		// Get current tag list.
-		$tags = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_app_git_tag_history', true ) );
+		$tags = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_app_git_tag_history', true ) );
 
 		// Make sure we have something in the tags array otherwise create a blank one.
 		if ( empty( $tags ) ) {
@@ -2781,7 +2782,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Push back to database.
-		return update_post_meta( $id, 'wpcd_app_git_tag_history', $tags );
+		return update_post_meta( $id, 'sstk_app_git_tag_history', $tags );
 
 	}
 
@@ -2795,7 +2796,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function get_git_tag_history( $id ) {
 
 		// Get current tag list.
-		$tags = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_app_git_tag_history', true ) );
+		$tags = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_app_git_tag_history', true ) );
 
 		// Make sure we have something in the logs array otherwise create a blank one.
 		if ( empty( $tags ) ) {
@@ -2816,8 +2817,8 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_formatted_git_branch_for_display( $id ) {
 		/* Translators: %s is the current git branch for the site. */
-		$branch = sprintf( __( 'Current Branch: %s', 'wpcd' ), $this->get_git_branch( $id ) );
-		$branch = '<div class="wpcd_git_site_branch_wrap"><span class="wpcd_git_site_branch">' . $branch . '</span></div>';
+		$branch = sprintf( __( 'Current Branch: %s', 'simple-stack' ), $this->get_git_branch( $id ) );
+		$branch = '<div class="sstk_git_site_branch_wrap"><span class="sstk_git_site_branch">' . $branch . '</span></div>';
 		return $branch;
 	}
 
@@ -2829,8 +2830,8 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function get_formatted_git_remote_repo_for_display( $id ) {
 
 		/* Translators: %s is the current git repo url associated with this site. */
-		$repo = sprintf( __( 'Repo: %s', 'wpcd' ), $this->get_remote_repo_url( $id ) );
-		$repo = '<div class="wpcd_git_site_repo_wrap"><span class="wpcd_git_site_repo">' . $repo . '</span></div>';
+		$repo = sprintf( __( 'Repo: %s', 'simple-stack' ), $this->get_remote_repo_url( $id ) );
+		$repo = '<div class="sstk_git_site_repo_wrap"><span class="sstk_git_site_repo">' . $repo . '</span></div>';
 
 		return $repo;
 	}
@@ -2846,25 +2847,25 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function remove_metas( $action, $id ) {
 
 		// Legacy metas used during development. These were changed to new names later.
-		delete_post_meta( $id, 'wpcd_wpapp_git_settings' );
-		delete_post_meta( $id, 'wpcd_wpapp_git_history' );
-		delete_post_meta( $id, 'wpcd_app_tag_history' );
+		delete_post_meta( $id, 'sstk_wpapp_git_settings' );
+		delete_post_meta( $id, 'sstk_wpapp_git_history' );
+		delete_post_meta( $id, 'sstk_app_tag_history' );
 
 		// Production metas.
-		delete_post_meta( $id, 'wpcd_app_git_settings' );
+		delete_post_meta( $id, 'sstk_app_git_settings' );
 		delete_post_meta( $id, 'wpapp_git_branch' );
 		delete_post_meta( $id, 'wpapp_git_initial_credentials_only_valid' );
-		delete_post_meta( $id, 'wpcd_app_git_tag_history' );
-		delete_post_meta( $id, 'wpcd_app_git_push_to_deploy_webhook_url' );
-		delete_post_meta( $id, 'wpcd_app_git_push_to_deploy_secret_key' );
-		delete_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_branches' );
-		delete_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_type' );
+		delete_post_meta( $id, 'sstk_app_git_tag_history' );
+		delete_post_meta( $id, 'sstk_app_git_push_to_deploy_webhook_url' );
+		delete_post_meta( $id, 'sstk_app_git_push_to_deploy_secret_key' );
+		delete_post_meta( $id, 'sstk_app_git_push_to_deploy_action_branches' );
+		delete_post_meta( $id, 'sstk_app_git_push_to_deploy_action_type' );
 
 		// Remove the status meta.
 		$this->set_git_status( $id, false );
 
 		// Log the action.
-		$this->git_add_to_site_log( $id, __( 'Metas deleted.', 'wpcd' ) );
+		$this->git_add_to_site_log( $id, __( 'Metas deleted.', 'simple-stack' ) );
 
 		return true;
 	}
@@ -2876,18 +2877,18 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	 * @param string $tag The tag to clean.
 	 */
 	public function sanitize_tag( $tag ) {
-		return wpcd_clean_alpha_numeric_dashes_periods_underscores( $tag );
+		return sstk_clean_alpha_numeric_dashes_periods_underscores( $tag );
 	}
 
 	/**
 	 * Register an endpoint to handle the webhook from GitHub.
 	 *
 	 * The route has to be public: GitHub has no WordPress account. What secures it is the
-	 * per-site `wpcd_app_git_push_to_deploy_secret_key`, checked below with `hash_equals()`.
+	 * per-site `sstk_app_git_push_to_deploy_secret_key`, checked below with `hash_equals()`.
 	 */
 	public function register_github_webhook_endpoint() {
 		register_rest_route(
-			$this->get_app_name() . '/v' . WPCD_REST_VERSION,
+			'simple-stack/v' . SSTK_REST_VERSION,
 			'/handle-git-webhook/(?P<randomid>\d+)/(?P<id>\d+)/',
 			array(
 				'methods'             => array( 'GET', 'POST' ),
@@ -2930,9 +2931,17 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Get the request body.
 		$payload = file_get_contents( 'php://input' );
 
-		// Compute the HMAC signature of the payload using the secret as the key.
-		$id                 = filter_var( sanitize_text_field( $data['id'] ), FILTER_VALIDATE_INT );
-		$secret             = $this->decrypt( get_post_meta( $id, 'wpcd_app_git_push_to_deploy_secret_key', true ) );
+		// Compute the HMAC signature of the payload using the site's non-empty secret.
+		$id = filter_var( sanitize_text_field( $data['id'] ), FILTER_VALIDATE_INT );
+		if ( ! $id ) {
+			return 'invalid site';
+		}
+
+		$secret = $this->decrypt( get_post_meta( $id, 'sstk_app_git_push_to_deploy_secret_key', true ) );
+		if ( empty( $secret ) ) {
+			return 'missing webhook secret';
+		}
+
 		$computed_signature = hash_hmac( $algorithm, $payload, $secret );
 
 		// Compare the computed signature with the signature from the header.
@@ -2947,7 +2956,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		// Which branch is it?
 		$ref = $decoded_payload['ref'];
 		if ( empty( $ref ) ) {
-			do_action( 'wpcd_log_error', sprintf( 'Git push-to-deploy webhook cannot be handled because we could not determine a branch. App Id: %s', $id ), 'error', __FILE__, __LINE__, $instance, false );
+			do_action( 'sstk_log_error', sprintf( 'Git push-to-deploy webhook cannot be handled because we could not determine a branch. App Id: %s', $id ), 'error', __FILE__, __LINE__, $instance, false );
 			return false;
 		}
 
@@ -2955,21 +2964,21 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		$parts  = explode( '/', $ref );
 		$branch = end( $parts );
 		if ( empty( $branch ) ) {
-			do_action( 'wpcd_log_error', sprintf( 'Git push-to-deploy webhook cannot be handled because we could not determine a branch. App Id: %s', $id ), 'error', __FILE__, __LINE__, $instance, false );
+			do_action( 'sstk_log_error', sprintf( 'Git push-to-deploy webhook cannot be handled because we could not determine a branch. App Id: %s', $id ), 'error', __FILE__, __LINE__, $instance, false );
 			return false;
 		}
 
 		// What branches should trigger action on our part?
-		$trigger_branches = explode( ',', wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_branches', true ) ) );
+		$trigger_branches = explode( ',', sstk_maybe_unserialize( get_post_meta( $id, 'sstk_app_git_push_to_deploy_action_branches', true ) ) );
 
 		// If the current push is not for one of the branches, do nothing.
 		if ( ! in_array( $branch, $trigger_branches, true ) ) {
-			do_action( 'wpcd_log_error', sprintf( 'Git push-to-deploy webhook cannot be handled because the pushed branch %s do not match any of the defined action branches for this site. App Id: %s', $branch, $id ), 'error', __FILE__, __LINE__, $instance, false );
+			do_action( 'sstk_log_error', sprintf( 'Git push-to-deploy webhook cannot be handled because the pushed branch %s do not match any of the defined action branches for this site. App Id: %s', $branch, $id ), 'error', __FILE__, __LINE__, $instance, false );
 			return false;
 		}
 
 		// What action should we perform?
-		$webhook_action = get_post_meta( $id, 'wpcd_app_git_push_to_deploy_action_type', true );
+		$webhook_action = get_post_meta( $id, 'sstk_app_git_push_to_deploy_action_type', true );
 
 		switch ( $webhook_action ) {
 			case 'fetch':
@@ -2977,23 +2986,23 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 				$args['domain']         = get_post_meta( $id, 'wpapp_domain', true );
 				$args['git_remote_url'] = $this->get_remote_repo_url( $id );
 				$args['git_branch']     = $branch;
-				$args['action_hook']    = 'wpcd_pending_log_git_clone_to_site';
+				$args['action_hook']    = 'sstk_pending_log_git_clone_to_site';
 				$args['action']         = 'git_clone_to_site';
-				WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $id, 'git-clone-to-site', $id, $args, 'ready', $id, __( 'Git site clone triggered from incoming webhook', 'wpcd' ) );
+				SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $id, 'git-clone-to-site', $id, $args, 'ready', $id, __( 'Git site clone triggered from incoming webhook', 'simple-stack' ) );
 				break;
 			case 'checkout':
 				// Setup array to be passed to pending logs.
 				$args['domain']      = get_post_meta( $id, 'wpapp_domain', true );
 				$args['git_branch']  = $branch;
-				$args['action_hook'] = 'wpcd_pending_log_git_checkout';
+				$args['action_hook'] = 'sstk_pending_log_git_checkout';
 				$args['action']      = 'git_checkout';
-				WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $id, 'git-checkout', $id, $args, 'ready', $id, __( 'Git checkout triggered from incoming webhook', 'wpcd' ) );
+				SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $id, 'git-checkout', $id, $args, 'ready', $id, __( 'Git checkout triggered from incoming webhook', 'simple-stack' ) );
 				break;
 				break;
 		}
 
 		// Log the push-to-deploy request to the site.
-		$msg = sprintf( __( 'A push-to-deploy webhook was received for branch %s.', 'wpcd' ), $branch );
+		$msg = sprintf( __( 'A push-to-deploy webhook was received for branch %s.', 'simple-stack' ), $branch );
 		$this->git_add_to_site_log( $id, $msg );
 
 		return true;
@@ -3002,35 +3011,35 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Git clone to site.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_pending_log_git_clone_to_site
+	 * Action Hook: sstk_pending_log_git_clone_to_site
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $id         Id of site involved in this action.
 	 * @param array $args       All the data needed to handle this action.
 	 */
-	public function wpcd_pending_log_git_clone_to_site( $task_id, $id, $args ) {
+	public function sstk_pending_log_git_clone_to_site( $task_id, $id, $args ) {
 
 		// Get data from pending-log.
 		// Expecting the following array structure.
 		/*
 		Array (
 			'domain' => 'sjx3te5gftpe.vnxv.com',
-			'git_remote_url' => 'https://github.com/elindydotcom/testwpcdintegration03',
+			'git_remote_url' => 'https://github.com/elindydotcom/testsstkintegration03',
 			'git_branch' => 'dev01',
-			'action_hook' => 'wpcd_pending_log_git_clone_to_site',
+			'action_hook' => 'sstk_pending_log_git_clone_to_site',
 			'action' => 'git_clone_to_site',
 			'pending_tasks_id' => 225681,
 			'pending_task_associated_server_id' => '215746',
-			'pending_task_parent_post_type' => 'wpcd_app',
+			'pending_task_parent_post_type' => 'sstk_app',
 		)
 		*/
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		// Set task to in-process.
 		$task_status = 'in-process';
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
 
 		// Stamp the site with the task id.  We'll use it when the command completes.
 		update_post_meta( $id, 'wpapp_pending_log_git_clone_to_site', $task_id );
@@ -3042,21 +3051,21 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		 *   - git_branch
 		 *   - domain
 		 */
-		do_action( 'wpcd_git_clone_to_site', 'git_clone_to_site', $id, $data );
+		do_action( 'sstk_git_clone_to_site', 'git_clone_to_site', $id, $data );
 	}
 
 	/**
 	 * Checkout a branch.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_pending_log_git_checkout
+	 * Action Hook: sstk_pending_log_git_checkout
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $id         Id of site involved in this action.
 	 * @param array $args       All the data needed to handle this action.
 	 */
-	public function wpcd_pending_log_git_checkout( $task_id, $id, $args ) {
+	public function sstk_pending_log_git_checkout( $task_id, $id, $args ) {
 
 		// Get data from pending-log.
 		// Expecting the following array structure.
@@ -3064,18 +3073,18 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		Array (
 			'domain' => 'sjx3te5gftpe.vnxv.com',
 			'git_branch' => 'dev01',
-			'action_hook' => 'wpcd_pending_log_git_checkout',
+			'action_hook' => 'sstk_pending_log_git_checkout',
 			'action' => 'git_ccheckout',
 			'pending_tasks_id' => 225681,
 			'pending_task_associated_server_id' => '215746',
-			'pending_task_parent_post_type' => 'wpcd_app',
+			'pending_task_parent_post_type' => 'sstk_app',
 		)
 		*/
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		// Set task to in-process.
 		$task_status = 'in-process';
-		WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
+		SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, $task_status );
 
 		// Stamp the site with the task id.  We'll use it when the command completes.
 		update_post_meta( $id, 'wpapp_pending_log_git_checkout', $task_id );
@@ -3086,7 +3095,7 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 		 *   - git_branch
 		 *   - domain
 		 */
-		do_action( 'wpcd_git_checkout', 'git_checkout', $id, $data );
+		do_action( 'sstk_git_checkout', 'git_checkout', $id, $data );
 	}
 
 	/**
@@ -3103,9 +3112,9 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 
 		$url = '';
 
-		$randomid = wpcd_random_str( 32, '0123456789' );
+		$randomid = sstk_random_str( 32, '0123456789' );
 
-		$url = apply_filters( 'wpcd_git_push_to_deploy_url', rest_url( "{$this->get_app_name()}/v" . wpcd_rest_version . "/handle-git-webhook/$randomid/$id" ), $id );
+		$url = apply_filters( 'sstk_git_push_to_deploy_url', rest_url( "simple-stack/v" . SSTK_REST_VERSION . "/handle-git-webhook/$randomid/$id" ), $id );
 
 		return $url;
 	}
@@ -3133,12 +3142,12 @@ class WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE extends WPCD_WORDPRESS_TABS {
 	public function generate_push_to_deploy_keys( $id ) {
 
 		$push_to_deploy_webhook_url = $this->generate_push_to_deploy_url( $id );
-		$push_to_deploy_secret_key  = wpcd_random_str();
-		update_post_meta( $id, 'wpcd_app_git_push_to_deploy_webhook_url', $push_to_deploy_webhook_url );
-		update_post_meta( $id, 'wpcd_app_git_push_to_deploy_secret_key', $this->encrypt( $push_to_deploy_secret_key ) );
+		$push_to_deploy_secret_key  = sstk_random_str();
+		update_post_meta( $id, 'sstk_app_git_push_to_deploy_webhook_url', $push_to_deploy_webhook_url );
+		update_post_meta( $id, 'sstk_app_git_push_to_deploy_secret_key', $this->encrypt( $push_to_deploy_secret_key ) );
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_GIT_CONTROL_SITE();
+new SSTK_WORDPRESS_TABS_GIT_CONTROL_SITE();

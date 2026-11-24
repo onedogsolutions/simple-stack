@@ -1,1 +1,1 @@
-REST API controller layer exposing server, site, task, domain-change, and clone-site endpoints under the wpcd/v1 namespace for programmatic management of WordPress App resources.
+REST API controller layer exposing server, site, task, domain-change, and clone-site endpoints under the simple-stack/v1 namespace for programmatic management of WordPress App resources.

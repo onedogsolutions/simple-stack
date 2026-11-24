@@ -2,16 +2,17 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-posts-base.php](file://includes/core/class-wpcd-posts-base.php)
-- [class-wpcd-posts-app-server.php](file://includes/core/class-wpcd-posts-app-server.php)
-- [class-wpcd-posts-app.php](file://includes/core/class-wpcd-posts-app.php)
-- [class-wpcd-sync.php](file://includes/core/class-wpcd-sync.php)
-- [class-wpcd-custom-table.php](file://includes/core/custom-table/class-wpcd-custom-table.php)
+- [class-sstk-posts-base.php](file://includes/core/class-sstk-posts-base.php)
+- [class-sstk-posts-app-server.php](file://includes/core/class-sstk-posts-app-server.php)
+- [class-sstk-posts-app.php](file://includes/core/class-sstk-posts-app.php)
+- [class-sstk-custom-table.php](file://includes/core/custom-table/class-sstk-custom-table.php)
 - [Model.php](file://required_plugins/mb-custom-table/src/Model/Model.php)
 - [Cache.php](file://required_plugins/mb-custom-table/src/Cache.php)
 - [Storage.php](file://required_plugins/mb-custom-table/src/Storage.php)
 - [loader.php](file://includes/core/apps/wordpress-app/public/custom-table/loader.php)
 - [class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
+- [uninstall.php](file://uninstall.php)
+- [tests/uninstall-harness.php](file://tests/uninstall-harness.php)
 </cite>
 
 ## Table of Contents
@@ -26,36 +27,33 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the data access patterns and query optimization strategies used throughout SimpleStack. It focuses on:
-- The base post type class architecture for custom post types (CPTs).
-- Query building patterns, including admin search, filtering, and column rendering.
-- Caching mechanisms for both WordPress object cache and provider API transients.
-- The relationship between custom post types and custom tables, including synchronization and consistency models.
-- Efficient querying patterns, pagination handling, and search optimization.
-- Transaction management, error handling, and performance monitoring for data operations.
-- Best practices for extending data access layers while maintaining backward compatibility.
+
+Simple Stack uses two complementary persistence layers:
+
+- WordPress custom post types for servers, sites and operational logs.
+- Meta Box custom tables for structured provider and DNS records.
+
+The data-access layer relies on WordPress query hooks, post metadata, transient caches and the
+Meta Box model/cache/storage APIs. Cross-site data synchronization is retired: there is no
+export/import service, remote receiver or synchronization cron schedule.
 
 ## Project Structure
-SimpleStack organizes data access across two primary layers:
-- Custom Post Types (CPTs): Represent core entities such as servers and apps using WordPress posts with rich metadata.
-- Custom Tables: High-performance storage for structured data like providers, DNS zones, and records, managed via a custom table framework.
 
 ```mermaid
 graph TB
 subgraph "WordPress Layer"
-PostsBase["WPCD_Posts_Base"]
-AppServer["WPCD_POSTS_APP_SERVER"]
-App["WPCD_POSTS_APP"]
+PostsBase["SSTK_Posts_Base"]
+AppServer["SSTK_POSTS_APP_SERVER"]
+App["SSTK_POSTS_APP"]
 end
 subgraph "Custom Table Layer"
-CTBase["WPCD_MB_Custom_Table"]
-MBCTModel["MetaBox\\CustomTable\\Model"]
-MBCTCache["MetaBox\\CustomTable\\Cache"]
-MBCTStorage["MetaBox\\CustomTable\\Storage"]
+CTBase["SSTK_MB_Custom_Table"]
+MBCTModel["MetaBox CustomTable Model"]
+MBCTCache["MetaBox CustomTable Cache"]
+MBCTStorage["MetaBox CustomTable Storage"]
 end
 subgraph "External Integrations"
 ProviderAPI["Cloud Provider API"]
-Sync["WPCD_SYNC"]
 end
 AppServer --> PostsBase
 App --> PostsBase
@@ -64,293 +62,129 @@ MBCTModel --> MBCTStorage
 MBCTModel --> MBCTCache
 AppServer --> ProviderAPI
 App --> ProviderAPI
-Sync --> AppServer
-Sync --> App
 ```
 
-**Diagram sources**
-- [class-wpcd-posts-base.php:16-80](file://includes/core/class-wpcd-posts-base.php#L16-L80)
-- [class-wpcd-posts-app-server.php:15-57](file://includes/core/class-wpcd-posts-app-server.php#L15-L57)
-- [class-wpcd-posts-app.php:15-56](file://includes/core/class-wpcd-posts-app.php#L15-L56)
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [Model.php:4-42](file://required_plugins/mb-custom-table/src/Model/Model.php#L4-L42)
-- [Cache.php:4-47](file://required_plugins/mb-custom-table/src/Cache.php#L4-L47)
-- [Storage.php:163-181](file://required_plugins/mb-custom-table/src/Storage.php#L163-L181)
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [class-wpcd-sync.php:15-52](file://includes/core/class-wpcd-sync.php#L15-L52)
-
 **Section sources**
-- [class-wpcd-posts-base.php:16-80](file://includes/core/class-wpcd-posts-base.php#L16-L80)
-- [class-wpcd-posts-app-server.php:15-57](file://includes/core/class-wpcd-posts-app-server.php#L15-L57)
-- [class-wpcd-posts-app.php:15-56](file://includes/core/class-wpcd-posts-app.php#L15-L56)
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [Model.php:4-42](file://required_plugins/mb-custom-table/src/Model/Model.php#L4-L42)
-- [Cache.php:4-47](file://required_plugins/mb-custom-table/src/Cache.php#L4-L47)
-- [Storage.php:163-181](file://required_plugins/mb-custom-table/src/Storage.php#L163-L181)
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [class-wpcd-sync.php:15-52](file://includes/core/class-wpcd-sync.php#L15-L52)
+- [class-sstk-posts-base.php](file://includes/core/class-sstk-posts-base.php)
+- [class-sstk-posts-app-server.php](file://includes/core/class-sstk-posts-app-server.php)
+- [class-sstk-posts-app.php](file://includes/core/class-sstk-posts-app.php)
+- [class-sstk-custom-table.php](file://includes/core/custom-table/class-sstk-custom-table.php)
+- [class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
 
 ## Core Components
-- Base Post Type Class: Provides shared behavior for custom post types, including display state customization and label injection.
-- App Server Post Type: Manages server entities, hooks into WordPress list screens, and integrates with provider APIs for status and metadata.
-- App Post Type: Manages application entities, links to parent servers, and exposes columns and filters for efficient listing and search.
-- Custom Table Framework: Abstracts CRUD operations, admin/public UI, validation, and persistence for high-volume structured data.
-- Synchronization Engine: Handles export/import of users, teams, server/app posts, and settings across sites, ensuring consistent state.
 
-Key responsibilities:
-- CPTs encapsulate business logic for servers and apps, leveraging WordPress hooks for admin UX and queries.
-- Custom tables provide fast, indexed storage for providers and DNS data, with caching and model abstraction.
-- Sync engine coordinates cross-site data movement with encryption, scheduling, and idempotent import logic.
-
-**Section sources**
-- [class-wpcd-posts-base.php:16-80](file://includes/core/class-wpcd-posts-base.php#L16-L80)
-- [class-wpcd-posts-app-server.php:15-57](file://includes/core/class-wpcd-posts-app-server.php#L15-L57)
-- [class-wpcd-posts-app.php:15-56](file://includes/core/class-wpcd-posts-app.php#L15-L56)
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [class-wpcd-sync.php:15-52](file://includes/core/class-wpcd-sync.php#L15-L52)
+- **Base post class:** shared display-state and label behavior for Simple Stack post types.
+- **Server post type:** server records, provider integration, admin columns and filters.
+- **Site post type:** site records, parent-server relationships, admin columns and filters.
+- **Custom table framework:** CRUD, validation, admin/public rendering and persistence for
+  provider and DNS data.
+- **Lifecycle cleanup:** prefixed options, posts, metadata, terms, cron hooks, roles,
+  capabilities and custom tables are removed across a multisite network on uninstall.
 
 ## Architecture Overview
-The system uses a dual-layer data model:
-- WordPress CPTs for flexible, extensible content with rich metadata and taxonomy relationships.
-- Custom tables for performance-critical datasets, accessed through a model layer that abstracts storage and caching.
 
 ```mermaid
 sequenceDiagram
 participant Admin as "Admin UI"
-participant AppServer as "WPCD_POSTS_APP_SERVER"
+participant AppServer as "SSTK_POSTS_APP_SERVER"
 participant ProviderAPI as "Cloud Provider API"
 participant WPDB as "WordPress Database"
-participant CTModel as "MBCT Model"
-participant CTStorage as "MBCT Storage"
-participant CTCache as "MBCT Cache"
+participant CTModel as "Meta Box Model"
+participant CTStorage as "Meta Box Storage"
+participant CTCache as "Meta Box Cache"
 Admin->>AppServer : List servers
-AppServer->>WPDB : Query wpcd_app_server posts + meta
-AppServer->>ProviderAPI : Fetch provider descriptions/status
+AppServer->>WPDB : Query sstk_app_server posts and meta
+AppServer->>ProviderAPI : Fetch provider status or metadata
 ProviderAPI-->>AppServer : Cached or live response
-AppServer-->>Admin : Rendered list with statuses
-Admin->>CTModel : Load provider/dns data
-CTModel->>CTCache : Get cached row by ID
+AppServer-->>Admin : Render server list
+Admin->>CTModel : Load provider or DNS data
+CTModel->>CTCache : Read cached row
 alt Cache hit
-CTCache-->>CTModel : Row data
+CTCache-->>CTModel : Cached row
 else Cache miss
-CTModel->>CTStorage : Read from custom table
-CTStorage-->>CTModel : Row data
-CTModel->>CTCache : Set cache
+CTModel->>CTStorage : Read custom table
+CTStorage-->>CTModel : Row
+CTModel->>CTCache : Store row
 end
-CTModel-->>Admin : Display table
+CTModel-->>Admin : Render record
 ```
-
-**Diagram sources**
-- [class-wpcd-posts-app-server.php:356-707](file://includes/core/class-wpcd-posts-app-server.php#L356-L707)
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [Cache.php:4-47](file://required_plugins/mb-custom-table/src/Cache.php#L4-L47)
-- [Storage.php:163-181](file://required_plugins/mb-custom-table/src/Storage.php#L163-L181)
 
 ## Detailed Component Analysis
 
-### Base Post Type Class Architecture
-The base class centralizes common behaviors for custom post types:
-- Display state customization: Removes “private” labels conditionally and injects custom labels derived from stored metadata.
-- Delete protection flags: Adds visual indicators for protected items.
+### Base Post Type Architecture
 
-```mermaid
-classDiagram
-class WPCD_Posts_Base {
-+display_post_states(states, post) array
-}
-class WPCD_POSTS_APP_SERVER
-class WPCD_POSTS_APP
-WPCD_POSTS_APP_SERVER --|> WPCD_Posts_Base
-WPCD_POSTS_APP --|> WPCD_Posts_Base
-```
+`SSTK_Posts_Base` centralizes behavior shared by the server and site post types, including
+conditional display-state labels and protected-record indicators. Concrete post classes add
+their own columns, filters, metadata and provider integration.
 
-**Diagram sources**
-- [class-wpcd-posts-base.php:16-80](file://includes/core/class-wpcd-posts-base.php#L16-L80)
-- [class-wpcd-posts-app-server.php:15-57](file://includes/core/class-wpcd-posts-app-server.php#L15-L57)
-- [class-wpcd-posts-app.php:15-56](file://includes/core/class-wpcd-posts-app.php#L15-L56)
+### Query Building Patterns
 
-**Section sources**
-- [class-wpcd-posts-base.php:16-80](file://includes/core/class-wpcd-posts-base.php#L16-L80)
+Server and site list screens extend the normal WordPress query pipeline:
 
-### Query Building Patterns in CPTs
-Both app and app server post types extend WordPress’s default query pipeline:
-- Admin search extension: Hooks into pre_get_posts to include title and meta fields in search.
-- Where clause modification: Uses posts_where to add custom conditions.
-- Parse query hook: Adjusts query parameters for filtering by custom meta/taxonomy.
-- Column rendering: Dynamically builds list columns with provider details, IPs, groups, and counts.
+- `pre_get_posts` expands admin search to relevant metadata and titles.
+- `posts_where` adds custom conditions.
+- `parse_query` applies supported filters.
+- List-table columns render provider, address, group and related-record data.
 
-```mermaid
-flowchart TD
-Start(["Admin List Request"]) --> PreGetPosts["pre_get_posts Hook"]
-PreGetPosts --> ExtendSearch["Extend Search to Meta/Title"]
-ExtendSearch --> PostsWhere["posts_where Filter"]
-PostsWhere --> ParseQuery["parse_query Filter"]
-ParseQuery --> Columns["Column Rendering"]
-Columns --> End(["Rendered List"])
-```
-
-**Diagram sources**
-- [class-wpcd-posts-app-server.php:62-162](file://includes/core/class-wpcd-posts-app-server.php#L62-L162)
-- [class-wpcd-posts-app.php:61-156](file://includes/core/class-wpcd-posts-app.php#L61-L156)
-
-**Section sources**
-- [class-wpcd-posts-app-server.php:62-162](file://includes/core/class-wpcd-posts-app-server.php#L62-L162)
-- [class-wpcd-posts-app.php:61-156](file://includes/core/class-wpcd-posts-app.php#L61-L156)
+WordPress owns pagination for post-type lists. Meta Box list-table classes provide pagination
+for custom-table views.
 
 ### Caching Mechanisms
-Two primary caching strategies are used:
-- Provider API caching: Transient-based caching keyed by method and API key; supports clearing and storing specific methods.
-- Custom table row caching: Object cache group per table, with get/set/delete helpers to reduce DB hits.
 
-```mermaid
-flowchart TD
-A["Provider API Call"] --> B{"Method allowed?"}
-B --> |No| C["Skip Cache"]
-B --> |Yes| D["Generate Cache Key"]
-D --> E{"Transient exists?"}
-E --> |Yes| F["Return Cached Data"]
-E --> |No| G["Call Provider API"]
-G --> H["Store Transient"]
-H --> I["Return Data"]
-J["Custom Table Row Access"] --> K["wp_cache_get(object_id, group)"]
-K --> L{"Cache hit?"}
-L --> |Yes| M["Return Row"]
-L --> |No| N["wpdb SELECT"]
-N --> O["wp_cache_set(object_id, row)"]
-O --> P["Return Row"]
-```
+Two cache layers are important:
 
-**Diagram sources**
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [Cache.php:4-47](file://required_plugins/mb-custom-table/src/Cache.php#L4-L47)
+- **Provider API transients:** cache selected provider API methods and invalidate them when
+  credentials or configuration change.
+- **Meta Box row cache:** stores custom-table rows in WordPress object-cache groups and updates
+  or deletes entries when records change.
 
-**Section sources**
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [Cache.php:4-47](file://required_plugins/mb-custom-table/src/Cache.php#L4-L47)
+The React provider settings controller also caches region and size counts for 300 seconds under
+`sstk_provider_counts_<provider>`. A `refresh=1` request bypasses that cache; provider failures
+return zero advisory counts rather than breaking the settings screen.
 
-### Relationship Between Custom Post Types and Custom Tables
-- CPTs represent high-level entities (servers, apps) with rich metadata and relationships.
-- Custom tables store structured reference data (providers, DNS zones/records) optimized for performance.
-- The loader bridges public/admin pages to custom table models, enabling shortcode-driven lists and edit screens.
+### Custom Post Types and Custom Tables
 
-```mermaid
-graph LR
-CPT_App["wpcd_app (Post)"] --> ParentServer["parent_post_id -> wpcd_app_server (Post)"]
-ProviderTable["Providers (Custom Table)"] --> CTModel["MBCT Model"]
-DNSZone["DNS Zones (Custom Table)"] --> CTModel
-CTLoader["Public Loader"] --> CTModel
-CTModel --> CTStorage["Storage Layer"]
-```
+- `sstk_app_server` and `sstk_app` store high-level control-plane entities and relationships.
+- Provider and DNS records use custom tables through the Meta Box model layer.
+- Site records point at their parent server through `parent_post_id`.
+- The public custom-table loader connects shortcode-driven list and edit views to Meta Box
+  models.
 
-**Diagram sources**
-- [class-wpcd-posts-app.php:761-793](file://includes/core/class-wpcd-posts-app.php#L761-L793)
-- [loader.php:87-104](file://includes/core/apps/wordpress-app/public/custom-table/loader.php#L87-L104)
-- [Model.php:4-42](file://required_plugins/mb-custom-table/src/Model/Model.php#L4-L42)
-- [Storage.php:163-181](file://required_plugins/mb-custom-table/src/Storage.php#L163-L181)
+### Data Portability and Lifecycle
 
-**Section sources**
-- [class-wpcd-posts-app.php:761-793](file://includes/core/class-wpcd-posts-app.php#L761-L793)
-- [loader.php:87-104](file://includes/core/apps/wordpress-app/public/custom-table/loader.php#L87-L104)
-- [Model.php:4-42](file://required_plugins/mb-custom-table/src/Model/Model.php#L4-L42)
-- [Storage.php:163-181](file://required_plugins/mb-custom-table/src/Storage.php#L163-L181)
+Cross-site data synchronization is retired. There is no service for moving users, teams,
+servers, sites or settings between control-plane installations. Each installation is
+configured explicitly.
 
-### Data Synchronization Strategies and Consistency Models
-The sync engine manages cross-site data transfer:
-- Export/import of users, teams, server/app posts, and settings.
-- Encryption for sensitive configuration values.
-- Cron scheduling for automated exports based on settings changes.
-- Idempotent imports with optional deletion of existing records before re-import.
+`uninstall.php` removes Simple Stack data across every site in a multisite network, including
+prefixed options, transients, posts, metadata, terms, cron hooks, roles, capabilities and custom
+tables. Cron cleanup discovers every scheduled hook beginning with `sstk_`. Role cleanup also
+removes direct user capability assignments. `tests/uninstall-harness.php` exercises these paths
+with WordPress API stubs and a recording database double while checking that unrelated data is
+preserved.
 
-```mermaid
-sequenceDiagram
-participant Settings as "Settings Screen"
-participant Sync as "WPCD_SYNC"
-participant Cron as "WP-Cron"
-participant Target as "Target Site"
-Settings->>Sync : Update sync config
-Sync->>Sync : Compare saved vs new values
-Sync->>Cron : Schedule/unschedule export events
-Cron->>Sync : Trigger export action
-Sync->>Target : Push encrypted payload
-Target->>Target : Decrypt, map IDs, import users/teams/posts/settings
-```
+### Error Handling and Consistency
 
-**Diagram sources**
-- [class-wpcd-sync.php:60-135](file://includes/core/class-wpcd-sync.php#L60-L135)
-- [class-wpcd-sync.php:777-800](file://includes/core/class-wpcd-sync.php#L777-L800)
+Multi-step operations use WordPress APIs and explicit error checks rather than a shared database
+transaction wrapper. Callers must therefore treat each persisted step as independently
+fallible and avoid assuming that a later failure rolls back earlier writes.
 
-**Section sources**
-- [class-wpcd-sync.php:60-135](file://includes/core/class-wpcd-sync.php#L60-L135)
-- [class-wpcd-sync.php:777-800](file://includes/core/class-wpcd-sync.php#L777-L800)
-
-### Efficient Querying Patterns, Pagination, and Search Optimization
-- Admin search: Extends default search to include meta fields and titles for faster discovery.
-- Filtering: Uses parse_query and restrict_manage_posts to add dropdown filters and adjust WHERE clauses.
-- Pagination: Relies on WordPress list table infrastructure; custom tables use MBCT list table classes for admin/public views.
-- Search optimization: Avoids full-text scans by narrowing queries early and limiting fields where possible.
-
-```mermaid
-flowchart TD
-QStart["List Query"] --> Filters["Apply Filters (parse_query)"]
-Filters --> Where["Modify WHERE (posts_where)"]
-Where --> Search["Extend Search (pre_get_posts)"]
-Search --> Columns["Render Columns (efficient meta reads)"]
-Columns --> Paginate["Pagination via WP List Table"]
-Paginate --> QEnd["Results"]
-```
-
-**Diagram sources**
-- [class-wpcd-posts-app-server.php:62-162](file://includes/core/class-wpcd-posts-app-server.php#L62-L162)
-- [class-wpcd-posts-app.php:61-156](file://includes/core/class-wpcd-posts-app.php#L61-L156)
-- [class-wpcd-custom-table.php:567-578](file://includes/core/custom-table/class-wpcd-custom-table.php#L567-L578)
-
-**Section sources**
-- [class-wpcd-posts-app-server.php:62-162](file://includes/core/class-wpcd-posts-app-server.php#L62-L162)
-- [class-wpcd-posts-app.php:61-156](file://includes/core/class-wpcd-posts-app.php#L61-L156)
-- [class-wpcd-custom-table.php:567-578](file://includes/core/custom-table/class-wpcd-custom-table.php#L567-L578)
-
-### Transaction Management, Error Handling, and Performance Monitoring
-- Transactions: Direct database transactions are not explicitly wrapped around multi-step operations in the referenced files; instead, operations rely on WordPress functions and explicit checks for errors.
-- Error handling: Validation errors are surfaced via notices; AJAX responses return JSON success/error payloads; provider API caches are cleared when needed.
-- Performance monitoring: Logging actions are triggered for cache deletions and debug logs for post creation; frontend scripts handle long-running operations with timeouts and user feedback.
-
-Best practices observed:
-- Validate inputs and sanitize data before persistence.
-- Use nonce checks and permission gates for AJAX endpoints.
-- Provide clear user feedback for failures and long-running tasks.
-
-**Section sources**
-- [class-wpcd-custom-table.php:212-235](file://includes/core/custom-table/class-wpcd-custom-table.php#L212-L235)
-- [class-wpcd-custom-table.php:635-672](file://includes/core/custom-table/class-wpcd-custom-table.php#L635-L672)
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-
-### Best Practices for Extending Data Access Layers and Maintaining Backward Compatibility
-- Extend base classes: Derive new CPT handlers from WPCD_Posts_Base to inherit shared behaviors.
-- Use traits for reusable functionality (e.g., metaboxes, taxonomies, teams).
-- Leverage filters and actions to customize queries, columns, and UI without modifying core logic.
-- For custom tables, define models via MBCT and implement validation and save hooks to maintain consistency.
-- Ensure backward compatibility by:
-  - Keeping meta keys stable and providing fallbacks.
-  - Using options and feature flags to toggle visibility of columns and features.
-  - Preserving existing AJAX endpoints and response shapes.
-
-**Section sources**
-- [class-wpcd-posts-app-server.php:17-57](file://includes/core/class-wpcd-posts-app-server.php#L17-L57)
-- [class-wpcd-posts-app.php:17-56](file://includes/core/class-wpcd-posts-app.php#L17-L56)
-- [class-wpcd-custom-table.php:80-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L80-L112)
+AJAX and REST handlers return structured success or error responses. Long-running SSH operations
+use command logs and status callbacks so the admin UI can report progress and failures.
 
 ## Dependency Analysis
+
 ```mermaid
 graph TB
-PostsBase["WPCD_Posts_Base"]
-AppServer["WPCD_POSTS_APP_SERVER"]
-App["WPCD_POSTS_APP"]
-CTBase["WPCD_MB_Custom_Table"]
-MBCTModel["MBCT Model"]
-MBCTStorage["MBCT Storage"]
-MBCTCache["MBCT Cache"]
+PostsBase["SSTK_Posts_Base"]
+AppServer["SSTK_POSTS_APP_SERVER"]
+App["SSTK_POSTS_APP"]
+CTBase["SSTK_MB_Custom_Table"]
+MBCTModel["Meta Box Model"]
+MBCTStorage["Meta Box Storage"]
+MBCTCache["Meta Box Cache"]
 ProviderAPI["Cloud Provider API"]
-Sync["WPCD_SYNC"]
+Uninstall["uninstall.php"]
 AppServer --> PostsBase
 App --> PostsBase
 CTBase --> MBCTModel
@@ -358,54 +192,34 @@ MBCTModel --> MBCTStorage
 MBCTModel --> MBCTCache
 AppServer --> ProviderAPI
 App --> ProviderAPI
-Sync --> AppServer
-Sync --> App
+Uninstall --> AppServer
+Uninstall --> App
+Uninstall --> CTBase
 ```
 
-**Diagram sources**
-- [class-wpcd-posts-base.php:16-80](file://includes/core/class-wpcd-posts-base.php#L16-L80)
-- [class-wpcd-posts-app-server.php:15-57](file://includes/core/class-wpcd-posts-app-server.php#L15-L57)
-- [class-wpcd-posts-app.php:15-56](file://includes/core/class-wpcd-posts-app.php#L15-L56)
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [Model.php:4-42](file://required_plugins/mb-custom-table/src/Model/Model.php#L4-L42)
-- [Storage.php:163-181](file://required_plugins/mb-custom-table/src/Storage.php#L163-L181)
-- [Cache.php:4-47](file://required_plugins/mb-custom-table/src/Cache.php#L4-L47)
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [class-wpcd-sync.php:15-52](file://includes/core/class-wpcd-sync.php#L15-L52)
-
-**Section sources**
-- [class-wpcd-posts-base.php:16-80](file://includes/core/class-wpcd-posts-base.php#L16-L80)
-- [class-wpcd-posts-app-server.php:15-57](file://includes/core/class-wpcd-posts-app-server.php#L15-L57)
-- [class-wpcd-posts-app.php:15-56](file://includes/core/class-wpcd-posts-app.php#L15-L56)
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [Model.php:4-42](file://required_plugins/mb-custom-table/src/Model/Model.php#L4-L42)
-- [Storage.php:163-181](file://required_plugins/mb-custom-table/src/Storage.php#L163-L181)
-- [Cache.php:4-47](file://required_plugins/mb-custom-table/src/Cache.php#L4-L47)
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [class-wpcd-sync.php:15-52](file://includes/core/class-wpcd-sync.php#L15-L52)
-
 ## Performance Considerations
-- Prefer custom tables for high-volume, frequently queried datasets; leverage MBCT caching to minimize DB calls.
-- Use provider API transient caching to avoid repeated external calls; clear caches when credentials or configurations change.
-- Optimize admin list queries by limiting fields and avoiding heavy computations in column renderers.
-- Batch operations where possible; avoid N+1 queries in loops by grouping meta reads or using IN clauses.
-- Monitor long-running tasks and provide user feedback; consider increasing script execution limits for heavy operations.
 
-[No sources needed since this section provides general guidance]
+- Narrow post queries before rendering columns and avoid repeated metadata reads in loops.
+- Use Meta Box row caching for frequently accessed custom-table records.
+- Keep provider transients short-lived and clear them after credential changes.
+- Batch writes where the underlying API supports it; otherwise report partial failure clearly.
+- Monitor SSH command logs and REST activity for slow provider calls or long-running tasks.
 
 ## Troubleshooting Guide
-Common issues and resolutions:
-- Long-running AJAX operations: Frontend scripts alert about potential gateway timeouts; check SSH/Command logs and increase timeout limits if necessary.
-- Validation errors in custom tables: Notices are displayed; verify input sanitization and required fields.
-- Provider API cache inconsistencies: Clear provider cache after changing API keys or settings; ensure cache methods are whitelisted.
-- Sync import failures: Verify decryption keys and mapping of IDs; ensure target site has required roles and permissions.
 
-**Section sources**
-- [class-wpcd-custom-table.php:679-685](file://includes/core/custom-table/class-wpcd-custom-table.php#L679-L685)
-- [class-cloud-provider-api.php:512-554](file://includes/core/providers/class-cloud-provider-api.php#L512-L554)
-- [class-wpcd-sync.php:192-236](file://includes/core/class-wpcd-sync.php#L192-L236)
+- **Stale provider data:** clear the relevant provider transient or request a refreshed provider
+  count.
+- **Missing custom-table row:** verify the table exists, the model uses the expected table name
+  and the row cache was invalidated after the write.
+- **Unexpected admin-list results:** inspect the active `parse_query`, `posts_where` and
+  `pre_get_posts` filters before changing the underlying query code.
+- **Partial uninstall:** run `php tests/uninstall-harness.php` and inspect network options,
+  cron hooks, user capabilities and custom tables on each blog.
 
 ## Conclusion
-SimpleStack’s data access patterns combine WordPress CPTs for flexibility and custom tables for performance. Query building leverages standard WordPress hooks for search and filtering, while caching strategies reduce overhead for both provider APIs and custom table rows. Synchronization ensures consistent state across sites with careful handling of encryption, scheduling, and idempotent imports. By following the outlined best practices—extending base classes, using filters/actions, and optimizing queries—you can extend the data access layer effectively while maintaining backward compatibility and performance.
 
-[No sources needed since this section summarizes without analyzing specific files]
+Simple Stack combines WordPress post types for flexible control-plane entities with Meta Box
+custom tables for structured provider and DNS data. Standard WordPress query hooks, targeted
+transients and object-cache groups keep reads predictable. New extensions should use the
+current `sstk_` identifiers, fixed `scripts/v2` provisioning and the existing permission,
+validation and logging patterns.

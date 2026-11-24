@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * OLS Console
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,18 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE
+ * Class SSTK_WORDPRESS_TABS_SERVER_OLS_CONSOLE
  */
-class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 	}
 
 	/**
@@ -50,7 +51,7 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 		if ( 'ols' === $this->get_web_server_type( $id ) ) {
 			if ( $this->get_tab_security( $id ) ) {
 				$tabs[ $this->get_tab_slug() ] = array(
-					'label' => __( 'OLS Console', 'wpcd' ),
+					'label' => __( 'OLS Console', 'simple-stack' ),
 					'icon'  => 'far fa-phone-office',
 				);
 			}
@@ -66,13 +67,13 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the OLS Console tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -107,8 +108,8 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -116,7 +117,7 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -163,10 +164,10 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 			case 1:
 				$check_ols_console_status = $this->is_ols_console_enabled( $id );
 				if ( empty( $check_ols_console_status ) ) :
-					$desc  = __( 'The OpenLiteSpeed Webserver Manager console is not installed.', 'wpcd' );
-					$desc .= '<br />' . __( 'To install it please enter a username & password, then click the INSTALL button.', 'wpcd' );
+					$desc  = __( 'The OpenLiteSpeed Webserver Manager console is not installed.', 'simple-stack' );
+					$desc .= '<br />' . __( 'To install it please enter a username & password, then click the INSTALL button.', 'simple-stack' );
 				else :
-					$desc = __( 'When launching the OpenLiteSpeed Webserver Manager console you will encounter a security warning related to SSL. This is because the OLS server is using a self-signed certificate. Traffic is still encrypted between your browser and the console with the self-signed certificate so you should approve the browser request to ignore the warning.', 'wpcd' );
+					$desc = __( 'When launching the OpenLiteSpeed Webserver Manager console you will encounter a security warning related to SSL. This is because the OLS server is using a self-signed certificate. Traffic is still encrypted between your browser and the console with the self-signed certificate so you should approve the browser request to ignore the warning.', 'simple-stack' );
 				endif;
 				break;
 			default:
@@ -197,25 +198,25 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 		if ( ! empty( $check_ols_console_status ) ) {
 
 			// get data from server record.
-			$check_ols_console_status = get_post_meta( $id, 'wpcd_wpapp_enable_ols_console', true );
-			$ols_console_username     = get_post_meta( $id, 'wpcd_wpapp_username_for_ols_console', true );
-			$ols_console_pass         = $this::decrypt( get_post_meta( $id, 'wpcd_wpapp_password_for_ols_console', true ) );
-			$ipv4                     = WPCD_SERVER()->get_ipv4_address( $id );
+			$check_ols_console_status = get_post_meta( $id, 'sstk_wpapp_enable_ols_console', true );
+			$ols_console_username     = get_post_meta( $id, 'sstk_wpapp_username_for_ols_console', true );
+			$ols_console_pass         = $this::decrypt( get_post_meta( $id, 'sstk_wpapp_password_for_ols_console', true ) );
+			$ipv4                     = SSTK_SERVER()->get_ipv4_address( $id );
 			$ols_console_url          = 'https://' . $ipv4 . ':7080';
-			$launch                   = sprintf( '<a href="%s" target="_blank">', $ols_console_url ) . __( 'View Console', 'wpcd' ) . '</a>';
+			$launch                   = sprintf( '<a href="%s" target="_blank">', $ols_console_url ) . __( 'View Console', 'simple-stack' ) . '</a>';
 
 			// classes to wrap around the data.
-			$css_styles_start = '<div class="wpcd_push_data_value_item wpcd_server_status_push_data_value_item">';
+			$css_styles_start = '<div class="sstk_push_data_value_item sstk_server_status_push_data_value_item">';
 			$css_styles_end   = '</div>';
 
 			/**
 			 * Display Console Enabled Flag.
 			 */
 
-			$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_one_third_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['ols-console-enabled-header'] = array(
-				'label'          => __( 'Console Enabled?', 'wpcd' ),
+				'label'          => __( 'Console Enabled?', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => '',
@@ -230,16 +231,16 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 				),
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/**
 			 * Display link to launch ols.
 			 */
 
-			$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_one_third_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['ols-console-launch-header'] = array(
-				'label'          => __( 'View Console', 'wpcd' ),
+				'label'          => __( 'View Console', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => '',
@@ -254,16 +255,16 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 				),
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 			/**
 			 * Show Credentials
 			 */
 
-			$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_one_third_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['ols-console-show-credentials'] = array(
-				'label'          => __( 'Credentials', 'wpcd' ),
+				'label'          => __( 'Credentials', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => '',
@@ -274,20 +275,20 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 				'label'          => '',
 				'type'           => 'custom_html',
 				'raw_attributes' => array(
-					'std' => __( 'User Id: ', 'wpcd' ) . wpcd_wrap_clipboard_copy( $ols_console_username, false ) . '<br />' . __( 'Password: ', 'wpcd' ) . wpcd_wrap_clipboard_copy( $ols_console_pass, false ),
+					'std' => __( 'User Id: ', 'simple-stack' ) . sstk_wrap_clipboard_copy( $ols_console_username, false ) . '<br />' . __( 'Password: ', 'simple-stack' ) . sstk_wrap_clipboard_copy( $ols_console_pass, false ),
 				),
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		}
 
 		if ( empty( $check_ols_console_status ) ) {
 			/* Console is disabled, show appropriate fields for that. */
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['ols-console-header-main'] = array(
-				'label'          => __( 'OpenLiteSpeed Webserver Manager Console', 'wpcd' ),
+				'label'          => __( 'OpenLiteSpeed Webserver Manager Console', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $this->get_field_header_desc( 1, $id ),
@@ -295,25 +296,25 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 			);
 
 			$actions['username-for-ols-console'] = array(
-				'label'          => __( 'User Name', 'wpcd' ),
+				'label'          => __( 'User Name', 'simple-stack' ),
 				'type'           => 'text',
 				'raw_attributes' => array(
 					'desc'           => '',
-					'std'            => wpcd_generate_alpha_numeric_string( 12 ),
+					'std'            => sstk_generate_alpha_numeric_string( 12 ),
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'username_for_ols_console',
+					'data-sstk-name' => 'username_for_ols_console',
 					'spellcheck'     => 'false',
 				),
 			);
 
 			$actions['password-for-ols-console'] = array(
-				'label'          => __( 'Password', 'wpcd' ),
+				'label'          => __( 'Password', 'simple-stack' ),
 				'type'           => 'password',
 				'raw_attributes' => array(
 					'desc'           => '',
-					'std'            => wpcd_generate_default_password(),
+					'std'            => sstk_generate_default_password(),
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'password_for_ols_console',
+					'data-sstk-name' => 'password_for_ols_console',
 					'spellcheck'     => 'false',
 				),
 			);
@@ -321,39 +322,39 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 			$actions['enable-ols-console'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Install', 'wpcd' ),
+					'std'                 => __( 'Install', 'simple-stack' ),
 					'desc'                => '',
 					// make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to enable the OpenLiteSpeed webserver manager console?', 'wpcd' ),
-					'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_username-for-ols-console', '#wpcd_app_action_password-for-ols-console' ) ),
+					'confirmation_prompt' => __( 'Are you sure you would like to enable the OpenLiteSpeed webserver manager console?', 'simple-stack' ),
+					'data-sstk-fields'    => json_encode( array( '#sstk_app_action_username-for-ols-console', '#sstk_app_action_password-for-ols-console' ) ),
 				),
 				'type'           => 'button',
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		} else {
 
 			/* Console is enabled, show additional appropriate fields for that. */
-			$actions[] = wpcd_start_one_third_card( $this->get_tab_slug() ); // Start new card.
+			$actions[] = sstk_start_one_third_card( $this->get_tab_slug() ); // Start new card.
 
 			$actions['disable-ols-console-header'] = array(
-				'label' => __( 'Disable The OpenLiteSpeed Webserver Manager Console', 'wpcd' ),
+				'label' => __( 'Disable The OpenLiteSpeed Webserver Manager Console', 'simple-stack' ),
 				'type'  => 'heading',
 			);
 
 			$actions['disable-ols-console'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Disable', 'wpcd' ),
+					'std'                 => __( 'Disable', 'simple-stack' ),
 					'desc'                => '',
 					// make sure we give the user a confirmation prompt.
-					'confirmation_prompt' => __( 'Are you sure you would like to disable the OpenLiteSpeed webserver manager console?', 'wpcd' ),
+					'confirmation_prompt' => __( 'Are you sure you would like to disable the OpenLiteSpeed webserver manager console?', 'simple-stack' ),
 				),
 				'type'           => 'button',
 			);
 
-			$actions[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+			$actions[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		}
 
@@ -374,46 +375,46 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 		$return = '';
 
 		// get data from server record.
-		$check_ols_console_status = get_post_meta( $id, 'wpcd_wpapp_enable_ols_console', true );
-		$ols_console_username     = get_post_meta( $id, 'wpcd_wpapp_username_for_ols_console', true );
-		$ols_console_pass         = get_post_meta( $id, 'wpcd_wpapp_password_for_ols_console', true );
-		$ipv4                     = WPCD_SERVER()->get_ipv4_address( $id );
+		$check_ols_console_status = get_post_meta( $id, 'sstk_wpapp_enable_ols_console', true );
+		$ols_console_username     = get_post_meta( $id, 'sstk_wpapp_username_for_ols_console', true );
+		$ols_console_pass         = get_post_meta( $id, 'sstk_wpapp_password_for_ols_console', true );
+		$ipv4                     = SSTK_SERVER()->get_ipv4_address( $id );
 		$ols_console_url          = 'https://' . $ipv4 . ':7080';
-		$launch                   = sprintf( '<a href="%s" target="_blank">', $ols_console_url ) . __( 'Launch OLS Console', 'wpcd' ) . '</a>';
+		$launch                   = sprintf( '<a href="%s" target="_blank">', $ols_console_url ) . __( 'Launch OLS Console', 'simple-stack' ) . '</a>';
 
 		// Format the data.
-		$return              = '<div class="wpcd_push_data wpcd_server_status_push_data">';
-				$return     .= '<div class="wpcd_push_data_inner_wrap wpcd_server_status_push_data_inner_wrap">';
-				$return     .= '<div class="wpcd_push_data_label_item wpcd_server_status_push_data_label_item">';
-					$return .= __( 'Is OLS Console Enabled?', 'wpcd' );
+		$return              = '<div class="sstk_push_data sstk_server_status_push_data">';
+				$return     .= '<div class="sstk_push_data_inner_wrap sstk_server_status_push_data_inner_wrap">';
+				$return     .= '<div class="sstk_push_data_label_item sstk_server_status_push_data_label_item">';
+					$return .= __( 'Is OLS Console Enabled?', 'simple-stack' );
 				$return     .= '</div>';
 
-				$return     .= '<div class="wpcd_push_data_value_item wpcd_server_status_push_data_value_item">';
+				$return     .= '<div class="sstk_push_data_value_item sstk_server_status_push_data_value_item">';
 					$return .= ! empty( $check_ols_console_status ) ? esc_html( 'Yes' ) : 'No';
 				$return     .= '</div>';
 
-				$return     .= '<div class="wpcd_push_data_label_item wpcd_server_status_push_data_label_item">';
-					$return .= __( 'URL:', 'wpcd' );
+				$return     .= '<div class="sstk_push_data_label_item sstk_server_status_push_data_label_item">';
+					$return .= __( 'URL:', 'simple-stack' );
 				$return     .= '</div>';
 
-				$return     .= '<div class="wpcd_push_data_label_item wpcd_server_status_push_data_label_item">';
+				$return     .= '<div class="sstk_push_data_label_item sstk_server_status_push_data_label_item">';
 					$return .= $launch;
 				$return     .= '</div>';
 
-				$return     .= '<div class="wpcd_push_data_label_item wpcd_server_status_push_data_label_item">';
-					$return .= __( 'User Name:', 'wpcd' );
+				$return     .= '<div class="sstk_push_data_label_item sstk_server_status_push_data_label_item">';
+					$return .= __( 'User Name:', 'simple-stack' );
 				$return     .= '</div>';
 
-				$return     .= '<div class="wpcd_push_data_value_item wpcd_server_status_push_data_value_item">';
-					$return .= wpcd_wrap_clipboard_copy( esc_html( $ols_console_username ) );
+				$return     .= '<div class="sstk_push_data_value_item sstk_server_status_push_data_value_item">';
+					$return .= sstk_wrap_clipboard_copy( esc_html( $ols_console_username ) );
 				$return     .= '</div>';
 
-				$return     .= '<div class="wpcd_push_data_label_item wpcd_server_status_push_data_label_item">';
-					$return .= __( 'Password:', 'wpcd' );
+				$return     .= '<div class="sstk_push_data_label_item sstk_server_status_push_data_label_item">';
+					$return .= __( 'Password:', 'simple-stack' );
 				$return     .= '</div>';
 
-				$return     .= '<div class="wpcd_push_data_value_item wpcd_server_status_push_data_value_item">';
-					$return .= wpcd_wrap_clipboard_copy( WPCD()->decrypt( $ols_console_pass ) );
+				$return     .= '<div class="sstk_push_data_value_item sstk_server_status_push_data_value_item">';
+					$return .= sstk_wrap_clipboard_copy( SSTK()->decrypt( $ols_console_pass ) );
 				$return     .= '</div>';
 
 			$return .= '</div>';
@@ -438,7 +439,7 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action id we're trying to execute. It is usually a string without spaces, not a number. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -448,12 +449,12 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 			case 'enable_ols_console':
 				// Make sure all four required fields have been provided and return error if not.
 				if ( empty( $args['username_for_ols_console'] ) ) {
-					return new \WP_Error( __( 'Please enter user name', 'wpcd' ) );
+					return new \WP_Error( __( 'Please enter user name', 'simple-stack' ) );
 				}
 
 				// Make sure all required fields have been provided and return error if not.
 				if ( empty( $args['password_for_ols_console'] ) ) {
-					return new \WP_Error( __( 'Please enter password', 'wpcd' ) );
+					return new \WP_Error( __( 'Please enter password', 'simple-stack' ) );
 				}
 				$command_name               = 'enable_ols_console';
 				$args['enable_ols_console'] = $this->get_command_url( $id, $command_name, 'completed' );
@@ -503,33 +504,33 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 				break;
 		}
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// Execute command and check result.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'ols_manage_admin_console.txt' );
 		if ( ! $success ) {
 			/* Translators: %1$s: Action string; %2$s: Error string/message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s : %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s : %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 
 			// Success - update some postmetas and set response message according to action.
 			switch ( $action ) {
 				case 'enable_ols_console':
-					update_post_meta( $id, 'wpcd_wpapp_enable_ols_console', 'yes' );
-					update_post_meta( $id, 'wpcd_wpapp_username_for_ols_console', $user_name );
-					update_post_meta( $id, 'wpcd_wpapp_password_for_ols_console', WPCD()->encrypt( $pass ) );
+					update_post_meta( $id, 'sstk_wpapp_enable_ols_console', 'yes' );
+					update_post_meta( $id, 'sstk_wpapp_username_for_ols_console', $user_name );
+					update_post_meta( $id, 'sstk_wpapp_password_for_ols_console', SSTK()->encrypt( $pass ) );
 					$success = array(
-						'msg'     => __( 'OLS console successfully enabled.', 'wpcd' ),
+						'msg'     => __( 'OLS console successfully enabled.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
 				case 'disable_ols_console':
-					delete_post_meta( $id, 'wpcd_wpapp_enable_ols_console' );
-					delete_post_meta( $id, 'wpcd_wpapp_username_for_ols_console' );
-					delete_post_meta( $id, 'wpcd_wpapp_password_for_ols_console' );
+					delete_post_meta( $id, 'sstk_wpapp_enable_ols_console' );
+					delete_post_meta( $id, 'sstk_wpapp_username_for_ols_console' );
+					delete_post_meta( $id, 'sstk_wpapp_password_for_ols_console' );
 					$success = array(
-						'msg'     => __( 'OLS console successfully disabled.', 'wpcd' ),
+						'msg'     => __( 'OLS console successfully disabled.', 'simple-stack' ),
 						'refresh' => 'yes',
 					);
 					break;
@@ -548,7 +549,7 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function is_ols_console_enabled( $id ) {
 
-		$check_ols_console_enable = get_post_meta( $id, 'wpcd_wpapp_enable_ols_console', 'yes' );
+		$check_ols_console_enable = get_post_meta( $id, 'sstk_wpapp_enable_ols_console', 'yes' );
 
 		if ( ! empty( $check_ols_console_enable ) ) {
 
@@ -559,4 +560,4 @@ class WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE extends WPCD_WORDPRESS_TABS {
 	}
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_OLS_CONSOLE();
+new SSTK_WORDPRESS_TABS_SERVER_OLS_CONSOLE();

@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * REST client for the `simple-stack/v1` namespace.
  *
@@ -7,7 +8,7 @@
  */
 
 export class ApiError extends Error {
-	constructor( message, { code = 'simplestack_error', status = 0 } = {} ) {
+	constructor( message, { code = 'sstk_error', status = 0 } = {} ) {
 		super( message );
 		this.name = 'ApiError';
 		this.code = code;
@@ -93,7 +94,7 @@ async function request( path, { method = 'GET', query, body } = {} ) {
 		} );
 	} catch ( cause ) {
 		throw new ApiError( 'Could not reach the server.', {
-			code: 'simplestack_network_error',
+			code: 'sstk_network_error',
 		} );
 	}
 
@@ -108,7 +109,7 @@ async function request( path, { method = 'GET', query, body } = {} ) {
 	if ( ! response.ok || ( json && json.ok === false ) ) {
 		throw new ApiError(
 			( json && json.message ) || `Request failed with status ${ response.status }.`,
-			{ code: ( json && json.code ) || 'simplestack_http_error', status: response.status }
+			{ code: ( json && json.code ) || 'sstk_http_error', status: response.status }
 		);
 	}
 

@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -6,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class handle Provider functionality
  */
-class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
+class SSTK_CT_Provider extends SSTK_MB_Custom_Table {
 
 	/**
 	 * Model slug
@@ -48,7 +49,7 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 		add_filter( "rwmb_allowed_users_field_meta", array( $this, 'field_allowed_users' ), 10, 3 );
 		add_filter( "rwmb_allowed_roles_field_meta", array( $this, 'field_allowed_roles' ), 10, 3 );
 		
-		add_action( 'wpcd_after_public_pages_created', array( $this, 'create_public_page') );
+		add_action( 'sstk_after_public_pages_created', array( $this, 'create_public_page') );
 	}
 	
 	/**
@@ -62,10 +63,10 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 				'name'          => 'Providers',
 				'singular_name' => 'Provider',
 			],
-			'add_new_item'  => __( 'Add New Provider', 'wpcd' ),
-			'parent'      => 'edit.php?post_type=wpcd_app_server',
+			'add_new_item'  => __( 'Add New Provider', 'simple-stack' ),
+			'parent'      => 'edit.php?post_type=sstk_app_server',
 			'position'    => 80,
-			'capability'  => 'wpcd_manage_settings',
+			'capability'  => 'sstk_manage_settings',
 			'show_in_menu'	=> false,
 			'show_in_menu_custom'	=> true,
 			
@@ -114,8 +115,8 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 
 			$page_id = wp_insert_post(
 				array(
-					'post_title'   => __( 'Providers', 'wpcd' ),
-					'post_content' => '[wpcd_ct_providers]',
+					'post_title'   => __( 'Providers', 'simple-stack' ),
+					'post_content' => '[sstk_ct_providers]',
 					'post_status'  => 'publish',
 					'post_author'  => get_current_user_id(),
 					'post_type'    => 'page',
@@ -144,7 +145,7 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 	 */
 	public function metaboxes( $meta_boxes ) {
 
-		$base_provider_options = WPCD_POSTS_CLOUD_PROVIDER()->get_provider_types();
+		$base_provider_options = SSTK_POSTS_CLOUD_PROVIDER()->get_provider_types();
 
 		
 		$fields = array(
@@ -153,35 +154,35 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 					'type' => 'hidden',
 					'std'	=> $this->get_nonce( $this->action() ),
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 					'save_field'      => false
 				),
 
 
 				array(
-					'name' => __( 'Name', 'wpcd' ),
+					'name' => __( 'Name', 'simple-stack' ),
 					'id'   => 'provider_name',
 					'type' => 'text',
 					'required' => true,
-					'desc' => __('Add provider name', 'wpcd' ),
+					'desc' => __('Add provider name', 'simple-stack' ),
 					'admin_columns' => [
 						'position' => 'after id',
 						'sort'     => true,
 					],
 				),
 				array(
-					'name' => __( 'Description', 'wpcd' ),
+					'name' => __( 'Description', 'simple-stack' ),
 					'id'   => 'description',
 					'type' => 'textarea',
-					'desc' => __('Provider description', 'wpcd' ),
+					'desc' => __('Provider description', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'Base Provider', 'wpcd' ),
+					'name' => __( 'Base Provider', 'simple-stack' ),
 					'id'   => 'base_provider',
 					'type' => 'select',
 					'required' => true,
 					'options' => $base_provider_options,
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 					'admin_columns' => [
 						'position' => 'after provider_name',
 						'sort'     => true,
@@ -189,149 +190,149 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 				),
 				array(
 					'type' => 'heading',
-					'name' => __( 'API Keys', 'wpcd' )
+					'name' => __( 'API Keys', 'simple-stack' )
 				),
 				array(
-					'name' => __( 'API Access Key', 'wpcd' ),
+					'name' => __( 'API Access Key', 'simple-stack' ),
 					'id'   => 'api_access_key',
 					'type' => 'text',
-					'desc'  => __( 'You can get this key from your providers security or API dashboard. It is encrypted before being stored in the database.', 'wpcd' ),
+					'desc'  => __( 'You can get this key from your providers security or API dashboard. It is encrypted before being stored in the database.', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'API Secret Key', 'wpcd' ),
+					'name' => __( 'API Secret Key', 'simple-stack' ),
 					'id'   => 'api_secret_key',
 					'type' => 'text',
-					'class'			=> 'wpcd_settings_pass_toggle',
-					'desc' => __( 'You can get this key from your providers security or API dashboard. It is encrypted before being stored in the database.', 'wpcd' ),
+					'class'			=> 'sstk_settings_pass_toggle',
+					'desc' => __( 'You can get this key from your providers security or API dashboard. It is encrypted before being stored in the database.', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'API Key Notes', 'wpcd' ),
+					'name' => __( 'API Key Notes', 'simple-stack' ),
 					'id'   => 'api_key_notes',
 					'type' => 'textarea',
-					'desc' => __( 'Your notes about this api key - optional', 'wpcd' ),
+					'desc' => __( 'Your notes about this api key - optional', 'simple-stack' ),
 				),
 				array(
 						'type' => 'heading',
-						'name' => __( 'SSH Keys', 'wpcd' ),
-						'desc' => __( 'For security, we only use public-private key pairs for server management. You must upload at least one public key to provider.', 'wpcd' ),
+						'name' => __( 'SSH Keys', 'simple-stack' ),
+						'desc' => __( 'For security, we only use public-private key pairs for server management. You must upload at least one public key to provider.', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'SSH Public_key Id', 'wpcd' ),
+					'name' => __( 'SSH Public_key Id', 'simple-stack' ),
 					'id'   => 'ssh_public_key_id',
 					'type' => 'text',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'SSH Public Key', 'wpcd' ),
+					'name' => __( 'SSH Public Key', 'simple-stack' ),
 					'id'   => 'ssh_public_key',
 					'type' => 'textarea',
-					'class'			=> 'wpcd_settings_pass_toggle',
-					'desc' => __('', 'wpcd' ),
+					'class'			=> 'sstk_settings_pass_toggle',
+					'desc' => __('', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'SSH Private Key', 'wpcd' ),
+					'name' => __( 'SSH Private Key', 'simple-stack' ),
 					'id'   => 'ssh_private_key',
 					'type' => 'textarea',
-					'class'			=> 'wpcd_settings_pass_toggle',
-					'desc' => __('', 'wpcd' ),
+					'class'			=> 'sstk_settings_pass_toggle',
+					'desc' => __('', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'SSH Private Key Password', 'wpcd' ),
+					'name' => __( 'SSH Private Key Password', 'simple-stack' ),
 					'id'   => 'ssh_private_key_password',
 					'type' => 'text',
-					'class'			=> 'wpcd_settings_pass_toggle',
-					'desc' => __('', 'wpcd' ),
+					'class'			=> 'sstk_settings_pass_toggle',
+					'desc' => __('', 'simple-stack' ),
 				),
 				array( 'type' => 'divider' ),
 				array(
-					'name' => __( 'Region', 'wpcd' ),
+					'name' => __( 'Region', 'simple-stack' ),
 					'id'   => 'region',
 					'type' => 'text',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 				
 				array(
-					'name' => __( 'Enable Backups', 'wpcd' ),
+					'name' => __( 'Enable Backups', 'simple-stack' ),
 					'id'   => 'enable_backups',
 					'type' => 'checkbox',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 					'admin_columns' => [
 						'position' => 'after base_provider',
 						'sort'     => true,
 					],
 				),
 				array(
-					'name' => __( 'Enable ipv6', 'wpcd' ),
+					'name' => __( 'Enable ipv6', 'simple-stack' ),
 					'id'   => 'enable_ipv6',
 					'type' => 'checkbox',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 					'admin_columns' => [
 						'position' => 'after enable_backups',
 						'sort'     => true,
 					],
 				),
 				array(
-					'name' => __( 'Tags', 'wpcd' ),
+					'name' => __( 'Tags', 'simple-stack' ),
 					'id'   => 'tags',
 					'type' => 'text',
-					'placeholder'     => __( 'Add Tags.', 'wpcd' ),
+					'placeholder'     => __( 'Add Tags.', 'simple-stack' ),
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 
 				array(
 					'id'            => "server_sizes",
 					'type'          => 'key_value',
-					'name'			=> __( 'Server Sizes', 'wpcd' )
+					'name'			=> __( 'Server Sizes', 'simple-stack' )
 				),
 				array(
-					'name' => __( 'Other Notes', 'wpcd' ),
+					'name' => __( 'Other Notes', 'simple-stack' ),
 					'id'   => 'other_notes',
 					'type' => 'textarea',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 				
 				
 				array(
 					'type' => 'heading',
-					'name' => __( 'Azure', 'wpcd' )
+					'name' => __( 'Azure', 'simple-stack' )
 				),
 				
 				array(
-					'name' => __( 'Azure Tenant', 'wpcd' ),
+					'name' => __( 'Azure Tenant', 'simple-stack' ),
 					'id'   => 'azure_tenant',
 					'type' => 'text',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'Azure Subscription', 'wpcd' ),
+					'name' => __( 'Azure Subscription', 'simple-stack' ),
 					'id'   => 'azure_subscription',
 					'type' => 'text',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 				array(
-					'name' => __( 'Azure Storage Type', 'wpcd' ),
+					'name' => __( 'Azure Storage Type', 'simple-stack' ),
 					'id'   => 'azure_storage_type',
 					'type' => 'text',
 					'class'			=> '',
-					'desc' => __('', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
 				),
 
 				array(
 					'type' => 'heading',
-					'name' => __( 'Permissions', 'wpcd' )
+					'name' => __( 'Permissions', 'simple-stack' )
 				)
 		);
 		
-		if( wpcd_is_admin() ) {
+		if( sstk_is_admin() ) {
 			$owner_field = array(
-					'name' => __( 'Owner', 'wpcd' ),
+					'name' => __( 'Owner', 'simple-stack' ),
 					'id'   => 'owner',
 					'type' => 'user',
 					'field_type'  => 'select_advanced',
@@ -339,40 +340,40 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 					'ajax'  => true,
 					'multiple'        => false,
 					'class'	=> '',
-					'desc' => __('', 'wpcd' )
+					'desc' => __('', 'simple-stack' )
 				);
 		} else {
 			
 			$owner_field = array(
-					'name' => __( 'Owner', 'wpcd' ),
+					'name' => __( 'Owner', 'simple-stack' ),
 					'id'   => 'owner',
 					'readonly' => true,
 					'save_field' => false,
 					'std' => $this->field_owner_std(),
 					'type' => 'text',
 					'class'	=> '',
-					'desc' => __('', 'wpcd' )
+					'desc' => __('', 'simple-stack' )
 				);
 		}
 		
 		$fields[] = $owner_field;
 		
-		if( wpcd_is_admin() ) {
+		if( sstk_is_admin() ) {
 			$fields = array_merge( $fields, array(
 				array(
-					'name' => __( 'Allowed Roles', 'wpcd' ),
+					'name' => __( 'Allowed Roles', 'simple-stack' ),
 					'id'   => 'allowed_roles',
 					'type' => 'select_advanced',
-					'options'         => wpcd_get_roles(),
+					'options'         => sstk_get_roles(),
 					'select_all_none' => true,
 					'multiple'        => true,
 					'save_field'	  => false,
-					'desc' => __('', 'wpcd' ),
-					'placeholder'     => __( 'Select allowed roles.', 'wpcd' ),
+					'desc' => __('', 'simple-stack' ),
+					'placeholder'     => __( 'Select allowed roles.', 'simple-stack' ),
 				),
 				
 				array(
-					'name' => __( 'Allowed Users', 'wpcd' ),
+					'name' => __( 'Allowed Users', 'simple-stack' ),
 					'id'   => 'allowed_users',
 					'type' => 'user',
 					'field_type'  => 'select_advanced',
@@ -381,13 +382,13 @@ class WPCD_CT_Provider extends WPCD_MB_Custom_Table {
 					'multiple'        => true,
 					'save_field'	  => false,
 					'class'	=> '',
-					'desc' => __('', 'wpcd' )
+					'desc' => __('', 'simple-stack' )
 				)
 			));
 		}
 		$meta_boxes[] = array(
 			'id'             => $this->form_meta_box_id(),
-			'title'          => __( 'General', 'wpcd' ),
+			'title'          => __( 'General', 'simple-stack' ),
 			'models'       => [ $this->get_model_name() ],
 			'storage_type' => 'custom_table',
 			'table'        => $this->get_table_name(),

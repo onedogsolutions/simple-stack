@@ -1,6 +1,6 @@
-- Each provider class sets its identity in the constructor via `set_provider()` / `set_provider_slug()` plus optional `set_base_provider_name()` / `set_base_provider_slug()` so custom-server wrappers retain the original provider's identity.
+- Each provider class sets its identity in the constructor via `set_provider()` / `set_provider_slug()` plus optional `set_base_provider_name()` / `set_base_provider_slug()` so virtual provider aliases retain the underlying Vultr or UpCloud identity.
 - Provider capabilities are declared by calling `set_feature_flag( $feature, true|false )` for each supported capability (snapshots, resize, ssh_create, test_connection, backups, custom_images, dynamic_tags, enable_backups_on_server_create).
-- Credentials are always loaded from options using `WPCD()->decrypt( wpcd_get_early_option( 'vpn_' . $slug . '_apikey' ) )` (or the equivalent user_name/user_password pair for UpCloud) rather than reading globals directly.
-- The settings screen is extended by hooking `wpcd_cloud_provider_settings_{provider}` and related `*_after_api_*` / `*_after_part1_*` filters to inject provider-specific form fields.
-- A link to the provider's dashboard is registered by adding a filter on `wpcd_cloud_provider_settings_api_key_label_desc_{provider}` bound to the ancestor's `set_link_to_provider_dashboard` method.
+- Credentials are always loaded from options using `SSTK()->decrypt( sstk_get_early_option( 'sstk_' . $slug . '_apikey' ) )` (or the equivalent user_name/user_password pair for UpCloud) rather than reading globals directly.
+- The settings screen is extended by hooking `sstk_cloud_provider_settings_{provider}` and related `*_after_api_*` / `*_after_part1_*` filters to inject provider-specific form fields.
+- A link to the provider's dashboard is registered by adding a filter on `sstk_cloud_provider_settings_api_key_label_desc_{provider}` bound to the ancestor's `set_link_to_provider_dashboard` method.
 - Cache keys are built from `provider_slug + cache_key_prefix + sha256(secret_key) + method`, allowing multiple accounts on one install to share the same transient store without collisions.

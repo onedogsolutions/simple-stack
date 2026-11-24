@@ -2,12 +2,12 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-custom-table.php](file://includes/core/custom-table/class-wpcd-custom-table.php)
-- [class-wpcd-custom-table-api.php](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php)
-- [class-wpcd-provider.php](file://includes/core/custom-table/class-wpcd-provider.php)
-- [class-wpcd-dns-provider.php](file://includes/core/custom-table/class-wpcd-dns-provider.php)
-- [class-wpcd-dns-zone.php](file://includes/core/custom-table/class-wpcd-dns-zone.php)
-- [class-wpcd-dns-zone-record.php](file://includes/core/custom-table/class-wpcd-dns-zone-record.php)
+- [class-sstk-custom-table.php](file://includes/core/custom-table/class-sstk-custom-table.php)
+- [class-sstk-custom-table-api.php](file://includes/core/custom-table/api/class-sstk-custom-table-api.php)
+- [class-sstk-provider.php](file://includes/core/custom-table/class-sstk-provider.php)
+- [class-sstk-dns-provider.php](file://includes/core/custom-table/class-sstk-dns-provider.php)
+- [class-sstk-dns-zone.php](file://includes/core/custom-table/class-sstk-dns-zone.php)
+- [class-sstk-dns-zone-record.php](file://includes/core/custom-table/class-sstk-dns-zone-record.php)
 - [functions-classes.php](file://includes/core/functions-classes.php)
 - [loader.php](file://includes/core/apps/wordpress-app/public/custom-table/loader.php)
 - [custom_table.js](file://assets/js/custom_table.js)
@@ -44,12 +44,12 @@ The custom table subsystem lives under includes/core/custom-table and integrates
 ```mermaid
 graph TB
 subgraph "Custom Table Core"
-A["WPCD_MB_Custom_Table<br/>Base class"]
-B["WPCD_Custom_Table_API<br/>API abstraction"]
-C["Provider Model<br/>WPCD_CT_Provider"]
-D["DNS Provider Model<br/>WPCD_CT_DNS_Provider"]
-E["DNS Zone Model<br/>WPCD_CT_DNS_Zone"]
-F["DNS Zone Record Model<br/>WPCD_CT_DNS_Zone_Record"]
+A["SSTK_MB_Custom_Table<br/>Base class"]
+B["SSTK_Custom_Table_API<br/>API abstraction"]
+C["Provider Model<br/>SSTK_CT_Provider"]
+D["DNS Provider Model<br/>SSTK_CT_DNS_Provider"]
+E["DNS Zone Model<br/>SSTK_CT_DNS_Zone"]
+F["DNS Zone Record Model<br/>SSTK_CT_DNS_Zone_Record"]
 end
 subgraph "Integration"
 G["Bootstrap<br/>functions-classes.php"]
@@ -70,12 +70,12 @@ H --> I
 ```
 
 **Diagram sources**
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [class-wpcd-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L4-L41)
-- [class-wpcd-provider.php:9-73](file://includes/core/custom-table/class-wpcd-provider.php#L9-L73)
-- [class-wpcd-dns-provider.php:10-68](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L68)
-- [class-wpcd-dns-zone.php:9-67](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L67)
-- [class-wpcd-dns-zone-record.php:9-65](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L65)
+- [class-sstk-custom-table.php:15-112](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L112)
+- [class-sstk-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L4-L41)
+- [class-sstk-provider.php:9-73](file://includes/core/custom-table/class-sstk-provider.php#L9-L73)
+- [class-sstk-dns-provider.php:10-68](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L68)
+- [class-sstk-dns-zone.php:9-67](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L67)
+- [class-sstk-dns-zone-record.php:9-65](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L65)
 - [functions-classes.php:53-102](file://includes/core/functions-classes.php#L53-L102)
 - [loader.php:6-21](file://includes/core/apps/wordpress-app/public/custom-table/loader.php#L6-L21)
 - [custom_table.js:1-41](file://assets/js/custom_table.js#L1-L41)
@@ -85,13 +85,13 @@ H --> I
 - [loader.php:6-21](file://includes/core/apps/wordpress-app/public/custom-table/loader.php#L6-L21)
 
 ## Core Components
-- WPCD_MB_Custom_Table: Abstract base class providing common behavior for all custom tables (model registration, admin integration, nonce handling, permissions, encryption hooks, public/admin page helpers).
-- WPCD_Custom_Table_API: Abstract API layer for CRUD operations, meta storage, and permission-aware listing queries.
+- SSTK_MB_Custom_Table: Abstract base class providing common behavior for all custom tables (model registration, admin integration, nonce handling, permissions, encryption hooks, public/admin page helpers).
+- SSTK_Custom_Table_API: Abstract API layer for CRUD operations, meta storage, and permission-aware listing queries.
 - Concrete models:
-  - WPCD_CT_Provider: Manages cloud provider configurations.
-  - WPCD_CT_DNS_Provider: Manages DNS provider credentials and settings.
-  - WPCD_CT_DNS_Zone: Manages zones belonging to a DNS provider.
-  - WPCD_CT_DNS_Zone_Record: Manages records belonging to a DNS zone.
+  - SSTK_CT_Provider: Manages cloud provider configurations.
+  - SSTK_CT_DNS_Provider: Manages DNS provider credentials and settings.
+  - SSTK_CT_DNS_Zone: Manages zones belonging to a DNS provider.
+  - SSTK_CT_DNS_Zone_Record: Manages records belonging to a DNS zone.
 
 Key responsibilities:
 - Registering models via mb_register_model
@@ -101,12 +101,12 @@ Key responsibilities:
 - Enforcing owner-based and role/user-based access control
 
 **Section sources**
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [class-wpcd-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L4-L41)
-- [class-wpcd-provider.php:9-73](file://includes/core/custom-table/class-wpcd-provider.php#L9-L73)
-- [class-wpcd-dns-provider.php:10-68](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L68)
-- [class-wpcd-dns-zone.php:9-67](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L67)
-- [class-wpcd-dns-zone-record.php:9-65](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L65)
+- [class-sstk-custom-table.php:15-112](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L112)
+- [class-sstk-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L4-L41)
+- [class-sstk-provider.php:9-73](file://includes/core/custom-table/class-sstk-provider.php#L9-L73)
+- [class-sstk-dns-provider.php:10-68](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L68)
+- [class-sstk-dns-zone.php:9-67](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L67)
+- [class-sstk-dns-zone-record.php:9-65](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L65)
 
 ## Architecture Overview
 The architecture follows a layered pattern:
@@ -120,8 +120,8 @@ The architecture follows a layered pattern:
 sequenceDiagram
 participant WP as "WordPress"
 participant Boot as "Bootstrap<br/>functions-classes.php"
-participant Base as "WPCD_MB_Custom_Table"
-participant API as "WPCD_Custom_Table_API"
+participant Base as "SSTK_MB_Custom_Table"
+participant API as "SSTK_Custom_Table_API"
 participant Model as "Concrete Model"
 participant MB as "MetaBox Factory"
 WP->>Boot : init hook
@@ -135,12 +135,12 @@ Note over Base,MB : Admin hooks, AJAX handlers, filters registered
 
 **Diagram sources**
 - [functions-classes.php:78-102](file://includes/core/functions-classes.php#L78-L102)
-- [class-wpcd-custom-table.php:80-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L80-L112)
-- [class-wpcd-custom-table-api.php:32-41](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L32-L41)
+- [class-sstk-custom-table.php:80-112](file://includes/core/custom-table/class-sstk-custom-table.php#L80-L112)
+- [class-sstk-custom-table-api.php:32-41](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L32-L41)
 
 ## Detailed Component Analysis
 
-### Base Class: WPCD_MB_Custom_Table
+### Base Class: SSTK_MB_Custom_Table
 Responsibilities:
 - Provides static factory get(model_name) to resolve concrete classes by naming convention.
 - Constructor sets up API instance, registers model, loads MetaBox model, attaches admin UI, and registers AJAX endpoints.
@@ -156,7 +156,7 @@ Important behaviors:
 
 ```mermaid
 classDiagram
-class WPCD_MB_Custom_Table {
+class SSTK_MB_Custom_Table {
 +string model_name
 +string view_type
 +object model
@@ -223,40 +223,40 @@ class WPCD_MB_Custom_Table {
 ```
 
 **Diagram sources**
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [class-wpcd-custom-table.php:122-163](file://includes/core/custom-table/class-wpcd-custom-table.php#L122-L163)
-- [class-wpcd-custom-table.php:170-193](file://includes/core/custom-table/class-wpcd-custom-table.php#L170-L193)
-- [class-wpcd-custom-table.php:212-312](file://includes/core/custom-table/class-wpcd-custom-table.php#L212-L312)
-- [class-wpcd-custom-table.php:331-381](file://includes/core/custom-table/class-wpcd-custom-table.php#L331-L381)
-- [class-wpcd-custom-table.php:391-416](file://includes/core/custom-table/class-wpcd-custom-table.php#L391-L416)
-- [class-wpcd-custom-table.php:425-489](file://includes/core/custom-table/class-wpcd-custom-table.php#L425-L489)
-- [class-wpcd-custom-table.php:527-578](file://includes/core/custom-table/class-wpcd-custom-table.php#L527-L578)
-- [class-wpcd-custom-table.php:600-672](file://includes/core/custom-table/class-wpcd-custom-table.php#L600-L672)
-- [class-wpcd-custom-table.php:679-708](file://includes/core/custom-table/class-wpcd-custom-table.php#L679-L708)
-- [class-wpcd-custom-table.php:717-737](file://includes/core/custom-table/class-wpcd-custom-table.php#L717-L737)
-- [class-wpcd-custom-table.php:744-758](file://includes/core/custom-table/class-wpcd-custom-table.php#L744-L758)
-- [class-wpcd-custom-table.php:765-800](file://includes/core/custom-table/class-wpcd-custom-table.php#L765-L800)
-- [class-wpcd-custom-table.php:801-846](file://includes/core/custom-table/class-wpcd-custom-table.php#L801-L846)
-- [class-wpcd-custom-table.php:855-863](file://includes/core/custom-table/class-wpcd-custom-table.php#L855-L863)
-- [class-wpcd-custom-table.php:873-926](file://includes/core/custom-table/class-wpcd-custom-table.php#L873-L926)
-- [class-wpcd-custom-table.php:938-988](file://includes/core/custom-table/class-wpcd-custom-table.php#L938-L988)
-- [class-wpcd-custom-table.php:995-1006](file://includes/core/custom-table/class-wpcd-custom-table.php#L995-L1006)
-- [class-wpcd-custom-table.php:1017-1032](file://includes/core/custom-table/class-wpcd-custom-table.php#L1017-L1032)
-- [class-wpcd-custom-table.php:1039-1089](file://includes/core/custom-table/class-wpcd-custom-table.php#L1039-L1089)
-- [class-wpcd-custom-table.php:1100-1152](file://includes/core/custom-table/class-wpcd-custom-table.php#L1100-L1152)
-- [class-wpcd-custom-table.php:1159-1242](file://includes/core/custom-table/class-wpcd-custom-table.php#L1159-L1242)
+- [class-sstk-custom-table.php:15-112](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L112)
+- [class-sstk-custom-table.php:122-163](file://includes/core/custom-table/class-sstk-custom-table.php#L122-L163)
+- [class-sstk-custom-table.php:170-193](file://includes/core/custom-table/class-sstk-custom-table.php#L170-L193)
+- [class-sstk-custom-table.php:212-312](file://includes/core/custom-table/class-sstk-custom-table.php#L212-L312)
+- [class-sstk-custom-table.php:331-381](file://includes/core/custom-table/class-sstk-custom-table.php#L331-L381)
+- [class-sstk-custom-table.php:391-416](file://includes/core/custom-table/class-sstk-custom-table.php#L391-L416)
+- [class-sstk-custom-table.php:425-489](file://includes/core/custom-table/class-sstk-custom-table.php#L425-L489)
+- [class-sstk-custom-table.php:527-578](file://includes/core/custom-table/class-sstk-custom-table.php#L527-L578)
+- [class-sstk-custom-table.php:600-672](file://includes/core/custom-table/class-sstk-custom-table.php#L600-L672)
+- [class-sstk-custom-table.php:679-708](file://includes/core/custom-table/class-sstk-custom-table.php#L679-L708)
+- [class-sstk-custom-table.php:717-737](file://includes/core/custom-table/class-sstk-custom-table.php#L717-L737)
+- [class-sstk-custom-table.php:744-758](file://includes/core/custom-table/class-sstk-custom-table.php#L744-L758)
+- [class-sstk-custom-table.php:765-800](file://includes/core/custom-table/class-sstk-custom-table.php#L765-L800)
+- [class-sstk-custom-table.php:801-846](file://includes/core/custom-table/class-sstk-custom-table.php#L801-L846)
+- [class-sstk-custom-table.php:855-863](file://includes/core/custom-table/class-sstk-custom-table.php#L855-L863)
+- [class-sstk-custom-table.php:873-926](file://includes/core/custom-table/class-sstk-custom-table.php#L873-L926)
+- [class-sstk-custom-table.php:938-988](file://includes/core/custom-table/class-sstk-custom-table.php#L938-L988)
+- [class-sstk-custom-table.php:995-1006](file://includes/core/custom-table/class-sstk-custom-table.php#L995-L1006)
+- [class-sstk-custom-table.php:1017-1032](file://includes/core/custom-table/class-sstk-custom-table.php#L1017-L1032)
+- [class-sstk-custom-table.php:1039-1089](file://includes/core/custom-table/class-sstk-custom-table.php#L1039-L1089)
+- [class-sstk-custom-table.php:1100-1152](file://includes/core/custom-table/class-sstk-custom-table.php#L1100-L1152)
+- [class-sstk-custom-table.php:1159-1242](file://includes/core/custom-table/class-sstk-custom-table.php#L1159-L1242)
 
 **Section sources**
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [class-wpcd-custom-table.php:122-163](file://includes/core/custom-table/class-wpcd-custom-table.php#L122-L163)
-- [class-wpcd-custom-table.php:873-926](file://includes/core/custom-table/class-wpcd-custom-table.php#L873-L926)
-- [class-wpcd-custom-table.php:938-988](file://includes/core/custom-table/class-wpcd-custom-table.php#L938-L988)
-- [class-wpcd-custom-table.php:1017-1032](file://includes/core/custom-table/class-wpcd-custom-table.php#L1017-L1032)
-- [class-wpcd-custom-table.php:1039-1089](file://includes/core/custom-table/class-wpcd-custom-table.php#L1039-L1089)
-- [class-wpcd-custom-table.php:1100-1152](file://includes/core/custom-table/class-wpcd-custom-table.php#L1100-L1152)
-- [class-wpcd-custom-table.php:1159-1242](file://includes/core/custom-table/class-wpcd-custom-table.php#L1159-L1242)
+- [class-sstk-custom-table.php:15-112](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L112)
+- [class-sstk-custom-table.php:122-163](file://includes/core/custom-table/class-sstk-custom-table.php#L122-L163)
+- [class-sstk-custom-table.php:873-926](file://includes/core/custom-table/class-sstk-custom-table.php#L873-L926)
+- [class-sstk-custom-table.php:938-988](file://includes/core/custom-table/class-sstk-custom-table.php#L938-L988)
+- [class-sstk-custom-table.php:1017-1032](file://includes/core/custom-table/class-sstk-custom-table.php#L1017-L1032)
+- [class-sstk-custom-table.php:1039-1089](file://includes/core/custom-table/class-sstk-custom-table.php#L1039-L1089)
+- [class-sstk-custom-table.php:1100-1152](file://includes/core/custom-table/class-sstk-custom-table.php#L1100-L1152)
+- [class-sstk-custom-table.php:1159-1242](file://includes/core/custom-table/class-sstk-custom-table.php#L1159-L1242)
 
-### API Abstraction: WPCD_Custom_Table_API
+### API Abstraction: SSTK_Custom_Table_API
 Responsibilities:
 - Provide consistent table/meta table names
 - Implement basic CRUD operations (get_by_id, delete_item, update_owner)
@@ -287,27 +287,27 @@ Exec --> Return(["{items_count, items}"])
 ```
 
 **Diagram sources**
-- [class-wpcd-custom-table-api.php:246-257](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L246-L257)
-- [class-wpcd-custom-table-api.php:266-275](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L266-L275)
-- [class-wpcd-custom-table-api.php:287-301](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L287-L301)
-- [class-wpcd-custom-table-api.php:313-331](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L313-L331)
-- [class-wpcd-custom-table-api.php:342-348](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L342-L348)
-- [class-wpcd-custom-table-api.php:359-381](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L359-L381)
-- [class-wpcd-custom-table-api.php:393-414](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L393-L414)
+- [class-sstk-custom-table-api.php:246-257](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L246-L257)
+- [class-sstk-custom-table-api.php:266-275](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L266-L275)
+- [class-sstk-custom-table-api.php:287-301](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L287-L301)
+- [class-sstk-custom-table-api.php:313-331](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L313-L331)
+- [class-sstk-custom-table-api.php:342-348](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L342-L348)
+- [class-sstk-custom-table-api.php:359-381](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L359-L381)
+- [class-sstk-custom-table-api.php:393-414](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L393-L414)
 
 **Section sources**
-- [class-wpcd-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L4-L41)
-- [class-wpcd-custom-table-api.php:59-74](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L59-L74)
-- [class-wpcd-custom-table-api.php:85-133](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L85-L133)
-- [class-wpcd-custom-table-api.php:145-217](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L145-L217)
-- [class-wpcd-custom-table-api.php:226-233](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L226-L233)
-- [class-wpcd-custom-table-api.php:246-275](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L246-L275)
-- [class-wpcd-custom-table-api.php:287-381](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L287-L381)
-- [class-wpcd-custom-table-api.php:393-414](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L393-L414)
+- [class-sstk-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L4-L41)
+- [class-sstk-custom-table-api.php:59-74](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L59-L74)
+- [class-sstk-custom-table-api.php:85-133](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L85-L133)
+- [class-sstk-custom-table-api.php:145-217](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L145-L217)
+- [class-sstk-custom-table-api.php:226-233](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L226-L233)
+- [class-sstk-custom-table-api.php:246-275](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L246-L275)
+- [class-sstk-custom-table-api.php:287-381](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L287-L381)
+- [class-sstk-custom-table-api.php:393-414](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L393-L414)
 
 ### Concrete Models
 
-#### Provider Model: WPCD_CT_Provider
+#### Provider Model: SSTK_CT_Provider
 - Registers model with labels, parent menu, capability, and visibility flags.
 - Defines table columns including provider details, SSH keys, Azure settings, tags, server sizes, notes, and owner.
 - Creates a public page with a shortcode for listing providers.
@@ -350,14 +350,14 @@ Constraints:
 - Owner-based and role/user-based permissions via base class
 
 **Section sources**
-- [class-wpcd-provider.php:57-73](file://includes/core/custom-table/class-wpcd-provider.php#L57-L73)
-- [class-wpcd-provider.php:78-106](file://includes/core/custom-table/class-wpcd-provider.php#L78-L106)
-- [class-wpcd-provider.php:111-127](file://includes/core/custom-table/class-wpcd-provider.php#L111-L127)
-- [class-wpcd-provider.php:145-398](file://includes/core/custom-table/class-wpcd-provider.php#L145-L398)
-- [class-wpcd-provider.php:403-428](file://includes/core/custom-table/class-wpcd-provider.php#L403-L428)
-- [class-wpcd-provider.php:454-481](file://includes/core/custom-table/class-wpcd-provider.php#L454-L481)
+- [class-sstk-provider.php:57-73](file://includes/core/custom-table/class-sstk-provider.php#L57-L73)
+- [class-sstk-provider.php:78-106](file://includes/core/custom-table/class-sstk-provider.php#L78-L106)
+- [class-sstk-provider.php:111-127](file://includes/core/custom-table/class-sstk-provider.php#L111-L127)
+- [class-sstk-provider.php:145-398](file://includes/core/custom-table/class-sstk-provider.php#L145-L398)
+- [class-sstk-provider.php:403-428](file://includes/core/custom-table/class-sstk-provider.php#L403-L428)
+- [class-sstk-provider.php:454-481](file://includes/core/custom-table/class-sstk-provider.php#L454-L481)
 
-#### DNS Provider Model: WPCD_CT_DNS_Provider
+#### DNS Provider Model: SSTK_CT_DNS_Provider
 - Registers model and creates table with DNS provider fields and owner.
 - Creates public page with shortcode for listing DNS providers.
 - Metaboxes include required fields, secret key, and permissions.
@@ -380,14 +380,14 @@ Cascading delete:
 - Deletes child zones and their records when deleting a DNS provider
 
 **Section sources**
-- [class-wpcd-dns-provider.php:54-68](file://includes/core/custom-table/class-wpcd-dns-provider.php#L54-L68)
-- [class-wpcd-dns-provider.php:73-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L73-L85)
-- [class-wpcd-dns-provider.php:90-105](file://includes/core/custom-table/class-wpcd-dns-provider.php#L90-L105)
-- [class-wpcd-dns-provider.php:123-314](file://includes/core/custom-table/class-wpcd-dns-provider.php#L123-L314)
-- [class-wpcd-dns-provider.php:345-372](file://includes/core/custom-table/class-wpcd-dns-provider.php#L345-L372)
-- [class-wpcd-dns-provider.php:378-415](file://includes/core/custom-table/class-wpcd-dns-provider.php#L378-L415)
+- [class-sstk-dns-provider.php:54-68](file://includes/core/custom-table/class-sstk-dns-provider.php#L54-L68)
+- [class-sstk-dns-provider.php:73-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L73-L85)
+- [class-sstk-dns-provider.php:90-105](file://includes/core/custom-table/class-sstk-dns-provider.php#L90-L105)
+- [class-sstk-dns-provider.php:123-314](file://includes/core/custom-table/class-sstk-dns-provider.php#L123-L314)
+- [class-sstk-dns-provider.php:345-372](file://includes/core/custom-table/class-sstk-dns-provider.php#L345-L372)
+- [class-sstk-dns-provider.php:378-415](file://includes/core/custom-table/class-sstk-dns-provider.php#L378-L415)
 
-#### DNS Zone Model: WPCD_CT_DNS_Zone
+#### DNS Zone Model: SSTK_CT_DNS_Zone
 - Registers model and creates table with parent_id, domain, and default flag.
 - Adds inline edit metabox with domain and default checkbox.
 - Shows parent provider info and provides row actions to load records.
@@ -408,22 +408,22 @@ Child relationship:
 - Records belong to a zone via parent_id
 
 **Section sources**
-- [class-wpcd-dns-zone.php:53-67](file://includes/core/custom-table/class-wpcd-dns-zone.php#L53-L67)
-- [class-wpcd-dns-zone.php:72-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L72-L80)
-- [class-wpcd-dns-zone.php:98-134](file://includes/core/custom-table/class-wpcd-dns-zone.php#L98-L134)
-- [class-wpcd-dns-zone.php:141-168](file://includes/core/custom-table/class-wpcd-dns-zone.php#L141-L168)
-- [class-wpcd-dns-zone.php:179-186](file://includes/core/custom-table/class-wpcd-dns-zone.php#L179-L186)
-- [class-wpcd-dns-zone.php:193-195](file://includes/core/custom-table/class-wpcd-dns-zone.php#L193-L195)
-- [class-wpcd-dns-zone.php:206-231](file://includes/core/custom-table/class-wpcd-dns-zone.php#L206-L231)
-- [class-wpcd-dns-zone.php:240-268](file://includes/core/custom-table/class-wpcd-dns-zone.php#L240-L268)
-- [class-wpcd-dns-zone.php:277-280](file://includes/core/custom-table/class-wpcd-dns-zone.php#L277-L280)
-- [class-wpcd-dns-zone.php:291-293](file://includes/core/custom-table/class-wpcd-dns-zone.php#L291-L293)
-- [class-wpcd-dns-zone.php:301-327](file://includes/core/custom-table/class-wpcd-dns-zone.php#L301-L327)
-- [class-wpcd-dns-zone.php:332-370](file://includes/core/custom-table/class-wpcd-dns-zone.php#L332-L370)
-- [class-wpcd-dns-zone.php:375-386](file://includes/core/custom-table/class-wpcd-dns-zone.php#L375-L386)
-- [class-wpcd-dns-zone.php:391-419](file://includes/core/custom-table/class-wpcd-dns-zone.php#L391-L419)
+- [class-sstk-dns-zone.php:53-67](file://includes/core/custom-table/class-sstk-dns-zone.php#L53-L67)
+- [class-sstk-dns-zone.php:72-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L72-L80)
+- [class-sstk-dns-zone.php:98-134](file://includes/core/custom-table/class-sstk-dns-zone.php#L98-L134)
+- [class-sstk-dns-zone.php:141-168](file://includes/core/custom-table/class-sstk-dns-zone.php#L141-L168)
+- [class-sstk-dns-zone.php:179-186](file://includes/core/custom-table/class-sstk-dns-zone.php#L179-L186)
+- [class-sstk-dns-zone.php:193-195](file://includes/core/custom-table/class-sstk-dns-zone.php#L193-L195)
+- [class-sstk-dns-zone.php:206-231](file://includes/core/custom-table/class-sstk-dns-zone.php#L206-L231)
+- [class-sstk-dns-zone.php:240-268](file://includes/core/custom-table/class-sstk-dns-zone.php#L240-L268)
+- [class-sstk-dns-zone.php:277-280](file://includes/core/custom-table/class-sstk-dns-zone.php#L277-L280)
+- [class-sstk-dns-zone.php:291-293](file://includes/core/custom-table/class-sstk-dns-zone.php#L291-L293)
+- [class-sstk-dns-zone.php:301-327](file://includes/core/custom-table/class-sstk-dns-zone.php#L301-L327)
+- [class-sstk-dns-zone.php:332-370](file://includes/core/custom-table/class-sstk-dns-zone.php#L332-L370)
+- [class-sstk-dns-zone.php:375-386](file://includes/core/custom-table/class-sstk-dns-zone.php#L375-L386)
+- [class-sstk-dns-zone.php:391-419](file://includes/core/custom-table/class-sstk-dns-zone.php#L391-L419)
 
-#### DNS Zone Record Model: WPCD_CT_DNS_Zone_Record
+#### DNS Zone Record Model: SSTK_CT_DNS_Zone_Record
 - Registers model and creates table with parent_id, type, name, content, ttl, notes.
 - Provides container and AJAX endpoint to render child records table.
 - Metabox defines record type, name, content, TTL, and notes.
@@ -439,35 +439,35 @@ Table definition example (columns):
 - notes: text NULL
 
 Extensibility:
-- Record types list can be extended via wpcd_zone_record_types filter
+- Record types list can be extended via sstk_zone_record_types filter
 
 **Section sources**
-- [class-wpcd-dns-zone-record.php:52-65](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L52-L65)
-- [class-wpcd-dns-zone-record.php:70-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L70-L82)
-- [class-wpcd-dns-zone-record.php:90-113](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L90-L113)
-- [class-wpcd-dns-zone-record.php:118-155](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L118-L155)
-- [class-wpcd-dns-zone-record.php:161-172](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L161-L172)
-- [class-wpcd-dns-zone-record.php:180-204](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L180-L204)
-- [class-wpcd-dns-zone-record.php:212-223](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L212-L223)
-- [class-wpcd-dns-zone-record.php:241-306](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L241-L306)
-- [class-wpcd-dns-zone-record.php:317-355](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L317-L355)
-- [class-wpcd-dns-zone-record.php:364-402](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L364-L402)
-- [class-wpcd-dns-zone-record.php:407-431](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L407-L431)
-- [class-wpcd-dns-zone-record.php:440-456](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L440-L456)
+- [class-sstk-dns-zone-record.php:52-65](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L52-L65)
+- [class-sstk-dns-zone-record.php:70-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L70-L82)
+- [class-sstk-dns-zone-record.php:90-113](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L90-L113)
+- [class-sstk-dns-zone-record.php:118-155](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L118-L155)
+- [class-sstk-dns-zone-record.php:161-172](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L161-L172)
+- [class-sstk-dns-zone-record.php:180-204](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L180-L204)
+- [class-sstk-dns-zone-record.php:212-223](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L212-L223)
+- [class-sstk-dns-zone-record.php:241-306](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L241-L306)
+- [class-sstk-dns-zone-record.php:317-355](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L317-L355)
+- [class-sstk-dns-zone-record.php:364-402](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L364-L402)
+- [class-sstk-dns-zone-record.php:407-431](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L407-L431)
+- [class-sstk-dns-zone-record.php:440-456](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L440-L456)
 
 ### Table Registration System
 - Each model implements register_model() calling mb_register_model with table, labels, parent menu, position, capability, and visibility flags.
-- Bootstrap functions-classes.php conditionally loads custom table components and initializes model instances into WPCD()->classes.
+- Bootstrap functions-classes.php conditionally loads custom table components and initializes model instances into SSTK()->classes.
 - The MetaBox Custom Table library provides the underlying model factory and storage abstraction.
 
 Registration example pattern:
 - mb_register_model(model_name, { table, labels, parent, position, capability, show_in_menu, show_in_menu_custom })
 
 **Section sources**
-- [class-wpcd-provider.php:57-73](file://includes/core/custom-table/class-wpcd-provider.php#L57-L73)
-- [class-wpcd-dns-provider.php:54-68](file://includes/core/custom-table/class-wpcd-dns-provider.php#L54-L68)
-- [class-wpcd-dns-zone.php:53-67](file://includes/core/custom-table/class-wpcd-dns-zone.php#L53-L67)
-- [class-wpcd-dns-zone-record.php:52-65](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L52-L65)
+- [class-sstk-provider.php:57-73](file://includes/core/custom-table/class-sstk-provider.php#L57-L73)
+- [class-sstk-dns-provider.php:54-68](file://includes/core/custom-table/class-sstk-dns-provider.php#L54-L68)
+- [class-sstk-dns-zone.php:53-67](file://includes/core/custom-table/class-sstk-dns-zone.php#L53-L67)
+- [class-sstk-dns-zone-record.php:52-65](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L52-L65)
 - [functions-classes.php:53-102](file://includes/core/functions-classes.php#L53-L102)
 
 ### Query Builder Patterns
@@ -479,9 +479,9 @@ Usage pattern:
 - $model->get_items([limit => N, page => P], $user_id)
 
 **Section sources**
-- [class-wpcd-custom-table.php:1240-1242](file://includes/core/custom-table/class-wpcd-custom-table.php#L1240-L1242)
-- [class-wpcd-custom-table-api.php:359-381](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L359-L381)
-- [class-wpcd-custom-table-api.php:393-414](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L393-L414)
+- [class-sstk-custom-table.php:1240-1242](file://includes/core/custom-table/class-sstk-custom-table.php#L1240-L1242)
+- [class-sstk-custom-table-api.php:359-381](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L359-L381)
+- [class-sstk-custom-table-api.php:393-414](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L393-L414)
 
 ### Field Type Mappings and Constraints
 Common mappings observed across models:
@@ -497,26 +497,26 @@ Constraints:
 - Owner-based ownership and role/user-based access control enforced via base class methods
 
 **Section sources**
-- [class-wpcd-provider.php:78-106](file://includes/core/custom-table/class-wpcd-provider.php#L78-L106)
-- [class-wpcd-provider.php:145-398](file://includes/core/custom-table/class-wpcd-provider.php#L145-L398)
-- [class-wpcd-provider.php:454-481](file://includes/core/custom-table/class-wpcd-provider.php#L454-L481)
-- [class-wpcd-dns-provider.php:73-85](file://includes/core/custom-table/class-wpcd-dns-provider.php#L73-L85)
-- [class-wpcd-dns-provider.php:123-314](file://includes/core/custom-table/class-wpcd-dns-provider.php#L123-L314)
-- [class-wpcd-dns-provider.php:345-372](file://includes/core/custom-table/class-wpcd-dns-provider.php#L345-L372)
-- [class-wpcd-dns-zone.php:72-80](file://includes/core/custom-table/class-wpcd-dns-zone.php#L72-L80)
-- [class-wpcd-dns-zone.php:98-134](file://includes/core/custom-table/class-wpcd-dns-zone.php#L98-L134)
-- [class-wpcd-dns-zone.php:240-268](file://includes/core/custom-table/class-wpcd-dns-zone.php#L240-L268)
-- [class-wpcd-dns-zone-record.php:70-82](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L70-L82)
-- [class-wpcd-dns-zone-record.php:241-306](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L241-L306)
-- [class-wpcd-dns-zone-record.php:364-402](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L364-L402)
+- [class-sstk-provider.php:78-106](file://includes/core/custom-table/class-sstk-provider.php#L78-L106)
+- [class-sstk-provider.php:145-398](file://includes/core/custom-table/class-sstk-provider.php#L145-L398)
+- [class-sstk-provider.php:454-481](file://includes/core/custom-table/class-sstk-provider.php#L454-L481)
+- [class-sstk-dns-provider.php:73-85](file://includes/core/custom-table/class-sstk-dns-provider.php#L73-L85)
+- [class-sstk-dns-provider.php:123-314](file://includes/core/custom-table/class-sstk-dns-provider.php#L123-L314)
+- [class-sstk-dns-provider.php:345-372](file://includes/core/custom-table/class-sstk-dns-provider.php#L345-L372)
+- [class-sstk-dns-zone.php:72-80](file://includes/core/custom-table/class-sstk-dns-zone.php#L72-L80)
+- [class-sstk-dns-zone.php:98-134](file://includes/core/custom-table/class-sstk-dns-zone.php#L98-L134)
+- [class-sstk-dns-zone.php:240-268](file://includes/core/custom-table/class-sstk-dns-zone.php#L240-L268)
+- [class-sstk-dns-zone-record.php:70-82](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L70-L82)
+- [class-sstk-dns-zone-record.php:241-306](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L241-L306)
+- [class-sstk-dns-zone-record.php:364-402](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L364-L402)
 
 ### Extension Points
-- New table types: Create a new class extending WPCD_MB_Custom_Table, implement register_model, create_table, metaboxes, validate_data, and optionally ajax_handle_delete_item.
-- Extend record types: Apply filter wpcd_zone_record_types in WPCD_CT_DNS_Zone_Record::types_list.
-- Public pages: Use WPCD_CT_Public_Loader to enqueue scripts and handle shortcodes for front-end lists.
+- New table types: Create a new class extending SSTK_MB_Custom_Table, implement register_model, create_table, metaboxes, validate_data, and optionally ajax_handle_delete_item.
+- Extend record types: Apply filter sstk_zone_record_types in SSTK_CT_DNS_Zone_Record::types_list.
+- Public pages: Use SSTK_CT_Public_Loader to enqueue scripts and handle shortcodes for front-end lists.
 
 **Section sources**
-- [class-wpcd-dns-zone-record.php:212-223](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L212-L223)
+- [class-sstk-dns-zone-record.php:212-223](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L212-L223)
 - [loader.php:6-21](file://includes/core/apps/wordpress-app/public/custom-table/loader.php#L6-L21)
 
 ## Dependency Analysis
@@ -524,22 +524,22 @@ The following diagram shows how bootstrap wires models and how models depend on 
 
 ```mermaid
 graph LR
-Boot["functions-classes.php"] --> CT_Base["WPCD_MB_Custom_Table"]
-Boot --> Provider["WPCD_CT_Provider"]
-Boot --> DNSProv["WPCD_CT_DNS_Provider"]
-Boot --> DNSZone["WPCD_CT_DNS_Zone"]
-Boot --> DNSRec["WPCD_CT_DNS_Zone_Record"]
+Boot["functions-classes.php"] --> CT_Base["SSTK_MB_Custom_Table"]
+Boot --> Provider["SSTK_CT_Provider"]
+Boot --> DNSProv["SSTK_CT_DNS_Provider"]
+Boot --> DNSZone["SSTK_CT_DNS_Zone"]
+Boot --> DNSRec["SSTK_CT_DNS_Zone_Record"]
 Provider --> CT_Base
 DNSProv --> CT_Base
 DNSZone --> CT_Base
 DNSRec --> CT_Base
-CT_Base --> API["WPCD_Custom_Table_API"]
+CT_Base --> API["SSTK_Custom_Table_API"]
 ```
 
 **Diagram sources**
 - [functions-classes.php:53-102](file://includes/core/functions-classes.php#L53-L102)
-- [class-wpcd-custom-table.php:15-112](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L112)
-- [class-wpcd-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-wpcd-custom-table-api.php#L4-L41)
+- [class-sstk-custom-table.php:15-112](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L112)
+- [class-sstk-custom-table-api.php:4-41](file://includes/core/custom-table/api/class-sstk-custom-table-api.php#L4-L41)
 
 **Section sources**
 - [functions-classes.php:53-102](file://includes/core/functions-classes.php#L53-L102)
@@ -582,16 +582,16 @@ Common issues and resolutions:
 Debugging tips:
 - Enable WordPress debug logging to capture AJAX responses and notices.
 - Validate nonce actions and view-specific nonces for AJAX endpoints.
-- Check that the correct model is instantiated via WPCD_MB_Custom_Table::get(model_name).
+- Check that the correct model is instantiated via SSTK_MB_Custom_Table::get(model_name).
 
 **Section sources**
-- [class-wpcd-custom-table.php:122-163](file://includes/core/custom-table/class-wpcd-custom-table.php#L122-L163)
-- [class-wpcd-provider.php:454-481](file://includes/core/custom-table/class-wpcd-provider.php#L454-L481)
-- [class-wpcd-dns-provider.php:345-372](file://includes/core/custom-table/class-wpcd-dns-provider.php#L345-L372)
-- [class-wpcd-dns-zone.php:240-268](file://includes/core/custom-table/class-wpcd-dns-zone.php#L240-L268)
-- [class-wpcd-dns-zone-record.php:364-402](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L364-L402)
+- [class-sstk-custom-table.php:122-163](file://includes/core/custom-table/class-sstk-custom-table.php#L122-L163)
+- [class-sstk-provider.php:454-481](file://includes/core/custom-table/class-sstk-provider.php#L454-L481)
+- [class-sstk-dns-provider.php:345-372](file://includes/core/custom-table/class-sstk-dns-provider.php#L345-L372)
+- [class-sstk-dns-zone.php:240-268](file://includes/core/custom-table/class-sstk-dns-zone.php#L240-L268)
+- [class-sstk-dns-zone-record.php:364-402](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L364-L402)
 
 ## Conclusion
-The custom table abstraction layer provides a robust, extensible foundation for managing structured data in WordPress. By centralizing common behaviors in WPCD_MB_Custom_Table and abstracting database operations in WPCD_Custom_Table_API, it ensures consistent table registration, secure CRUD operations, and permission-aware querying. Concrete models demonstrate practical usage patterns for providers and DNS entities, while extension points allow adding new table types and features. Proper attention to migrations, schema updates, and compatibility across WordPress versions will maintain reliability and performance.
+The custom table abstraction layer provides a robust, extensible foundation for managing structured data in WordPress. By centralizing common behaviors in SSTK_MB_Custom_Table and abstracting database operations in SSTK_Custom_Table_API, it ensures consistent table registration, secure CRUD operations, and permission-aware querying. Concrete models demonstrate practical usage patterns for providers and DNS entities, while extension points allow adding new table types and features. Proper attention to migrations, schema updates, and compatibility across WordPress versions will maintain reliability and performance.
 
 [No sources needed since this section summarizes without analyzing specific files]

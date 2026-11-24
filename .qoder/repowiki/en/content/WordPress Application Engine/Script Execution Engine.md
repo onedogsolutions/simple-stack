@@ -2,11 +2,11 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-app.php](file://includes/core/apps/class-wpcd-app.php)
+- [class-sstk-app.php](file://includes/core/apps/class-sstk-app.php)
 - [commands-and-logs.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php)
 - [script-handlers.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php)
 - [push-commands.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php)
-- [class-wpcd-ssh.php](file://includes/core/apps/class-wpcd-ssh.php)
+- [class-sstk-ssh.php](file://includes/core/apps/class-sstk-ssh.php)
 - [class-wordpress-ssh.php](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php)
 - [tabs.php](file://includes/core/apps/wordpress-app/tabs/tabs.php)
 - [ssh_console.php](file://includes/core/apps/wordpress-app/tabs-server/ssh_console.php)
@@ -44,8 +44,8 @@ The engine is implemented as a set of PHP classes and traits within the WordPres
 ```mermaid
 graph TB
 subgraph "App Layer"
-APP["WPCD_APP<br/>turn_script_into_command()"]
-WPAPP["WPCD_WORDPRESS_APP<br/>hooks & REST API"]
+APP["SSTK_APP<br/>turn_script_into_command()"]
+WPAPP["SSTK_WORDPRESS_APP<br/>hooks & REST API"]
 end
 subgraph "Traits"
 CMD["commands-and-logs.php<br/>execute_ssh(), get_logs_*()"]
@@ -53,7 +53,7 @@ SH["script-handlers.php<br/>is_ssh_successful(), placeholders"]
 PUSH["push-commands.php<br/>push_command_* handlers"]
 end
 subgraph "SSH Layer"
-SSHBASE["WPCD_SSH<br/>exec(), upload(), download()"]
+SSHBASE["SSTK_SSH<br/>exec(), upload(), download()"]
 WPSSH["WORDPRESS_SSH<br/>get_ssh_key_details()"]
 end
 subgraph "UI"
@@ -70,41 +70,41 @@ CONSOLE --> TABS
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
 - [script-handlers.php:23-800](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L23-L800)
 - [push-commands.php:33-176](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php#L33-L176)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [class-wordpress-ssh.php:78-136](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L78-L136)
 - [tabs.php:107-132](file://includes/core/apps/wordpress-app/tabs/tabs.php#L107-L132)
 - [ssh_console.php:351-406](file://includes/core/apps/wordpress-app/tabs-server/ssh_console.php#L351-L406)
 
 **Section sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
 - [script-handlers.php:23-800](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L23-L800)
 - [push-commands.php:33-176](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php#L33-L176)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [class-wordpress-ssh.php:78-136](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L78-L136)
 - [tabs.php:107-132](file://includes/core/apps/wordpress-app/tabs/tabs.php#L107-L132)
 - [ssh_console.php:351-406](file://includes/core/apps/wordpress-app/tabs-server/ssh_console.php#L351-L406)
 
 ## Core Components
-- WPCD_APP: Builds final shell commands from templates, replaces tokens, and applies filters for customization.
+- SSTK_APP: Builds final shell commands from templates, replaces tokens, and applies filters for customization.
 - commands-and-logs.php (trait): Orchestrates SSH execution, logs intermediate/done files, and defers background actions.
 - script-handlers.php (trait): Determines success based on script output and defines placeholder mappings for scripts.
 - push-commands.php (trait): Handles inbound server status, site status, apt-get status, posttypes, malware scans, restarts, monit alerts, and backups.
-- WPCD_SSH: Encapsulates SSH/SFTP operations, timeouts, error formatting, and key pair generation.
+- SSTK_SSH: Encapsulates SSH/SFTP operations, timeouts, error formatting, and key pair generation.
 - WORDPRESS_SSH: Resolves SSH credentials and IP from server/provider data.
 - tabs.php: Provides submit_generic_server_command for ad-hoc command execution via UI.
 - ssh_console.php: Implements an interactive SSH console flow with command history.
 
 **Section sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
 - [script-handlers.php:23-800](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L23-L800)
 - [push-commands.php:33-176](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php#L33-L176)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [class-wordpress-ssh.php:78-136](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L78-L136)
 - [tabs.php:107-132](file://includes/core/apps/wordpress-app/tabs/tabs.php#L107-L132)
 - [ssh_console.php:351-406](file://includes/core/apps/wordpress-app/tabs-server/ssh_console.php#L351-L406)
@@ -120,9 +120,9 @@ The engine composes multiple layers:
 ```mermaid
 sequenceDiagram
 participant UI as "UI (tabs/console)"
-participant APP as "WPCD_APP"
+participant APP as "SSTK_APP"
 participant TR as "commands-and-logs trait"
-participant SSH as "WPCD_SSH / WORDPRESS_SSH"
+participant SSH as "SSTK_SSH / WORDPRESS_SSH"
 participant REM as "Remote Server"
 UI->>APP : Request action (e.g., generic command)
 APP->>APP : turn_script_into_command()<br/>replace tokens
@@ -136,9 +136,9 @@ APP-->>UI : response (success/error/logs)
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 
 ## Detailed Component Analysis
 
@@ -161,21 +161,21 @@ DOS2UNIX --> End(["Return final command"])
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [script-handlers.php:1697-1739](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L1697-L1739)
 
 **Section sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [script-handlers.php:1697-1739](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L1697-L1739)
 
 ### SSH Connection Management and Execution
 - Credentials are resolved per server/provider using WORDPRESS_SSH::get_ssh_key_details().
-- WPCD_SSH::exec() establishes SSH connections, sets timeouts, runs commands, logs results, and returns captured output.
+- SSTK_SSH::exec() establishes SSH connections, sets timeouts, runs commands, logs results, and returns captured output.
 - SFTP methods support upload/download with consistent error handling.
 
 ```mermaid
 classDiagram
-class WPCD_SSH {
+class SSTK_SSH {
 +exec(ip, command, key_attributes, action, reference_post_id, user, callback)
 +download(ip, remote_file, local_file, key_attributes, user, error_type)
 +upload(ip, remote_file, local_file, key_attributes, user)
@@ -186,18 +186,18 @@ class WORDPRESS_SSH {
 +do_file_download(instance, filename)
 +get_ssh_key_details(attributes)
 }
-WPCD_SSH <|-- WORDPRESS_SSH : "extends"
+SSTK_SSH <|-- WORDPRESS_SSH : "extends"
 ```
 
 **Diagram sources**
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
-- [class-wpcd-ssh.php:165-244](file://includes/core/apps/class-wpcd-ssh.php#L165-L244)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
+- [class-sstk-ssh.php:165-244](file://includes/core/apps/class-sstk-ssh.php#L165-L244)
 - [class-wordpress-ssh.php:35-62](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L35-L62)
 - [class-wordpress-ssh.php:78-136](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L78-L136)
 
 **Section sources**
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
-- [class-wpcd-ssh.php:165-244](file://includes/core/apps/class-wpcd-ssh.php#L165-L244)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
+- [class-sstk-ssh.php:165-244](file://includes/core/apps/class-sstk-ssh.php#L165-L244)
 - [class-wordpress-ssh.php:35-62](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L35-L62)
 - [class-wordpress-ssh.php:78-136](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L78-L136)
 
@@ -209,7 +209,7 @@ WPCD_SSH <|-- WORDPRESS_SSH : "extends"
 sequenceDiagram
 participant UI as "UI"
 participant TR as "commands-and-logs trait"
-participant SSH as "WPCD_SSH"
+participant SSH as "SSTK_SSH"
 participant REM as "Remote Server"
 UI->>TR : Start long-running task
 TR->>SSH : exec(command, callback?)
@@ -267,10 +267,10 @@ G --> H["Mark failed or retry"]
 ```mermaid
 sequenceDiagram
 participant REM as "Remote Server"
-participant WPAPP as "WPCD_WORDPRESS_APP"
+participant WPAPP as "SSTK_WORDPRESS_APP"
 participant PUSH as "push-commands trait"
 participant DB as "WordPress DB"
-REM->>WPAPP : POST /wp-json/wpcd/v1/command/{name}_completed
+REM->>WPAPP : POST /wp-json/simple-stack/v1/command/{name}_completed
 WPAPP->>PUSH : push_command_{name}_completed(...)
 PUSH->>DB : Update meta/history, set flags
 PUSH-->>WPAPP : Emit _processed_good/_processed hooks
@@ -306,7 +306,7 @@ participant User as "User"
 participant Console as "ssh_console.php"
 participant Tabs as "tabs.php"
 participant CmdTrait as "commands-and-logs trait"
-participant SSH as "WPCD_SSH"
+participant SSH as "SSTK_SSH"
 User->>Console : Submit command
 Console->>Tabs : submit_generic_server_command(id, action, cmd, raw=true)
 Tabs->>CmdTrait : execute_ssh('generic', instance, {commands})
@@ -322,46 +322,46 @@ Console-->>User : Structured response
 - [ssh_console.php:351-406](file://includes/core/apps/wordpress-app/tabs-server/ssh_console.php#L351-L406)
 - [tabs.php:107-132](file://includes/core/apps/wordpress-app/tabs/tabs.php#L107-L132)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 
 **Section sources**
 - [ssh_console.php:351-406](file://includes/core/apps/wordpress-app/tabs-server/ssh_console.php#L351-L406)
 - [tabs.php:107-132](file://includes/core/apps/wordpress-app/tabs/tabs.php#L107-L132)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 
 ## Dependency Analysis
-- WPCD_APP depends on traits for SSH orchestration and script handling.
-- commands-and-logs trait depends on WORDPRESS_SSH for credential resolution and WPCD_SSH for transport.
-- push-commands trait relies on WPCD_WORDPRESS_APP hooks to route inbound callbacks.
+- SSTK_APP depends on traits for SSH orchestration and script handling.
+- commands-and-logs trait depends on WORDPRESS_SSH for credential resolution and SSTK_SSH for transport.
+- push-commands trait relies on SSTK_WORDPRESS_APP hooks to route inbound callbacks.
 - UI components depend on tabs helper which delegates to execute_ssh.
 
 ```mermaid
 graph LR
-APP["WPCD_APP"] --> CMDT["commands-and-logs trait"]
+APP["SSTK_APP"] --> CMDT["commands-and-logs trait"]
 APP --> SHT["script-handlers trait"]
 CMDT --> WPSSH["WORDPRESS_SSH"]
-CMDT --> SSHBASE["WPCD_SSH"]
-WPAPP["WPCD_WORDPRESS_APP"] --> PUSH["push-commands trait"]
+CMDT --> SSHBASE["SSTK_SSH"]
+WPAPP["SSTK_WORDPRESS_APP"] --> PUSH["push-commands trait"]
 UI["tabs/console"] --> CMDT
 ```
 
 **Diagram sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
 - [script-handlers.php:23-800](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L23-L800)
 - [push-commands.php:33-176](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php#L33-L176)
 - [class-wordpress-ssh.php:78-136](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L78-L136)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [tabs.php:107-132](file://includes/core/apps/wordpress-app/tabs/tabs.php#L107-L132)
 
 **Section sources**
-- [class-wpcd-app.php:1408-1468](file://includes/core/apps/class-wpcd-app.php#L1408-L1468)
+- [class-sstk-app.php:1408-1468](file://includes/core/apps/class-sstk-app.php#L1408-L1468)
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
 - [script-handlers.php:23-800](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L23-L800)
 - [push-commands.php:33-176](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php#L33-L176)
 - [class-wordpress-ssh.php:78-136](file://includes/core/apps/wordpress-app/class-wordpress-ssh.php#L78-L136)
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [tabs.php:107-132](file://includes/core/apps/wordpress-app/tabs/tabs.php#L107-L132)
 
 ## Performance Considerations
@@ -380,7 +380,7 @@ UI["tabs/console"] --> CMDT
 - Push endpoints: Validate incoming parameters and sanitize inputs; check action routing and hook registration.
 
 **Section sources**
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [commands-and-logs.php:364-432](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L364-L432)
 
 ## Conclusion
@@ -404,7 +404,7 @@ The script execution engine provides a robust, extensible framework for managing
 
 **Section sources**
 - [commands-and-logs.php:269-310](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/commands-and-logs.php#L269-L310)
-- [class-wpcd-ssh.php:68-93](file://includes/core/apps/class-wpcd-ssh.php#L68-L93)
+- [class-sstk-ssh.php:68-93](file://includes/core/apps/class-sstk-ssh.php#L68-L93)
 
 ### Monitoring Script Execution in Real-Time
 - Poll get_logs_intermed during execution to stream progress.
@@ -419,5 +419,5 @@ The script execution engine provides a robust, extensible framework for managing
 - Audit logging: All SSH attempts and results are logged; use these logs for compliance and troubleshooting.
 
 **Section sources**
-- [class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [push-commands.php:33-176](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/push-commands.php#L33-L176)

@@ -1,12 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class handles server specific actions such as
  * creation, destroying, moving and so on.
  *
- * @TODO:  Right now it depends on an instance of the VPN APP
- * to do certain things.  We need to divorce that out.
- *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,12 +12,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_Server
+ * Class SSTK_Server
  */
-class WPCD_Server extends WPCD_Base {
+class SSTK_Server extends SSTK_Base {
 
 	/**
-	 * WPCD_Server constructer.
+	 * SSTK_Server constructer.
 	 */
 	public function __construct() {
 
@@ -34,7 +32,7 @@ class WPCD_Server extends WPCD_Base {
 	private function hooks() {
 
 		// This action hook might actually be unused - not sure where it's being called from right now.
-		add_action( 'wpcd_app_server_action', array( &$this, 'do_instance_action' ), 10, 3 );  // Invoke a server action via an action call.
+		add_action( 'sstk_app_server_action', array( &$this, 'do_instance_action' ), 10, 3 );  // Invoke a server action via an action call.
 
 		add_action( 'wp_trash_post', array( &$this, 'trash_server_post' ), 10, 1 );  // Attempt to delete server at the provider when server post is deleted.
 
@@ -56,16 +54,51 @@ class WPCD_Server extends WPCD_Base {
 	 */
 	public function do_instance_action( $post_id, $action, $additional = array() ) {
 
-		// Create a server...
-		// For now it will unfortunately install a VPN as well because server creation is not yet decoupled from
-		// app creation...
+		// Create a server through the same validated path used by direct callers.
 		if ( is_null( $post_id ) && 'create' === $action ) {
-			$instance = WPCD()->get_provider_api( $additional['provider'] )->call( 'create', $additional );
-			$instance = array_merge( $additional, $instance );
-			$this->update_instance( $instance );
-			return;
+			return $this->create_server( $action, $additional );
 		}
 
+		return false;
+	}
+
+	/**
+	 * Validate and normalize attributes before any provider API call.
+	 *
+	 * @param array $additional Server creation attributes.
+	 *
+	 * @return array|WP_Error
+	 */
+	private function validate_create_attributes( $additional ) {
+		if ( ! is_array( $additional ) ) {
+			return new \WP_Error( 'sstk_invalid_server_attributes', __( 'Invalid server creation attributes.', 'simple-stack' ) );
+		}
+
+		$additional['webserver_type'] = $additional['webserver_type'] ?? 'ols';
+		if ( empty( $additional['webserver_type'] ) ) {
+			$additional['webserver_type'] = 'ols';
+		}
+		if ( 'ols' !== $additional['webserver_type'] ) {
+			return new \WP_Error( 'sstk_invalid_webserver_type', __( 'Simple Stack supports OpenLiteSpeed servers only.', 'simple-stack' ) );
+		}
+
+		if ( empty( $additional['provider'] ) ) {
+			return new \WP_Error( 'sstk_invalid_provider', __( 'A cloud provider is required.', 'simple-stack' ) );
+		}
+
+		$provider_api = SSTK()->get_provider_api( $additional['provider'] );
+		if ( ! is_object( $provider_api ) || ! is_callable( array( $provider_api, 'call' ) ) ) {
+			return new \WP_Error( 'sstk_invalid_provider', __( 'The selected cloud provider is not available.', 'simple-stack' ) );
+		}
+
+		$additional['initial_os'] = $additional['initial_os'] ?? SSTK_WORDPRESS_APP()->get_default_os();
+		if ( ! isset( SSTK()->get_os_list()[ $additional['initial_os'] ] ) ) {
+			return new \WP_Error( 'sstk_invalid_os', __( 'The selected operating system is not supported.', 'simple-stack' ) );
+		}
+
+		$additional['scripts_version'] = SSTK_WORDPRESS_APP()->get_configured_scripts_version();
+
+		return $additional;
 	}
 
 	/**
@@ -83,11 +116,15 @@ class WPCD_Server extends WPCD_Base {
 	 */
 	public function create_server( $action, $additional = array() ) {
 
-		// Create a server...
+		// Validate the locked stack and provider before creating anything remotely.
 		if ( 'create' === $action ) {
+			$additional = $this->validate_create_attributes( $additional );
+			if ( is_wp_error( $additional ) ) {
+				return $additional;
+			}
 
 			// Create the instance via the api.
-			$instance = WPCD()->get_provider_api( $additional['provider'] )->call( 'create', $additional );
+			$instance = SSTK()->get_provider_api( $additional['provider'] )->call( 'create', $additional );
 
 			// Make sure it's not a wp_error.
 			if ( is_wp_error( $instance ) ) {
@@ -99,7 +136,7 @@ class WPCD_Server extends WPCD_Base {
 				$instance = array_merge( $additional, $instance );
 
 				// Allow apps to hook in and do things.
-				$instance = apply_filters( 'wpcd_after_server_create', $instance );
+				$instance = apply_filters( 'sstk_after_server_create', $instance );
 
 				// Add a record of the instance to the appropriate custom post type.
 				$post_id = $this->create_server_post( $instance );
@@ -108,7 +145,7 @@ class WPCD_Server extends WPCD_Base {
 				$instance['post_id'] = $post_id;
 
 				// Allow apps to hook in again.
-				$instance = apply_filters( 'wpcd_after_server_post_create', $instance );
+				$instance = apply_filters( 'sstk_after_server_post_create', $instance );
 
 				// return a reference to the instance.
 				return $instance;
@@ -130,13 +167,6 @@ class WPCD_Server extends WPCD_Base {
 
 		/* variable to hold post author */
 		$post_author = 0;
-
-		/**
-		 * If 'wc_user_id' is set in the instance use it as the post author.
-		 */
-		if ( ( isset( $instance['wc_user_id'] ) ) ) {
-			$post_author = $instance['wc_user_id'];
-		}
 
 		/**
 		 * If we still don't have a post author, then check to see if a 'user_id' element is set and use that.
@@ -174,7 +204,7 @@ class WPCD_Server extends WPCD_Base {
 		$post_id = wp_insert_post(
 			array(
 				'ID'          => array_key_exists( 'post_id', $instance ) ? $instance['post_id'] : '',
-				'post_type'   => 'wpcd_app_server',
+				'post_type'   => 'sstk_app_server',
 				'post_status' => 'private',
 				'post_title'  => $instance['name'],
 				'post_author' => isset( $post_author ) ? $post_author : 1,
@@ -184,11 +214,11 @@ class WPCD_Server extends WPCD_Base {
 		/* If we have a valid post id, update some metas on the server record */
 		if ( ( ! empty( $post_id ) ) && ( ! is_wp_error( $post_id ) ) ) {
 			// Set plugin version so we know what plugin version created the server.
-			update_post_meta( $post_id, 'wpcd_server_plugin_initial_version', wpcd_version );
-			update_post_meta( $post_id, 'wpcd_server_plugin_updated_version', wpcd_version );
+			update_post_meta( $post_id, 'sstk_server_plugin_initial_version', SSTK_VERSION );
+			update_post_meta( $post_id, 'sstk_server_plugin_updated_version', SSTK_VERSION );
 		}
 
-		do_action( 'wpcd_log_error', "Created CPT with ID $post_id " . print_r( $instance, true ), 'debug', __FILE__, __LINE__ );
+		do_action( 'sstk_log_error', "Created CPT with ID $post_id " . print_r( $instance, true ), 'debug', __FILE__, __LINE__ );
 
 		return $post_id;
 
@@ -230,14 +260,14 @@ class WPCD_Server extends WPCD_Base {
 	public function delete_server( $attributes ) {
 		$instance = null;
 		$action   = 'delete';
-		$provider_api = WPCD()->get_provider_api( $attributes['provider'] );
+		$provider_api = SSTK()->get_provider_api( $attributes['provider'] );
 		if ( ! empty( $provider_api ) ) {
 			$instance = $provider_api->call( $action, $attributes );
 		}
 		// if the instance is missing from the provider or if the destroy method succeeds.
 		if ( empty( $instance) || is_wp_error( $instance ) || 'done' === $instance['status'] ) {
 			wp_trash_post( $attributes['post_id'] );
-			wpcd_delete_child_posts( 'wpcd_app', $attributes['post_id'] ); // delete all app child posts associated with the server...
+			sstk_delete_child_posts( 'sstk_app', $attributes['post_id'] ); // delete all app child posts associated with the server...
 			$this->add_action_to_history( $action, $attributes );
 		}
 	}
@@ -321,24 +351,24 @@ class WPCD_Server extends WPCD_Base {
 		}
 
 		/* Bail out if not our post type */
-		if ( 'wpcd_app_server' != get_post_type( $post_id ) ) {
+		if ( 'sstk_app_server' != get_post_type( $post_id ) ) {
 			return;
 		}
 
 		/* Ok, we're good - lets fill out the attributes array that all the provider api calls expect */
 		$attributes['post_id']              = $post_id;
-		$attributes['provider']             = get_post_meta( $post_id, 'wpcd_server_provider', true );
-		$attributes['provider_instance_id'] = get_post_meta( $post_id, 'wpcd_server_provider_instance_id', true );
+		$attributes['provider']             = get_post_meta( $post_id, 'sstk_server_provider', true );
+		$attributes['provider_instance_id'] = get_post_meta( $post_id, 'sstk_server_provider_instance_id', true );
 
 		/*Run the delete api function call */
 		$action = 'delete';
-		if ( ! empty( WPCD()->get_provider_api( $attributes['provider'] ) ) ) {
-			$instance = WPCD()->get_provider_api( $attributes['provider'] )->call( $action, $attributes );
+		if ( ! empty( SSTK()->get_provider_api( $attributes['provider'] ) ) ) {
+			$instance = SSTK()->get_provider_api( $attributes['provider'] )->call( $action, $attributes );
 		}
 
 		// Check results - if the instance is missing from the provider or if the destroy method succeeds.
 		if ( is_wp_error( $instance ) || 'done' === $instance['status'] ) {
-			wpcd_delete_child_posts( 'wpcd_app', $attributes['post_id'] ); // delete all app child posts associated with the server...
+			sstk_delete_child_posts( 'sstk_app', $attributes['post_id'] ); // delete all app child posts associated with the server...
 			$this->add_action_to_history( $action, $attributes );
 		}
 
@@ -353,7 +383,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return void
 	 */
 	public function add_ipv4_address( $post_id, $ip ) {
-		update_post_meta( $post_id, 'wpcd_server_ipv4', $ip );
+		update_post_meta( $post_id, 'sstk_server_ipv4', $ip );
 	}
 
 	/**
@@ -365,7 +395,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return void
 	 */
 	public function add_ipv6_address( $post_id, $ipv6 ) {
-		update_post_meta( $post_id, 'wpcd_server_ipv6', $ipv6 );
+		update_post_meta( $post_id, 'sstk_server_ipv6', $ipv6 );
 	}
 
 	/**
@@ -376,7 +406,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the ipv4 address
 	 */
 	public function get_ipv4_address( $post_id ) {
-		return get_post_meta( $post_id, 'wpcd_server_ipv4', true );
+		return get_post_meta( $post_id, 'sstk_server_ipv4', true );
 	}
 
 	/**
@@ -387,7 +417,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the ipv6 address
 	 */
 	public function get_ipv6_address( $post_id ) {
-		return get_post_meta( $post_id, 'wpcd_server_ipv6', true );
+		return get_post_meta( $post_id, 'sstk_server_ipv6', true );
 	}
 
 	/**
@@ -402,15 +432,15 @@ class WPCD_Server extends WPCD_Base {
 		$ip   = '';
 		$ipv4 = $this->get_ipv4_address( $post_id );
 		if ( ! empty( $ipv4 ) ) {
-			$ip = wpcd_wrap_clipboard_copy( $ipv4, false );
+			$ip = sstk_wrap_clipboard_copy( $ipv4, false );
 		}
-		if ( wpcd_get_early_option( 'wpcd_show_ipv6' ) ) {
+		if ( sstk_get_early_option( 'sstk_show_ipv6' ) ) {
 			$ipv6 = $this->get_ipv6_address( $post_id );
 			if ( ! empty( $ipv6 ) ) {
 				if ( ! empty( $ip ) ) {
-					$ip .= '<br />' . wpcd_wrap_clipboard_copy ( $ipv6, false );
+					$ip .= '<br />' . sstk_wrap_clipboard_copy ( $ipv6, false );
 				} else {
-					$ip = wpcd_wrap_clipboard_copy( $ipv6 );
+					$ip = sstk_wrap_clipboard_copy( $ipv6 );
 				}
 			}
 		}
@@ -423,24 +453,16 @@ class WPCD_Server extends WPCD_Base {
 	 * Get the server os on the server record.
 	 *
 	 * This is our string, not the providers' string.
-	 * If no OS is on the server record, return ubuntu 18.04 LTS as the server.
+	 * If no OS is on the server record, return Ubuntu 24.04 LTS.
 	 *
 	 * @param int $post_id post id of server record.
 	 *
 	 * @return string the os
 	 */
 	public function get_server_os( $post_id ) {
-		$os = get_post_meta( $post_id, 'wpcd_server_initial_os', true );
+		$os = get_post_meta( $post_id, 'sstk_server_initial_os', true );
 		if ( empty( $os ) ) {
-			// What's the version of the wpcd plugin that was used for this server?  
-			$initial_plugin_version = get_post_meta( $post_id, 'wpcd_server_plugin_initial_version', true );
-			if ( version_compare( $initial_plugin_version, '4.99.99' ) > -1 ) {
-				// Versions greater than or equal to 5.0 has 20.04 as the default image in all providers.
-				$os = 'ubuntu2004lts';
-			} else {
-				// Earlier versions probably used 18.04.
-				$os = 'ubuntu1804lts';
-			}
+			$os = 'ubuntu2404lts';
 		}
 		return $os;
 	}
@@ -475,7 +497,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the server name
 	 */
 	public function get_server_region( $post_id ) {
-		return get_post_meta( $post_id, 'wpcd_server_region', true );
+		return get_post_meta( $post_id, 'sstk_server_region', true );
 	}
 
 	/**
@@ -486,28 +508,28 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the server name
 	 */
 	public function get_server_provider( $post_id ) {
-		return get_post_meta( $post_id, 'wpcd_server_provider', true );
+		return get_post_meta( $post_id, 'sstk_server_provider', true );
 	}
 
 	/**
 	 * Get the server size on the server record
 	 *
-	 * @TODO: There is a field called 'wpcd_server_size' on the server record
+	 * @TODO: There is a field called 'sstk_server_size' on the server record
 	 * that needs to be converted to a 'raw' size and returned if it exists
-	 * and 'wpcd_server_size_raw' does not exist.
+	 * and 'sstk_server_size_raw' does not exist.
 	 *
 	 * @param int $post_id post id of server record.
 	 *
 	 * @return string the server name
 	 */
 	public function get_server_size( $post_id ) {
-		return get_post_meta( $post_id, 'wpcd_server_size_raw', true );
+		return get_post_meta( $post_id, 'sstk_server_size_raw', true );
 	}
 
 	/**
 	 * Set the server size on the server record
 	 *
-	 * @TODO: There is a field called 'wpcd_server_size' on the server record
+	 * @TODO: There is a field called 'sstk_server_size' on the server record
 	 * that needs to be set if it already exists with a value.
 	 *
 	 * @param int $post_id post id of server record.
@@ -515,7 +537,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the server name
 	 */
 	public function set_server_size( $post_id, $new_size ) {
-		return update_post_meta( $post_id, 'wpcd_server_size_raw', $new_size );
+		return update_post_meta( $post_id, 'sstk_server_size_raw', $new_size );
 	}
 
 	/**
@@ -527,7 +549,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the server name
 	 */
 	public function set_pending_server_size( $post_id, $new_size ) {
-		return update_post_meta( $post_id, 'wpcd_server_pending_size_raw', $new_size );
+		return update_post_meta( $post_id, 'sstk_server_pending_size_raw', $new_size );
 	}
 
 	/**
@@ -539,8 +561,8 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the server name
 	 */
 	public function finalize_server_size( $post_id ) {
-		$return = $this->set_server_size( $post_id, get_post_meta( $post_id, 'wpcd_server_pending_size_raw', true ) );
-		delete_post_meta( $post_id, 'wpcd_server_pending_size_raw' );
+		$return = $this->set_server_size( $post_id, get_post_meta( $post_id, 'sstk_server_pending_size_raw', true ) );
+		delete_post_meta( $post_id, 'sstk_server_pending_size_raw' );
 		return $return;
 	}
 
@@ -552,7 +574,7 @@ class WPCD_Server extends WPCD_Base {
 	 * @return string the server name
 	 */
 	public function get_server_provider_instance_id( $post_id ) {
-		return get_post_meta( $post_id, 'wpcd_server_provider_instance_id', true );
+		return get_post_meta( $post_id, 'sstk_server_provider_instance_id', true );
 	}
 
 	/**
@@ -566,12 +588,12 @@ class WPCD_Server extends WPCD_Base {
 
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app_server',
+				'post_type'   => 'sstk_app_server',
 				'post_status' => 'private',
 				'numberposts' => -1,
 				'meta_query'  => array(
 					array(
-						'key'   => 'wpcd_server_provider_instance_id',
+						'key'   => 'sstk_server_provider_instance_id',
 						'value' => $instance_id,
 					),
 				),
@@ -601,7 +623,7 @@ class WPCD_Server extends WPCD_Base {
 	public function get_app_count( $post_id ) {
 
 		$args = array(
-			'post_type'      => 'wpcd_app',
+			'post_type'      => 'sstk_app',
 			'post_status'    => 'private',
 			'posts_per_page' => 9999,
 			'meta_query'     => array(
@@ -634,7 +656,7 @@ class WPCD_Server extends WPCD_Base {
 	public function get_apps_by_server_id( $server_id ) {
 
 		$args = array(
-			'post_type'      => 'wpcd_app',
+			'post_type'      => 'sstk_app',
 			'post_status'    => 'private',
 			'posts_per_page' => 9999,
 			'meta_query'     => array(
@@ -661,14 +683,14 @@ class WPCD_Server extends WPCD_Base {
 	public function get_root_user_name( $id ) {
 
 		// Is a root user specified on the server post?  If so, return it.
-		$server_root_user = get_post_meta( $id, 'wpcd_server_ssh_root_user', true );
+		$server_root_user = get_post_meta( $id, 'sstk_server_ssh_root_user', true );
 		if ( ! empty( $server_root_user ) ) {
 			return $server_root_user;
 		}
 
 		// Get the default root user from the provider.
-		$provider  = get_post_meta( $id, 'wpcd_server_provider', true );
-		$root_user = WPCD()->get_provider_api( $provider )->get_root_user();
+		$provider  = get_post_meta( $id, 'sstk_server_provider', true );
+		$root_user = SSTK()->get_provider_api( $provider )->get_root_user();
 		return $root_user;
 
 	}
@@ -691,13 +713,13 @@ class WPCD_Server extends WPCD_Base {
 		}
 
 		// Valid post id so grab meta and append to it.
-		$history = get_post_meta( $post_id, 'wpcd_server_actions', true );
+		$history = get_post_meta( $post_id, 'sstk_server_actions', true );
 		if ( ! $history ) {
 			$history = array();
 		}
 		// $history[ $action ] = time();
-		$history[ time() ] = $action;  // Note: Starting in WPCD V4.0.0, we switched the array key from action to the time in order to handle duplicate actions.
-		update_post_meta( $post_id, 'wpcd_server_actions', $history );
+		$history[ time() ] = $action;  // Note: Starting in SSTK V4.0.0, we switched the array key from action to the time in order to handle duplicate actions.
+		update_post_meta( $post_id, 'sstk_server_actions', $history );
 	}
 
 	/**
@@ -712,43 +734,43 @@ class WPCD_Server extends WPCD_Base {
 	public function handle_async_action( $action, $attributes ) {
 		$post_id = $attributes['post_id'];
 
-		$current_status = get_post_meta( $post_id, 'wpcd_server_action_status', true );
+		$current_status = get_post_meta( $post_id, 'sstk_server_action_status', true );
 		if ( empty( $current_status ) ) {
 			$current_status = '';  // Make sure this variable is a string, not boolean or integer.
 		}
 
 		if ( empty( $current_status ) ) {
 
-			$instance = WPCD()->get_provider_api( $attributes['provider'] )->call( $action, $attributes );
+			$instance = SSTK()->get_provider_api( $attributes['provider'] )->call( $action, $attributes );
 
-			WPCD_SERVER()->add_action_to_history( $action . ' (pre)', $attributes );
+			SSTK_SERVER()->add_action_to_history( $action . ' (pre)', $attributes );
 
-			do_action( 'wpcd_log_error', "Async action $action called with result = " . print_r( $instance, true ), 'debug', __FILE__, __LINE__ );
+			do_action( 'sstk_log_error', "Async action $action called with result = " . print_r( $instance, true ), 'debug', __FILE__, __LINE__ );
 
 			if ( is_wp_error( $instance ) ) {
-				update_post_meta( $post_id, 'wpcd_server_error', $instance->get_error_message() );
+				update_post_meta( $post_id, 'sstk_server_error', $instance->get_error_message() );
 				return false;
 			} elseif ( 'in-progress' === $instance['status'] ) {
-				update_post_meta( $post_id, 'wpcd_server_current_state', 'performing ' . $action );
-				update_post_meta( $post_id, 'wpcd_server_action_status', $instance['status'] );
-				update_post_meta( $post_id, 'wpcd_server_action', $action );
-				update_post_meta( $post_id, 'wpcd_server_action_id', $instance['action_id'] );
-				$this->add_deferred_action_history( $post_id, 'class-wpcd-server' );
+				update_post_meta( $post_id, 'sstk_server_current_state', 'performing ' . $action );
+				update_post_meta( $post_id, 'sstk_server_action_status', $instance['status'] );
+				update_post_meta( $post_id, 'sstk_server_action', $action );
+				update_post_meta( $post_id, 'sstk_server_action_id', $instance['action_id'] );
+				$this->add_deferred_action_history( $post_id, 'class-sstk-server' );
 			}
 		} else {
-			$instance = WPCD()->get_provider_api( $attributes['provider'] )->call( 'status', $attributes );
+			$instance = SSTK()->get_provider_api( $attributes['provider'] )->call( 'status', $attributes );
 
 			if ( 'completed' === $instance['status'] ) {
-				delete_post_meta( $post_id, 'wpcd_server_current_state' );
-				delete_post_meta( $post_id, 'wpcd_server_action_status' );
-				delete_post_meta( $post_id, 'wpcd_server_action' );
-				delete_post_meta( $post_id, 'wpcd_server_action_id' );
-				$this->add_deferred_action_history( $post_id, 'class-wpcd-server' );
+				delete_post_meta( $post_id, 'sstk_server_current_state' );
+				delete_post_meta( $post_id, 'sstk_server_action_status' );
+				delete_post_meta( $post_id, 'sstk_server_action' );
+				delete_post_meta( $post_id, 'sstk_server_action_id' );
+				$this->add_deferred_action_history( $post_id, 'class-sstk-server' );
 
 				if ( 'off' === $action ) {
-					update_post_meta( $post_id, 'wpcd_server_current_state', 'off' );
+					update_post_meta( $post_id, 'sstk_server_current_state', 'off' );
 				}
-				WPCD_SERVER()->add_action_to_history( $action, $attributes );
+				SSTK_SERVER()->add_action_to_history( $action, $attributes );
 
 			}
 		}
@@ -768,7 +790,7 @@ class WPCD_Server extends WPCD_Base {
 	 */
 	public function is_server_available_for_commands( $server_id ) {
 
-		$current_state = get_post_meta( $server_id, 'wpcd_server_current_state', true );
+		$current_state = get_post_meta( $server_id, 'sstk_server_current_state', true );
 
 		// Check state variable first.
 		if ( $current_state <> 'active' and ! empty( $current_state ) ) {
@@ -777,7 +799,7 @@ class WPCD_Server extends WPCD_Base {
 
 		$return = true;
 
-		$return = apply_filters( 'wpcd_is_server_available_for_commands', $return, $server_id );
+		$return = apply_filters( 'sstk_is_server_available_for_commands', $return, $server_id );
 
 		return $return;
 

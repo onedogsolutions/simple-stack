@@ -11,14 +11,14 @@ source_files:
     - package-lock.json
     - vite.config.js
     - tools/verify-css-isolation.mjs
-    - required_plugins/wpcd-required-plugins.php
+    - required_plugins/sstk-required-plugins.php
     - required_plugins/class-tgm-plugin-activation.php
     - .gitignore
 ---
 
 ## Overview
 
-SimpleStack uses three distinct dependency-management layers for its WordPress plugin:
+Simple Stack uses three distinct dependency-management layers for its WordPress plugin:
 
 1. **PHP runtime & dev tooling** — managed via **Composer** (`composer.json`, `composer.lock`).
 2. **Frontend build (React admin dashboard)** — managed via **npm** (`package.json`, `package-lock.json`) and built with **Vite** (`vite.config.js`), producing committed artifacts under `assets/dist/`.
@@ -74,7 +74,7 @@ Each subdirectory contains its own `vendor/` folder (likely from the original pa
 
 ### TGMPA bootstrap
 
-`required_plugins/class-tgm-plugin-activation.php` is the TGMPA library itself (a third-party dependency). `required_plugins/wpcd-required-plugins.php` registers the required plugins via the `tgmpa_register` hook. In the current state only `meta-box` (slug `meta-box`) is listed as required from the WordPress.org repository; the rest are expected to be loaded from the vendored directories above.
+`required_plugins/class-tgm-plugin-activation.php` is the TGMPA library itself (a third-party dependency). `required_plugins/sstk-required-plugins.php` registers the required plugins via the `tgmpa_register` hook. In the current state only `meta-box` (slug `meta-box`) is listed as required from the WordPress.org repository; the rest are expected to be loaded from the vendored directories above.
 
 Configuration sets `is_automatic => true` and `dismissable => false`, meaning required plugins are auto-activated and the notice cannot be dismissed until they are installed.
 
@@ -97,6 +97,6 @@ Configuration sets `is_automatic => true` and `dismissable => false`, meaning re
 - `vite.config.js` — build target, output path, committed artifact strategy, CSS bundling behavior.
 - `tools/verify-css-isolation.mjs` — post-build invariant check for CSS chunks.
 - `required_plugins/class-tgm-plugin-activation.php` — vendored TGMPA library.
-- `required_plugins/wpcd-required-plugins.php` — TGMPA registration declaring `meta-box` as required.
+- `required_plugins/sstk-required-plugins.php` — TGMPA registration declaring `meta-box` as required.
 - `required_plugins/<add-on>/` — vendored Meta Box ecosystem add-on sources.
 - `.gitignore` — declares that `assets/dist/` is committed and `node_modules/` is ignored.

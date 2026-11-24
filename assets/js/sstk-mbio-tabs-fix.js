@@ -1,8 +1,9 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /* This code fixes an issue in METABOX.io tabs.  It tries to detect what 
  * tab you're on before a page refresh and then take you right back there
  * after the page refresh is complete.
  * 
- * Currently, this file is being enqueued in class-wpcd-settings.php on
+ * Currently, this file is being enqueued in class-sstk-settings.php on
  * the admin_enqueue_scripts action hook.
  */
 (function (window, document, $) {

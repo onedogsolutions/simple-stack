@@ -2,10 +2,10 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-settings.php](file://includes/core/class-wpcd-settings.php)
-- [class-wpcd-setup-wizard.php](file://includes/core/class-wpcd-setup-wizard.php)
-- [class-wpcd-custom-fields.php](file://includes/core/class-wpcd-custom-fields.php)
-- [wp-cloud-deploy.php](file://includes/core/wp-cloud-deploy.php)
+- [class-sstk-settings.php](file://includes/core/class-sstk-settings.php)
+- [class-sstk-setup-wizard.php](file://includes/core/class-sstk-setup-wizard.php)
+- [class-sstk-custom-fields.php](file://includes/core/class-sstk-custom-fields.php)
+- [simple-stack.php](file://includes/core/simple-stack.php)
 - [functions.php](file://includes/core/functions.php)
 </cite>
 
@@ -29,52 +29,52 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack's simplified settings management system. The system is now focused on provider configuration and basic application settings, with removal of extensive license management infrastructure and Wisdom analytics integration. It covers how configuration is stored, validated, and retrieved; the streamlined setup wizard flow for initial configuration; the custom fields system used for storing additional metadata; examples for adding new settings, validating user input, and migrating configuration data between versions; the relationship between global settings, provider-specific configurations, and per-server/site options; and security considerations including encryption mechanisms for sensitive credentials.
+This document explains Simple Stack's simplified settings management system. The system is now focused on provider configuration and basic application settings, with removal of extensive license management infrastructure and Wisdom analytics integration. It covers how configuration is stored, validated, and retrieved; the streamlined setup wizard flow for initial configuration; the custom fields system used for storing additional metadata; examples for adding new settings, validating user input, and migrating configuration data between versions; the relationship between global settings, provider-specific configurations, and per-server/site options; and security considerations including encryption mechanisms for sensitive credentials.
 
 ## Project Structure
 The settings subsystem is centered around a core settings class that registers a WordPress admin settings page using Metabox.io. Provider-specific configuration is dynamically generated per cloud provider. A streamlined setup wizard guides users through essential initial configuration, including encryption key setup, provider selection, credential validation, and SSH key creation. Custom fields provide an extensible registry for additional metadata that can be merged into scripts or rendered in specific UI locations.
 
 ```mermaid
 graph TB
-AdminUI["Admin UI<br/>Settings Page"] --> SettingsClass["WPCD_Settings<br/>Registers metaboxes and tabs"]
-SettingsClass --> MetaboxIO["Metabox.io Storage<br/>Option: wpcd_settings"]
+AdminUI["Admin UI<br/>Settings Page"] --> SettingsClass["SSTK_Settings<br/>Registers metaboxes and tabs"]
+SettingsClass --> MetaboxIO["Metabox.io Storage<br/>Option: sstk_settings"]
 SettingsClass --> ProviderFields["Provider Fields<br/>Per-provider tabs"]
-SetupWizard["WPCD_Admin_Setup_Wizard<br/>Initial configuration flow"] --> SettingsClass
+SetupWizard["SSTK_Admin_Setup_Wizard<br/>Initial configuration flow"] --> SettingsClass
 SetupWizard --> Encryption["Encryption Utilities<br/>AES-128-CBC + HMAC"]
-CustomFields["WPCD_Custom_Fields<br/>Extensible metadata registry"] --> Scripts["Script Merge Points"]
-FunctionsAPI["wpcd_get_option / wpcd_set_option"] --> MetaboxIO
+CustomFields["SSTK_Custom_Fields<br/>Extensible metadata registry"] --> Scripts["Script Merge Points"]
+FunctionsAPI["sstk_get_option / sstk_set_option"] --> MetaboxIO
 ```
 
 **Diagram sources**
-- [class-wpcd-settings.php:72-1109](file://includes/core/class-wpcd-settings.php#L72-L1109)
-- [class-wpcd-setup-wizard.php:162-214](file://includes/core/class-wpcd-setup-wizard.php#L162-L214)
-- [wp-cloud-deploy.php:971-1141](file://includes/core/wp-cloud-deploy.php#L971-L1141)
+- [class-sstk-settings.php:72-1109](file://includes/core/class-sstk-settings.php#L72-L1109)
+- [class-sstk-setup-wizard.php:162-214](file://includes/core/class-sstk-setup-wizard.php#L162-L214)
+- [simple-stack.php:971-1141](file://includes/core/simple-stack.php#L971-L1141)
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
 
 **Section sources**
-- [class-wpcd-settings.php:72-1109](file://includes/core/class-wpcd-settings.php#L72-L1109)
-- [class-wpcd-setup-wizard.php:162-214](file://includes/core/class-wpcd-setup-wizard.php#L162-L214)
+- [class-sstk-settings.php:72-1109](file://includes/core/class-sstk-settings.php#L72-L1109)
+- [class-sstk-setup-wizard.php:162-214](file://includes/core/class-sstk-setup-wizard.php#L162-L214)
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
 
 ## Core Components
-- WPCD_Settings: Registers the main settings page, defines global and provider-specific fields, handles encryption/decryption hooks, and provides utilities for testing connections and clearing caches.
-- WPCD_Admin_Setup_Wizard: Orchestrates the streamlined first-time setup flow, validates encryption key presence, collects provider credentials, tests connectivity, and creates SSH keys.
-- WPCD_Custom_Fields: Provides a registry for custom fields with location-based and script-merge capabilities.
-- Encryption Utilities (WPCD): Implements AES-128-CBC encryption with HMAC verification and supports v1/v2 formats.
-- Options API Helpers: wpcd_get_option and wpcd_set_option abstract reading/writing to the Metabox.io-managed option array.
+- SSTK_Settings: Registers the main settings page, defines global and provider-specific fields, handles encryption/decryption hooks, and provides utilities for testing connections and clearing caches.
+- SSTK_Admin_Setup_Wizard: Orchestrates the streamlined first-time setup flow, validates encryption key presence, collects provider credentials, tests connectivity, and creates SSH keys.
+- SSTK_Custom_Fields: Provides a registry for custom fields with location-based and script-merge capabilities.
+- Encryption Utilities (SSTK): Implements AES-128-CBC encryption with a random IV, HMAC-SHA256 authentication, and `sstk-encrypt-v2:` envelopes only.
+- Options API Helpers: sstk_get_option and sstk_set_option abstract reading/writing to the Metabox.io-managed option array.
 
 **Section sources**
-- [class-wpcd-settings.php:32-1109](file://includes/core/class-wpcd-settings.php#L32-L1109)
-- [class-wpcd-setup-wizard.php:21-214](file://includes/core/class-wpcd-setup-wizard.php#L21-L214)
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
-- [wp-cloud-deploy.php:971-1141](file://includes/core/wp-cloud-deploy.php#L971-L1141)
+- [class-sstk-settings.php:32-1109](file://includes/core/class-sstk-settings.php#L32-L1109)
+- [class-sstk-setup-wizard.php:21-214](file://includes/core/class-sstk-setup-wizard.php#L21-L214)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
+- [simple-stack.php:971-1141](file://includes/core/simple-stack.php#L971-L1141)
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
 
 ## Architecture Overview
-SimpleStack uses a streamlined layered architecture for settings focused on provider configuration:
-- Global settings are defined as metabox fields under the main settings page and stored in the wpcd_settings option via Metabox.io.
+Simple Stack uses a streamlined layered architecture for settings focused on provider configuration:
+- Global settings are defined as metabox fields under the main settings page and stored in the sstk_settings option via Metabox.io.
 - Provider-specific settings are dynamically generated per cloud provider and stored under the same option array with provider-scoped keys.
 - Sensitive values (API keys, private SSH keys, passwords) are encrypted on save and decrypted on retrieval using filters attached to Metabox.io field meta.
 - The setup wizard enforces secure initialization by requiring an encryption key before proceeding and validates provider credentials before allowing further steps.
@@ -83,13 +83,13 @@ SimpleStack uses a streamlined layered architecture for settings focused on prov
 sequenceDiagram
 participant Admin as "Admin User"
 participant Wizard as "Setup Wizard"
-participant Settings as "WPCD_Settings"
+participant Settings as "SSTK_Settings"
 participant Provider as "Cloud Provider API"
 participant Crypto as "Encryption Utilities"
 Admin->>Wizard : Open setup wizard
 Wizard->>Wizard : Check encryption key presence
 alt Missing encryption key
-Wizard-->>Admin : Prompt to define WPCD_ENCRYPTION_KEY
+Wizard-->>Admin : Prompt to define SSTK_ENCRYPTION_KEY
 else Key present
 Wizard->>Wizard : Select provider
 Wizard->>Wizard : Collect API credentials
@@ -106,15 +106,15 @@ end
 ```
 
 **Diagram sources**
-- [class-wpcd-setup-wizard.php:312-366](file://includes/core/class-wpcd-setup-wizard.php#L312-L366)
-- [class-wpcd-setup-wizard.php:371-440](file://includes/core/class-wpcd-setup-wizard.php#L371-L440)
-- [class-wpcd-setup-wizard.php:445-731](file://includes/core/class-wpcd-setup-wizard.php#L445-L731)
-- [class-wpcd-setup-wizard.php:736-794](file://includes/core/class-wpcd-setup-wizard.php#L736-L794)
-- [wp-cloud-deploy.php:971-1141](file://includes/core/wp-cloud-deploy.php#L971-L1141)
+- [class-sstk-setup-wizard.php:312-366](file://includes/core/class-sstk-setup-wizard.php#L312-L366)
+- [class-sstk-setup-wizard.php:371-440](file://includes/core/class-sstk-setup-wizard.php#L371-L440)
+- [class-sstk-setup-wizard.php:445-731](file://includes/core/class-sstk-setup-wizard.php#L445-L731)
+- [class-sstk-setup-wizard.php:736-794](file://includes/core/class-sstk-setup-wizard.php#L736-L794)
+- [simple-stack.php:971-1141](file://includes/core/simple-stack.php#L971-L1141)
 
 ## Detailed Component Analysis
 
-### WPCD_Settings
+### SSTK_Settings
 Responsibilities:
 - Registers the settings page and tabs.
 - Defines global settings sections (general, logging, misc, tools).
@@ -129,7 +129,7 @@ Key implementation patterns:
 
 ```mermaid
 classDiagram
-class WPCD_Settings {
+class SSTK_Settings {
 +display_settings()
 +register_options_page(settings_pages)
 +provider_metabox_tabs()
@@ -140,31 +140,31 @@ class WPCD_Settings {
 +decrypt(meta, field, saved)
 +is_api_key_empty(provider)
 +show_server_sizes(provider)
-+wpcd_provider_clear_cache()
-+wpcd_provider_auto_create_ssh_key()
-+wpcd_provider_test_provider_connection()
-+wpcd_can_connect_to_provider(provider)
-+wpcd_get_last_test_connection_status(provider)
-+wpcd_clear_all_providers_cache(new, field, old)
++sstk_provider_clear_cache()
++sstk_provider_auto_create_ssh_key()
++sstk_provider_test_provider_connection()
++sstk_can_connect_to_provider(provider)
++sstk_get_last_test_connection_status(provider)
++sstk_clear_all_providers_cache(new, field, old)
 }
 ```
 
 **Diagram sources**
-- [class-wpcd-settings.php:72-1109](file://includes/core/class-wpcd-settings.php#L72-L1109)
-- [class-wpcd-settings.php:1117-1696](file://includes/core/class-wpcd-settings.php#L1117-L1696)
-- [class-wpcd-settings.php:1710-1803](file://includes/core/class-wpcd-settings.php#L1710-L1803)
-- [class-wpcd-settings.php:1814-2163](file://includes/core/class-wpcd-settings.php#L1814-L2163)
+- [class-sstk-settings.php:72-1109](file://includes/core/class-sstk-settings.php#L72-L1109)
+- [class-sstk-settings.php:1117-1696](file://includes/core/class-sstk-settings.php#L1117-L1696)
+- [class-sstk-settings.php:1710-1803](file://includes/core/class-sstk-settings.php#L1710-L1803)
+- [class-sstk-settings.php:1814-2163](file://includes/core/class-sstk-settings.php#L1814-L2163)
 
 **Section sources**
-- [class-wpcd-settings.php:72-1109](file://includes/core/class-wpcd-settings.php#L72-L1109)
-- [class-wpcd-settings.php:1117-1696](file://includes/core/class-wpcd-settings.php#L1117-L1696)
-- [class-wpcd-settings.php:1710-1803](file://includes/core/class-wpcd-settings.php#L1710-L1803)
-- [class-wpcd-settings.php:1814-2163](file://includes/core/class-wpcd-settings.php#L1814-L2163)
+- [class-sstk-settings.php:72-1109](file://includes/core/class-sstk-settings.php#L72-L1109)
+- [class-sstk-settings.php:1117-1696](file://includes/core/class-sstk-settings.php#L1117-L1696)
+- [class-sstk-settings.php:1710-1803](file://includes/core/class-sstk-settings.php#L1710-L1803)
+- [class-sstk-settings.php:1814-2163](file://includes/core/class-sstk-settings.php#L1814-L2163)
 
-### WPCD_Admin_Setup_Wizard
+### SSTK_Admin_Setup_Wizard
 Responsibilities:
 - Displays an admin notice prompting users to start the wizard.
-- Enforces presence of WPCD_ENCRYPTION_KEY before allowing progression.
+- Enforces presence of SSTK_ENCRYPTION_KEY before allowing progression.
 - Guides users through provider selection, credential entry, connection testing, and SSH key creation.
 - Saves provider credentials securely and redirects between steps.
 
@@ -176,7 +176,7 @@ Flow highlights:
 
 ```mermaid
 flowchart TD
-Start([Wizard Entry]) --> CheckEncryption["Check WPCD_ENCRYPTION_KEY"]
+Start([Wizard Entry]) --> CheckEncryption["Check SSTK_ENCRYPTION_KEY"]
 CheckEncryption --> |Missing| PromptKey["Prompt to define key in wp-config.php"]
 PromptKey --> StayStep["Stay on general step"]
 CheckEncryption --> |Present| SelectProvider["Select provider"]
@@ -190,20 +190,20 @@ SaveKeys --> NextStep(["Proceed to next step"])
 ```
 
 **Diagram sources**
-- [class-wpcd-setup-wizard.php:312-366](file://includes/core/class-wpcd-setup-wizard.php#L312-L366)
-- [class-wpcd-setup-wizard.php:371-440](file://includes/core/class-wpcd-setup-wizard.php#L371-L440)
-- [class-wpcd-setup-wizard.php:445-731](file://includes/core/class-wpcd-setup-wizard.php#L445-L731)
-- [class-wpcd-setup-wizard.php:736-794](file://includes/core/class-wpcd-setup-wizard.php#L736-L794)
+- [class-sstk-setup-wizard.php:312-366](file://includes/core/class-sstk-setup-wizard.php#L312-L366)
+- [class-sstk-setup-wizard.php:371-440](file://includes/core/class-sstk-setup-wizard.php#L371-L440)
+- [class-sstk-setup-wizard.php:445-731](file://includes/core/class-sstk-setup-wizard.php#L445-L731)
+- [class-sstk-setup-wizard.php:736-794](file://includes/core/class-sstk-setup-wizard.php#L736-L794)
 
 **Section sources**
-- [class-wpcd-setup-wizard.php:68-100](file://includes/core/class-wpcd-setup-wizard.php#L68-L100)
-- [class-wpcd-setup-wizard.php:162-214](file://includes/core/class-wpcd-setup-wizard.php#L162-L214)
-- [class-wpcd-setup-wizard.php:312-366](file://includes/core/class-wpcd-setup-wizard.php#L312-L366)
-- [class-wpcd-setup-wizard.php:371-440](file://includes/core/class-wpcd-setup-wizard.php#L371-L440)
-- [class-wpcd-setup-wizard.php:445-731](file://includes/core/class-wpcd-setup-wizard.php#L445-L731)
-- [class-wpcd-setup-wizard.php:736-794](file://includes/core/class-wpcd-setup-wizard.php#L736-L794)
+- [class-sstk-setup-wizard.php:68-100](file://includes/core/class-sstk-setup-wizard.php#L68-L100)
+- [class-sstk-setup-wizard.php:162-214](file://includes/core/class-sstk-setup-wizard.php#L162-L214)
+- [class-sstk-setup-wizard.php:312-366](file://includes/core/class-sstk-setup-wizard.php#L312-L366)
+- [class-sstk-setup-wizard.php:371-440](file://includes/core/class-sstk-setup-wizard.php#L371-L440)
+- [class-sstk-setup-wizard.php:445-731](file://includes/core/class-sstk-setup-wizard.php#L445-L731)
+- [class-sstk-setup-wizard.php:736-794](file://includes/core/class-sstk-setup-wizard.php#L736-L794)
 
-### WPCD_Custom_Fields
+### SSTK_Custom_Fields
 Responsibilities:
 - Maintains a registry of custom fields with metadata such as display location, type, options, and script merge flags.
 - Provides methods to retrieve all fields, filter by location, and filter by script name for merging into deployment scripts.
@@ -215,7 +215,7 @@ Usage patterns:
 
 ```mermaid
 classDiagram
-class WPCD_Custom_Fields {
+class SSTK_Custom_Fields {
 -custom_fields : array
 +add_field(name, field)
 +get_fields() array
@@ -225,21 +225,22 @@ class WPCD_Custom_Fields {
 ```
 
 **Diagram sources**
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
 
 **Section sources**
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
 
 ### Encryption Utilities
 Responsibilities:
 - Encrypts sensitive strings using AES-128-CBC with a random IV and HMAC-SHA256 integrity check.
-- Supports legacy v1 format and modern v2 format with dynamic IV.
-- Derives encryption key from WPCD_ENCRYPTION_KEY constant, fallback to database-stored key, or generates one if missing.
+- Accepts and emits only the authenticated `sstk-encrypt-v2:` envelope; malformed, tampered, wrong-key, and legacy v1 values are rejected.
+- Resolves the key from an explicit argument, `SSTK_ENCRYPTION_KEY`, or the persistent `sstk_encryption_key_v2` option, generating and storing that fallback once when needed.
 
 Security characteristics:
 - Uses OpenSSL for cryptographic operations.
-- Stores IV and HMAC alongside ciphertext for v2 format.
-- Validates HMAC during decryption to detect tampering.
+- Stores the random IV, HMAC, and ciphertext inside the `sstk-encrypt-v2:` envelope.
+- Validates the envelope prefix and HMAC during decryption to detect tampering.
+- Has no legacy decryption or migration path.
 
 ```mermaid
 flowchart TD
@@ -252,21 +253,21 @@ Combine --> Output["Return prefixed ciphertext"]
 ```
 
 **Diagram sources**
-- [wp-cloud-deploy.php:971-1007](file://includes/core/wp-cloud-deploy.php#L971-L1007)
-- [wp-cloud-deploy.php:1041-1141](file://includes/core/wp-cloud-deploy.php#L1041-L1141)
+- [simple-stack.php:971-1007](file://includes/core/simple-stack.php#L971-L1007)
+- [simple-stack.php:1041-1141](file://includes/core/simple-stack.php#L1041-L1141)
 
 **Section sources**
-- [wp-cloud-deploy.php:971-1007](file://includes/core/wp-cloud-deploy.php#L971-L1007)
-- [wp-cloud-deploy.php:1041-1141](file://includes/core/wp-cloud-deploy.php#L1041-L1141)
+- [simple-stack.php:971-1007](file://includes/core/simple-stack.php#L971-L1007)
+- [simple-stack.php:1041-1141](file://includes/core/simple-stack.php#L1041-L1141)
 
 ### Options API Helpers
 Responsibilities:
-- wpcd_get_option retrieves values from the Metabox.io-managed option array.
-- wpcd_get_early_option reads directly from WordPress options for early bootstrap scenarios.
-- wpcd_set_option writes values directly to the option array.
+- sstk_get_option retrieves values from the Metabox.io-managed option array.
+- sstk_get_early_option reads directly from WordPress options for early bootstrap scenarios.
+- sstk_set_option writes values directly to the option array.
 
 Behavior:
-- Defaults domain to wpcd_settings.
+- Defaults domain to sstk_settings.
 - Returns false if Metabox.io is not available for read operations.
 
 **Section sources**
@@ -275,37 +276,37 @@ Behavior:
 ## Architecture Overview
 The simplified settings architecture focuses on provider configuration and basic application settings:
 
-- Global settings: Defined in WPCD_Settings metaboxes and stored under wpcd_settings. Examples include logging preferences, cache limits, UI toggles, and brand colors.
+- Global settings: Defined in SSTK_Settings metaboxes and stored under sstk_settings. Examples include logging preferences, cache limits, UI toggles, and brand colors.
 - Provider-specific configuration: Dynamically generated per provider with fields for API keys, SSH keys, server sizes, tags, and cache controls. Stored under the same option array with provider-scoped keys.
-- Per-server/site options: Not managed by WPCD_Settings; these are typically post meta for server and app entities. The settings system focuses on application-wide and provider-level configuration.
+- Per-server/site options: Not managed by SSTK_Settings; these are typically post meta for server and app entities. The settings system focuses on application-wide and provider-level configuration.
 
 ```mermaid
 graph TB
-GlobalSettings["Global Settings<br/>General, Logging, Misc, Tools"] --> OptionStore["wpcd_settings"]
+GlobalSettings["Global Settings<br/>General, Logging, Misc, Tools"] --> OptionStore["sstk_settings"]
 ProviderSettings["Provider Settings<br/>API Keys, SSH Keys, Sizes, Tags"] --> OptionStore
 CustomFields["Custom Fields Registry<br/>Location & Script Merge"] --> Scripts["Deployment Scripts"]
 OptionStore --> Applications["Apps & Servers<br/>Use settings at runtime"]
 ```
 
 **Diagram sources**
-- [class-wpcd-settings.php:72-1109](file://includes/core/class-wpcd-settings.php#L72-L1109)
-- [class-wpcd-settings.php:1117-1696](file://includes/core/class-wpcd-settings.php#L1117-L1696)
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
+- [class-sstk-settings.php:72-1109](file://includes/core/class-sstk-settings.php#L72-L1109)
+- [class-sstk-settings.php:1117-1696](file://includes/core/class-sstk-settings.php#L1117-L1696)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
 
 ## Detailed Component Analysis
 
 ### Configuration Storage and Retrieval
-- Storage: All settings are stored in the wpcd_settings option via Metabox.io. Global fields are defined in WPCD_Settings, while provider fields are generated dynamically.
-- Retrieval: Use wpcd_get_option for normal access and wpcd_get_early_option for early bootstrap. Sensitive fields are automatically decrypted via Metabox.io filters.
+- Storage: All settings are stored in the sstk_settings option via Metabox.io. Global fields are defined in SSTK_Settings, while provider fields are generated dynamically.
+- Retrieval: Use sstk_get_option for normal access and sstk_get_early_option for early bootstrap. Sensitive fields are automatically decrypted via Metabox.io filters.
 
 Best practices:
-- Always use wpcd_get_option for consistency.
+- Always use sstk_get_option for consistency.
 - Avoid direct database writes except in controlled automation paths.
 - Ensure sensitive fields are marked for encryption via the appropriate field ID filters.
 
 **Section sources**
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
-- [class-wpcd-settings.php:1658-1692](file://includes/core/class-wpcd-settings.php#L1658-L1692)
+- [class-sstk-settings.php:1658-1692](file://includes/core/class-sstk-settings.php#L1658-L1692)
 
 ### Validation and Sanitization
 - Frontend validation: Some JavaScript files perform client-side validation for webhooks and URLs.
@@ -318,32 +319,32 @@ Recommendations:
 - Leverage existing nonce checks for AJAX actions.
 
 **Section sources**
-- [class-wpcd-setup-wizard.php:421-440](file://includes/core/class-wpcd-setup-wizard.php#L421-L440)
-- [class-wpcd-setup-wizard.php:682-731](file://includes/core/class-wpcd-setup-wizard.php#L682-L731)
-- [class-wpcd-settings.php:1905-1932](file://includes/core/class-wpcd-settings.php#L1905-L1932)
-- [class-wpcd-settings.php:2000-2048](file://includes/core/class-wpcd-settings.php#L2000-L2048)
+- [class-sstk-setup-wizard.php:421-440](file://includes/core/class-sstk-setup-wizard.php#L421-L440)
+- [class-sstk-setup-wizard.php:682-731](file://includes/core/class-sstk-setup-wizard.php#L682-L731)
+- [class-sstk-settings.php:1905-1932](file://includes/core/class-sstk-settings.php#L1905-L1932)
+- [class-sstk-settings.php:2000-2048](file://includes/core/class-sstk-settings.php#L2000-L2048)
 
-### Migration Between Versions
-- Default settings: WPCD_Setup initializes default values for wpcd_settings on activation.
-- Versioned encryption: Encryption utilities support v1 and v2 formats, enabling migration of existing encrypted data without re-encryption.
-- Data sync: Optional data sync features allow exporting/importing settings and records between sites, facilitating environment migrations.
+### Configuration Upgrades
+- Default settings: `SSTK_Setup` initializes default values for `sstk_settings` on activation.
+- Encryption: Only `sstk-encrypt-v2:` values are supported. Legacy v1 envelopes are rejected rather than decrypted or migrated.
+- Data portability: There is no retired data-sync compatibility layer; configuration moves through explicit operator-controlled exports or fresh setup.
 
-Migration strategy:
-- Define new defaults in WPCD_Setup and ensure they are applied on upgrade.
-- Use versioned encryption to maintain compatibility with existing data.
-- Provide export/import workflows for complex configuration sets.
+Upgrade strategy:
+- Define new defaults in `SSTK_Setup` and ensure they are applied on upgrade.
+- Re-enter any credential that is not a valid authenticated v2 envelope.
+- Use explicit configuration workflows for complex environment setup.
 
 **Section sources**
-- [wp-cloud-deploy.php:1021-1029](file://includes/core/wp-cloud-deploy.php#L1021-L1029)
-- [wp-cloud-deploy.php:1041-1141](file://includes/core/wp-cloud-deploy.php#L1041-L1141)
-- [class-wpcd-settings.php:856-1038](file://includes/core/class-wpcd-settings.php#L856-L1038)
+- [simple-stack.php:1021-1029](file://includes/core/simple-stack.php#L1021-L1029)
+- [simple-stack.php:1041-1141](file://includes/core/simple-stack.php#L1041-L1141)
+- [class-sstk-settings.php:856-1038](file://includes/core/class-sstk-settings.php#L856-L1038)
 
 ### Adding New Settings
 Steps:
-1. Define a new metabox field in WPCD_Settings under the appropriate tab.
+1. Define a new metabox field in SSTK_Settings under the appropriate tab.
 2. If the field contains sensitive data, attach encryption/decryption filters for the field ID.
 3. Provide validation logic in the relevant handler or AJAX endpoint.
-4. Expose the setting via wpcd_get_option for retrieval.
+4. Expose the setting via sstk_get_option for retrieval.
 
 Example pattern:
 - Add field definition in provider_fields or global metaboxes.
@@ -351,24 +352,25 @@ Example pattern:
 - Attach rwmb_{field}_field_meta filter to decrypt on load.
 
 **Section sources**
-- [class-wpcd-settings.php:1658-1692](file://includes/core/class-wpcd-settings.php#L1658-L1692)
+- [class-sstk-settings.php:1658-1692](file://includes/core/class-sstk-settings.php#L1658-L1692)
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
 
 ### Security Considerations
-- Encryption key: Require WPCD_ENCRYPTION_KEY constant for secure storage of sensitive data.
+- Encryption key: The setup wizard requires `SSTK_ENCRYPTION_KEY` before it will advance. Runtime encryption also has a persistent `sstk_encryption_key_v2` fallback for non-wizard callers.
 - Sensitive fields: Automatically encrypt API keys, private SSH keys, and passwords using Metabox.io filters.
 - Access control: Restrict settings page access to administrators and enforce capability checks.
 - Nonce validation: Validate nonces for all AJAX actions to prevent CSRF attacks.
 
 Recommendations:
-- Always define WPCD_ENCRYPTION_KEY in wp-config.php.
+- Define `SSTK_ENCRYPTION_KEY` in `wp-config.php` for a stable, operator-controlled master key and to complete the setup wizard.
+- Treat the persistent fallback as a runtime safety net, not a replacement for the wizard requirement.
 - Avoid logging sensitive data; use redaction utilities where necessary.
 - Limit exposure of private keys in UI and logs.
 
 **Section sources**
-- [class-wpcd-setup-wizard.php:312-366](file://includes/core/class-wpcd-setup-wizard.php#L312-L366)
-- [class-wpcd-settings.php:1658-1692](file://includes/core/class-wpcd-settings.php#L1658-L1692)
-- [wp-cloud-deploy.php:971-1141](file://includes/core/wp-cloud-deploy.php#L971-L1141)
+- [class-sstk-setup-wizard.php:312-366](file://includes/core/class-sstk-setup-wizard.php#L312-L366)
+- [class-sstk-settings.php:1658-1692](file://includes/core/class-sstk-settings.php#L1658-L1692)
+- [simple-stack.php:971-1141](file://includes/core/simple-stack.php#L971-L1141)
 
 ## Dependency Analysis
 The simplified settings system depends on:
@@ -378,20 +380,20 @@ The simplified settings system depends on:
 - Encryption utilities for securing sensitive data.
 
 Coupling:
-- WPCD_Settings is tightly coupled with Metabox.io and provider APIs.
-- Setup wizard depends on WPCD_Settings for provider field generation and encryption utilities for credential handling.
+- SSTK_Settings is tightly coupled with Metabox.io and provider APIs.
+- Setup wizard depends on SSTK_Settings for provider field generation and encryption utilities for credential handling.
 - Custom fields are loosely coupled and can be extended independently.
 
 Potential circular dependencies:
 - None identified; dependencies are hierarchical and unidirectional.
 
 External integrations:
-- Cloud providers (e.g., Vultr, UpCloud, Hetzner, Linode, DigitalOcean).
+- Cloud providers: Vultr API v2 and UpCloud API 1.3 only.
 - WordPress admin UI and AJAX infrastructure.
 
 ```mermaid
 graph TB
-SettingsClass["WPCD_Settings"] --> MetaboxIO["Metabox.io"]
+SettingsClass["SSTK_Settings"] --> MetaboxIO["Metabox.io"]
 SettingsClass --> Providers["Cloud Provider APIs"]
 SetupWizard["Setup Wizard"] --> SettingsClass
 SetupWizard --> Crypto["Encryption Utilities"]
@@ -399,21 +401,21 @@ CustomFields["Custom Fields"] --> Scripts["Deployment Scripts"]
 ```
 
 **Diagram sources**
-- [class-wpcd-settings.php:72-1109](file://includes/core/class-wpcd-settings.php#L72-L1109)
-- [class-wpcd-setup-wizard.php:162-214](file://includes/core/class-wpcd-setup-wizard.php#L162-L214)
-- [wp-cloud-deploy.php:971-1141](file://includes/core/wp-cloud-deploy.php#L971-L1141)
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
+- [class-sstk-settings.php:72-1109](file://includes/core/class-sstk-settings.php#L72-L1109)
+- [class-sstk-setup-wizard.php:162-214](file://includes/core/class-sstk-setup-wizard.php#L162-L214)
+- [simple-stack.php:971-1141](file://includes/core/simple-stack.php#L971-L1141)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
 
 **Section sources**
-- [class-wpcd-settings.php:72-1109](file://includes/core/class-wpcd-settings.php#L72-L1109)
-- [class-wpcd-setup-wizard.php:162-214](file://includes/core/class-wpcd-setup-wizard.php#L162-L214)
-- [wp-cloud-deploy.php:971-1141](file://includes/core/wp-cloud-deploy.php#L971-L1141)
-- [class-wpcd-custom-fields.php:19-114](file://includes/core/class-wpcd-custom-fields.php#L19-L114)
+- [class-sstk-settings.php:72-1109](file://includes/core/class-sstk-settings.php#L72-L1109)
+- [class-sstk-setup-wizard.php:162-214](file://includes/core/class-sstk-setup-wizard.php#L162-L214)
+- [simple-stack.php:971-1141](file://includes/core/simple-stack.php#L971-L1141)
+- [class-sstk-custom-fields.php:19-114](file://includes/core/class-sstk-custom-fields.php#L19-L114)
 
 ## Performance Considerations
 - Provider caching: Cache provider responses (sizes, keys, regions) to reduce API calls and respect rate limits. Adjust cache durations via provider cache limit fields.
 - Lazy loading: Only render advanced provider fields when credentials are configured and connection is verified.
-- Minimize database writes: Use wpcd_get_early_option for read-heavy early bootstrap scenarios to avoid unnecessary Metabox.io overhead.
+- Minimize database writes: Use sstk_get_early_option for read-heavy early bootstrap scenarios to avoid unnecessary Metabox.io overhead.
 
 Optimization tips:
 - Increase cache durations after initial setup to improve performance.
@@ -421,13 +423,13 @@ Optimization tips:
 - Avoid excessive logging in production environments.
 
 **Section sources**
-- [class-wpcd-settings.php:1755-1777](file://includes/core/class-wpcd-settings.php#L1755-L1777)
-- [class-wpcd-settings.php:1814-1854](file://includes/core/class-wpcd-settings.php#L1814-L1854)
+- [class-sstk-settings.php:1755-1777](file://includes/core/class-sstk-settings.php#L1755-L1777)
+- [class-sstk-settings.php:1814-1854](file://includes/core/class-sstk-settings.php#L1814-L1854)
 - [functions.php:163-170](file://includes/core/functions.php#L163-L170)
 
 ## Troubleshooting Guide
 Common issues and resolutions:
-- Missing encryption key: The setup wizard will block progression until WPCD_ENCRYPTION_KEY is defined. Define it in wp-config.php and retry.
+- Missing encryption key: The setup wizard blocks progression until `SSTK_ENCRYPTION_KEY` is defined. Runtime encryption outside the wizard uses the persistent `sstk_encryption_key_v2` fallback.
 - Provider connection failures: Use the Test Connection button to validate credentials. Check network access, IP whitelisting, and API permissions.
 - Stale provider data: Clear provider caches via the Clear Cached Data button to refresh lists of keys and sizes.
 - Sensitive data exposure: Ensure encryption filters are active for sensitive fields and avoid logging raw credentials.
@@ -438,22 +440,22 @@ Debugging steps:
 - Inspect Metabox.io field definitions for missing encryption filters.
 
 **Section sources**
-- [class-wpcd-setup-wizard.php:312-366](file://includes/core/class-wpcd-setup-wizard.php#L312-L366)
-- [class-wpcd-settings.php:1905-1932](file://includes/core/class-wpcd-settings.php#L1905-L1932)
-- [class-wpcd-settings.php:2000-2048](file://includes/core/class-wpcd-settings.php#L2000-L2048)
+- [class-sstk-setup-wizard.php:312-366](file://includes/core/class-sstk-setup-wizard.php#L312-L366)
+- [class-sstk-settings.php:1905-1932](file://includes/core/class-sstk-settings.php#L1905-L1932)
+- [class-sstk-settings.php:2000-2048](file://includes/core/class-sstk-settings.php#L2000-L2048)
 
 ## Conclusion
-SimpleStack's simplified settings management system provides a focused, robust framework for managing provider-specific configurations and basic application settings. It emphasizes security through mandatory encryption keys and automatic encryption of sensitive fields. The streamlined setup wizard simplifies initial configuration, while custom fields enable flexible metadata handling. By following the recommended patterns for adding settings, validating input, and migrating data, developers can extend the system safely and efficiently.
+Simple Stack's simplified settings management system provides a focused, robust framework for managing provider-specific configurations and basic application settings. It emphasizes authenticated v2 encryption for sensitive fields, a persistent fallback key for runtime callers, and a separate setup-wizard requirement for `SSTK_ENCRYPTION_KEY`. The streamlined setup wizard simplifies initial configuration, while custom fields enable flexible metadata handling. By following the recommended patterns for adding settings and validating input, developers can extend the system safely and efficiently.
 
 ## Appendices
 
 ### Example: Adding a New Setting
-- Define a new metabox field in WPCD_Settings under the appropriate tab.
+- Define a new metabox field in SSTK_Settings under the appropriate tab.
 - If sensitive, attach encryption/decryption filters for the field ID.
-- Retrieve the setting using wpcd_get_option.
+- Retrieve the setting using sstk_get_option.
 
 Reference paths:
-- [class-wpcd-settings.php:1658-1692](file://includes/core/class-wpcd-settings.php#L1658-L1692)
+- [class-sstk-settings.php:1658-1692](file://includes/core/class-sstk-settings.php#L1658-L1692)
 - [functions.php:144-196](file://includes/core/functions.php#L144-L196)
 
 ### Example: Validating User Input
@@ -461,14 +463,14 @@ Reference paths:
 - Implement AJAX handlers with nonce checks and permission validation.
 
 Reference paths:
-- [class-wpcd-setup-wizard.php:421-440](file://includes/core/class-wpcd-setup-wizard.php#L421-L440)
-- [class-wpcd-settings.php:1905-1932](file://includes/core/class-wpcd-settings.php#L1905-L1932)
+- [class-sstk-setup-wizard.php:421-440](file://includes/core/class-sstk-setup-wizard.php#L421-L440)
+- [class-sstk-settings.php:1905-1932](file://includes/core/class-sstk-settings.php#L1905-L1932)
 
-### Example: Migrating Configuration Data
+### Example: Upgrading Configuration Data
 - Update default settings for new versions.
-- Use versioned encryption to maintain compatibility with existing data.
-- Leverage data sync features for cross-site migrations.
+- Keep only authenticated `sstk-encrypt-v2:` credential envelopes; re-enter invalid or legacy values.
+- Use explicit operator-controlled configuration workflows for environment setup.
 
 Reference paths:
-- [wp-cloud-deploy.php:1021-1029](file://includes/core/wp-cloud-deploy.php#L1021-L1029)
-- [class-wpcd-settings.php:856-1038](file://includes/core/class-wpcd-settings.php#L856-L1038)
+- [simple-stack.php:1021-1029](file://includes/core/simple-stack.php#L1021-L1029)
+- [class-sstk-settings.php:856-1038](file://includes/core/class-sstk-settings.php#L856-L1038)

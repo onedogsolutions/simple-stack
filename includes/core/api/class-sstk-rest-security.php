@@ -1,8 +1,10 @@
 <?php
 /**
- * SimpleStack REST controller for site security posture.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * Simple Stack REST controller for site security posture.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,18 +12,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class SimpleStack_REST_Security
+ * Class SSTK_REST_Security
  *
  * Runs a strictly read-only probe against a site and reports what is installed and
  * how it is configured. Nothing here mutates the remote system and no key material
  * is ever placed in the response.
  */
-class SimpleStack_REST_Security extends SimpleStack_REST_Controller_Base {
+class SSTK_REST_Security extends SSTK_REST_Controller_Base {
 
 	/**
-	 * Separator used to merge three read-only commands into one SSH round trip.
+	 * Separator used to merge four read-only commands into one SSH round trip.
 	 */
-	const SPLIT = '#SIMPLESTACK#';
+	const SPLIT = '#SSTK#';
 
 	/**
 	 * Register the security routes.
@@ -51,11 +53,11 @@ class SimpleStack_REST_Security extends SimpleStack_REST_Controller_Base {
 		$app_id = (int) $request->get_param( 'id' );
 		$app    = get_post( $app_id );
 
-		if ( ! $app || 'wpcd_app' !== $app->post_type ) {
-			return $this->error( 'simplestack_site_not_found', __( 'Site not found.', 'wpcd' ), 404 );
+		if ( ! $app || 'sstk_app' !== $app->post_type ) {
+			return $this->error( 'sstk_site_not_found', __( 'Site not found.', 'simple-stack' ), 404 );
 		}
 
-		$domain    = WPCD_WORDPRESS_APP()->get_domain_name( $app_id );
+		$domain    = SSTK_WORDPRESS_APP()->get_domain_name( $app_id );
 		$server_id = (int) get_post_meta( $app_id, 'parent_post_id', true );
 
 		$data = array(
@@ -70,7 +72,7 @@ class SimpleStack_REST_Security extends SimpleStack_REST_Controller_Base {
 		);
 
 		if ( empty( $domain ) || $server_id <= 0 ) {
-			$data['message'] = __( 'The site record has no domain or no parent server, so it cannot be probed.', 'wpcd' );
+			$data['message'] = __( 'The site record has no domain or no parent server, so it cannot be probed.', 'simple-stack' );
 			return $this->respond( $data );
 		}
 
@@ -81,7 +83,7 @@ class SimpleStack_REST_Security extends SimpleStack_REST_Controller_Base {
 			return $this->respond( $data );
 		}
 
-		$output = WPCD_WORDPRESS_APP()->ssh()->exec(
+		$output = SSTK_WORDPRESS_APP()->ssh()->exec(
 			$ssh['ip'],
 			$this->build_command( $domain ),
 			$ssh,
@@ -199,17 +201,17 @@ class SimpleStack_REST_Security extends SimpleStack_REST_Controller_Base {
 	 */
 	protected function resolve_ssh( int $server_id ) {
 
-		$provider = WPCD_SERVER()->get_server_provider( $server_id );
+		$provider = SSTK_SERVER()->get_server_provider( $server_id );
 
 		if ( empty( $provider ) ) {
-			return $this->error( 'simplestack_server_not_found', __( 'The site has no provider recorded on its server.', 'wpcd' ), 404 );
+			return $this->error( 'sstk_server_not_found', __( 'The site has no provider recorded on its server.', 'simple-stack' ), 404 );
 		}
 
-		if ( empty( WPCD()->get_provider_api( $provider ) ) ) {
-			return $this->error( 'simplestack_provider_unavailable', __( 'The provider for this site is not installed in this build.', 'wpcd' ), 400 );
+		if ( empty( SSTK()->get_provider_api( $provider ) ) ) {
+			return $this->error( 'sstk_provider_unavailable', __( 'The provider for this site is not installed in this build.', 'simple-stack' ), 400 );
 		}
 
-		$key = WPCD_WORDPRESS_APP()->ssh()->get_ssh_key_details(
+		$key = SSTK_WORDPRESS_APP()->ssh()->get_ssh_key_details(
 			array(
 				'post_id'  => $server_id,
 				'provider' => $provider,
@@ -217,7 +219,7 @@ class SimpleStack_REST_Security extends SimpleStack_REST_Controller_Base {
 		);
 
 		if ( empty( $key ) || empty( $key['ip'] ) ) {
-			return $this->error( 'simplestack_ssh_unavailable', __( 'The server is not reachable right now. Its provider instance may still be starting.', 'wpcd' ), 400 );
+			return $this->error( 'sstk_ssh_unavailable', __( 'The server is not reachable right now. Its provider instance may still be starting.', 'simple-stack' ), 400 );
 		}
 
 		return $key;

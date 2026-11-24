@@ -1,3 +1,4 @@
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 echo "done" && {
     cd ~ ; 
 	} && {
@@ -28,7 +29,7 @@ echo "done" && {
     sudo -E wget --no-check-certificate -O ##SCRIPT_NAME## ##SCRIPT_URL## &&
     export interactive=no &&
     sudo -E dos2unix ##SCRIPT_NAME## >> ##SCRIPT_LOGS##.log.intermed 2>&1 &&
-	export webserver_type=##WEBSERVER_TYPE## name=##NAME## post_id=##POST_ID## post_processing_script_server=##POST_PROCESSING_SCRIPT_SERVER## secret_key_manager_api_key=##SECRET_KEY_MANAGER_API_KEY## SIMPLE_STACK_ADMIN_IP='##SIMPLE_STACK_ADMIN_IP##' &&
+	export webserver_type=##WEBSERVER_TYPE## name=##NAME## post_id=##POST_ID## post_processing_script_server=##POST_PROCESSING_SCRIPT_SERVER## secret_key_manager_api_key=##SECRET_KEY_MANAGER_API_KEY## SSTK_ADMIN_IP='##SSTK_ADMIN_IP##' &&
 	sudo -E echo "###################################################################################################" >> ##SCRIPT_LOGS##.log.intermed 2>&1 &&
 	sudo -E echo "# This is the start of the installation of the meat of your WordPress server.                      " >> ##SCRIPT_LOGS##.log.intermed 2>&1 &&
 	sudo -E echo "# We will be installing your Webserver stack, multiple PHP versions, firewall and more.            " >> ##SCRIPT_LOGS##.log.intermed 2>&1 &&

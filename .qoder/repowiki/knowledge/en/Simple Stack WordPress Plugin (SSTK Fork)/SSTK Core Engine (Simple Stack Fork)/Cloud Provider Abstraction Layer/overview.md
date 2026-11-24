@@ -1,1 +1,1 @@
-Abstracts multiple cloud server providers (DigitalOcean, Vultr, UpCloud, custom servers) behind a common PHP API for provisioning, snapshots, resizing, and lifecycle management.
+Abstracts the two supported cloud providers—Vultr API v2 and UpCloud API 1.3—behind a common PHP API for provisioning, resizing, SSH keys, snapshots where supported, and server lifecycle management. Virtual provider aliases reuse these two implementations; DigitalOcean and custom-server providers are not supported.

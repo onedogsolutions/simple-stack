@@ -1,4 +1,5 @@
-var ajaxurl=wpcd_wpapp_params.ajaxurl;
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
+var ajaxurl=sstk_wpapp_params.ajaxurl;
 
 /* global ajaxurl */
 /* global params */
@@ -15,7 +16,7 @@ var ajaxurl=wpcd_wpapp_params.ajaxurl;
         // Resize the public/front-end grid
         function table_grid_view() {
 
-            $('.wpcd-list-table.wpcd-grid-table').each( function() {
+            $('.sstk-list-table.sstk-grid-table').each( function() {
 
                     $(this).removeClass('table-hidden');
                     if( $(this).width() < $(this).data('max-width') ) {
@@ -37,22 +38,22 @@ var ajaxurl=wpcd_wpapp_params.ajaxurl;
         
 
         // Remove A WordPress Site/App/Server.
-        $('body').on('click', '.wpcd_public_row_del_item_action', function(e) {
+        $('body').on('click', '.sstk_public_row_del_item_action', function(e) {
 
             e.preventDefault();
             
-            var action = $(this).attr('data-wpcd-action');
-            var type = $(this).attr('data-wpcd-type');
-            var _action = 'wpcd_public_' + type+'_' + action;
+            var action = $(this).attr('data-sstk-action');
+            var type = $(this).attr('data-sstk-type');
+            var _action = 'sstk_public_' + type+'_' + action;
             
             var prompt = "";
             var prompr_action_name = action == 'trash' ? 'delete' : action;
             var messages = new Array();
             
             if( 'app' == type ) {
-                    messages = JSON.parse( wpcd_public_app_delete_messages );
+                    messages = JSON.parse( sstk_public_app_delete_messages );
             } else if( 'server' == type ) {
-                    messages = JSON.parse( wpcd_public_server_delete_messages );
+                    messages = JSON.parse( sstk_public_server_delete_messages );
             }
             
             prompt = messages[ prompr_action_name ];
@@ -61,11 +62,11 @@ var ajaxurl=wpcd_wpapp_params.ajaxurl;
             }
             
             // Setup form data as necessary
-            var id = $(this).attr('data-wpcd-id');
+            var id = $(this).attr('data-sstk-id');
             var formData = new FormData();
             formData.append('action', params.action);
             formData.append('_action', _action);
-            formData.append('nonce', $(this).attr('data-wpcd-nonce'));
+            formData.append('nonce', $(this).attr('data-sstk-nonce'));
             formData.append('id', id);
             formData.append('params', '');
 
@@ -99,4 +100,4 @@ var ajaxurl=wpcd_wpapp_params.ajaxurl;
 
     }
 
-})(jQuery, wpcd_wpapp_params);
+})(jQuery, sstk_wpapp_params);

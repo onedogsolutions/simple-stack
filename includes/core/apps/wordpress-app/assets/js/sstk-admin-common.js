@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
  * This JS file is loaded for WordPress admin.
  */
@@ -14,7 +15,7 @@
     function init() {
 
         // Dismiss the admin notice that shows up when the bash script folded isn't readable by outside http calls.
-        $('body').on('click', '.wpcd-readability-check .notice-dismiss', function(e) {
+        $('body').on('click', '.sstk-readability-check .notice-dismiss', function(e) {
             e.preventDefault();
             $.ajax({
                 url: ajaxurl,
@@ -31,7 +32,7 @@
 
         // Recheck to see if the bash scripts folded can be read by outside http calls.
         // This is triggered when the user clicks a button on the notice that shows up when the bash script folded isn't readable by outside http calls.
-        $('body').on('click', '.wpcd-readability-check #wpcd-check-again', function(e) {
+        $('body').on('click', '.sstk-readability-check #sstk-check-again', function(e) {
             e.preventDefault();
             $.ajax({
                 url: ajaxurl,
@@ -48,7 +49,7 @@
         });
 
         // Dismiss the admin notice that shows up when the crons aren't scheduled and loaded.
-        $('body').on('click', '.wpcd-cron-check .notice-dismiss', function(e) {
+        $('body').on('click', '.sstk-cron-check .notice-dismiss', function(e) {
             e.preventDefault();
             $.ajax({
                 url: ajaxurl,
@@ -64,7 +65,7 @@
         });
 
         // Dismiss the admin notice that shows up when the PHP version does not match the condition.
-        $('body').on('click', '.wpcd-php-version-check .notice-dismiss', function(e) {
+        $('body').on('click', '.sstk-php-version-check .notice-dismiss', function(e) {
             e.preventDefault();
             $.ajax({
                 url: ajaxurl,
@@ -80,7 +81,7 @@
         });
 
         // Dismiss the admin notice that shows up when the plugin is on a localhost server.
-        $('body').on('click', '.wpcd-localhost-check .notice-dismiss', function(e) {
+        $('body').on('click', '.sstk-localhost-check .notice-dismiss', function(e) {
             e.preventDefault();
             $.ajax({
                 url: ajaxurl,
@@ -112,13 +113,13 @@
         }
 
         // Click to copy functionality.
-        $('body').on('click', '.wpcd-click-to-copy', function(e) {
+        $('body').on('click', '.sstk-click-to-copy', function(e) {
             e.preventDefault();
             /* Get parent link & target */
             var has_parent_link = $(this).find('a').attr('href');
             var has_link_target = $(this).find('a').attr('target');
             /* Get the IP field */
-            var copyText = $(this).find('.wpcd-click-to-copy-text');
+            var copyText = $(this).find('.sstk-click-to-copy-text');
             /* Copy the IP inside the IP field */
             var IP = copyText.text().trim();
 
@@ -129,9 +130,9 @@
             }
             /* Alert the copied IP */
             var $copiedElement = $("<span>");
-            $copiedElement.addClass('wpcd-copied').text($(this).find('.wpcd-click-to-copy-label').data('label'));
+            $copiedElement.addClass('sstk-copied').text($(this).find('.sstk-click-to-copy-label').data('label'));
             $(this).append($copiedElement);
-            $(this).find('.wpcd-click-to-copy-label').addClass('wpcd-copy-hidden');
+            $(this).find('.sstk-click-to-copy-label').addClass('sstk-copy-hidden');
             $copiedElement.fadeIn(100);
             $copiedElement.fadeOut(2000);
             setTimeout(function() { 
@@ -147,12 +148,12 @@
         });
 
         // Show copy text on mouse hover.
-        $(".wpcd-click-to-copy").hover(
+        $(".sstk-click-to-copy").hover(
             function() {
-                $(this).children(".wpcd-click-to-copy-label").removeClass("wpcd-copy-hidden");
+                $(this).children(".sstk-click-to-copy-label").removeClass("sstk-copy-hidden");
             },
             function() {
-                $(this).children(".wpcd-click-to-copy-label").addClass('wpcd-copy-hidden');
+                $(this).children(".sstk-click-to-copy-label").addClass('sstk-copy-hidden');
             }
         );
     }

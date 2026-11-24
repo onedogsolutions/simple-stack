@@ -1,16 +1,15 @@
 # PHP Performance Tuning
 
 <cite>
-**Referenced Files in This Document**   
-- [SIMPLESTACK.md](file://docs/SIMPLESTACK.md)
+**Referenced Files in This Document**
+- [docs/SIMPLESTACK.md](file://docs/SIMPLESTACK.md)
 - [php-options.php](file://includes/core/apps/wordpress-app/tabs/php-options.php)
-- [class-wordpress-posts-site-package.php](file://includes/core/apps/wordpress-app/class-wordpress-posts-site-package.php)
-- [39-php_workers.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt)
-- [01-prepare_server.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt)
-- [1020-upgrade_460_performance.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/1020-upgrade_460_performance.txt)
-- [class-wpcd-ssh.php](file://includes/core/apps/class-wpcd-ssh.php)
-- [class-simplestack-rest-security.php](file://includes/core/api/class-simplestack-rest-security.php)
-- [class-simplestack-secret-redactor.php](file://includes/core/api/class-simplestack-secret-redactor.php)
+- [01-prepare_server.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt)
+- [10-misc.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt)
+- [55-ols_options.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt)
+- [change_php_version_misc.txt](file://includes/core/apps/wordpress-app/scripts/v2/change_php_version_misc.txt)
+- [change_php_option_misc.txt](file://includes/core/apps/wordpress-app/scripts/v2/change_php_option_misc.txt)
+- [restart_php_service.txt](file://includes/core/apps/wordpress-app/scripts/v2/restart_php_service.txt)
 </cite>
 
 ## Table of Contents
@@ -25,385 +24,273 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how SimpleStack configures and tunes the PHP execution environment for WordPress sites. It focuses on:
 
-- PHP-FPM worker process configuration and pool tuning.
-- Memory limits, upload sizing, and execution timeouts.
-- OPcache activation and memory pool settings.
-- OpenLiteSpeed vs NGINX differences that affect performance tuning.
-- Error reporting and production-safe logging behavior.
-- Benchmarking, profiling, and system parameter fine-tuning guidance.
+Simple Stack runs WordPress on OpenLiteSpeed with LiteSpeed PHP (`lsphp83`, `lsphp84`, and `lsphp85`). PHP 8.4 is the provisioned default. PHP tuning is split between server-wide defaults established during provisioning and per-site overrides managed from the WordPress App PHP Options tab.
 
-SimpleStack is an internal hosting control-plane plugin whose default stack targets OpenLiteSpeed with `lsphp83`, `lsphp84`, and `lsphp85`. The repository also contains legacy provisioning scripts for NGINX + PHP-FPM environments, which still influence site-level worker controls and historical performance upgrades.
+The supported controls are:
+
+- Per-site PHP version selection among 8.3, 8.4, and 8.5.
+- Per-site common and advanced PHP directives.
+- Upload-size changes.
+- PHP module enable/disable actions.
+- WordPress debug-log routing.
+- OpenLiteSpeed restart actions that reload its LSPHP processes.
+
+All provisioning and management commands resolve under `includes/core/apps/wordpress-app/scripts/v2/`. OpenLiteSpeed owns the LSPHP processes; Simple Stack does not manage a separate PHP worker-pool service.
 
 **Section sources**
-- [SIMPLESTACK.md:1-11](file://docs/SIMPLESTACK.md#L1-L11)
+- [php-options.php:129-171](file://includes/core/apps/wordpress-app/tabs/php-options.php#L129-L171)
+- [01-prepare_server.txt:295-340](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L295-L340)
 
 ## Project Structure
-The PHP performance surface spans three layers:
 
 | Layer | Responsibility | Key Files |
 |---|---|---|
-| Admin UI schema | Defines PHP options, workers, version switching, and restart actions | `php-options.php`, `class-wordpress-posts-site-package.php` |
-| Server-side provisioning | Installs PHP versions, sets defaults, enables OPcache, hardens functions, installs Redis | `01-prepare_server.txt`, `1020-upgrade_460_performance.txt` |
-| Worker management script | Updates per-domain PHP-FPM pool directives and reloads services | `39-php_workers.txt` |
+| Admin action dispatcher | Checks site permissions, validates PHP versions and common option names, builds SSH commands | `php-options.php` |
+| Provisioning | Installs the supported LSPHP packages, selects PHP 8.4 as the default, configures runtime limits and OPcache | `scripts/v2/raw/01-prepare_server.txt` |
+| Site management | Changes the vhost LSPHP handler, edits per-site PHP configuration, manages modules, debug logging, and upload limits | `scripts/v2/raw/10-misc.txt` |
+| OpenLiteSpeed options | Validates OLS configuration and manages global/server-site limits and restricted functions | `scripts/v2/raw/55-ols_options.txt` |
+| Command wrappers | Substitute command parameters and execute the selected raw script over SSH | `change_php_version_misc.txt`, `change_php_option_misc.txt`, `restart_php_service.txt` |
 
 ```mermaid
 graph TB
-Admin["WordPress Admin<br/>PHP Options Tab"] --> REST["SimpleStack REST API"]
-REST --> AppClass["WordPress App Class"]
-AppClass --> SSH["SSH Execution Layer"]
-SSH --> Script["Worker Change Script"]
-Script --> PoolConf["Per-Domain PHP-FPM Pool Config"]
-Script --> Service["PHP-FPM Service"]
-Provision["Server Provisioning Script"] --> PHPIni["PHP INI Files"]
-Provision --> OPcache["OPcache Settings"]
-Provision --> Redis["Redis Installation"]
+    Admin["WordPress Admin<br/>PHP Options Tab"] --> Dispatcher["Site Action Dispatcher<br/>Permissions and validation"]
+    Dispatcher --> SSH["SSH Command Layer"]
+    SSH --> Version["change_php_version_misc.txt"]
+    SSH --> Options["change_php_option_misc.txt"]
+    SSH --> Restart["restart_php_service.txt"]
+    Version --> Misc["raw/10-misc.txt"]
+    Options --> Misc
+    Restart --> Misc
+    Misc --> Vhost["OpenLiteSpeed Vhost<br/>LSPHP handler and php_admin_value"]
+    Misc --> SiteIni["Per-site .phpini/php.ini"]
+    Misc --> OLS["OpenLiteSpeed<br/>Configuration check and restart"]
+    Provision["raw/01-prepare_server.txt"] --> GlobalIni["Global LSPHP php.ini<br/>Runtime limits and OPcache"]
+    Provision --> OLS
 ```
 
 **Diagram sources**
-- [php-options.php:115-196](file://includes/core/apps/wordpress-app/tabs/php-options.php#L115-L196)
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
-- [01-prepare_server.txt:849-864](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L864)
-
-**Section sources**
-- [SIMPLESTACK.md:15-32](file://docs/SIMPLESTACK.md#L15-L32)
-- [php-options.php:15-35](file://includes/core/apps/wordpress-app/tabs/php-options.php#L15-L35)
+- [php-options.php:570-769](file://includes/core/apps/wordpress-app/tabs/php-options.php#L570-L769)
+- [10-misc.txt:183-229](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L183-L229)
+- [10-misc.txt:348-395](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L348-L395)
+- [01-prepare_server.txt:442-474](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L442-L474)
 
 ## Core Components
-SimpleStack exposes PHP performance tuning through a dedicated tab and supporting data structures:
 
-- **PHP Options Tab**: Provides fields for changing PHP version, restarting PHP, setting common PHP options, adding advanced PHP options, and updating PHP workers.
-- **Site Package Fields**: Stores worker mode, max children, start servers, min spare servers, max spare servers, memory limit, and maximum execution time.
-- **Worker Script**: A Bash script that edits per-domain PHP-FPM pool configuration and conditionally reloads PHP-FPM after validation.
-- **Provisioning Scripts**: Set baseline PHP runtime values, enable OPcache, configure session paths, restrict dangerous functions, and install caching backends.
+### PHP Options Tab
 
-Key responsibilities:
+`SSTK_WORDPRESS_TABS_PHP_OPTIONS` registers the existing WordPress App tab actions and two optional action hooks:
 
-| Component | Purpose |
-|---|---|
-| `WPCD_WORDPRESS_TABS_PHP_OPTIONS` | Renders PHP-related tabs, validates permissions, dispatches actions such as restart, version change, option update, and worker update. |
-| Site package meta | Persists user-selected PHP worker and runtime values. |
-| `39-php_workers.txt` | Applies validated worker changes to the active PHP-FPM pool file. |
-| `01-prepare_server.txt` | Sets default PHP runtime values and OPcache configuration during server preparation. |
-| `1020-upgrade_460_performance.txt` | Historical upgrade routine enabling OPcache across multiple PHP versions (now marked unsupported). |
+- `sstk_wordpress-app_do_change_php_version`
+- `sstk_wordpress-app_do_change_php_options`
+
+Common-option changes are gated by the site-level PHP-option permission check. The common option allowlist contains:
+
+- `upload_max_filesize`
+- `post_max_size`
+- `memory_limit`
+- `max_execution_time`
+- `max_input_time`
+- `max_input_vars`
+
+Advanced changes accept another directive name and value. Values are sanitized for form use and shell-escaped before being passed to the remote script. Successful changes are recorded in the site's `wpapp_php_custom_options` metadata.
 
 **Section sources**
-- [php-options.php:115-196](file://includes/core/apps/wordpress-app/tabs/php-options.php#L115-L196)
-- [class-wordpress-posts-site-package.php:347-389](file://includes/core/apps/wordpress-app/class-wordpress-posts-site-package.php#L347-L389)
-- [class-wordpress-posts-site-package.php:410-418](file://includes/core/apps/wordpress-app/class-wordpress-posts-site-package.php#L410-L418)
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
-- [01-prepare_server.txt:849-864](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L864)
-- [1020-upgrade_460_performance.txt:49-125](file://includes/core/apps/wordpress-app/scripts/v1/raw/1020-upgrade_460_performance.txt#L49-L125)
+- [php-options.php:25-31](file://includes/core/apps/wordpress-app/tabs/php-options.php#L25-L31)
+- [php-options.php:143-171](file://includes/core/apps/wordpress-app/tabs/php-options.php#L143-L171)
+- [php-options.php:472-474](file://includes/core/apps/wordpress-app/tabs/php-options.php#L472-L474)
+- [php-options.php:691-769](file://includes/core/apps/wordpress-app/tabs/php-options.php#L691-L769)
+
+### Server Provisioning Defaults
+
+The server preparation script installs the explicit LSPHP package set and common extensions. Core package failures stop provisioning; an unavailable optional extension is reported as a warning.
+
+It then makes `lsphp84` the default command-line PHP binary and the OpenLiteSpeed handler. The configuration block applies the same runtime baseline to each installed LSPHP version:
+
+| Setting | Provisioned Value |
+|---|---|
+| `memory_limit` | `1024M` |
+| `post_max_size` | `25M` |
+| `upload_max_filesize` | `25M` |
+| `max_execution_time` | `7200` |
+| `session.save_path` | `/var/lib/lsphp/session/lsphp<version>` |
+| `opcache.enable` | `1` |
+| `opcache.enable_cli` | `1` |
+| `opcache.memory_consumption` | `128` |
+| `opcache.max_accelerated_files` | `100000` |
+| `opcache.interned_strings_buffer` | `8` |
+| `opcache.revalidate_freq` | `1` |
+| `opcache.file_update_protection` | `60` |
+
+The provisioning block also enables comment preservation, current-working-directory handling, root validation, and permission validation for OPcache. Session directories are created with mode `1733`.
+
+**Section sources**
+- [01-prepare_server.txt:295-340](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L295-L340)
+- [01-prepare_server.txt:442-480](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L442-L480)
 
 ## Architecture Overview
-The PHP performance workflow connects admin input, PHP action dispatch, SSH-based command execution, and service reload.
 
 ```mermaid
 sequenceDiagram
-participant User as "Admin User"
-participant UI as "PHP Options Tab"
-participant Action as "Tab Action Dispatcher"
-participant App as "WordPress App Handler"
-participant SSH as "SSH Command Layer"
-participant Script as "Worker Change Script"
-participant FPM as "PHP-FPM Service"
-User->>UI : Submit PHP worker or PHP option changes
-UI->>Action : Validate action and permissions
-Action->>App : Dispatch change_php_workers or change_php_options
-App->>SSH : Execute remote command
-SSH->>Script : Run worker update script
-Script->>Script : Validate pool parameters
-Script->>FPM : Reload or restart PHP-FPM
-FPM-->>Script : Status
-Script-->>SSH : Result
-SSH-->>App : Output
-App-->>UI : Success or error response
+    participant User as "Authorized Site Operator"
+    participant UI as "PHP Options Tab"
+    participant PHP as "PHP Options Controller"
+    participant SSH as "SSH Command Layer"
+    participant Script as "scripts/v2/raw/10-misc.txt"
+    participant OLS as "OpenLiteSpeed"
+    participant Vhost as "Site Vhost and php.ini"
+
+    User->>UI : Submit version, option, upload, or restart action
+    UI->>PHP : Dispatch tab action
+    PHP->>PHP : Check site permission and validate input
+    PHP->>SSH : Execute parameterized wrapper
+    SSH->>Script : Run selected action as root
+    Script->>Vhost : Update LSPHP handler or PHP directive
+    Script->>OLS : Validate/restart when required
+    OLS-->>Script : Command result
+    Script-->>SSH : Output and exit status
+    SSH-->>PHP : Result
+    PHP-->>UI : Success, refresh request, or WP_Error
 ```
 
-**Diagram sources**
-- [php-options.php:115-196](file://includes/core/apps/wordpress-app/tabs/php-options.php#L115-L196)
-- [39-php_workers.txt:30-48](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L30-L48)
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
+The PHP controller converts dotted versions such as `8.4` to OpenLiteSpeed service names such as `lsphp84` before building the command. It converts the service name back to the dotted version after a successful change so stored site metadata remains consistent.
+
+**Section sources**
+- [php-options.php:570-655](file://includes/core/apps/wordpress-app/tabs/php-options.php#L570-L655)
+- [change_php_version_misc.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/change_php_version_misc.txt#L1-L9)
+- [10-misc.txt:183-229](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L183-L229)
 
 ## Detailed Component Analysis
 
-### PHP-FPM Worker Configuration
-SimpleStack supports three worker modes:
+### Per-Site PHP Version Changes
 
-| Mode | Meaning |
-|---|---|
-| `dynamic` | Workers are created and destroyed based on demand. |
-| `static` | A fixed number of workers is maintained. |
-| `ondemand` | Workers are spawned only when requests arrive. |
+The controller accepts only `8.3`, `8.4`, and `8.5`. The raw script:
 
-The relevant pool directives managed by SimpleStack include:
+1. Reads the current `lsphp83`, `lsphp84`, or `lsphp85` handler from the site's vhost.
+2. Confirms at least one supported LSPHP service is installed.
+3. Accepts only an installed supported service.
+4. Exits without rewriting when the requested version is already active.
+5. Replaces the handler in the vhost and restarts OpenLiteSpeed.
 
-| Directive | Role |
-|---|---|
-| `pm` | Process manager mode. |
-| `pm.max_children` | Maximum concurrent worker processes. |
-| `pm.start_servers` | Initial number of workers started. |
-| `pm.min_spare_servers` | Minimum idle workers kept ready. |
-| `pm.max_spare_servers` | Maximum idle workers allowed. |
+This changes the PHP handler for the selected site. It does not install a new PHP package or change the server-wide default.
 
-Validation rules enforced by the worker script:
+**Section sources**
+- [php-options.php:570-655](file://includes/core/apps/wordpress-app/tabs/php-options.php#L570-L655)
+- [10-misc.txt:183-229](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L183-L229)
 
-- `pm.min_spare_servers` must not exceed `pm.max_children`.
-- `pm.max_spare_servers` must not exceed `pm.max_children`.
-- `pm.start_servers` must be between `pm.min_spare_servers` and `pm.max_spare_servers`.
+### Per-Site PHP Directives
+
+Adding a directive removes an existing line for the same directive, inserts `php_admin_value <name>=<value>` into the vhost's common PHP block, replaces the matching entry in `/var/www/<domain>/.phpini/php.ini`, and restarts OpenLiteSpeed.
+
+Removing a directive deletes its vhost `php_admin_value` line and the corresponding per-site `php.ini` entry, then restarts OpenLiteSpeed. The UI can select an existing vhost directive for removal.
 
 ```mermaid
 flowchart TD
-Start(["Worker Update Entry"]) --> SelectDomain["Select Domain"]
-SelectDomain --> GetVersion["Detect PHP Version"]
-GetVersion --> AskMode["Ask PM Mode"]
-AskMode --> ValidateMode{"Mode Valid?"}
-ValidateMode --> |No| RejectMode["Reject Invalid Mode"]
-ValidateMode --> |Yes| AskLimits["Ask Children and Spare Limits"]
-AskLimits --> ValidateLimits{"Limits Consistent?"}
-ValidateLimits --> |No| RejectLimits["Reject Inconsistent Limits"]
-ValidateLimits --> |Yes| ApplyChanges["Apply Pool Directives"]
-ApplyChanges --> TestConfig["Test PHP-FPM Config"]
-TestConfig --> ReloadService["Reload or Restart PHP-FPM"]
-ReloadService --> End(["Update Complete"])
-RejectMode --> End
-RejectLimits --> End
+    Start(["PHP Option Change"]) --> Validate["Check site permission"]
+    Validate --> Common{"Common option?"}
+    Common --> |Yes| Allowlist["Require allowlisted directive"]
+    Common --> |No| Advanced["Sanitize advanced name and value"]
+    Allowlist --> Escape["Shell-escape command arguments"]
+    Advanced --> Escape
+    Escape --> Execute["Execute change_php_option_misc.txt"]
+    Execute --> Vhost["Update vhost php_admin_value"]
+    Vhost --> SiteIni["Update per-site php.ini"]
+    SiteIni --> Restart["Restart OpenLiteSpeed"]
+    Restart --> Save["Save wpapp_php_custom_options"]
 ```
 
-**Diagram sources**
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
+**Section sources**
+- [php-options.php:691-769](file://includes/core/apps/wordpress-app/tabs/php-options.php#L691-L769)
+- [10-misc.txt:348-395](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L348-L395)
+- [change_php_option_misc.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/change_php_option_misc.txt#L1-L9)
 
-Important implementation notes:
+### Upload Limits and Request Limits
 
-- The worker section is only shown for NGINX web servers in the PHP options tab.
-- The script explicitly checks whether the web server type is NGINX before applying worker changes.
-- After successful configuration edits, the script triggers a PHP-FPM reload or restart depending on the detected PHP version and service state.
+The upload-limit action requires a positive whole number of megabytes. It sets both `upload_max_filesize` and `post_max_size` to that value in the site's vhost and restarts OpenLiteSpeed.
+
+OpenLiteSpeed also has a server-wide HTTP request-body limit, `maxReqBodySize`, managed separately by `55-ols_options.txt`. PHP upload settings do not override that web-server limit. Long-running administrative requests may additionally be affected by the server-wide `connTimeout` setting.
 
 **Section sources**
-- [php-options.php:612-738](file://includes/core/apps/wordpress-app/tabs/php-options.php#L612-L738)
-- [class-wordpress-posts-site-package.php:347-389](file://includes/core/apps/wordpress-app/class-wordpress-posts-site-package.php#L347-L389)
-- [39-php_workers.txt:15-21](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L15-L21)
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
+- [10-misc.txt:716-748](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L716-L748)
+- [55-ols_options.txt:1095-1274](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt#L1095-L1274)
 
-### Memory Management and Execution Timeouts
-SimpleStack manages several PHP runtime limits:
+### Modules, Debug Logging, and Restarts
 
-| Setting | Scope | Notes |
-|---|---|---|
-| `memory_limit` | Per-site PHP options and OpenLiteSpeed defaults | Can be changed via common or advanced PHP options. |
-| `max_execution_time` | Per-site PHP options and OpenLiteSpeed defaults | Also influences SSH timeout calculation. |
-| `post_max_size` | OpenLiteSpeed defaults | Controls POST payload size. |
-| `upload_max_filesize` | OpenLiteSpeed defaults | Controls uploaded file size. |
+The miscellaneous script can move module definitions between `mods-available` and `mods-disabled` for the configured default LSPHP version. It derives that version from the main OpenLiteSpeed configuration and restarts OpenLiteSpeed after the change.
 
-OpenLiteSpeed provisioning sets baseline values for memory, uploads, and execution time. Site-level overrides can be applied through the PHP options interface.
+For per-site WordPress debugging, enabling debug mode:
 
-The SSH layer uses `max_execution_time` to calculate a safe SSH timeout, subtracting a margin to avoid premature termination during long-running commands.
+- Sets `WP_DEBUG` to `true`.
+- Keeps `WP_DEBUG_DISPLAY` false.
+- Sets `WP_DEBUG_LOG` to true.
+- Creates a group-writable `wp-content/debug.log`.
+- Routes the vhost PHP error log to that file.
 
-```mermaid
-flowchart TD
-Start(["PHP Runtime Limits"]) --> Defaults["OpenLiteSpeed Default Values"]
-Defaults --> SiteOverrides["Site-Level PHP Options"]
-SiteOverrides --> MemoryLimit["memory_limit"]
-SiteOverrides --> ExecTime["max_execution_time"]
-SiteOverrides --> UploadSize["post_max_size / upload_max_filesize"]
-ExecTime --> SSHTimeout["SSH Timeout Calculation"]
-SSHTimeout --> Margin["Subtract Safety Margin"]
-```
+Disabling debug mode sets `WP_DEBUG` to false and restores the vhost PHP error-log path to `logs/php_error_log`.
 
-**Diagram sources**
-- [01-prepare_server.txt:849-852](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L852)
-- [php-options.php:503-521](file://includes/core/apps/wordpress-app/tabs/php-options.php#L503-L521)
-- [class-wpcd-ssh.php:74-77](file://includes/core/apps/class-wpcd-ssh.php#L74-L77)
+The PHP restart action restarts OpenLiteSpeed and all of its LSPHP processes. It is not a per-site process restart.
 
 **Section sources**
-- [01-prepare_server.txt:849-852](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L852)
-- [php-options.php:503-521](file://includes/core/apps/wordpress-app/tabs/php-options.php#L503-L521)
-- [class-wpcd-ssh.php:74-77](file://includes/core/apps/class-wpcd-ssh.php#L74-L77)
-
-### OPcache Configuration and Memory Pool Sizing
-SimpleStack enables and configures OPcache in two main places:
-
-1. **OpenLiteSpeed provisioning**: Enables OPcache, CLI OPcache, string buffer, accelerated files, memory consumption, comment saving, revalidation frequency, working directory usage, root validation, permission validation, and file update protection.
-2. **Historical NGINX performance upgrade**: Enables OPcache across multiple PHP versions and increases accelerated file count and memory consumption.
-
-Relevant OPcache directives configured by SimpleStack:
-
-| Directive | Purpose |
-|---|---|
-| `opcache.enable` | Enables OPcache. |
-| `opcache.enable_cli` | Enables OPcache for CLI operations. |
-| `opcache.interned_strings_buffer` | Buffers interned strings. |
-| `opcache.max_accelerated_files` | Maximum number of files cached. |
-| `opcache.memory_consumption` | Size of the OPcache memory pool. |
-| `opcache.save_comments` | Preserves comments for tools that need them. |
-| `opcache.revalidate_freq` | How often OPcache checks for file updates. |
-| `opcache.use_cwd` | Uses current working directory in cache keys. |
-| `opcache.validate_root` | Validates root path. |
-| `opcache.validate_permission` | Validates file permissions. |
-| `opcache.file_update_protection` | Protects against race conditions during file updates. |
-
-```mermaid
-flowchart TD
-Install["Install lsphp Versions"] --> Detect["Loop Installed PHP Versions"]
-Detect --> SessionPath["Set Session Save Path"]
-Detect --> RuntimeDefaults["Set memory_limit, post_max_size, upload_max_filesize, max_execution_time"]
-Detect --> OPcacheEnable["Enable OPcache"]
-OPcacheEnable --> OPcacheMemory["Configure OPcache Memory and File Limits"]
-OPcacheEnable --> OPcacheValidation["Enable Validation and Protection Flags"]
-OPcacheMemory --> Restart["Restart PHP Services"]
-OPcacheValidation --> Restart
-```
-
-**Diagram sources**
-- [01-prepare_server.txt:849-864](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L864)
-- [1020-upgrade_460_performance.txt:49-125](file://includes/core/apps/wordpress-app/scripts/v1/raw/1020-upgrade_460_performance.txt#L49-L125)
-
-**Section sources**
-- [01-prepare_server.txt:849-864](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L864)
-- [1020-upgrade_460_performance.txt:49-125](file://includes/core/apps/wordpress-app/scripts/v1/raw/1020-upgrade_460_performance.txt#L49-L125)
-
-### JIT Compilation Settings
-JIT compilation is a PHP 8 feature controlled by `opcache.jit` and related directives. The analyzed SimpleStack codebase does not explicitly set JIT configuration values in the referenced provisioning or tab files. Therefore, JIT remains at its PHP distribution default unless manually added to a PHP INI file or vhost override.
-
-Guidance:
-
-- If JIT is needed, add appropriate `opcache.jit*` directives to the target PHP INI or vhost configuration.
-- Validate changes using PHP’s configuration inspection tools rather than assuming they were applied by SimpleStack.
-- Monitor CPU usage and latency after enabling JIT because it benefits CPU-bound workloads more than I/O-bound workloads.
-
-[No sources needed since this section provides general guidance without analyzing specific files]
-
-### PHP Extensions and Disabled Modules
-SimpleStack applies security-focused restrictions to PHP functions, especially for OpenLiteSpeed installations. For PHP 8.1, 8.2, and 8.3, it sets a global restricted function list. Some functions required by OpenLiteSpeed installation workflows are intentionally excluded from the global restriction.
-
-Additionally, the security status probe reads installed plugins, WordPress configuration, PHP version, and the vhost PHP handler to help operators assess environment state.
-
-Important considerations:
-
-- Do not blindly remove restricted functions without testing application dependencies.
-- Use the security status endpoint to verify the running PHP version and handler.
-- Be aware that some provisioning steps may require temporary access to functions like `proc_open` or `proc_close` during site setup.
-
-**Section sources**
-- [01-prepare_server.txt:866-876](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L866-L876)
-- [class-simplestack-rest-security.php:171-190](file://includes/core/api/class-simplestack-rest-security.php#L171-L190)
-
-### Error Reporting and Production Environment Behavior
-SimpleStack includes mechanisms that support production-safe operation:
-
-- Log routes expose command, SSH, and error logs through the REST API.
-- All REST responses pass through a secret redactor that masks credentials and sensitive tokens.
-- Common vhost configuration includes `log_errors On`.
-
-Production recommendations derived from the codebase:
-
-- Keep error logging enabled but avoid exposing raw error output to end users.
-- Use the SimpleStack activity and log endpoints to inspect failures instead of enabling verbose display errors.
-- Avoid placing secrets in command output; the redactor helps, but prevention is safer.
-
-```mermaid
-flowchart TD
-Request["REST Request"] --> Controller["Security or Logs Controller"]
-Controller --> Redactor["Secret Redactor"]
-Redactor --> Response["Safe JSON Response"]
-Response --> Client["React Admin UI"]
-```
-
-**Diagram sources**
-- [class-simplestack-secret-redactor.php:12-37](file://includes/core/api/class-simplestack-secret-redactor.php#L12-L37)
-- [class-simplestack-rest-logs.php:12-37](file://includes/core/api/class-simplestack-rest-logs.php#L12-L37)
-
-**Section sources**
-- [class-simplestack-secret-redactor.php:12-37](file://includes/core/api/class-simplestack-secret-redactor.php#L12-L37)
-- [class-simplestack-rest-logs.php:12-37](file://includes/core/api/class-simplestack-rest-logs.php#L12-L37)
+- [10-misc.txt:577-645](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L577-L645)
+- [10-misc.txt:664-713](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L664-L713)
+- [10-misc.txt:786-801](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L786-L801)
+- [restart_php_service.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/restart_php_service.txt#L1-L9)
 
 ## Dependency Analysis
-The PHP performance features depend on a clear chain of components:
+
+- PHP version changes require the requested LSPHP service to be installed and present in the site's OpenLiteSpeed vhost.
+- Per-site directive changes require a valid site record, SSH access, and permission to change that site's PHP options.
+- PHP directive changes affect both the vhost and the site's `.phpini/php.ini`; operators should use the supported actions rather than editing only one file.
+- Upload success depends on PHP limits, OpenLiteSpeed request-body limits, and available disk space.
+- OPcache configuration is applied during server preparation; site-level overrides should be validated against the active LSPHP version before use.
 
 ```mermaid
 graph LR
-Tab["PHP Options Tab"] --> Meta["Site Package Meta"]
-Tab --> Action["Tab Action Dispatcher"]
-Action --> App["WordPress App Handler"]
-App --> SSH["SSH Layer"]
-SSH --> WorkerScript["Worker Change Script"]
-WorkerScript --> Pool["PHP-FPM Pool Config"]
-Provision["Server Provisioning"] --> PHPINI["PHP INI"]
-Provision --> OPcache["OPcache"]
-Security["Security Probe"] --> Vhost["Vhost PHP Handler"]
+    Version["PHP Version Action"] --> Installed["Installed LSPHP Service"]
+    Version --> Handler["Vhost LSPHP Handler"]
+    Options["PHP Option Action"] --> Vhost["Vhost php_admin_value"]
+    Options --> SiteIni["Per-site php.ini"]
+    Upload["Upload Limit"] --> PHPUpload["PHP POST and Upload Limits"]
+    Upload --> OLSBody["OpenLiteSpeed maxReqBodySize"]
+    Restart["PHP Restart"] --> OLS["OpenLiteSpeed and All LSPHP Processes"]
 ```
 
-**Diagram sources**
-- [php-options.php:115-196](file://includes/core/apps/wordpress-app/tabs/php-options.php#L115-L196)
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
-- [01-prepare_server.txt:849-864](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L864)
-- [class-simplestack-rest-security.php:171-190](file://includes/core/api/class-simplestack-rest-security.php#L171-L190)
-
-Coupling and cohesion observations:
-
-- The PHP options tab is cohesive around PHP runtime configuration but depends on external services through SSH.
-- Worker changes are tightly coupled to NGINX-style PHP-FPM pool files.
-- OPcache configuration is centralized in provisioning scripts rather than exposed through the admin UI.
-- Secret redaction is a cross-cutting concern applied to all REST responses.
-
-**Section sources**
-- [php-options.php:115-196](file://includes/core/apps/wordpress-app/tabs/php-options.php#L115-L196)
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
-- [01-prepare_server.txt:849-864](file://includes/core/apps/wordpress-app/scripts/v1/raw/01-prepare_server.txt#L849-L864)
-- [class-simplestack-secret-redactor.php:12-37](file://includes/core/api/class-simplestack-secret-redactor.php#L12-L37)
-
 ## Performance Considerations
-Use the following tuning strategy when operating SimpleStack:
 
-1. **Start with defaults.** Let provisioning set baseline memory, upload sizes, execution time, and OPcache values.
-2. **Tune workers conservatively.** Begin with dynamic mode and small child counts, then increase based on observed memory pressure and request concurrency.
-3. **Validate pool constraints.** Ensure minimum and maximum spare servers do not exceed max children, and start servers remain within the allowed range.
-4. **Monitor OPcache hit rates.** Increase `opcache.memory_consumption` and `opcache.max_accelerated_files` only if cache misses or file table saturation are observed.
-5. **Separate concerns.** Use site-level PHP options for application-specific limits and keep global defaults for consistency.
-6. **Avoid overloading PHP-FPM.** Worker count × memory per worker should fit within available RAM, leaving room for the OS, database, and other services.
-7. **Profile before changing.** Identify bottlenecks with PHP profilers, server metrics, and SimpleStack logs before adjusting runtime values.
-
-Benchmarking and profiling recommendations:
-
-- Measure baseline response times and throughput under realistic load.
-- Use PHP profilers such as Xdebug or Blackfire in non-production environments.
-- Track OPcache statistics and PHP-FPM process counts.
-- Compare results before and after each change to avoid regression.
-- Use SimpleStack’s activity and log endpoints to correlate configuration changes with failures.
-
-[No sources needed since this section provides general guidance]
+- Keep the PHP 8.4 default unless a site has a tested compatibility requirement for 8.3 or 8.5.
+- Treat `memory_limit` as a per-request ceiling, not a server capacity plan. Size LSPHP concurrency and server memory together.
+- The provisioned `max_execution_time = 7200` supports long administrative operations but can allow a runaway request to consume resources. Reduce it for sites that do not need long-running requests.
+- OPcache's provisioned memory and file-count settings should be checked against the number of plugins and deployed PHP files on each server.
+- Per-site `php_admin_value` settings can override global LSPHP defaults. Inspect both layers when diagnosing unexpected values.
+- Raising PHP upload limits alone is insufficient when OpenLiteSpeed's request-body limit remains lower.
+- Measure application and database latency separately from PHP execution time before changing runtime limits.
 
 ## Troubleshooting Guide
-Common issues and their likely causes in SimpleStack:
 
-| Symptom | Likely Cause | Recommended Action |
-|---|---|---|
-| PHP-FPM fails to restart after worker changes | Invalid pool directive or inconsistent limits | Review worker values and validate constraints. |
-| Site cannot handle large uploads | Upload limits too low | Adjust `post_max_size` and `upload_max_filesize`. |
-| Long-running scripts time out | `max_execution_time` too low | Increase execution time and review SSH timeout behavior. |
-| OPcache not effective | Cache disabled or memory pool too small | Verify OPcache flags and memory settings. |
-| Secrets appear in logs | Command output contains credentials | Redact secrets before logging and use the redacted REST responses. |
-| Cannot determine PHP handler | OpenLiteSpeed vs NGINX difference | Use the security status probe to inspect the vhost PHP handler. |
+| Symptom | Checks |
+|---|---|
+| Requested PHP version is rejected | Confirm the controller supplied `8.3`, `8.4`, or `8.5` and the corresponding `lsphp83`, `lsphp84`, or `lsphp85` package is installed. |
+| Version change reports no current handler | Inspect the site's OpenLiteSpeed vhost for a supported LSPHP handler. |
+| PHP option change fails | Confirm SSH access, site PHP-option permission, directive syntax, and the raw script's command output. |
+| Changed value is not visible | Inspect both the vhost `php_admin_value` block and `/var/www/<domain>/.phpini/php.ini`; confirm OpenLiteSpeed restarted. |
+| Upload still fails below the configured PHP limit | Check OpenLiteSpeed `maxReqBodySize`, `connTimeout`, WordPress limits, and disk space. |
+| OPcache appears disabled | Confirm the extension package installed for the active LSPHP version and inspect its `litespeed/php.ini`. |
+| Debug output is visible to visitors | Ensure `WP_DEBUG_DISPLAY` remains false and PHP errors are routed to a protected log file. |
 
-Operational tips:
+Useful server-side checks include:
 
-- Always test PHP-FPM configuration before reloading.
-- Use the PHP options tab confirmation prompts to prevent accidental destructive changes.
-- Inspect SimpleStack logs for command output and SSH transcripts.
-- Use the security status endpoint to confirm the active PHP version and handler.
+```bash
+/usr/local/lsws/bin/openlitespeed -t
+systemctl status openlitespeed
+ls -1 /usr/local/lsws/ | grep '^lsphp'
+/usr/local/lsws/lsphp84/bin/php -i | grep -E 'memory_limit|max_execution_time|opcache.enable'
+```
 
 **Section sources**
-- [39-php_workers.txt:182-260](file://includes/core/apps/wordpress-app/scripts/v1/raw/39-php_workers.txt#L182-L260)
-- [php-options.php:612-738](file://includes/core/apps/wordpress-app/tabs/php-options.php#L612-L738)
-- [class-simplestack-rest-security.php:171-190](file://includes/core/api/class-simplestack-rest-security.php#L171-L190)
+- [10-misc.txt:183-229](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L183-L229)
+- [10-misc.txt:348-395](file://includes/core/apps/wordpress-app/scripts/v2/raw/10-misc.txt#L348-L395)
+- [55-ols_options.txt:1095-1274](file://includes/core/apps/wordpress-app/scripts/v2/raw/55-ols_options.txt#L1095-L1274)
 
 ## Conclusion
-SimpleStack provides a structured way to tune PHP performance through admin-driven configuration, server-side provisioning, and service reload logic. Its strongest performance controls are:
 
-- Per-site PHP options for memory, uploads, and execution time.
-- NGINX-style PHP-FPM worker pool tuning through a validated script.
-- OPcache activation and conservative defaults during provisioning.
-- Production-safe logging and secret redaction in the REST layer.
-
-For optimal throughput and response times, combine conservative worker sizing, adequate OPcache memory, appropriate upload and execution limits, and disciplined profiling. Avoid aggressive changes until workload characteristics are understood, and always validate configuration before reloading services.
+Simple Stack's PHP performance model is built around OpenLiteSpeed and the three supported LSPHP versions. Provisioning establishes server-wide runtime and OPcache defaults, while the PHP Options tab applies validated per-site version and directive changes through the fixed `scripts/v2/` workflow. Operators should tune PHP and OpenLiteSpeed limits together, account for server-wide restart scope, and verify both vhost and per-site configuration when troubleshooting.

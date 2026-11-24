@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class is used for notification log.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_NOTIFY_LOG
+ * Class SSTK_NOTIFY_LOG
  */
-class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
+class SSTK_NOTIFY_LOG extends SSTK_POSTS_LOG {
 
 	/**
-	 * WPCD_NOTIFY_LOG instance.
+	 * SSTK_NOTIFY_LOG instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -25,7 +26,7 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 	}
 
 	/**
-	 * WPCD_NOTIFY_LOG constructor.
+	 * SSTK_NOTIFY_LOG constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
@@ -45,28 +46,28 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 		add_action( 'save_post', array( $this, 'save_meta_values' ), 10, 2 );
 
 		// Filter hook to add new columns.
-		add_filter( 'manage_wpcd_notify_log_posts_columns', array( $this, 'notify_log_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_notify_log_posts_columns', array( $this, 'notify_log_table_head' ), 10, 1 );
 
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_notify_log_posts_custom_column', array( $this, 'notify_log_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_notify_log_posts_custom_column', array( $this, 'notify_log_table_content' ), 10, 2 );
 
 		// Filter hook to add sortable columns.
-		add_filter( 'manage_edit-wpcd_notify_log_sortable_columns', array( $this, 'notify_log_table_sorting' ), 10, 1 );
+		add_filter( 'manage_edit-sstk_notify_log_sortable_columns', array( $this, 'notify_log_table_sorting' ), 10, 1 );
 
 		// Action hook to extend admin filter options.
-		add_action( 'restrict_manage_posts', array( $this, 'wpcd_notify_log_table_filtering' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'sstk_notify_log_table_filtering' ) );
 
 		// Filter hook to filter notification listing on custom meta data.
-		add_filter( 'parse_query', array( $this, 'wpcd_notification_list_parse_query' ), 10, 1 );
+		add_filter( 'parse_query', array( $this, 'sstk_notification_list_parse_query' ), 10, 1 );
 
 		// Filter hook to remove edit bulk action.
-		add_filter( 'bulk_actions-edit-wpcd_notify_log', array( $this, 'wpcd_log_bulk_actions' ), 10, 1 );
+		add_filter( 'bulk_actions-edit-sstk_notify_log', array( $this, 'sstk_log_bulk_actions' ), 10, 1 );
 
 		// Action hook to add new bulk option in notification logs listing.
-		add_filter( 'bulk_actions-edit-wpcd_notify_log', array( $this, 'wpcd_add_new_bulk_actions_notify_log' ) );
+		add_filter( 'bulk_actions-edit-sstk_notify_log', array( $this, 'sstk_add_new_bulk_actions_notify_log' ) );
 
 		// Action hook to handle bulk action for notifications.
-		add_filter( 'handle_bulk_actions-edit-wpcd_notify_log', array( $this, 'wpcd_bulk_action_handler_notify_log' ), 10, 3 );
+		add_filter( 'handle_bulk_actions-edit-sstk_notify_log', array( $this, 'sstk_bulk_action_handler_notify_log' ), 10, 3 );
 	}
 
 	/**
@@ -74,25 +75,25 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 	 */
 	public function register() {
 		register_post_type(
-			'wpcd_notify_log',
+			'sstk_notify_log',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'Notification Logs', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'Notification Log', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => _x( 'Notification Log', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'Notification Log', 'Add New on Toolbar', 'wpcd' ),
-					'edit_item'             => __( 'Edit Notification Log', 'wpcd' ),
-					'view_item'             => __( 'View Notification Log', 'wpcd' ),
-					'all_items'             => __( 'Notifications', 'wpcd' ), // Label to signify all items in a submenu link.
-					'search_items'          => __( 'Search Notification Log', 'wpcd' ),
-					'not_found'             => __( 'No Notification Logs were found.', 'wpcd' ),
-					'not_found_in_trash'    => __( 'No Notification Logs were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter Notification Log list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'Notification Log list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'Notification Log list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'Notification Logs', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'Notification Log', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => _x( 'Notification Log', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'Notification Log', 'Add New on Toolbar', 'simple-stack' ),
+					'edit_item'             => __( 'Edit Notification Log', 'simple-stack' ),
+					'view_item'             => __( 'View Notification Log', 'simple-stack' ),
+					'all_items'             => __( 'Notifications', 'simple-stack' ), // Label to signify all items in a submenu link.
+					'search_items'          => __( 'Search Notification Log', 'simple-stack' ),
+					'not_found'             => __( 'No Notification Logs were found.', 'simple-stack' ),
+					'not_found_in_trash'    => __( 'No Notification Logs were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter Notification Log list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'Notification Log list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'Notification Log list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
-				'show_in_menu'        => 'edit.php?post_type=wpcd_notify_log',
+				'show_in_menu'        => 'edit.php?post_type=sstk_notify_log',
 				'show_in_nav_menus'   => true,
 				'show_in_admin_bar'   => false,
 				'public'              => true,
@@ -105,14 +106,14 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 				'capability_type'     => 'post',
 				'capabilities'        => array(
 					'create_posts' => false,
-					'read_posts'   => 'wpcd_manage_logs',
-					'edit_posts'   => 'wpcd_manage_logs',
+					'read_posts'   => 'sstk_manage_logs',
+					'edit_posts'   => 'sstk_manage_logs',
 				),
 				'map_meta_cap'        => true,
 			)
 		);
 
-		$this->set_post_type( 'wpcd_notify_log' );
+		$this->set_post_type( 'sstk_notify_log' );
 
 		$search_fields = array(
 			'parent_post_id',
@@ -133,11 +134,11 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 	 * @return $columns modified array with new columns
 	 */
 	public function notify_log_table_sorting( $columns ) {
-		$columns['wpcd_notification_parent_id'] = 'wpcd_notification_parent_id';
-		$columns['wpcd_notification_type']      = 'wpcd_notification_type';
-		$columns['wpcd_notification_reference'] = 'wpcd_notification_reference';
-		$columns['wpcd_notification_count']     = 'wpcd_notification_count';
-		$columns['wpcd_notification_sent']      = 'wpcd_notification_sent';
+		$columns['sstk_notification_parent_id'] = 'sstk_notification_parent_id';
+		$columns['sstk_notification_type']      = 'sstk_notification_type';
+		$columns['sstk_notification_reference'] = 'sstk_notification_reference';
+		$columns['sstk_notification_count']     = 'sstk_notification_count';
+		$columns['sstk_notification_sent']      = 'sstk_notification_sent';
 		return $columns;
 	}
 
@@ -148,20 +149,20 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @return void
 	 */
-	public function wpcd_notify_log_table_filtering() {
+	public function sstk_notify_log_table_filtering() {
 
 		global $typenow, $pagenow;
 
-		$post_type = 'wpcd_notify_log';
+		$post_type = 'sstk_notify_log';
 
 		if ( is_admin() && 'edit.php' === $pagenow && $typenow === $post_type ) {
 
 			// Notification Type.
-			$notify_type = $this->generate_notify_meta_dropdown( $post_type, 'notification_type', __( 'All Types', 'wpcd' ) );
+			$notify_type = $this->generate_notify_meta_dropdown( $post_type, 'notification_type', __( 'All Types', 'simple-stack' ) );
 			echo $notify_type;
 
 			// Notification Reference.
-			$notify_reference = $this->generate_notify_meta_dropdown( $post_type, 'notification_reference', __( 'All References', 'wpcd' ) );
+			$notify_reference = $this->generate_notify_meta_dropdown( $post_type, 'notification_reference', __( 'All References', 'simple-stack' ) );
 			echo $notify_reference;
 
 		}
@@ -210,11 +211,11 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @param  object $query query.
 	 */
-	public function wpcd_notification_list_parse_query( $query ) {
+	public function sstk_notification_list_parse_query( $query ) {
 		global $pagenow;
 
 		$filter_action = sanitize_text_field( filter_input( INPUT_GET, 'filter_action', FILTER_UNSAFE_RAW ) );
-		if ( is_admin() && $query->is_main_query() && 'wpcd_notify_log' === $query->query['post_type'] && 'edit.php' === $pagenow && ! empty( $filter_action ) ) {
+		if ( is_admin() && $query->is_main_query() && 'sstk_notify_log' === $query->query['post_type'] && 'edit.php' === $pagenow && ! empty( $filter_action ) ) {
 			$qv = &$query->query_vars;
 
 			// NOTIFICATION TYPE.
@@ -255,7 +256,7 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 
 		switch ( $column_name ) {
 
-			case 'wpcd_notification_parent_id':
+			case 'sstk_notification_parent_id':
 				// Display the name of the server or app.
 				$parent_post_id = get_post_meta( $post_id, 'parent_post_id', true );
 				if ( $parent_post_id ) {
@@ -265,21 +266,21 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 						$value = sprintf( '<a href="%s">' . $title . '</a>', get_edit_post_link( $parent_post_id ) );
 						$value = $value . '<br />' . 'id: ' . (string) $parent_post_id;
 					} else {
-						$value = __( 'Parent post not found', 'wpcd' );
+						$value = __( 'Parent post not found', 'simple-stack' );
 					}
 				} else {
-					$value = __( 'Parent post not found', 'wpcd' );
+					$value = __( 'Parent post not found', 'simple-stack' );
 				}
 
 				break;
 
-			case 'wpcd_notification_type':
+			case 'sstk_notification_type':
 				// Display the command type.
 				$value = wp_kses_post( get_post_meta( $post_id, 'notification_type', true ) );
 
 				break;
 
-			case 'wpcd_notification_message':
+			case 'sstk_notification_message':
 				// Display a portion of the command result.
 				$string_length        = 150;
 				$notification_message = wp_kses_post( get_post_meta( $post_id, 'notification_message', true ) );
@@ -289,17 +290,17 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 				$value = $notification_message;
 				break;
 
-			case 'wpcd_notification_count':
+			case 'sstk_notification_count':
 				// Display the number of alerts in a 2 min period.
 				$value = wp_kses_post( get_post_meta( $post_id, 'notification_count', true ) );
 				break;
 
-			case 'wpcd_notification_sent':
+			case 'sstk_notification_sent':
 				// Display whether or not the notification has been processed for sending alerts.
 				$value = wp_kses_post( get_post_meta( $post_id, 'notification_sent', true ) );
 				break;
 
-			case 'wpcd_notification_reference':
+			case 'sstk_notification_reference':
 				// Display a notification reference if any.
 				$value = wp_kses_post( get_post_meta( $post_id, 'notification_reference', true ) );
 
@@ -334,13 +335,13 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 
 		unset( $defaults['date'] );
 
-		$defaults['wpcd_notification_parent_id'] = __( 'Owner/Parent', 'wpcd' );
-		$defaults['wpcd_notification_type']      = __( 'Type', 'wpcd' );
-		$defaults['wpcd_notification_message']   = __( 'Message', 'wpcd' );
-		$defaults['wpcd_notification_reference'] = __( 'Reference', 'wpcd' );
-		$defaults['wpcd_notification_count']     = __( 'Count', 'wpcd' );
-		$defaults['wpcd_notification_sent']      = __( 'Sent', 'wpcd' );
-		$defaults['date']                        = __( 'Date', 'wpcd' );
+		$defaults['sstk_notification_parent_id'] = __( 'Owner/Parent', 'simple-stack' );
+		$defaults['sstk_notification_type']      = __( 'Type', 'simple-stack' );
+		$defaults['sstk_notification_message']   = __( 'Message', 'simple-stack' );
+		$defaults['sstk_notification_reference'] = __( 'Reference', 'simple-stack' );
+		$defaults['sstk_notification_count']     = __( 'Count', 'simple-stack' );
+		$defaults['sstk_notification_sent']      = __( 'Sent', 'simple-stack' );
+		$defaults['date']                        = __( 'Date', 'simple-stack' );
 
 		return $defaults;
 
@@ -353,9 +354,9 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 
 		add_meta_box(
 			'notify_log',
-			__( 'Notification Log', 'wpcd' ),
+			__( 'Notification Log', 'simple-stack' ),
 			array( $this, 'render_notify_log_meta_box' ),
-			'wpcd_notify_log',
+			'sstk_notify_log',
 			'advanced',
 			'high'
 		);
@@ -379,7 +380,7 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 		$parent_post_id         = get_post_meta( $post->ID, 'parent_post_id', true );
 
 		ob_start();
-		require wpcd_path . 'includes/templates/notify_log.php';
+		require SSTK_PATH . 'includes/templates/notify_log.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -414,7 +415,8 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 		// Construct transient string to check to see if it's set.
 		$transient_key = '';
 		if ( ! empty( $parent_post_id ) ) {
-			$transient_key = (string) $parent_post_id . $notification_type . $message;
+			$message_key   = is_wp_error( $message ) ? $message->get_error_message() : (string) $message;
+			$transient_key = 'sstk_notify_log_dedupe_' . $parent_post_id . '_' . md5( $notification_type . "\0" . $message_key );
 			if ( get_transient( $transient_key ) ) {
 				$post_id = get_transient( $transient_key );
 				// transient exists so just increase the notification count and move on...
@@ -434,7 +436,7 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 			}
 			$post_id = wp_insert_post(
 				array(
-					'post_type'   => 'wpcd_notify_log',
+					'post_type'   => 'sstk_notify_log',
 					'post_status' => 'private',
 					'post_title'  => $post_title,
 					'post_author' => $author_id,
@@ -471,8 +473,8 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 	 *
 	 * @param array $bulk_array bulk array.
 	 */
-	public function wpcd_add_new_bulk_actions_notify_log( $bulk_array ) {
-		$bulk_array['wpcd_notify_reset_sent_flag'] = __( 'Reset Sent Flag', 'wpcd' );
+	public function sstk_add_new_bulk_actions_notify_log( $bulk_array ) {
+		$bulk_array['sstk_notify_reset_sent_flag'] = __( 'Reset Sent Flag', 'simple-stack' );
 		return $bulk_array;
 	}
 
@@ -483,12 +485,12 @@ class WPCD_NOTIFY_LOG extends WPCD_POSTS_LOG {
 	 * @param string $action action name.
 	 * @param array  $post_ids all post ids.
 	 */
-	public function wpcd_bulk_action_handler_notify_log( $redirect_url, $action, $post_ids ) {
+	public function sstk_bulk_action_handler_notify_log( $redirect_url, $action, $post_ids ) {
 		// Let's remove query args first.
-		$redirect_url = remove_query_arg( array( 'wpcd_notify_reset_sent_flag' ), $redirect_url );
+		$redirect_url = remove_query_arg( array( 'sstk_notify_reset_sent_flag' ), $redirect_url );
 
 		// Handle "Reset Sent Flag" bulk action.
-		if ( 'wpcd_notify_reset_sent_flag' === $action ) {
+		if ( 'sstk_notify_reset_sent_flag' === $action ) {
 			if ( ! empty( $post_ids ) ) {
 				// Reset sent flag.
 				foreach ( $post_ids as $key => $value ) {

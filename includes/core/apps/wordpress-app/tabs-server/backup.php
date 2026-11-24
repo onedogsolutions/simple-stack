@@ -1,12 +1,13 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Backup Tab
  *
- * @TODO: Some metavalues in this file are set to "wpapp_" prefixes instead of "wpcd_wpapp" or "wpcd_wpapp_server" or "wpcd_server_wordpress-app_server".
+ * @TODO: Some metavalues in this file are set to "wpapp_" prefixes instead of "sstk_wpapp" or "sstk_wpapp_server" or "sstk_server_wordpress-app_server".
  * While this does not hurt anything right now, it needs to be fixed and an upgrade routine written to maintain our metavalue naming standards
  * on the server record.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,26 +15,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_BACKUP
+ * Class SSTK_WORDPRESS_TABS_SERVER_BACKUP
  */
-class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_BACKUP extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
 		// Allow the auto_backup_action_all_sites action to be triggered via an action hook.
-		add_action( 'wpcd_wordpress-manage_server_backup_action_all_sites', array( $this, 'auto_backup_action_all_sites' ), 10, 1 ); // Unlike others, this one only needs the server id.
-		add_action( 'wpcd_{$this->get_app_name()}_manage_server_backup_action_all_sites', array( $this, 'auto_backup_action_all_sites' ), 10, 1 ); // Duplicate of the one above because the one above has the incorrect action hook name - the one above is for backwards compatibiilty.
+		add_action( 'sstk_wordpress-manage_server_backup_action_all_sites', array( $this, 'auto_backup_action_all_sites' ), 10, 1 ); // Unlike others, this one only needs the server id.
+		add_action( 'sstk_{$this->get_app_name()}_manage_server_backup_action_all_sites', array( $this, 'auto_backup_action_all_sites' ), 10, 1 ); // Duplicate of the one above because the one above has the incorrect action hook name - the one above is for backwards compatibiilty.
 
-		// Allow the server configuration backups to be triggered via an action hook. Hook: wpcd_wordpress-app-toggle_server_configuration_backups.
-		add_action( "wpcd_{$this->get_app_name()}_toggle_server_configuration_backups", array( $this, 'toggle_server_configuration_backups' ), 10, 1 ); // Unlike others, this one only needs the server id.
+		// Allow the server configuration backups to be triggered via an action hook. Hook: sstk_wordpress-app-toggle_server_configuration_backups.
+		add_action( "sstk_{$this->get_app_name()}_toggle_server_configuration_backups", array( $this, 'toggle_server_configuration_backups' ), 10, 1 ); // Unlike others, this one only needs the server id.
 
 	}
 
@@ -62,7 +63,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Backup', 'wpcd' ),
+				'label' => __( 'Backup', 'simple-stack' ),
 				'icon'  => 'fad fa-server',
 			);
 		}
@@ -77,7 +78,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -92,9 +93,9 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -102,7 +103,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -160,127 +161,127 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$desc  = __( 'You can use a unique set of S3 credentials for each of your servers.  Set the credentials for this server below.  If these are left empty, the values in your SETTINGS screen will be used for any backup operations.', 'wpcd' );
-		$desc .= '<br/>' . __( 'Warning: You must save credentials on this screen at least once. To use the values in your global SETTINGS just save ALL the fields with empty values. We will then copy the values from your global settings to the server.', 'wpcd' );
-		$desc .= '<br/>' . __( 'Note: As you might expect, credentials entered here are used to backup all sites on the server!', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc  = __( 'You can use a unique set of S3 credentials for each of your servers.  Set the credentials for this server below.  If these are left empty, the values in your SETTINGS screen will be used for any backup operations.', 'simple-stack' );
+		$desc .= '<br/>' . __( 'Warning: You must save credentials on this screen at least once. To use the values in your global SETTINGS just save ALL the fields with empty values. We will then copy the values from your global settings to the server.', 'simple-stack' );
+		$desc .= '<br/>' . __( 'Note: As you might expect, credentials entered here are used to backup all sites on the server!', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_prune_icon( __( '%s AWS S3 Credentials', 'wpcd' ) ),
-			'id'   => 'wpcd_app_action_aws-s3-credentials-header',
+			'name' => sstk_apply_prune_icon( __( '%s AWS S3 Credentials', 'simple-stack' ) ),
+			'id'   => 'sstk_app_action_aws-s3-credentials-header',
 			'tab'  => 'server_backup',
 			'type' => 'heading',
 			'desc' => $desc,
 		);
 		$fields[] = array(
-			'name'       => __( 'AWS Access Key ID', 'wpcd' ),
-			'id'         => 'wpcd_app_aws_key',
+			'name'       => __( 'AWS Access Key ID', 'simple-stack' ),
+			'id'         => 'sstk_app_aws_key',
 			'tab'        => 'server_backup',
 			'type'       => 'text',
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'aws_key',
+				'data-sstk-name' => 'aws_key',
 				'spellcheck'     => 'false',
 			),
-			'std'        => get_post_meta( $id, 'wpcd_wpapp_backup_aws_key', true ),
+			'std'        => get_post_meta( $id, 'sstk_wpapp_backup_aws_key', true ),
 		);
 
-		$pass = get_post_meta( $id, 'wpcd_wpapp_backup_aws_secret', true );
+		$pass = get_post_meta( $id, 'sstk_wpapp_backup_aws_secret', true );
 		if ( ! empty( $pass ) ) {
 			$pass = self::decrypt( $pass );
 		}
 		$fields[] = array(
-			'name'       => __( 'AWS Access Secret', 'wpcd' ),
-			'id'         => 'wpcd_app_aws_secret',
+			'name'       => __( 'AWS Access Secret', 'simple-stack' ),
+			'id'         => 'sstk_app_aws_secret',
 			'tab'        => 'server_backup',
 			'type'       => 'password',
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'aws_secret',
+				'data-sstk-name' => 'aws_secret',
 				'spellcheck'     => 'false',
 			),
-			'class'      => 'wpcd_app_pass_toggle',
+			'class'      => 'sstk_app_pass_toggle',
 			'std'        => $pass,
 			'size'       => 60,
 		);
 		$fields[] = array(
-			'name'       => __( 'AWS Bucket Name', 'wpcd' ),
-			'id'         => 'wpcd_app_aws_bucket',
+			'name'       => __( 'AWS Bucket Name', 'simple-stack' ),
+			'id'         => 'sstk_app_aws_bucket',
 			'tab'        => 'server_backup',
 			'type'       => 'text',
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'aws_bucket',
+				'data-sstk-name' => 'aws_bucket',
 				'spellcheck'     => 'false',
 			),
-			'std'        => get_post_meta( $id, 'wpcd_wpapp_backup_aws_bucket', true ),
+			'std'        => get_post_meta( $id, 'sstk_wpapp_backup_aws_bucket', true ),
 		);
 		$fields[] = array(
-			'name'       => __( 'AWS Region', 'wpcd' ),
-			'id'         => 'wpcd_app_aws_region',
+			'name'       => __( 'AWS Region', 'simple-stack' ),
+			'id'         => 'sstk_app_aws_region',
 			'tab'        => 'server_backup',
 			'type'       => 'text',
-			'tooltip'    => sprintf( __( 'You can find a list of valid regions here: <a href="%s" target="_blank" >Valid Regions</a>', 'wpcd' ), 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions' ),
-			'desc'       => sprintf( __( '<a href="%s" target="_blank" >Valid Regions</a>', 'wpcd' ), 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions' ),
+			'tooltip'    => sprintf( __( 'You can find a list of valid regions here: <a href="%s" target="_blank" >Valid Regions</a>', 'simple-stack' ), 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions' ),
+			'desc'       => sprintf( __( '<a href="%s" target="_blank" >Valid Regions</a>', 'simple-stack' ), 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions' ),
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'aws_region',
+				'data-sstk-name' => 'aws_region',
 			),
-			'std'        => get_post_meta( $id, 'wpcd_wpapp_backup_aws_region', true ),
+			'std'        => get_post_meta( $id, 'sstk_wpapp_backup_aws_region', true ),
 			'size'       => 10,
 		);
 		$fields[] = array(
-			'name'              => __( 'S3 Endpoint URL', 'wpcd' ),
-			'id'                => 'wpcd_app_s3_endpoint',
+			'name'              => __( 'S3 Endpoint URL', 'simple-stack' ),
+			'id'                => 'sstk_app_s3_endpoint',
 			'tab'               => 'server_backup',
 			'type'              => 'text',
-			'label_description' => __( 'Optional', 'wpcd' ),
-			'placeholder'       => __( 'https://endpoint.com', 'wpcd' ),
-			'tooltip'           => __( 'Only set this if you want to use an alternative S3-compatible service. MUST start with "https://"!', 'wpcd' ),
+			'label_description' => __( 'Optional', 'simple-stack' ),
+			'placeholder'       => __( 'https://endpoint.com', 'simple-stack' ),
+			'tooltip'           => __( 'Only set this if you want to use an alternative S3-compatible service. MUST start with "https://"!', 'simple-stack' ),
 			'save_field'        => false,
 			'attributes'        => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 's3_endpoint',
+				'data-sstk-name' => 's3_endpoint',
 			),
-			'std'               => get_post_meta( $id, 'wpcd_wpapp_backup_s3_endpoint', true ),
+			'std'               => get_post_meta( $id, 'sstk_wpapp_backup_s3_endpoint', true ),
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_change_cred',
+			'id'         => 'sstk_app_action_change_cred',
 			'name'       => '',
 			'tab'        => 'server_backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_save_icon( __( '%s Save Credentials', 'wpcd' ) ),
+			'std'        => sstk_apply_save_icon( __( '%s Save Credentials', 'simple-stack' ) ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'backup-change-cred',
+				'data-sstk-action'              => 'backup-change-cred',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode( array( '#wpcd_app_aws_key', '#wpcd_app_aws_secret', '#wpcd_app_aws_bucket', '#wpcd_app_aws_region', '#wpcd_app_s3_endpoint' ) ),
+				'data-sstk-fields'              => wp_json_encode( array( '#sstk_app_aws_key', '#sstk_app_aws_secret', '#sstk_app_aws_bucket', '#sstk_app_aws_region', '#sstk_app_s3_endpoint' ) ),
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to save these credentials?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to save these credentials?', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Auto backups for the entire server
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		/* all sites on the server */
 		$auto_backup_status_all_sites                = get_post_meta( $id, 'wpapp_auto_backups_status_all_sites', true );
@@ -299,30 +300,30 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// Set the confirmation prompt text.
 		if ( 'on' === $auto_backup_status_all_sites ) {
-			$auto_backups_confirmation_prompt_all_sites = __( 'Are you sure you would like to disable daily automatic backups for all sites?', 'wpcd' );
+			$auto_backups_confirmation_prompt_all_sites = __( 'Are you sure you would like to disable daily automatic backups for all sites?', 'simple-stack' );
 		} else {
-			$auto_backups_confirmation_prompt_all_sites = __( 'Are you sure you would like to enable daily automatic backups for all sites?', 'wpcd' );
+			$auto_backups_confirmation_prompt_all_sites = __( 'Are you sure you would like to enable daily automatic backups for all sites?', 'simple-stack' );
 		}
 
 		if ( 'on' === $auto_backup_status_all_sites ) {
 			// Backups have been enabled.  Show message about disabling it first before making changes.
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_clock_icon( __( '%s Automatic Backups - All Current and Future Sites On This Server', 'wpcd' ) ),
-				'desc' => __( 'Backups are enabled for this server. If you would like to make changes, please disable it first using the switch below.', 'wpcd' ),
+				'name' => sstk_apply_clock_icon( __( '%s Automatic Backups - All Current and Future Sites On This Server', 'simple-stack' ) ),
+				'desc' => __( 'Backups are enabled for this server. If you would like to make changes, please disable it first using the switch below.', 'simple-stack' ),
 				'tab'  => 'server_backup',
 				'type' => 'heading',
 			);
 		} else {
-			$desc  = __( 'Enable automatic backups to run once per day for all current and future sites on this server.', 'wpcd' );
-			$desc .= '<br />' . __( 'With this option you do not have to schedule individual backups for each site.', 'wpcd' );
-			$desc .= '<br />' . __( 'Just configure this once and it will backup all your sites on **this server** once each night.', 'wpcd' );
-			$desc .= '<br />' . __( 'You should set up your S3 credentials and create a bucket for these backups before turning this option on!', 'wpcd' );
-			$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc  = __( 'Enable automatic backups to run once per day for all current and future sites on this server.', 'simple-stack' );
+			$desc .= '<br />' . __( 'With this option you do not have to schedule individual backups for each site.', 'simple-stack' );
+			$desc .= '<br />' . __( 'Just configure this once and it will backup all your sites on **this server** once each night.', 'simple-stack' );
+			$desc .= '<br />' . __( 'You should set up your S3 credentials and create a bucket for these backups before turning this option on!', 'simple-stack' );
+			$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_backup_icon( __( '%s Automatic Backups - All Current and Future Sites On This Server', 'wpcd' ) ),
+				'name' => sstk_apply_backup_icon( __( '%s Automatic Backups - All Current and Future Sites On This Server', 'simple-stack' ) ),
 				'desc' => $desc,
 				'tab'  => 'server_backup',
 				'type' => 'heading',
@@ -332,77 +333,77 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		if ( 'on' !== $auto_backup_status_all_sites ) {
 			// Backups are not currently enabled so we can show all fields.
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_auto_backup_all_sites_bucket_name',
-				'tooltip'    => __( 'If this is left blank then the server bucket name shown above or the global bucket name from the SETTINGS screen will be used', 'wpcd' ),
+				'id'         => 'sstk_app_action_auto_backup_all_sites_bucket_name',
+				'tooltip'    => __( 'If this is left blank then the server bucket name shown above or the global bucket name from the SETTINGS screen will be used', 'simple-stack' ),
 				'tab'        => 'server_backup',
 				'type'       => 'text',
-				'name'       => __( 'AWS Bucket Name', 'wpcd' ),
+				'name'       => __( 'AWS Bucket Name', 'simple-stack' ),
 				'std'        => $auto_backup_bucket_all_sites,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'auto_backup_bucket_name_all_sites',
+					'data-sstk-name' => 'auto_backup_bucket_name_all_sites',
 					'spellcheck'     => 'false',
 				),
 				'save_field' => false,
 			);
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_auto_backup_all_sites_retention_days',
-				'tooltip'    => __( 'If this is left blank or zero, we will default to 7 days. We recommend that you keep this number low and rely on S3 to store your older backups. If this is set to -1, local backups will NEVER be kept (NOT RECOMMENDED)', 'wpcd' ),
+				'id'         => 'sstk_app_action_auto_backup_all_sites_retention_days',
+				'tooltip'    => __( 'If this is left blank or zero, we will default to 7 days. We recommend that you keep this number low and rely on S3 to store your older backups. If this is set to -1, local backups will NEVER be kept (NOT RECOMMENDED)', 'simple-stack' ),
 				'tab'        => 'server_backup',
 				'type'       => 'number',
 				'min'        => -1,
-				'name'       => __( 'Retention Days', 'wpcd' ),
+				'name'       => __( 'Retention Days', 'simple-stack' ),
 				'std'        => $auto_backup_retention_days_all_sites,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'auto_backup_retention_days_all_sites',
+					'data-sstk-name' => 'auto_backup_retention_days_all_sites',
 				),
 				'size'       => 10,
 				'save_field' => false,
 			);
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_auto_backup_all_sites_delete_remotes',
-				'name'       => __( 'Delete Remote Backups', 'wpcd' ),
+				'id'         => 'sstk_app_action_auto_backup_all_sites_delete_remotes',
+				'name'       => __( 'Delete Remote Backups', 'simple-stack' ),
 				'tab'        => 'server_backup',
 				'type'       => 'select',
 				'options'    => array(
-					'off' => __( 'Disabled', 'wpcd' ),
-					'on'  => __( 'Enabled', 'wpcd' ),
+					'off' => __( 'Disabled', 'simple-stack' ),
+					'on'  => __( 'Enabled', 'simple-stack' ),
 				),
 				'std'        => $auto_backup_delete_remotes_all_sites,
-				'tooltip'    => __( 'Delete remote backups when deleting local backups that exceed the retention days. We recommend that you keep this disabled and set a low number for the retention days above.', 'wpcd' ),
+				'tooltip'    => __( 'Delete remote backups when deleting local backups that exceed the retention days. We recommend that you keep this disabled and set a low number for the retention days above.', 'simple-stack' ),
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'auto_backup_delete_remotes_all_sites',
+					'data-sstk-name' => 'auto_backup_delete_remotes_all_sites',
 				),
 				'save_field' => false,
 			);
 		}
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_auto_backup_all_sites',
-			'name'       => 'on' === $auto_backup_status_all_sites ? '' : __( 'Schedule It', 'wpcd' ),
+			'id'         => 'sstk_app_action_auto_backup_all_sites',
+			'name'       => 'on' === $auto_backup_status_all_sites ? '' : __( 'Schedule It', 'simple-stack' ),
 			'tab'        => 'server_backup',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => 'on' === $auto_backup_status_all_sites,
-			'desc'       => 'on' === $auto_backup_status_all_sites ? '' : __( 'Enable daily automatic backups', 'wpcd' ),
+			'desc'       => 'on' === $auto_backup_status_all_sites ? '' : __( 'Enable daily automatic backups', 'simple-stack' ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'backup-run-schedule-all-sites',
+				'data-sstk-action'              => 'backup-run-schedule-all-sites',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => 'on' === $auto_backup_status_all_sites ? '' : wp_json_encode( array( '#wpcd_app_action_auto_backup_all_sites_bucket_name', '#wpcd_app_action_auto_backup_all_sites_retention_days', '#wpcd_app_action_auto_backup_all_sites_delete_remotes' ) ),              // the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-fields'              => 'on' === $auto_backup_status_all_sites ? '' : wp_json_encode( array( '#sstk_app_action_auto_backup_all_sites_bucket_name', '#sstk_app_action_auto_backup_all_sites_retention_days', '#sstk_app_action_auto_backup_all_sites_delete_remotes' ) ),              // the id.
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $auto_backups_confirmation_prompt_all_sites,
+				'data-sstk-confirmation-prompt' => $auto_backups_confirmation_prompt_all_sites,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* End auto backups for the entire server */
 
@@ -411,42 +412,42 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_one_third_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_one_third_card( $this->get_tab_slug() );
 
-		$desc = __( 'Manually delete LOCAL backups. Backups stored at AWS will not be deleted. Before you can use this option you must have configured backups and run the backup process at least once.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Manually delete LOCAL backups. Backups stored at AWS will not be deleted. Before you can use this option you must have configured backups and run the backup process at least once.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_trash_icon( __( '%s Delete Backups', 'wpcd' ) ),
+			'name' => sstk_apply_trash_icon( __( '%s Delete Backups', 'simple-stack' ) ),
 			'desc' => $desc,
 			'tab'  => 'server_backup',
 			'type' => 'heading',
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_delete_all_server_backups',
+			'id'         => 'sstk_app_action_delete_all_server_backups',
 			'name'       => '',
 			'tab'        => 'server_backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_trash_icon( __( '%s Delete All Backups For All Sites', 'wpcd' ) ),
+			'std'        => sstk_apply_trash_icon( __( '%s Delete All Backups For All Sites', 'simple-stack' ) ),
 			'desc'       => '',
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'delete-all-server-backups',
+				'data-sstk-action'              => 'delete-all-server-backups',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to delete all backups for this site? This action cannot be reversed!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to delete all backups for this site? This action cannot be reversed!', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* End Delete All Backups */
 
@@ -455,61 +456,61 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_one_third_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_one_third_card( $this->get_tab_slug() );
 
-		$desc  = __( 'This operation deletes local backups older than a specified number of days. It does it for all sites on this server. Before you can use these options you must have configured backups and run the backup process at least once.', 'wpcd' );
+		$desc  = __( 'This operation deletes local backups older than a specified number of days. It does it for all sites on this server. Before you can use these options you must have configured backups and run the backup process at least once.', 'simple-stack' );
 		$desc .= '<br/>';
 		$desc .= '<br/>';
-		$desc .= __( 'This is a one-time operation - to schedule automatic pruning please use the options under AUTOMATIC BACKUP section above.', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc .= __( 'This is a one-time operation - to schedule automatic pruning please use the options under AUTOMATIC BACKUP section above.', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_prune_icon( __( '%s Prune Backups', 'wpcd' ) ),
+			'name' => sstk_apply_prune_icon( __( '%s Prune Backups', 'simple-stack' ) ),
 			'desc' => $desc,
 			'tab'  => 'server_backup',
 			'type' => 'heading',
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_manual_prune_server_backup_retention_days',
-			'tooltip'    => __( 'If left blank or zero, the backups will never be deleted.', 'wpcd' ),
+			'id'         => 'sstk_app_action_manual_prune_server_backup_retention_days',
+			'tooltip'    => __( 'If left blank or zero, the backups will never be deleted.', 'simple-stack' ),
 			'tab'        => 'server_backup',
 			'type'       => 'number',
 			'std'        => (int) $auto_backup_manual_retention_days_all_sites,
-			'name'       => __( 'Retention Days', 'wpcd' ),
+			'name'       => __( 'Retention Days', 'simple-stack' ),
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'manual_prune_server_backup_retention_days',
+				'data-sstk-name' => 'manual_prune_server_backup_retention_days',
 			),
 			'size'       => 10,
 			'save_field' => false,
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_delete_server_backups',
+			'id'         => 'sstk_app_action_delete_server_backups',
 			'name'       => '',
 			'tab'        => 'server_backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_prune_icon( __( '%s Prune Backups For All Sites On This Server', 'wpcd' ) ),
+			'std'        => sstk_apply_prune_icon( __( '%s Prune Backups For All Sites On This Server', 'simple-stack' ) ),
 			'desc'       => '',
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'prune-all-server-backups',
+				'data-sstk-action'              => 'prune-all-server-backups',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode( array( '#wpcd_app_action_manual_prune_server_backup_retention_days' ) ),                // make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to prune backups for all sites on this server? This action cannot be reversed!', 'wpcd' ),
+				'data-sstk-fields'              => wp_json_encode( array( '#sstk_app_action_manual_prune_server_backup_retention_days' ) ),                // make sure we give the user a confirmation prompt.
+				'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to prune backups for all sites on this server? This action cannot be reversed!', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* End Manually Prune Backups */
 
@@ -518,20 +519,20 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_one_third_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_one_third_card( $this->get_tab_slug() );
 
-		$desc = __( 'Backup your server level configuration files to another folder every four hours. These include your nginx.conf, php.ini, ssl certificates, wp-config.php files and more. 90 days of history is retained.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( 'Backup your server-level configuration files to another folder every four hours. These include OpenLiteSpeed, LSPHP php.ini files, Simple Stack state, SSL certificates, wp-config.php files and more. 90 days of history is retained.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_backup_icon( __( '%s Local Server Configuration Backups', 'wpcd' ) ),
+			'name' => sstk_apply_backup_icon( __( '%s Local Server Configuration Backups', 'simple-stack' ) ),
 			'desc' => $desc,
 			'tab'  => 'server_backup',
 			'type' => 'heading',
 		);
 
-		$status = get_post_meta( $id, 'wpcd_wpapp_backup_config_status', true );
+		$status = get_post_meta( $id, 'sstk_wpapp_backup_config_status', true );
 		if ( empty( $status ) ) {
 			$status = 'off';
 		}
@@ -539,29 +540,29 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to disable backups for your server configurations??', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to disable backups for your server configurations??', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to enable backups of your server configurations?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to enable backups of your server configurations?', 'simple-stack' );
 		}
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_conf_backup_toggle',
-			'name'       => __( 'Configuration Backups', 'wpcd' ),
+			'id'         => 'sstk_app_action_conf_backup_toggle',
+			'name'       => __( 'Configuration Backups', 'simple-stack' ),
 			'tab'        => 'server_backup',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => 'on' === $status,
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'toggle-server-configuration-backups',
+				'data-sstk-action'              => 'toggle-server-configuration-backups',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -572,27 +573,27 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_conf_backup_delete',
-			'name'       => __( 'Delete all configuration backups', 'wpcd' ),
+			'id'         => 'sstk_app_action_conf_backup_delete',
+			'name'       => __( 'Delete all configuration backups', 'simple-stack' ),
 			'tab'        => 'server_backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_trash_icon( __( '%s Delete', 'wpcd' ) ),
+			'std'        => sstk_apply_trash_icon( __( '%s Delete', 'simple-stack' ) ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'delete-server-configuration-backups',
+				'data-sstk-action'              => 'delete-server-configuration-backups',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to delete all server configuration backups? This action cannot be reversed!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to delete all server configuration backups? This action cannot be reversed!', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* End Configuration Backups */
 
@@ -601,25 +602,25 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$s3note  = '';
-		$s3note .= __( 'When you change credentials on the global SETTINGS screen, they are not saved to any server.  Only when you click the save credentials on this screen and leave the credentials on this screen blank will the new global credentials be saved to your server and used for future backups.', 'wpcd' );
+		$s3note .= __( 'When you change credentials on the global SETTINGS screen, they are not saved to any server.  Only when you click the save credentials on this screen and leave the credentials on this screen blank will the new global credentials be saved to your server and used for future backups.', 'simple-stack' );
 		$s3note .= '<br />';
-		$s3note .= __( 'Yes, we know, its confusing. So feel free to check in with our support team with any questions!', 'wpcd' );
+		$s3note .= __( 'Yes, we know, its confusing. So feel free to check in with our support team with any questions!', 'simple-stack' );
 		$s3note .= '<br />';
-		$s3note .= __( 'To avoid confusion, our recommendation is that you use a set of credentials on each site/server and not leave the fields on this screen blank.', 'wpcd' );
+		$s3note .= __( 'To avoid confusion, our recommendation is that you use a set of credentials on each site/server and not leave the fields on this screen blank.', 'simple-stack' );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_warning_icon( __( '%s IMPORTANT notes about how the S3 credentials work', 'wpcd' ) ),
+			'name' => sstk_apply_warning_icon( __( '%s IMPORTANT notes about how the S3 credentials work', 'simple-stack' ) ),
 			'tab'  => 'server_backup',
 			'type' => 'heading',
 			'desc' => $s3note,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/* End S3 notes */
 
@@ -628,41 +629,41 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_snapshot_icon( __( '%s Server Provider Snapshots', 'wpcd' ) ),
-			'desc' => __( 'If this provider supports snapshots you can quickly submit a request to create a snapshot from here.', 'wpcd' ),
+			'name' => sstk_apply_snapshot_icon( __( '%s Server Provider Snapshots', 'simple-stack' ) ),
+			'desc' => __( 'If this provider supports snapshots you can quickly submit a request to create a snapshot from here.', 'simple-stack' ),
 			'tab'  => 'server_backup',
 			'type' => 'heading',
 		);
 
 		/* Get the provider object */
-		$provider     = WPCD_SERVER()->get_server_provider( $id );
-		$provider_api = WPCD()->get_provider_api( $provider );
+		$provider     = SSTK_SERVER()->get_server_provider( $id );
+		$provider_api = SSTK()->get_provider_api( $provider );
 
 		if ( $provider_api && $provider_api->get_feature_flag( 'snapshots' ) ) {
 			// snapshots are supported - yay!
 
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_take_snapshot',
+				'id'         => 'sstk_app_action_take_snapshot',
 				'name'       => '',
 				'tab'        => 'server_backup',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_snapshot_icon( __( '%s Take a Snapshot', 'wpcd' ) ),
-				'desc'       => __( 'Server will NOT be shutdown before snapshot operation which could lead to data inconsistency in the snapshot.', 'wpcd' ),
+				'std'        => sstk_apply_snapshot_icon( __( '%s Take a Snapshot', 'simple-stack' ) ),
+				'desc'       => __( 'Server will NOT be shutdown before snapshot operation which could lead to data inconsistency in the snapshot.', 'simple-stack' ),
 				// fields that contribute data for this action.
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'take-a-snapshot',
+					'data-sstk-action'              => 'take-a-snapshot',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to take a snapshot?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to take a snapshot?', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
@@ -670,15 +671,15 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 			// snapshots are not supported for the current provider.
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_snapshot_icon( __( '%s No Snapshots Support', 'wpcd' ) ),
-				'desc' => __( 'Unfortunately there is no support for snapshots in this provider.', 'wpcd' ),
+				'name' => sstk_apply_snapshot_icon( __( '%s No Snapshots Support', 'simple-stack' ) ),
+				'desc' => __( 'Unfortunately there is no support for snapshots in this provider.', 'simple-stack' ),
 				'tab'  => 'server_backup',
 				'type' => 'custom_html',
 			);
 		}
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		// End snapshots.
 
@@ -707,7 +708,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// sanitize the fields to allow them to be used safely on the bash command line.
@@ -715,30 +716,30 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 			$creds['aws_access_key_id'] = escapeshellarg( $args['aws_key'] );
 		} else {
 			// Get the one from the global settings screen...
-			$creds['aws_access_key_id'] = escapeshellarg( wpcd_get_option( 'wordpress_app_aws_access_key' ) );
+			$creds['aws_access_key_id'] = escapeshellarg( sstk_get_option( 'wordpress_app_aws_access_key' ) );
 		}
 		if ( ! empty( $args['aws_secret'] ) ) {
 			$creds['aws_secret_access_key'] = escapeshellarg( $args['aws_secret'] );
 		} else {
 			// Get the one from the global settings screen...
-			$creds['aws_secret_access_key'] = escapeshellarg( self::decrypt( wpcd_get_option( 'wordpress_app_aws_secret_key' ) ) );
+			$creds['aws_secret_access_key'] = escapeshellarg( self::decrypt( sstk_get_option( 'wordpress_app_aws_secret_key' ) ) );
 		}
 		if ( ! empty( $args['aws_region'] ) ) {
 			$creds['aws_region'] = escapeshellarg( $args['aws_region'] );
 		} else {
 			// Get the one from the global settings screen...
-			$creds['aws_region'] = escapeshellarg( wpcd_get_option( 'wordpress_app_aws_default_region' ) );
+			$creds['aws_region'] = escapeshellarg( sstk_get_option( 'wordpress_app_aws_default_region' ) );
 		}
 		if ( ! empty( $args['s3_endpoint'] ) ) {
 			$creds['s3_endpoint'] = escapeshellarg( $args['s3_endpoint'] );
 		} else {
 			// Get the one from the global settings screen...
-			$creds['s3_endpoint'] = escapeshellarg( wpcd_get_option( 'wordpress_app_s3_endpoint' ) );
+			$creds['s3_endpoint'] = escapeshellarg( sstk_get_option( 'wordpress_app_s3_endpoint' ) );
 		}
 
 		// If at this point both the credential fields are still blank, error out.
 		if ( empty( $creds['aws_access_key_id'] ) || empty( $creds['aws_secret_access_key'] ) || empty( $creds['aws_region'] ) ) {
-			return new \WP_Error( __( 'We are unable to execute this request because there are blank fields in the request and/or blank fields in the global credentials settings. Blanks on this screen are ok as long as there are some credentials configured in the global settings screen!', 'wpcd' ) );
+			return new \WP_Error( __( 'We are unable to execute this request because there are blank fields in the request and/or blank fields in the global credentials settings. Blanks on this screen are ok as long as there are some credentials configured in the global settings screen!', 'simple-stack' ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -757,13 +758,13 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// phpcs:ignore
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'backup_restore_save_credentials.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// How that we know we're successful, lets save the credentials to the server post meta.
@@ -773,28 +774,28 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		if ( ! empty( $args['aws_key'] ) && ! empty( $args['aws_secret'] ) && ! empty( $args['aws_bucket'] ) && ! empty( $args['aws_region'] ) ) {
 
 			// update the creds only if all fields are not empty.
-			update_post_meta( $server_id, 'wpcd_wpapp_backup_aws_key', $args['aws_key'] );
-			update_post_meta( $server_id, 'wpcd_wpapp_backup_aws_secret', self::encrypt( $args['aws_secret'] ) );
-			update_post_meta( $server_id, 'wpcd_wpapp_backup_aws_bucket', $args['aws_bucket'] );
-			update_post_meta( $server_id, 'wpcd_wpapp_backup_aws_region', $args['aws_region'] );
-			update_post_meta( $server_id, 'wpcd_wpapp_backup_s3_endpoint', $args['s3_endpoint'] );
+			update_post_meta( $server_id, 'sstk_wpapp_backup_aws_key', $args['aws_key'] );
+			update_post_meta( $server_id, 'sstk_wpapp_backup_aws_secret', self::encrypt( $args['aws_secret'] ) );
+			update_post_meta( $server_id, 'sstk_wpapp_backup_aws_bucket', $args['aws_bucket'] );
+			update_post_meta( $server_id, 'sstk_wpapp_backup_aws_region', $args['aws_region'] );
+			update_post_meta( $server_id, 'sstk_wpapp_backup_s3_endpoint', $args['s3_endpoint'] );
 
 		} elseif ( empty( $args['aws_key'] ) && empty( $args['aws_secret'] ) && empty( $args['aws_bucket'] ) ) {
 
 			// delete the creds if all fields are empty.
-			delete_post_meta( $server_id, 'wpcd_wpapp_backup_aws_key' );
-			delete_post_meta( $server_id, 'wpcd_wpapp_backup_aws_secret' );
-			delete_post_meta( $server_id, 'wpcd_wpapp_backup_aws_bucket' );
-			delete_post_meta( $server_id, 'wpcd_wpapp_backup_aws_region' );
-			delete_post_meta( $server_id, 'wpcd_wpapp_backup_s3_endpoint' );
+			delete_post_meta( $server_id, 'sstk_wpapp_backup_aws_key' );
+			delete_post_meta( $server_id, 'sstk_wpapp_backup_aws_secret' );
+			delete_post_meta( $server_id, 'sstk_wpapp_backup_aws_bucket' );
+			delete_post_meta( $server_id, 'sstk_wpapp_backup_aws_region' );
+			delete_post_meta( $server_id, 'sstk_wpapp_backup_s3_endpoint' );
 
 		} else {
 			// something ambiguous - let user know...
-			return new \WP_Error( __( 'Only some portions of this operation were successful because not all data fields were supplied. You should try this operation again and fill in all the fields or leave all the fields blank.', 'wpcd' ) );
+			return new \WP_Error( __( 'Only some portions of this operation were successful because not all data fields were supplied. You should try this operation again and fill in all the fields or leave all the fields blank.', 'simple-stack' ) );
 		}
 
 		$result = array(
-			'msg'     => __( 'Your backup settings have been saved.', 'wpcd' ),
+			'msg'     => __( 'Your backup settings have been saved.', 'simple-stack' ),
 			'refresh' => 'yes',
 		);  // If we got here, everything worked out so we'll return true.
 
@@ -832,8 +833,8 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$error_obj = new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
-			do_action( "wpcd_server_{$this->get_app_name()}_server_auto_backup_action_all_sites_failed", $id, $action, $error_obj );
+			$error_obj = new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
+			do_action( "sstk_server_{$this->get_app_name()}_server_auto_backup_action_all_sites_failed", $id, $action, $error_obj );
 			return $error_obj;
 		}
 
@@ -915,17 +916,17 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// phpcs:ignore
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'backup_restore_schedule.txt' );
 		if ( ! $success ) {
-			do_action( "wpcd_server_{$this->get_app_name()}_server_auto_backup_action_all_sites_failed", $id, $action, $success );
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			do_action( "sstk_server_{$this->get_app_name()}_server_auto_backup_action_all_sites_failed", $id, $action, $success );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			$result = array(
-				'msg'     => __( 'Your backup settings have been saved.', 'wpcd' ),
+				'msg'     => __( 'Your backup settings have been saved.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);  // If we got here, everything worked out so we'll return true.
 		}
@@ -941,7 +942,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 			update_post_meta( $server_id, 'wpapp_auto_backup_retention_days_all_sites', $retention_days );
 		}
 
-		do_action( "wpcd_server_{$this->get_app_name()}_server_auto_backup_action_all_sites_successful", $id, $action, $success );
+		do_action( "sstk_server_{$this->get_app_name()}_server_auto_backup_action_all_sites_successful", $id, $action, $success );
 
 		return $result;
 	}
@@ -963,7 +964,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get an array of credentials and buckets, with escapeshellarg already applied.
@@ -1003,17 +1004,17 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// phpcs:ignore
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'backup_restore_delete_and_prune_server.txt' );
 		if ( ! $success || is_wp_error( $success ) ) {
 			/* translators: %1$s is replaced with the internal action name; %2$s is replaced with the result of the call, usually an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			$result = array(
-				'msg'     => __( 'All local backups for all sites on this server have been deleted.', 'wpcd' ),
+				'msg'     => __( 'All local backups for all sites on this server have been deleted.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);  // If we got here, everything worked out so we'll return true.
 		}
@@ -1038,7 +1039,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get an array of credentials and buckets, with escapeshellarg already applied.
@@ -1051,7 +1052,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		// Make sure we have a number for the retention days...
 
 		if ( (int) $args['manual_prune_server_backup_retention_days'] <= 0 ) {
-			return new \WP_Error( 'Unable to execute this request because the retention days need to be greater than zero.', 'wpcd' );
+			return new \WP_Error( 'Unable to execute this request because the retention days need to be greater than zero.', 'simple-stack' );
 		}
 
 		// If a bucket was passed in for this action, add it to the creds array.
@@ -1095,14 +1096,14 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// phpcs:ignore
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'backup_restore_delete_and_prune_server.txt' );
 		if ( ! $success || is_wp_error( $success ) ) {
 			/* translators: %1$s is replaced with the internal action name; %2$s is replaced with the result of the call, usually an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 
 			// Update the meta to store the retention days.
@@ -1111,7 +1112,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 			}
 
 			$result = array(
-				'msg'     => __( 'All local backups for all sites on this server have been pruned.', 'wpcd' ),
+				'msg'     => __( 'All local backups for all sites on this server have been pruned.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);  // If we got here, everything worked out so we'll return true.
 		}
@@ -1129,7 +1130,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 	public function toggle_server_configuration_backups( $id ) {
 
 		// Figure out the current state and set action based on that.
-		$status = get_post_meta( $id, 'wpcd_wpapp_backup_config_status', true );
+		$status = get_post_meta( $id, 'sstk_wpapp_backup_config_status', true );
 		if ( empty( $status ) ) {
 			$status = 'off';
 		}
@@ -1148,7 +1149,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// construct the callback.
@@ -1167,25 +1168,25 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// phpcs:ignore
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'backup_config_files.txt' );
 		if ( ! $success || is_wp_error( $success ) ) {
-			do_action( "wpcd_server_{$this->get_app_name()}_toggle_server_configuration_backups_failed", $id, $action, $success );
+			do_action( "sstk_server_{$this->get_app_name()}_toggle_server_configuration_backups_failed", $id, $action, $success );
 			/* translators: %1$s is replaced with the internal action name; %2$s is replaced with the result of the call, usually an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			// Everything ok so set some metas.
 			if ( 'off' === $status ) {
 				// we just turned things on.
-				update_post_meta( $id, 'wpcd_wpapp_backup_config_status', 'on' );
-				$msg = __( 'Success - Configuration files will be backed up every four hours.', 'wpcd' );
+				update_post_meta( $id, 'sstk_wpapp_backup_config_status', 'on' );
+				$msg = __( 'Success - Configuration files will be backed up every four hours.', 'simple-stack' );
 			} else {
 				// we just turned things off.
-				update_post_meta( $id, 'wpcd_wpapp_backup_config_status', 'off' );
-				$msg = __( 'Success - Backups of configuration files have been disabled.', 'wpcd' );
+				update_post_meta( $id, 'sstk_wpapp_backup_config_status', 'off' );
+				$msg = __( 'Success - Backups of configuration files have been disabled.', 'simple-stack' );
 			}
 
 			// Return success.
@@ -1194,7 +1195,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 				'refresh' => 'yes',
 			);
 
-			do_action( "wpcd_server_{$this->get_app_name()}_toggle_server_configuration_backups_success", $id, $action, $success );
+			do_action( "sstk_server_{$this->get_app_name()}_toggle_server_configuration_backups_success", $id, $action, $success );
 		}
 
 		return $result;
@@ -1219,7 +1220,7 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -1227,17 +1228,17 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// log.
 		// phpcs:ignore
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'backup_config_files.txt' );
 		if ( ! $success || is_wp_error( $success ) ) {
 			/* translators: %1$s is replaced with the internal action name; %2$s is replaced with the result of the call, usually an error message. */
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		} else {
 			// Return success.
-			$msg    = __( 'Success - Server configuration files have been removed from the backup folders.', 'wpcd' );
+			$msg    = __( 'Success - Server configuration files have been removed from the backup folders.', 'simple-stack' );
 			$result = array(
 				'msg'     => $msg,
 				'refresh' => 'yes',
@@ -1261,15 +1262,15 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		/* Set action variable for consistency with other tabs */
 		$action = 'take_a_snapshot';
 
 		/* Get the provider object */
-		$provider     = WPCD_SERVER()->get_server_provider( $id );
-		$provider_api = WPCD()->get_provider_api( $provider );
+		$provider     = SSTK_SERVER()->get_server_provider( $id );
+		$provider_api = SSTK()->get_provider_api( $provider );
 
 		/* Call the snapshot function on the api */
 		if ( $provider_api && is_object( $provider_api ) ) {
@@ -1281,24 +1282,24 @@ class WPCD_WORDPRESS_TABS_SERVER_BACKUP extends WPCD_WORDPRESS_TABS {
 			/**
 			 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
 			 */
-			do_action( "wpcd_server_{$this->get_app_name()}_take_a_snapshot_action_successful", $id, $action, $success, $result );
+			do_action( "sstk_server_{$this->get_app_name()}_take_a_snapshot_action_successful", $id, $action, $success, $result );
 
 			// Return the data as an error so it can be shown in a dialog box.
-			return new \WP_Error( __( 'We have requested a snapshot via the server provider API. Please check your providers dashboard to verify completion.', 'wpcd' ) );
+			return new \WP_Error( __( 'We have requested a snapshot via the server provider API. Please check your providers dashboard to verify completion.', 'simple-stack' ) );
 
 		} else {
 			$success = false;
 			/**          *
 			 * Fire action hook to let other things know this action succeeded - usually used by things triggered from PENDING TASKS.
 			 */
-			do_action( "wpcd_server_{$this->get_app_name()}_take_a_snapshot_action_failed", $id, $action, $success );
+			do_action( "sstk_server_{$this->get_app_name()}_take_a_snapshot_action_failed", $id, $action, $success );
 
 			// Return the data as an error so it can be shown in a dialog box.
-			return new \WP_Error( __( 'Unfortunately we encountered an issue while requesting the snapshot.', 'wpcd' ) );
+			return new \WP_Error( __( 'Unfortunately we encountered an issue while requesting the snapshot.', 'simple-stack' ) );
 		}
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_BACKUP();
+new SSTK_WORDPRESS_TABS_SERVER_BACKUP();

@@ -1,7 +1,8 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Provision a server.
  *
- * Uses `POST /servers`, which calls `WPCD_SERVER()->create_server( 'create', $attributes )`
+ * Uses `POST /servers`, which calls `SSTK_SERVER()->create_server( 'create', $attributes )`
  * and then queues the install task exactly as the legacy REST controller did.
  */
 
@@ -13,6 +14,11 @@ import { Card, ErrorPanel } from '../components/Card.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { api } from '../lib/api.js';
 import { navigate } from '../lib/router.js';
+
+const OS_OPTIONS = [
+	{ value: 'ubuntu2404lts', label: 'Ubuntu 24.04 LTS' },
+	{ value: 'ubuntu2604lts', label: 'Ubuntu 26.04 LTS' },
+];
 
 const FIELDS = [
 	{
@@ -27,8 +33,9 @@ const FIELDS = [
 	{
 		key: 'os',
 		label: 'Operating system',
-		placeholder: 'ubuntu2404',
-		help: 'Defaults to the image the provider uses for Ubuntu 24.04.',
+		type: 'select',
+		options: OS_OPTIONS,
+		help: 'Ubuntu 24.04 and 26.04 are supported; PHP 8.4 is the default.',
 	},
 	{ key: 'author_email', label: 'Owner email', type: 'email', placeholder: 'ops@onedogsolutions.com' },
 ];
@@ -46,7 +53,7 @@ export default function ProvisionServer() {
 		provider: '',
 		region: '',
 		size: '',
-		os: '',
+		os: 'ubuntu2404lts',
 		author_email: '',
 	} );
 	const [ busy, setBusy ] = useState( false );
@@ -70,6 +77,8 @@ export default function ProvisionServer() {
 
 	const update = ( key ) => ( event ) =>
 		setValues( ( current ) => ( { ...current, [ key ]: event.target.value } ) );
+
+	const selectedOsLabel = OS_OPTIONS.find( ( option ) => option.value === values.os )?.label || 'Ubuntu 24.04 LTS';
 
 	const submit = async ( event ) => {
 		event.preventDefault();
@@ -144,22 +153,37 @@ export default function ProvisionServer() {
 										{ field.label }
 										{ field.required ? <span className="ml-0.5 text-negative-600">*</span> : null }
 									</label>
-									<input
-										id={ field.key }
-										type={ field.type || 'text' }
-										required={ field.required }
-										placeholder={ field.placeholder }
-										value={ values[ field.key ] }
-										onChange={ update( field.key ) }
-										className="w-full rounded-card border border-surface-border bg-surface-base px-3 py-2 text-sm placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-									/>
+									{ field.type === 'select' ? (
+										<select
+											id={ field.key }
+											value={ values[ field.key ] }
+											onChange={ update( field.key ) }
+											className="w-full rounded-card border border-surface-border bg-surface-base px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+										>
+											{ field.options.map( ( option ) => (
+												<option key={ option.value } value={ option.value }>
+													{ option.label }
+												</option>
+											) ) }
+										</select>
+									) : (
+										<input
+											id={ field.key }
+											type={ field.type || 'text' }
+											required={ field.required }
+											placeholder={ field.placeholder }
+											value={ values[ field.key ] }
+											onChange={ update( field.key ) }
+											className="w-full rounded-card border border-surface-border bg-surface-base px-3 py-2 text-sm placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+										/>
+									) }
 									{ field.help ? <p className="mt-1 text-xs text-ink-500">{ field.help }</p> : null }
 								</div>
 							) ) }
 
 							<div className="rounded-card border border-surface-border bg-surface-muted px-3 py-2 text-xs text-ink-500">
 								Web server: <span className="font-medium text-ink-800">OpenLiteSpeed</span> · Stack:
-								Ubuntu 24.04 LTS · PHP <span className="font-mono">lsphp84</span>
+								{ selectedOsLabel } · PHP <span className="font-mono">lsphp84</span>
 							</div>
 
 							{ error ? <ErrorPanel error={ error } /> : null }

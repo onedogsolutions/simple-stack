@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_SERVER_STATISTICS class for server statistics.
+ * SSTK_SERVER_STATISTICS class for server statistics.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_SERVER_STATISTICS
+ * Class SSTK_SERVER_STATISTICS
  */
-class WPCD_SERVER_STATISTICS {
+class SSTK_SERVER_STATISTICS {
 
 	/**
-	 * WPCD_SERVER_STATISTICS instance.
+	 * SSTK_SERVER_STATISTICS instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -25,7 +26,7 @@ class WPCD_SERVER_STATISTICS {
 	}
 
 	/**
-	 * WPCD_SERVER_STATISTICS constructor.
+	 * SSTK_SERVER_STATISTICS constructor.
 	 *
 	 * @return void
 	 */
@@ -39,13 +40,13 @@ class WPCD_SERVER_STATISTICS {
 	 * @param  int $post_id Server ID.
 	 * @return array
 	 */
-	public function wpcd_app_server_get_formatted_disk_statistics( $post_id ) {
+	public function sstk_app_server_get_formatted_disk_statistics( $post_id ) {
 
 		if ( empty( $post_id ) ) {
 			return array();
 		}
 
-		$disk_statistics = get_post_meta( $post_id, 'wpcd_wpapp_disk_statistics', true );
+		$disk_statistics = get_post_meta( $post_id, 'sstk_wpapp_disk_statistics', true );
 
 		$disk_statistics = wp_strip_all_tags( $disk_statistics );
 
@@ -96,12 +97,12 @@ class WPCD_SERVER_STATISTICS {
 			$avg_percentage = $combine_percentage / $count;
 		}
 
-		$combine_snap[0] = __( '/dev/all-loops', 'wpcd' );
+		$combine_snap[0] = __( '/dev/all-loops', 'simple-stack' );
 		$combine_snap[1] = $combine_1kblocks;
 		$combine_snap[2] = $combine_used;
 		$combine_snap[3] = $combine_available;
 		$combine_snap[4] = (int) $avg_percentage . '%';
-		$combine_snap[5] = __( '/all-snaps/', 'wpcd' );
+		$combine_snap[5] = __( '/all-snaps/', 'simple-stack' );
 
 		$line_parts[] = $combine_snap;
 
@@ -130,12 +131,12 @@ class WPCD_SERVER_STATISTICS {
 	 * @param  int $post_id Server ID.
 	 * @return array
 	 */
-	public function wpcd_app_server_get_formatted_vnstat_data( $post_id ) {
+	public function sstk_app_server_get_formatted_vnstat_data( $post_id ) {
 		if ( empty( $post_id ) ) {
 			return array();
 		}
 
-		$vnstat_data = get_post_meta( $post_id, 'wpcd_wpapp_vnstat_one_line_data', true );
+		$vnstat_data = get_post_meta( $post_id, 'sstk_wpapp_vnstat_one_line_data', true );
 
 		$vnstat_data = wp_strip_all_tags( $vnstat_data );
 
@@ -209,12 +210,12 @@ class WPCD_SERVER_STATISTICS {
 	 * @param  int $post_id Server ID.
 	 * @return array
 	 */
-	public function wpcd_app_server_get_formatted_vmstat_data( $post_id ) {
+	public function sstk_app_server_get_formatted_vmstat_data( $post_id ) {
 		if ( empty( $post_id ) ) {
 			return array();
 		}
 
-		$vmstat_data = get_post_meta( $post_id, 'wpcd_wpapp_vmstat_data', true );
+		$vmstat_data = get_post_meta( $post_id, 'sstk_wpapp_vmstat_data', true );
 
 		// Remove tags from the string.
 		$vmstat_data = wp_strip_all_tags( $vmstat_data );

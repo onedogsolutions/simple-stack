@@ -1,11 +1,12 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class is used as a base class
  * to share methods that are needed by multiple classes.
  *
  * Use it as the ancestor class if you need these methods.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,13 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * WPCD Base Class
+ * SSTK Base Class
  *
- * @package wpcd
- * @version 1.0.0 / wpcd
+ * @package simple-stack
+ * @version 1.0.0 / sstk
  * @since 4.2.0
  */
-class WPCD_Base {
+class SSTK_Base {
 
 	/**
 	 * Constructor function.
@@ -39,9 +40,9 @@ class WPCD_Base {
 	 *
 	 * @return void
 	 */
-	public function add_deferred_action_history( $id, $source, $meta_key = 'wpcd_server_last_deferred_action_source' ) {
+	public function add_deferred_action_history( $id, $source, $meta_key = 'sstk_server_last_deferred_action_source' ) {
 
-		$def_history = wpcd_maybe_unserialize( get_post_meta( $id, $meta_key, true ) );
+		$def_history = sstk_maybe_unserialize( get_post_meta( $id, $meta_key, true ) );
 		if ( ! $def_history ) {
 			$def_history = array();
 		}
@@ -62,7 +63,7 @@ class WPCD_Base {
 				}
 			}
 
-			$notation[' 0'] = __( 'Data has been purged.  Only the last 15 elements are shown.', 'wpcd' );
+			$notation[' 0'] = __( 'Data has been purged.  Only the last 15 elements are shown.', 'simple-stack' );
 			$def_history    = array_merge( $notation, $def_history );
 		}
 
@@ -86,7 +87,7 @@ class WPCD_Base {
 	 */
 	public function get_formatted_custom_links( $post_id ) {
 
-		$raw_links = get_post_meta( $post_id, 'wpcd_links', true );
+		$raw_links = get_post_meta( $post_id, 'sstk_links', true );
 
 		// shortcut - bail if nothing.
 		if ( empty( $raw_links ) ) {
@@ -96,7 +97,7 @@ class WPCD_Base {
 		// start to construct strings...
 		$return_string = '';
 		foreach ( $raw_links as $raw_link ) {
-			$return_string .= '<div class="wpcd_custom_link">' . sprintf( '<a href = "%s" target="_blank">' . esc_html( $raw_link['wpcd_link_label'] ) . '</a>', esc_url( $raw_link['wpcd_link_url'] ) ) . '</div>';
+			$return_string .= '<div class="sstk_custom_link">' . sprintf( '<a href = "%s" target="_blank">' . esc_html( $raw_link['sstk_link_label'] ) . '</a>', esc_url( $raw_link['sstk_link_url'] ) ) . '</div>';
 		}
 
 		return $return_string;

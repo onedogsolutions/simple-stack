@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class is used for cloud provider.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,15 +11,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_POSTS_CLOUD_PROVIDER
+ * Class SSTK_POSTS_CLOUD_PROVIDER
  */
-class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
+class SSTK_POSTS_CLOUD_PROVIDER extends SSTK_Posts_Base {
 
 	/* Include traits */
-	use wpcd_get_set_post_type;
+	use sstk_get_set_post_type;
 
 	/**
-	 * WPCD_POSTS_CLOUD_PROVIDER instance.
+	 * SSTK_POSTS_CLOUD_PROVIDER instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -43,22 +44,22 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	private function hooks() {
 
 		// Filter hook to add new columns.
-		add_filter( 'manage_wpcd_cloud_provider_posts_columns', array( $this, 'cloud_provider_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_cloud_provider_posts_columns', array( $this, 'cloud_provider_table_head' ), 10, 1 );
 
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_cloud_provider_posts_custom_column', array( $this, 'cloud_provider_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_cloud_provider_posts_custom_column', array( $this, 'cloud_provider_table_content' ), 10, 2 );
 
 		// Filter hook to add sortable columns.
-		add_filter( 'manage_edit-wpcd_cloud_provider_sortable_columns', array( $this, 'wpcd_cloud_provider_table_sorting' ), 10, 1 );
+		add_filter( 'manage_edit-sstk_cloud_provider_sortable_columns', array( $this, 'sstk_cloud_provider_table_sorting' ), 10, 1 );
 
 		// Action hook to extend admin filter options.
-		add_action( 'restrict_manage_posts', array( $this, 'wpcd_cloud_provider_table_filtering' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'sstk_cloud_provider_table_filtering' ) );
 
 		// Filter hook to filter cloud provider listing on custom meta data.
-		add_filter( 'parse_query', array( $this, 'wpcd_cloud_provider_list_parse_query' ), 10, 1 );
+		add_filter( 'parse_query', array( $this, 'sstk_cloud_provider_list_parse_query' ), 10, 1 );
 
 		// Action hook to save provider status.
-		add_action( 'wp_ajax_wpcd_provider_status_save', array( $this, 'wpcd_provider_status_save' ) );
+		add_action( 'wp_ajax_sstk_provider_status_save', array( $this, 'sstk_provider_status_save' ) );
 
 		// Remove PRIVATE state label from certain custom post types - function is actually in ancestor class.
 		add_filter( 'display_post_states', array( $this, 'display_post_states' ), 20, 2 );
@@ -67,25 +68,25 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 10, 1 );
 
 		// Filter hook to add custom meta box.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'wpcd_cloud_provider_register_meta_boxes' ), 10, 1 );
+		add_filter( 'rwmb_meta_boxes', array( $this, 'sstk_cloud_provider_register_meta_boxes' ), 10, 1 );
 
 		// Action hook after metabox is saved...
-		add_action( 'rwmb_wpcd_cloud_provider_basic_after_save_post', array( $this, 'metabox_io_after_save_post_cloud_provider_basic' ), 10, 1 );
+		add_action( 'rwmb_sstk_cloud_provider_basic_after_save_post', array( $this, 'metabox_io_after_save_post_cloud_provider_basic' ), 10, 1 );
 
 		// Add the new providers to the providers array.
-		add_filter( 'wpcd_get_cloud_providers', array( $this, 'wpcd_get_cloud_providers' ), 10, 1 );
+		add_filter( 'sstk_get_cloud_providers', array( $this, 'sstk_get_cloud_providers' ), 10, 1 );
 
 		// Change the placeholder in the title when adding a new virtual provider.
 		add_filter( 'enter_title_here', array( $this, 'change_title_placeholder_text' ) );
 
-		// Filter hook to remove delete link from wpcd_cloud_provider (virtual providers) listing row if it is used for any server.
-		add_filter( 'post_row_actions', array( $this, 'wpcd_cloud_provider_post_row_actions' ), 10, 2 );
+		// Filter hook to remove delete link from sstk_cloud_provider (virtual providers) listing row if it is used for any server.
+		add_filter( 'post_row_actions', array( $this, 'sstk_cloud_provider_post_row_actions' ), 10, 2 );
 
-		// Action hook to hide "Move to trash" link on wpcd_cloud_provider (virtual providers) detail screen if it is used for any server.
-		add_action( 'admin_head-post.php', array( $this, 'wpcd_cloud_provider_hide_delete_link' ) );
+		// Action hook to hide "Move to trash" link on sstk_cloud_provider (virtual providers) detail screen if it is used for any server.
+		add_action( 'admin_head-post.php', array( $this, 'sstk_cloud_provider_hide_delete_link' ) );
 
 		// Filter hook to restrict trash post for virtual providers if it is used for any server.
-		add_filter( 'pre_trash_post', array( $this, 'wpcd_cloud_provider_restrict_trash_post' ), 10, 2 );
+		add_filter( 'pre_trash_post', array( $this, 'sstk_cloud_provider_restrict_trash_post' ), 10, 2 );
 
 	}
 
@@ -98,10 +99,10 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		if ( in_array( $hook, array( 'post-new.php', 'post.php', 'edit.php' ), true ) ) {
 
 			$screen = get_current_screen();
-			if ( is_object( $screen ) && 'wpcd_cloud_provider' === $screen->post_type ) {
+			if ( is_object( $screen ) && 'sstk_cloud_provider' === $screen->post_type ) {
 
-				wp_enqueue_script( 'wpcd-virtual-provider-admin', wpcd_url . 'assets/js/wpcd-virtual-provider-admin.js', array( 'jquery' ), wpcd_version, true );
-				wp_localize_script( 'wpcd-virtual-provider-admin', 'params', array( 'i10n' => array( 'empty_title' => __( 'Please enter the virtual cloud provider title.', 'wpcd' ) ) ) );
+				wp_enqueue_script( 'sstk-virtual-provider-admin', SSTK_URL . 'assets/js/sstk-virtual-provider-admin.js', array( 'jquery' ), SSTK_VERSION, true );
+				wp_localize_script( 'sstk-virtual-provider-admin', 'params', array( 'i10n' => array( 'empty_title' => __( 'Please enter the virtual cloud provider title.', 'simple-stack' ) ) ) );
 
 			}
 		}
@@ -112,7 +113,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 */
 	public function register() {
 
-		self::wpcd_cloud_provider_register_post_and_taxonomy();
+		self::sstk_cloud_provider_register_post_and_taxonomy();
 
 	}
 
@@ -128,26 +129,26 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 
 		$value = '';
 		switch ( $column_name ) {
-			case 'wpcd_cloud_provider_type':
+			case 'sstk_cloud_provider_type':
 				// Display the short description.
-				$value = get_post_meta( $post_id, 'wpcd_cloud_provider_type', true );
+				$value = get_post_meta( $post_id, 'sstk_cloud_provider_type', true );
 				break;
-			case 'wpcd_cloud_provider_active':
-				$inactive = get_post_meta( $post_id, 'wpcd_cloud_provider_inactive', true );
+			case 'sstk_cloud_provider_active':
+				$inactive = get_post_meta( $post_id, 'sstk_cloud_provider_inactive', true );
 				if ( boolval( $inactive ) ) {
 					$active      = 1;
 					$checked     = '';
-					$status_text = __( 'INACTIVE', 'wpcd' );
+					$status_text = __( 'INACTIVE', 'simple-stack' );
 				} else {
 					$active      = 0;
-					$checked     = __( 'checked', 'wpcd' );
-					$status_text = __( 'ACTIVE', 'wpcd' );
+					$checked     = __( 'checked', 'simple-stack' );
+					$status_text = __( 'ACTIVE', 'simple-stack' );
 				}
-				$value = '<label class="wpcd_provider_active_switch"><input data-post_id="' . $post_id . '" class="wpcd_active_provider" data-action="wpcd_provider_status_save" data-nonce="' . wp_create_nonce( 'wpcd-provider-status-save' ) . '" value="' . $active . '" type="checkbox" ' . $checked . '><span class="wpcd_provider_active_slider round" title="' . $status_text . '" ></span></label>';
+				$value = '<label class="sstk_provider_active_switch"><input data-post_id="' . $post_id . '" class="sstk_active_provider" data-action="sstk_provider_status_save" data-nonce="' . wp_create_nonce( 'sstk-provider-status-save' ) . '" value="' . $active . '" type="checkbox" ' . $checked . '><span class="sstk_provider_active_slider round" title="' . $status_text . '" ></span></label>';
 				break;
 		}
 
-		$value = apply_filters( 'wpcd_cloud_provider_table_content', $value, $column_name, $post_id );
+		$value = apply_filters( 'sstk_cloud_provider_table_content', $value, $column_name, $post_id );
 
 		echo $value;
 	}
@@ -162,10 +163,10 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	public function cloud_provider_table_head( $defaults ) {
 
 		unset( $defaults['date'] ); // remove date column.
-		$defaults['title']                      = __( 'Virtual Provider', 'wpcd' );  // Add different title label to the title column.
-		$defaults['wpcd_cloud_provider_type']   = __( 'Provider Type', 'wpcd' );
-		$defaults['wpcd_cloud_provider_active'] = __( 'Active?', 'wpcd' );
-		$defaults['date']                       = __( 'Date', 'wpcd' );  // Add back the date column.
+		$defaults['title']                      = __( 'Virtual Provider', 'simple-stack' );  // Add different title label to the title column.
+		$defaults['sstk_cloud_provider_type']   = __( 'Provider Type', 'simple-stack' );
+		$defaults['sstk_cloud_provider_active'] = __( 'Active?', 'simple-stack' );
+		$defaults['date']                       = __( 'Date', 'simple-stack' );  // Add back the date column.
 
 		return $defaults;
 
@@ -178,8 +179,8 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 *
 	 * @return $columns modified array with new columns
 	 */
-	public function wpcd_cloud_provider_table_sorting( $columns ) {
-		$columns['wpcd_cloud_provider_type'] = 'wpcd_cloud_provider_type';
+	public function sstk_cloud_provider_table_sorting( $columns ) {
+		$columns['sstk_cloud_provider_type'] = 'sstk_cloud_provider_type';
 		return $columns;
 	}
 
@@ -190,24 +191,24 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_cloud_provider_table_filtering() {
+	public function sstk_cloud_provider_table_filtering() {
 
 		global $typenow, $pagenow;
 
-		$post_type = 'wpcd_cloud_provider';
+		$post_type = 'sstk_cloud_provider';
 
 		if ( is_admin() && 'edit.php' === $pagenow && $typenow === $post_type ) {
 
 			// Provider Type.
-			$provider_type = $this->generate_provider_meta_dropdown( $post_type, 'wpcd_cloud_provider_type', __( 'Provider Type', 'wpcd' ) );
+			$provider_type = $this->generate_provider_meta_dropdown( $post_type, 'sstk_cloud_provider_type', __( 'Provider Type', 'simple-stack' ) );
 			echo $provider_type;
 
 			// Active.
 			$cloud_options = array(
-				'active'   => __( 'Active', 'wpcd' ),
-				'inactive' => __( 'Inactive', 'wpcd' ),
+				'active'   => __( 'Active', 'simple-stack' ),
+				'inactive' => __( 'Inactive', 'simple-stack' ),
 			);
-			$cloud_active  = WPCD_WORDPRESS_APP()->generate_meta_dropdown( 'wpcd_cloud_provider_inactive', __( 'Provider Status', 'wpcd' ), $cloud_options );
+			$cloud_active  = SSTK_WORDPRESS_APP()->generate_meta_dropdown( 'sstk_cloud_provider_inactive', __( 'Provider Status', 'simple-stack' ), $cloud_options );
 			echo $cloud_active;
 
 		}
@@ -220,40 +221,40 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 *
 	 * @param  object $query query.
 	 */
-	public function wpcd_cloud_provider_list_parse_query( $query ) {
+	public function sstk_cloud_provider_list_parse_query( $query ) {
 		global $pagenow;
 
 		$filter_action = sanitize_text_field( filter_input( INPUT_GET, 'filter_action', FILTER_UNSAFE_RAW ) );
-		if ( is_admin() && $query->is_main_query() && 'wpcd_cloud_provider' === $query->query['post_type'] && 'edit.php' === $pagenow && ! empty( $filter_action ) ) {
+		if ( is_admin() && $query->is_main_query() && 'sstk_cloud_provider' === $query->query['post_type'] && 'edit.php' === $pagenow && ! empty( $filter_action ) ) {
 
 			$qv = &$query->query_vars;
 
 			// PROVIDER TYPE.
-			if ( isset( $_GET['wpcd_cloud_provider_type'] ) && ! empty( $_GET['wpcd_cloud_provider_type'] ) ) {
-				$wpcd_cloud_provider_type = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_cloud_provider_type', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_cloud_provider_type'] ) && ! empty( $_GET['sstk_cloud_provider_type'] ) ) {
+				$sstk_cloud_provider_type = sanitize_text_field( filter_input( INPUT_GET, 'sstk_cloud_provider_type', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_cloud_provider_type',
-					'value'   => $wpcd_cloud_provider_type,
+					'field'   => 'sstk_cloud_provider_type',
+					'value'   => $sstk_cloud_provider_type,
 					'compare' => '=',
 				);
 			}
 
 			// PROVIDER STATUS.
-			if ( isset( $_GET['wpcd_cloud_provider_inactive'] ) && ! empty( $_GET['wpcd_cloud_provider_inactive'] ) ) {
-				$wpcd_cloud_provider_inactive = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_cloud_provider_inactive', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_cloud_provider_inactive'] ) && ! empty( $_GET['sstk_cloud_provider_inactive'] ) ) {
+				$sstk_cloud_provider_inactive = sanitize_text_field( filter_input( INPUT_GET, 'sstk_cloud_provider_inactive', FILTER_UNSAFE_RAW ) );
 
-				if ( 'active' === $wpcd_cloud_provider_inactive ) {
+				if ( 'active' === $sstk_cloud_provider_inactive ) {
 					$qv['meta_query'][] = array(
-						'key'     => 'wpcd_cloud_provider_inactive',
+						'key'     => 'sstk_cloud_provider_inactive',
 						'value'   => '0',
 						'compare' => '=',
 					);
 				}
 
-				if ( 'inactive' === $wpcd_cloud_provider_inactive ) {
+				if ( 'inactive' === $sstk_cloud_provider_inactive ) {
 					$qv['meta_query'][] = array(
-						'key'     => 'wpcd_cloud_provider_inactive',
+						'key'     => 'sstk_cloud_provider_inactive',
 						'value'   => '1',
 						'compare' => '=',
 					);
@@ -265,14 +266,14 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	/**
 	 * Save provider status
 	 */
-	public function wpcd_provider_status_save() {
+	public function sstk_provider_status_save() {
 		// nonce check.
-		check_ajax_referer( 'wpcd-provider-status-save', 'nonce' );
+		check_ajax_referer( 'sstk-provider-status-save', 'nonce' );
 
 		// Permissions check.
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 
-			$msg = array( 'msg' => __( 'You are not allowed to perform this action - only admins are permitted here.', 'wpcd' ) );
+			$msg = array( 'msg' => __( 'You are not allowed to perform this action - only admins are permitted here.', 'simple-stack' ) );
 			wp_send_json_error( $msg );
 			wp_die();
 
@@ -282,7 +283,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		$provider_active = filter_input( INPUT_POST, 'provider_active', FILTER_SANITIZE_NUMBER_INT );
 
 		$provider_args = array(
-			'post_type'      => 'wpcd_cloud_provider',
+			'post_type'      => 'sstk_cloud_provider',
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
 			'p'              => $post_id,
@@ -291,11 +292,11 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		$provider_found = get_posts( $provider_args );
 
 		if ( ! empty( $provider_found ) && ( 0 === (int) $provider_active || 1 === (int) $provider_active ) ) {
-			update_post_meta( $post_id, 'wpcd_cloud_provider_inactive', $provider_active );
-			$msg = array( 'msg' => __( 'Provider status updated successfully.', 'wpcd' ) );
+			update_post_meta( $post_id, 'sstk_cloud_provider_inactive', $provider_active );
+			$msg = array( 'msg' => __( 'Provider status updated successfully.', 'simple-stack' ) );
 			wp_send_json_error( $msg );
 		} else {
-			$msg = array( 'msg' => __( 'Something went wrong. please try again', 'wpcd' ) );
+			$msg = array( 'msg' => __( 'Something went wrong. please try again', 'simple-stack' ) );
 			wp_send_json_error( $msg );
 		}
 
@@ -350,15 +351,15 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_cloud_provider_register_meta_boxes( $metaboxes ) {
+	public function sstk_cloud_provider_register_meta_boxes( $metaboxes ) {
 
-		$prefix = 'wpcd_';
+		$prefix = 'sstk_';
 
 		// Register a metabox to hold a description.
 		$metaboxes[] = array(
 			'id'       => $prefix . 'cloud_provider_help_description',
-			'title'    => __( 'Help', 'wpcd' ),
-			'pages'    => array( 'wpcd_cloud_provider' ), // displays on wpcd_app_server post type only.
+			'title'    => __( 'Help', 'simple-stack' ),
+			'pages'    => array( 'sstk_cloud_provider' ), // displays on sstk_app_server post type only.
 			'priority' => 'high',
 			'style'    => 'seamless',
 			'fields'   => array(
@@ -366,13 +367,13 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 					'name' => '',
 					'id'   => $prefix . 'cloud_provider_help',
 					'type' => 'custom_html',
-					'std'  => __( 'A Virtual Cloud Provider allows you to define a new provider based on an existing one.  By doing this you can use multiple accounts at the same cloud provider.', 'wpcd' ),
+					'std'  => __( 'A Virtual Cloud Provider allows you to define a new provider based on an existing one.  By doing this you can use multiple accounts at the same cloud provider.', 'simple-stack' ),
 				),
 				array(
 					'name' => '',
 					'id'   => $prefix . 'cloud_provider_help_view_docs',
 					'type' => 'custom_html',
-					'std'  => '<a href="https://wpclouddeploy.com/documentation/wpcloud-deploy-admin/virtual-cloud-providers/">' . __( 'View Documentation', 'wpcd' ) . '</a>',
+					'std'  => '<a href="https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#7-providers">' . __( 'View Documentation', 'simple-stack' ) . '</a>',
 				),
 			),
 		);
@@ -380,17 +381,17 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		// Register the metabox with the input fields required.
 		$metaboxes[] = array(
 			'id'         => $prefix . 'cloud_provider_basic',
-			'title'      => __( 'Virtual Cloud Provider Data', 'wpcd' ),
-			'pages'      => array( 'wpcd_cloud_provider' ), // displays on wpcd_app_server post type only.
+			'title'      => __( 'Virtual Cloud Provider Data', 'simple-stack' ),
+			'pages'      => array( 'sstk_cloud_provider' ), // displays on sstk_app_server post type only.
 			'priority'   => 'high',
 			'fields'     => array(
 				array(
 					'name'        => 'Cloud Provider Type',
-					'desc'        => __( 'Choose one of our supported cloud providers', 'wpcd' ),
+					'desc'        => __( 'Choose one of our supported cloud providers', 'simple-stack' ),
 					'id'          => $prefix . 'cloud_provider_type',
 					'type'        => 'select',
-					'std'         => 'digital-ocean',
-					'placeholder' => __( 'Select A Cloud Provider Type', 'wpcd' ),
+					'std'         => 'vultr-v2',
+					'placeholder' => __( 'Select A Cloud Provider Type', 'simple-stack' ),
 					'options'     => $this->get_provider_types(),
 				),
 
@@ -399,14 +400,14 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 				),
 				array(
 					'name' => 'Region Prefix',
-					'desc' => __( 'Optional - When selecting a region from a drop-down this prefix can help distinguish between providers of the same type.', 'wpcd' ),
+					'desc' => __( 'Optional - When selecting a region from a drop-down this prefix can help distinguish between providers of the same type.', 'simple-stack' ),
 					'id'   => $prefix . 'cloud_provider_region_prefix',
 					'type' => 'text',
 				),
 
 				array(
 					'name' => 'Providers Dashboard',
-					'desc' => __( 'Optional - Enter the URL to the providers dashboard where they can get a token/api keys. If left blank the default for the provider type will be used.', 'wpcd' ),
+					'desc' => __( 'Optional - Enter the URL to the providers dashboard where they can get a token/api keys. If left blank the default for the provider type will be used.', 'simple-stack' ),
 					'id'   => $prefix . 'cloud_provider_dashboard_link',
 					'type' => 'text',
 					'size' => 120,
@@ -417,7 +418,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 
 				array(
 					'name' => 'Client Information',
-					'desc' => __( 'If this virtual cloud provider is for a client, you can enter client data or notes here.', 'wpcd' ),
+					'desc' => __( 'If this virtual cloud provider is for a client, you can enter client data or notes here.', 'simple-stack' ),
 					'id'   => $prefix . 'cloud_provider_client_info',
 					'type' => 'textarea',
 					'rows' => 6,
@@ -430,7 +431,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 
 				array(
 					'name' => 'Notes',
-					'desc' => __( 'Internal notes about this virtual provider.', 'wpcd' ),
+					'desc' => __( 'Internal notes about this virtual provider.', 'simple-stack' ),
 					'id'   => $prefix . 'cloud_provider_notes',
 					'type' => 'textarea',
 					'rows' => 6,
@@ -443,7 +444,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 
 				array(
 					'name' => 'Deactivate',
-					'desc' => __( 'Disable this virtual cloud provider.', 'wpcd' ),
+					'desc' => __( 'Disable this virtual cloud provider.', 'simple-stack' ),
 					'id'   => $prefix . 'cloud_provider_inactive',
 					'type' => 'checkbox',
 				),
@@ -457,7 +458,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 				),
 				'messages' => array(
 					$prefix . 'cloud_provider_type' => array(
-						'required' => __( 'Cloud Provider Type is required.', 'wpcd' ),
+						'required' => __( 'Cloud Provider Type is required.', 'simple-stack' ),
 					),
 				),
 			),
@@ -468,7 +469,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Action hook after wpcd_cloud_provider_basic metabox is saved.
+	 * Action hook after sstk_cloud_provider_basic metabox is saved.
 	 *
 	 * @param int $object_id object_id.
 	 */
@@ -483,7 +484,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		}
 
 		// return if not the right post type.
-		if ( 'wpcd_cloud_provider' <> get_post_type( $post_id ) ) {
+		if ( 'sstk_cloud_provider' <> get_post_type( $post_id ) ) {
 			return;
 		}
 
@@ -491,9 +492,9 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		if ( $post_id ) {
 			$post = get_post( $post_id );
 			if ( $post ) {
-				$slug = get_post_meta( $post_id, 'wpcd_cloud_provider_slug', true );
+				$slug = get_post_meta( $post_id, 'sstk_cloud_provider_slug', true );
 				if ( empty( $slug ) ) {
-					update_post_meta( $post_id, 'wpcd_cloud_provider_slug', (string) $post_id . '-' . sanitize_title( $post->post_title ) );
+					update_post_meta( $post_id, 'sstk_cloud_provider_slug', (string) $post_id . '-' . sanitize_title( $post->post_title ) );
 				}
 			}
 		}
@@ -502,29 +503,29 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	/**
 	 * Registers the custom post type and related taxonomies (if any)
 	 */
-	public static function wpcd_cloud_provider_register_post_and_taxonomy() {
+	public static function sstk_cloud_provider_register_post_and_taxonomy() {
 		register_post_type(
-			'wpcd_cloud_provider',
+			'sstk_cloud_provider',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'Virtual Cloud Provider', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'Virtual Cloud Provider', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => _x( 'Virtual Cloud Providers', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'Virtual Cloud Providers', 'Add New on Toolbar', 'wpcd' ),
-					'add_new'               => __( 'Add New Virtual Cloud Provider', 'wpcd' ),
-					'add_new_item'          => __( 'Add New Virtual Cloud Provider', 'wpcd' ),
-					'edit_item'             => __( 'Edit Virtual Cloud Provider', 'wpcd' ),
-					'view_item'             => __( 'View Virtual Cloud Provider', 'wpcd' ),
-					'all_items'             => __( 'Virtual Providers', 'wpcd' ), // Label to signify all items in a submenu link.
-					'search_items'          => __( 'Search Virtual Cloud Providers', 'wpcd' ),
-					'not_found'             => apply_filters( 'wpcd_no_virtual_cloud_providers_found_msg', __( 'No Virtual Cloud Providers were found.', 'wpcd' ) ),
-					'not_found_in_trash'    => __( 'No Virtual Cloud Providers were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter Virtual Cloud Providers list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'Virtual Cloud Providers list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'Virtual Cloud Providers list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'Virtual Cloud Provider', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'Virtual Cloud Provider', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => _x( 'Virtual Cloud Providers', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'Virtual Cloud Providers', 'Add New on Toolbar', 'simple-stack' ),
+					'add_new'               => __( 'Add New Virtual Cloud Provider', 'simple-stack' ),
+					'add_new_item'          => __( 'Add New Virtual Cloud Provider', 'simple-stack' ),
+					'edit_item'             => __( 'Edit Virtual Cloud Provider', 'simple-stack' ),
+					'view_item'             => __( 'View Virtual Cloud Provider', 'simple-stack' ),
+					'all_items'             => __( 'Virtual Providers', 'simple-stack' ), // Label to signify all items in a submenu link.
+					'search_items'          => __( 'Search Virtual Cloud Providers', 'simple-stack' ),
+					'not_found'             => apply_filters( 'sstk_no_virtual_cloud_providers_found_msg', __( 'No Virtual Cloud Providers were found.', 'simple-stack' ) ),
+					'not_found_in_trash'    => __( 'No Virtual Cloud Providers were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter Virtual Cloud Providers list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'Virtual Cloud Providers list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'Virtual Cloud Providers list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
-				'show_in_menu'        => ( apply_filters( 'wpcd_show_virtual_cloud_providers', false ) ) ? 'edit.php?post_type=wpcd_app_server' : false,
+				'show_in_menu'        => ( apply_filters( 'sstk_show_virtual_cloud_providers', false ) ) ? 'edit.php?post_type=sstk_app_server' : false,
 				'menu_position'       => null,
 				'show_in_nav_menus'   => true,
 				'show_in_admin_bar'   => false,
@@ -535,19 +536,19 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 				'hierarchical'        => false,
 				'supports'            => array( 'title' ),
 				'capabilities'        => array(
-					'create_posts'           => 'wpcd_manage_settings',
-					'edit_post'              => 'wpcd_manage_settings',
-					'edit_posts'             => 'wpcd_manage_settings',
-					'edit_others_posts'      => 'wpcd_manage_settings',
-					'edit_published_posts'   => 'wpcd_manage_settings',
-					'delete_post'            => 'wpcd_manage_settings',
-					'publish_posts'          => 'wpcd_manage_settings',
-					'delete_posts'           => 'wpcd_manage_settings',
-					'delete_others_posts'    => 'wpcd_manage_settings',
-					'delete_published_posts' => 'wpcd_manage_settings',
-					'delete_private_posts'   => 'wpcd_manage_settings',
-					'edit_private_posts'     => 'wpcd_manage_settings',
-					'read_private_posts'     => 'wpcd_manage_settings',
+					'create_posts'           => 'sstk_manage_settings',
+					'edit_post'              => 'sstk_manage_settings',
+					'edit_posts'             => 'sstk_manage_settings',
+					'edit_others_posts'      => 'sstk_manage_settings',
+					'edit_published_posts'   => 'sstk_manage_settings',
+					'delete_post'            => 'sstk_manage_settings',
+					'publish_posts'          => 'sstk_manage_settings',
+					'delete_posts'           => 'sstk_manage_settings',
+					'delete_others_posts'    => 'sstk_manage_settings',
+					'delete_published_posts' => 'sstk_manage_settings',
+					'delete_private_posts'   => 'sstk_manage_settings',
+					'edit_private_posts'     => 'sstk_manage_settings',
+					'read_private_posts'     => 'sstk_manage_settings',
 				),
 			)
 		);
@@ -560,20 +561,11 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	public function get_provider_types() {
 
 		$provider_types = array(
-			'digital-ocean' => 'Digital Ocean',
+			'vultr-v2' => 'Vultr',
+			'upcloud'  => 'UpCloud',
 		);
 
-		/*
-		$provider_types = array(
-						'digital-ocean'	=> 'Digital Ocean',
-						'linode'		=> 'Linode',
-						'vultr'			=> 'Vultr',
-						'awsec2'		=> 'AWS EC2',
-						'awslightsail'	=> 'AWS Lightsail',
-					);
-		*/
-
-		return apply_filters( 'wpcd_provider_types', $provider_types );
+		return apply_filters( 'sstk_provider_types', $provider_types );
 
 	}
 
@@ -585,17 +577,17 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 *
 	 * @return array $providers New array of providers.
 	 */
-	public function wpcd_get_cloud_providers( $providers ) {
+	public function sstk_get_cloud_providers( $providers ) {
 
 		// Only do this if the virtual provider add-on is enabled.
-		if ( ! class_exists( 'WPCD_VirtualCloudProvider_Init' ) ) {
+		if ( ! class_exists( 'SSTK_VirtualCloudProvider_Init' ) ) {
 			return $providers;
 		}
 
 		// get all defined virtual providers.
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_cloud_provider',
+				'post_type'   => 'sstk_cloud_provider',
 				'post_status' => 'publish',
 				'numberposts' => -1,
 			)
@@ -604,11 +596,11 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 		// loop through and add to the providers array.
 		foreach ( $posts as $post ) {
 
-			$inactive = boolval( get_post_meta( $post->ID, 'wpcd_cloud_provider_inactive', true ) );
+			$inactive = boolval( get_post_meta( $post->ID, 'sstk_cloud_provider_inactive', true ) );
 
 			// if virtual provider is not inactive add it to the array.
 			if ( ! $inactive ) {
-				$providers[ get_post_meta( $post->ID, 'wpcd_cloud_provider_slug', true ) ] = $post->post_title;
+				$providers[ get_post_meta( $post->ID, 'sstk_cloud_provider_slug', true ) ] = $post->post_title;
 			}
 		}
 
@@ -629,15 +621,15 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	public function change_title_placeholder_text( $title ) {
 		$screen = get_current_screen();
 
-		if ( 'wpcd_cloud_provider' === $screen->post_type ) {
-			$title = __( 'Enter your virtual cloud provider title', 'wpcd' );
+		if ( 'sstk_cloud_provider' === $screen->post_type ) {
+			$title = __( 'Enter your virtual cloud provider title', 'simple-stack' );
 		}
 
 		return $title;
 	}
 
 	/**
-	 * Removes link to delete post and hides the checkbox for wpcd_cloud_provider if it is used for any server.
+	 * Removes link to delete post and hides the checkbox for sstk_cloud_provider if it is used for any server.
 	 *
 	 * Filter hook: post_row_actions
 	 *
@@ -646,19 +638,19 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_cloud_provider_post_row_actions( $actions, $post ) {
+	public function sstk_cloud_provider_post_row_actions( $actions, $post ) {
 
-		if ( 'wpcd_cloud_provider' === $post->post_type ) {
-			$slug = get_post_meta( $post->ID, 'wpcd_cloud_provider_slug', true );
+		if ( 'sstk_cloud_provider' === $post->post_type ) {
+			$slug = get_post_meta( $post->ID, 'sstk_cloud_provider_slug', true );
 
 			if ( empty( $slug ) ) {
 				return $actions;
 			}
 
 			$args    = array(
-				'post_type'   => 'wpcd_app_server',
+				'post_type'   => 'sstk_app_server',
 				'post_status' => 'private',
-				'meta_key'    => 'wpcd_server_provider',
+				'meta_key'    => 'sstk_server_provider',
 				'meta_value'  => $slug,
 				'fields'      => 'ids',
 			);
@@ -681,24 +673,24 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Removes "Move to trash" for wpcd_cloud_provider details screen if it is used for any server.
+	 * Removes "Move to trash" for sstk_cloud_provider details screen if it is used for any server.
 	 *
 	 * Action hook: admin_head-post.php
 	 *
 	 * @return void
 	 */
-	public function wpcd_cloud_provider_hide_delete_link() {
+	public function sstk_cloud_provider_hide_delete_link() {
 		$screen = get_current_screen();
 
-		if ( 'wpcd_cloud_provider' === $screen->post_type ) {
+		if ( 'sstk_cloud_provider' === $screen->post_type ) {
 			$post_id = filter_input( INPUT_GET, 'post', FILTER_VALIDATE_INT );
-			$slug    = get_post_meta( $post_id, 'wpcd_cloud_provider_slug', true );
+			$slug    = get_post_meta( $post_id, 'sstk_cloud_provider_slug', true );
 
 			if ( ! empty( $slug ) ) {
 				$args    = array(
-					'post_type'   => 'wpcd_app_server',
+					'post_type'   => 'sstk_app_server',
 					'post_status' => 'private',
-					'meta_key'    => 'wpcd_server_provider',
+					'meta_key'    => 'sstk_server_provider',
 					'meta_value'  => $slug,
 					'fields'      => 'ids',
 				);
@@ -715,7 +707,7 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Restricts the trash post of the wpcd_cloud_provider if it is used for any server.
+	 * Restricts the trash post of the sstk_cloud_provider if it is used for any server.
 	 *
 	 * Filter hook: pre_trash_post
 	 *
@@ -724,16 +716,16 @@ class WPCD_POSTS_CLOUD_PROVIDER extends WPCD_Posts_Base {
 	 *
 	 * @return boolean
 	 */
-	public function wpcd_cloud_provider_restrict_trash_post( $trash, $post ) {
+	public function sstk_cloud_provider_restrict_trash_post( $trash, $post ) {
 
-		if ( 'wpcd_cloud_provider' === $post->post_type ) {
-			$slug = get_post_meta( $post->ID, 'wpcd_cloud_provider_slug', true );
+		if ( 'sstk_cloud_provider' === $post->post_type ) {
+			$slug = get_post_meta( $post->ID, 'sstk_cloud_provider_slug', true );
 
 			if ( ! empty( $slug ) ) {
 				$args    = array(
-					'post_type'   => 'wpcd_app_server',
+					'post_type'   => 'sstk_app_server',
 					'post_status' => 'private',
-					'meta_key'    => 'wpcd_server_provider',
+					'meta_key'    => 'sstk_server_provider',
 					'meta_value'  => $slug,
 					'fields'      => 'ids',
 				);

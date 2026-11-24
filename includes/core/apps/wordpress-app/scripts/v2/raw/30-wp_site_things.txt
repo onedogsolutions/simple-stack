@@ -23,13 +23,13 @@ done
 }
 
 
-# for options where changes are applied to the NGINX configuration
+# for options where changes are applied to the OpenLiteSpeed configuration
 select_domain_mu () {
 while [[ -z $domain ]]; do
     echo
     echo "Please, select which site you want to work with"
     echo
-    gf_select_domain_nginx_ols
+    gf_select_domain_ols
 done
 }
 

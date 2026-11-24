@@ -2,9 +2,9 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-roles-capabilities.php](file://includes/core/class-wpcd-roles-capabilities.php)
-- [class-wpcd-posts-permission-type.php](file://includes/core/class-wpcd-posts-permission-type.php)
-- [class-wpcd-posts-team.php](file://includes/core/class-wpcd-posts-team.php)
+- [class-sstk-roles-capabilities.php](file://includes/core/class-sstk-roles-capabilities.php)
+- [class-sstk-posts-permission-type.php](file://includes/core/class-sstk-posts-permission-type.php)
+- [class-sstk-posts-team.php](file://includes/core/class-sstk-posts-team.php)
 - [functions.php](file://includes/core/functions.php)
 - [class-wordpress-app.php](file://includes/core/apps/wordpress-app/class-wordpress-app.php)
 </cite>
@@ -21,7 +21,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s authorization and permission system with a focus on role-based access control (RBAC), team-based permissions, capability definitions, and server/site-level controls. It covers how roles and capabilities are created, how permissions are defined and assigned to teams, how resource isolation works, and where checks are enforced across the application. Practical guidance is included for implementing custom roles and capabilities and securing administrative interfaces.
+This document explains Simple Stack’s authorization and permission system with a focus on role-based access control (RBAC), team-based permissions, capability definitions, and server/site-level controls. It covers how roles and capabilities are created, how permissions are defined and assigned to teams, how resource isolation works, and where checks are enforced across the application. Practical guidance is included for implementing custom roles and capabilities and securing administrative interfaces.
 
 ## Project Structure
 The authorization system spans several core components:
@@ -34,18 +34,18 @@ The authorization system spans several core components:
 ```mermaid
 graph TB
 subgraph "Roles & Capabilities"
-RC["WPCD_ROLES_CAPABILITIES<br/>Creates roles & caps"]
+RC["SSTK_ROLES_CAPABILITIES<br/>Creates roles & caps"]
 end
 subgraph "Permissions"
-PT["WPCD_POSTS_PERMISSION_TYPE<br/>Defines permission types"]
-DB_PT["DB: wpcd_permission_type<br/>(private posts)"]
+PT["SSTK_POSTS_PERMISSION_TYPE<br/>Defines permission types"]
+DB_PT["DB: sstk_permission_type<br/>(private posts)"]
 DB_PA["DB: wp_...permission_assignments<br/>(team-user-perm grants)"]
 end
 subgraph "Teams"
-TM["WPCD_POSTS_TEAM<br/>Assigns perms to users via teams"]
+TM["SSTK_POSTS_TEAM<br/>Assigns perms to users via teams"]
 end
 subgraph "Checks"
-FN["functions.php<br/>wpcd_user_can(), wpcd_get_posts_by_permission()"]
+FN["functions.php<br/>sstk_user_can(), sstk_get_posts_by_permission()"]
 end
 subgraph "App UI"
 APP["WordPress App UI<br/>Gates buttons/actions by caps"]
@@ -59,19 +59,19 @@ APP --> FN
 ```
 
 **Diagram sources**
-- [class-wpcd-roles-capabilities.php:73-151](file://includes/core/class-wpcd-roles-capabilities.php#L73-L151)
-- [class-wpcd-posts-permission-type.php:331-348](file://includes/core/class-wpcd-posts-permission-type.php#L331-L348)
-- [class-wpcd-posts-permission-type.php:350-760](file://includes/core/class-wpcd-posts-permission-type.php#L350-L760)
-- [class-wpcd-posts-team.php:312-348](file://includes/core/class-wpcd-posts-team.php#L312-L348)
+- [class-sstk-roles-capabilities.php:73-151](file://includes/core/class-sstk-roles-capabilities.php#L73-L151)
+- [class-sstk-posts-permission-type.php:331-348](file://includes/core/class-sstk-posts-permission-type.php#L331-L348)
+- [class-sstk-posts-permission-type.php:350-760](file://includes/core/class-sstk-posts-permission-type.php#L350-L760)
+- [class-sstk-posts-team.php:312-348](file://includes/core/class-sstk-posts-team.php#L312-L348)
 - [functions.php:697-735](file://includes/core/functions.php#L697-L735)
 - [functions.php:781-859](file://includes/core/functions.php#L781-L859)
 - [class-wordpress-app.php:2569-2594](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L2569-L2594)
 
 **Section sources**
-- [class-wpcd-roles-capabilities.php:73-151](file://includes/core/class-wpcd-roles-capabilities.php#L73-L151)
-- [class-wpcd-posts-permission-type.php:331-348](file://includes/core/class-wpcd-posts-permission-type.php#L331-L348)
-- [class-wpcd-posts-permission-type.php:350-760](file://includes/core/class-wpcd-posts-permission-type.php#L350-L760)
-- [class-wpcd-posts-team.php:312-348](file://includes/core/class-wpcd-posts-team.php#L312-L348)
+- [class-sstk-roles-capabilities.php:73-151](file://includes/core/class-sstk-roles-capabilities.php#L73-L151)
+- [class-sstk-posts-permission-type.php:331-348](file://includes/core/class-sstk-posts-permission-type.php#L331-L348)
+- [class-sstk-posts-permission-type.php:350-760](file://includes/core/class-sstk-posts-permission-type.php#L350-L760)
+- [class-sstk-posts-team.php:312-348](file://includes/core/class-sstk-posts-team.php#L312-L348)
 - [functions.php:697-735](file://includes/core/functions.php#L697-L735)
 - [functions.php:781-859](file://includes/core/functions.php#L781-L859)
 - [class-wordpress-app.php:2569-2594](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L2569-L2594)
@@ -90,9 +90,9 @@ Key responsibilities:
 - Enforce checks consistently across admin screens and REST endpoints.
 
 **Section sources**
-- [class-wpcd-roles-capabilities.php:73-151](file://includes/core/class-wpcd-roles-capabilities.php#L73-L151)
-- [class-wpcd-posts-permission-type.php:350-760](file://includes/core/class-wpcd-posts-permission-type.php#L350-L760)
-- [class-wpcd-posts-team.php:312-348](file://includes/core/class-wpcd-posts-team.php#L312-L348)
+- [class-sstk-roles-capabilities.php:73-151](file://includes/core/class-sstk-roles-capabilities.php#L73-L151)
+- [class-sstk-posts-permission-type.php:350-760](file://includes/core/class-sstk-posts-permission-type.php#L350-L760)
+- [class-sstk-posts-team.php:312-348](file://includes/core/class-sstk-posts-team.php#L312-L348)
 - [functions.php:697-735](file://includes/core/functions.php#L697-L735)
 - [functions.php:781-859](file://includes/core/functions.php#L781-L859)
 
@@ -109,13 +109,13 @@ participant APP as "WordPress App Layer"
 participant FN as "Permission Functions"
 participant DB as "Database"
 UI->>APP : Request action (e.g., provision server)
-APP->>FN : current_user_can('wpcd_provision_servers')?
+APP->>FN : current_user_can('sstk_provision_servers')?
 alt Has capability
 APP-->>UI : Allow
 else Missing capability
 APP-->>UI : Deny
 end
-UI->>FN : wpcd_user_can(user_id, perm_name, post_id)
+UI->>FN : sstk_user_can(user_id, perm_name, post_id)
 FN->>DB : Lookup permission id by name
 FN->>DB : Check team grants for user/team/resource
 DB-->>FN : granted?
@@ -131,10 +131,10 @@ FN-->>UI : true/false
 
 ### Roles and Capabilities
 - Predefined roles:
-  - WPCDAdmin: full platform administration including provisioning, management, logs, settings, groups, teams, and a global “manage all” capability.
-  - WPCDManager: similar to WPCDAdmin but without the “manage teams” and “manage all” capabilities.
-  - WPCDSysAdmin: manage servers and apps.
-  - WPCDAppManager: manage apps only.
+  - Simple Stack Admin: full platform administration including provisioning, management, logs, settings, groups, teams, and a global “manage all” capability.
+  - Simple Stack Manager: similar to Simple Stack Admin but without the “manage teams” and “manage all” capabilities.
+  - Simple Stack System Admin: manage servers and apps.
+  - Simple Stack App Manager: manage apps only.
 - Built-in Administrator role receives all custom capabilities automatically.
 - Lifecycle:
   - On plugin activation (single site or network-wide), roles and capabilities are created.
@@ -149,14 +149,14 @@ AddToAdmin --> End([Ready])
 ```
 
 **Diagram sources**
-- [class-wpcd-roles-capabilities.php:73-151](file://includes/core/class-wpcd-roles-capabilities.php#L73-L151)
-- [class-wpcd-roles-capabilities.php:162-173](file://includes/core/class-wpcd-roles-capabilities.php#L162-L173)
-- [class-wpcd-roles-capabilities.php:181-210](file://includes/core/class-wpcd-roles-capabilities.php#L181-L210)
+- [class-sstk-roles-capabilities.php:73-151](file://includes/core/class-sstk-roles-capabilities.php#L73-L151)
+- [class-sstk-roles-capabilities.php:162-173](file://includes/core/class-sstk-roles-capabilities.php#L162-L173)
+- [class-sstk-roles-capabilities.php:181-210](file://includes/core/class-sstk-roles-capabilities.php#L181-L210)
 
 **Section sources**
-- [class-wpcd-roles-capabilities.php:73-151](file://includes/core/class-wpcd-roles-capabilities.php#L73-L151)
-- [class-wpcd-roles-capabilities.php:162-173](file://includes/core/class-wpcd-roles-capabilities.php#L162-L173)
-- [class-wpcd-roles-capabilities.php:181-210](file://includes/core/class-wpcd-roles-capabilities.php#L181-L210)
+- [class-sstk-roles-capabilities.php:73-151](file://includes/core/class-sstk-roles-capabilities.php#L73-L151)
+- [class-sstk-roles-capabilities.php:162-173](file://includes/core/class-sstk-roles-capabilities.php#L162-L173)
+- [class-sstk-roles-capabilities.php:181-210](file://includes/core/class-sstk-roles-capabilities.php#L181-L210)
 
 ### Permission Types (Granular Permissions)
 - Permission types are stored as private posts of a custom post type.
@@ -188,12 +188,12 @@ PermissionType <.. PermissionAssignment : "referenced by"
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-permission-type.php:350-760](file://includes/core/class-wpcd-posts-permission-type.php#L350-L760)
-- [class-wpcd-posts-permission-type.php:331-348](file://includes/core/class-wpcd-posts-permission-type.php#L331-L348)
+- [class-sstk-posts-permission-type.php:350-760](file://includes/core/class-sstk-posts-permission-type.php#L350-L760)
+- [class-sstk-posts-permission-type.php:331-348](file://includes/core/class-sstk-posts-permission-type.php#L331-L348)
 
 **Section sources**
-- [class-wpcd-posts-permission-type.php:331-348](file://includes/core/class-wpcd-posts-permission-type.php#L331-L348)
-- [class-wpcd-posts-permission-type.php:350-760](file://includes/core/class-wpcd-posts-permission-type.php#L350-L760)
+- [class-sstk-posts-permission-type.php:331-348](file://includes/core/class-sstk-posts-permission-type.php#L331-L348)
+- [class-sstk-posts-permission-type.php:350-760](file://includes/core/class-sstk-posts-permission-type.php#L350-L760)
 
 ### Teams and Team-Based Permissions
 - Teams are managed via a custom post type with meta boxes to select:
@@ -217,14 +217,14 @@ InsertGrants --> Done([Done])
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-team.php:312-348](file://includes/core/class-wpcd-posts-team.php#L312-L348)
-- [class-wpcd-posts-team.php:443-517](file://includes/core/class-wpcd-posts-team.php#L443-L517)
-- [class-wpcd-posts-team.php:528-582](file://includes/core/class-wpcd-posts-team.php#L528-L582)
+- [class-sstk-posts-team.php:312-348](file://includes/core/class-sstk-posts-team.php#L312-L348)
+- [class-sstk-posts-team.php:443-517](file://includes/core/class-sstk-posts-team.php#L443-L517)
+- [class-sstk-posts-team.php:528-582](file://includes/core/class-sstk-posts-team.php#L528-L582)
 
 **Section sources**
-- [class-wpcd-posts-team.php:312-348](file://includes/core/class-wpcd-posts-team.php#L312-L348)
-- [class-wpcd-posts-team.php:443-517](file://includes/core/class-wpcd-posts-team.php#L443-L517)
-- [class-wpcd-posts-team.php:528-582](file://includes/core/class-wpcd-posts-team.php#L528-L582)
+- [class-sstk-posts-team.php:312-348](file://includes/core/class-sstk-posts-team.php#L312-L348)
+- [class-sstk-posts-team.php:443-517](file://includes/core/class-sstk-posts-team.php#L443-L517)
+- [class-sstk-posts-team.php:528-582](file://includes/core/class-sstk-posts-team.php#L528-L582)
 
 ### Permission Checking Functions and Hooks
 - Admin bypass:
@@ -232,12 +232,12 @@ InsertGrants --> Done([Done])
 - Capability checks:
   - UI and logic gate actions using WordPress capabilities such as “provision servers,” “manage servers,” “manage apps,” etc.
 - Team-scoped checks:
-  - wpcd_user_can(user_id, permission_name, post_id):
+  - sstk_user_can(user_id, permission_name, post_id):
     - Resolves permission id from its name.
     - Retrieves teams assigned to the resource.
     - Checks if the user has a granted permission for any of those teams.
 - Listing filtering:
-  - wpcd_get_posts_by_permission(permission_name, post_type, post_status, user_id):
+  - sstk_get_posts_by_permission(permission_name, post_type, post_status, user_id):
     - Returns posts visible to the user based on authorship or team grants.
 
 ```mermaid
@@ -273,7 +273,7 @@ GrantCheck --> |No| Deny([Deny])
 sequenceDiagram
 participant UI as "WordPress App UI"
 participant CAP as "current_user_can()"
-UI->>CAP : 'wpcd_provision_servers'?
+UI->>CAP : 'sstk_provision_servers'?
 alt Allowed
 UI-->>User : Show Deploy Server button
 else Denied
@@ -291,12 +291,12 @@ end
 
 #### Implementing Custom Roles and Capabilities
 - To create a new role with specific capabilities:
-  - Use WordPress role APIs to add a role and assign capabilities such as “wpcd_manage_servers,” “wpcd_manage_apps,” or a custom capability you define.
+  - Use WordPress role APIs to add a role and assign capabilities such as “sstk_manage_servers,” “sstk_manage_apps,” or a custom capability you define.
   - Ensure your capability names align with checks used throughout the codebase.
 - To extend existing roles:
   - Add capabilities to built-in roles (e.g., Administrator) during activation or via configuration.
 - Best practices:
-  - Keep capability names descriptive and consistent with existing patterns (e.g., wpcd_*).
+  - Keep capability names descriptive and consistent with existing patterns (e.g., sstk_*).
   - Avoid granting overly broad capabilities unless necessary.
 
 [No sources needed since this section provides general guidance]
@@ -312,7 +312,7 @@ end
 
 #### Securing Administrative Interfaces
 - Gate admin pages and actions using:
-  - WordPress capabilities (e.g., “wpcd_provision_servers,” “wpcd_manage_teams”).
+  - WordPress capabilities (e.g., “sstk_provision_servers,” “sstk_manage_teams”).
   - Admin checks (e.g., administrators bypass team checks).
 - For custom admin screens:
   - Check capabilities before rendering sensitive controls.
@@ -325,9 +325,9 @@ The following diagram shows key dependencies among authorization components:
 
 ```mermaid
 graph LR
-RC["WPCD_ROLES_CAPABILITIES"] --> WP_Roles["WP Roles/Caps"]
-PT["WPCD_POSTS_PERMISSION_TYPE"] --> DB_PT["DB: wpcd_permission_type"]
-TM["WPCD_POSTS_TEAM"] --> DB_PA["DB: permission_assignments"]
+RC["SSTK_ROLES_CAPABILITIES"] --> WP_Roles["WP Roles/Caps"]
+PT["SSTK_POSTS_PERMISSION_TYPE"] --> DB_PT["DB: sstk_permission_type"]
+TM["SSTK_POSTS_TEAM"] --> DB_PA["DB: permission_assignments"]
 FN["functions.php"] --> DB_PT
 FN --> DB_PA
 APP["WordPress App UI"] --> FN
@@ -335,16 +335,16 @@ APP --> WP_Caps["current_user_can()"]
 ```
 
 **Diagram sources**
-- [class-wpcd-roles-capabilities.php:73-151](file://includes/core/class-wpcd-roles-capabilities.php#L73-L151)
-- [class-wpcd-posts-permission-type.php:331-348](file://includes/core/class-wpcd-posts-permission-type.php#L331-L348)
-- [class-wpcd-posts-team.php:312-348](file://includes/core/class-wpcd-posts-team.php#L312-L348)
+- [class-sstk-roles-capabilities.php:73-151](file://includes/core/class-sstk-roles-capabilities.php#L73-L151)
+- [class-sstk-posts-permission-type.php:331-348](file://includes/core/class-sstk-posts-permission-type.php#L331-L348)
+- [class-sstk-posts-team.php:312-348](file://includes/core/class-sstk-posts-team.php#L312-L348)
 - [functions.php:697-735](file://includes/core/functions.php#L697-L735)
 - [class-wordpress-app.php:2569-2594](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L2569-L2594)
 
 **Section sources**
-- [class-wpcd-roles-capabilities.php:73-151](file://includes/core/class-wpcd-roles-capabilities.php#L73-L151)
-- [class-wpcd-posts-permission-type.php:331-348](file://includes/core/class-wpcd-posts-permission-type.php#L331-L348)
-- [class-wpcd-posts-team.php:312-348](file://includes/core/class-wpcd-posts-team.php#L312-L348)
+- [class-sstk-roles-capabilities.php:73-151](file://includes/core/class-sstk-roles-capabilities.php#L73-L151)
+- [class-sstk-posts-permission-type.php:331-348](file://includes/core/class-sstk-posts-permission-type.php#L331-L348)
+- [class-sstk-posts-team.php:312-348](file://includes/core/class-sstk-posts-team.php#L312-L348)
 - [functions.php:697-735](file://includes/core/functions.php#L697-L735)
 - [class-wordpress-app.php:2569-2594](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L2569-L2594)
 
@@ -375,8 +375,8 @@ Common issues and resolutions:
 
 **Section sources**
 - [functions.php:697-735](file://includes/core/functions.php#L697-L735)
-- [class-wpcd-posts-permission-type.php:350-760](file://includes/core/class-wpcd-posts-permission-type.php#L350-L760)
+- [class-sstk-posts-permission-type.php:350-760](file://includes/core/class-sstk-posts-permission-type.php#L350-L760)
 - [class-wordpress-app.php:2569-2594](file://includes/core/apps/wordpress-app/class-wordpress-app.php#L2569-L2594)
 
 ## Conclusion
-SimpleStack’s authorization system blends WordPress RBAC with a flexible, team-based permission model. Roles and capabilities provide coarse-grained control, while permission types and team assignments deliver fine-grained, object-scoped access. By consistently using the provided checking functions and capability checks, developers can secure both administrative interfaces and application features. Following the guidelines here will help you implement secure, maintainable access controls tailored to your environment.
+Simple Stack’s authorization system blends WordPress RBAC with a flexible, team-based permission model. Roles and capabilities provide coarse-grained control, while permission types and team assignments deliver fine-grained, object-scoped access. By consistently using the provided checking functions and capability checks, developers can secure both administrative interfaces and application features. Following the guidelines here will help you implement secure, maintainable access controls tailored to your environment.

@@ -22,7 +22,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s automated backup scheduling system for WordPress sites. It covers the cron-based scheduler, helper scripts wp-backup and wp-full-backup, configuration file format, job management operations, retention policies, callback notifications, logging, and advanced options such as excluding local backups while keeping remote copies.
+This document explains Simple Stack’s automated backup scheduling system for WordPress sites. It covers the cron-based scheduler, helper scripts wp-backup and wp-full-backup, configuration file format, job management operations, retention policies, callback notifications, logging, and advanced options such as excluding local backups while keeping remote copies.
 
 ## Project Structure
 The backup automation is implemented through:
@@ -422,6 +422,6 @@ Steps to diagnose:
 - [logs.php (server tab):316-335](file://includes/core/apps/wordpress-app/tabs-server/logs.php#L316-L335)
 
 ## Conclusion
-SimpleStack’s backup automation provides robust daily scheduling for both per-site and full-server backups. It supports flexible retention policies, remote storage integration, and application callbacks. By understanding the helper scripts, configuration file format, and cron setup, administrators can tailor backup strategies to their needs, including advanced options like remote-only backups. Proper monitoring of logs and validation of credentials and endpoints ensure reliable operation.
+Simple Stack’s backup automation provides robust daily scheduling for both per-site and full-server backups. It supports flexible retention policies, remote storage integration, and application callbacks. By understanding the helper scripts, configuration file format, and cron setup, administrators can tailor backup strategies to their needs, including advanced options like remote-only backups. Proper monitoring of logs and validation of credentials and endpoints ensure reliable operation.
 
 [No sources needed since this section summarizes without analyzing specific files]

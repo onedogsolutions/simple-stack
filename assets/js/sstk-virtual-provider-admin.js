@@ -1,5 +1,6 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
- * This JS file is loaded for cpt wpcd_cloud_provider details screen only!
+ * This JS file is loaded for cpt sstk_cloud_provider details screen only!
 */
 /* global params */
 (function ($, params) {
@@ -20,7 +21,7 @@
         });
 
         // for switch the cloud provider active status
-        $('body').on('click', '.wpcd_active_provider', function (e) {
+        $('body').on('click', '.sstk_active_provider', function (e) {
 
             var provider_active = 0;
 

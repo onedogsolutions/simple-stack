@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_Setup class for wpcd setup.
+ * SSTK_Setup class for sstk setup.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,13 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_Setup.
+ * Class SSTK_Setup.
  */
-class WPCD_Setup {
+class SSTK_Setup {
 	var $settings_defaults;
 
 	/**
-	 * WPCD_Setup constructer.
+	 * SSTK_Setup constructer.
 	 */
 	public function __construct() {
 		// empty - normally just call a function to set an array of defaults.
@@ -26,7 +27,7 @@ class WPCD_Setup {
 	/**
 	 * Add default settings upon first activation.
 	 *
-	 * Settings are stored in the 'wpcd_settings'
+	 * Settings are stored in the 'sstk_settings'
 	 * option and managed by metabox.io.
 	 *
 	 * But, in this function we have to access it
@@ -35,7 +36,7 @@ class WPCD_Setup {
 	 */
 	public function set_default_settings() {
 
-		$options = get_option( 'wpcd_settings' );
+		$options = get_option( 'sstk_settings' );
 		$options = empty( $options ) ? array() : $options;
 
 		if ( $this->settings_defaults ) {
@@ -46,7 +47,7 @@ class WPCD_Setup {
 				}
 			}
 		}
-		update_option( 'wpcd_settings', $options );
+		update_option( 'sstk_settings', $options );
 
 	}
 

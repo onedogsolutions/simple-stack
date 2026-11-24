@@ -1,7 +1,8 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Server detail.
  *
- * Replaces the Meta Box tabbed edit screen for `wpcd_app_server`. The overview panel is
+ * Replaces the Meta Box tabbed edit screen for `sstk_app_server`. The overview panel is
  * fed by `GET /servers/{id}` because the legacy "top of page" summary came from a
  * private method that the REST layer does not expose; the tabbed body is the same
  * `get_tabnames` / `get_tabs` schema the legacy renderer consumed.
@@ -224,9 +225,6 @@ function Detail( { label, children } ) {
 const CONSOLE_TABS = [
 	'ols_console',
 	'ssh_console',
-	'file-manager',
-	'monitorix',
-	'goaccess',
 	'statistics',
 ];
 

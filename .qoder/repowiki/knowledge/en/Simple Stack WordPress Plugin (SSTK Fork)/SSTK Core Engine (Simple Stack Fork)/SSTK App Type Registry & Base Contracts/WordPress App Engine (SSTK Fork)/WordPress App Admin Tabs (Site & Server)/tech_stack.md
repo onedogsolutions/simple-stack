@@ -1,1 +1,1 @@
-PHP classes registered against WPCD's metabox.io-driven admin UI; remote execution over SSH using WPCD's `execute_ssh` bridge to bash scripts shipped with the plugin.
+PHP classes registered against SSTK's metabox.io-driven admin UI; remote execution over SSH using SSTK's `execute_ssh` bridge to bash scripts shipped with the plugin.

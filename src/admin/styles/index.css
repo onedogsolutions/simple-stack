@@ -1,7 +1,8 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 @config "../../../tailwind.config.js";
 
 /*
- * Tailwind v4 CSS entry point for the SimpleStack admin client.
+ * Tailwind v4 CSS entry point for the Simple Stack admin client.
  *
  * Deliberately imported WITHOUT `@import "tailwindcss"`: that shorthand pulls in
  * Preflight, which resets html, body and * at the document root and would restyle

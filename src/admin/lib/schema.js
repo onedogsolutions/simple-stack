@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Translate the Meta Box field arrays returned by `GET /{servers|sites}/{id}/tabs`
  * into renderable descriptors.
@@ -11,15 +12,15 @@
  *   button  ->  the `action` plus the `params` the tab handler reads from `$_POST`.
  *
  * The param mapping follows the legacy client exactly
- * (`includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-admin-common.js`):
- * a button declares `data-wpcd-action` (the action slug) and `data-wpcd-fields`
+ * (`includes/core/apps/wordpress-app/assets/js/sstk-wpapp-admin-common.js`):
+ * a button declares `data-sstk-action` (the action slug) and `data-sstk-fields`
  * (a JSON array of `#element-id` selectors). For each selector the legacy code posted
- * `element.attr('data-wpcd-name') = element.val()`. We resolve the same selector against
+ * `element.attr('data-sstk-name') = element.val()`. We resolve the same selector against
  * the field list to recover both the request key and the current value.
  */
 
 /** Meta Box container field that opens or closes a card group. */
-const CARD_CONTAINER = 'wpcd_card_container';
+const CARD_CONTAINER = 'sstk_card_container';
 
 /** Field types that produce a label rather than a control. */
 const LABEL_TYPES = new Set( [ 'heading', 'divider' ] );
@@ -40,6 +41,9 @@ const READONLY_TYPES = new Set( [
 /** Field types that produce a file picker; their value is a `File`, never a string. */
 const FILE_TYPES = new Set( [ 'file', 'file_upload', 'file_input' ] );
 
+/** Field types that can dispatch the action declared by `data-sstk-action`. */
+const ACTION_TYPES = new Set( [ 'button', 'switch', 'checkbox' ] );
+
 /**
  * Read a field's declared attributes.
  *
@@ -53,14 +57,26 @@ export function attributesOf( field ) {
 }
 
 /**
- * A field triggers an action when it carries `data-wpcd-action`, or when its id is the
- * `wpcd_app_action_{slug}` shape that `get_fields_for_tab()` generates.
+ * A field triggers an action when it carries `data-sstk-action`, or when its id is the
+ * `sstk_app_action_{slug}` shape that `get_fields_for_tab()` generates.
  *
  * @param {Object} field Field definition.
  * @return {boolean} True for action buttons and action switches.
  */
 export function isActionField( field ) {
-	return actionSlug( field ) !== '';
+	const type = String( ( field && field.type ) || '' );
+	return ACTION_TYPES.has( type ) && actionSlug( field ) !== '';
+}
+
+/**
+ * Whether an action field submits its own on/off value when toggled.
+ *
+ * @param {Object} field Field definition.
+ * @return {boolean} True for action switches and checkboxes.
+ */
+export function isActionToggle( field ) {
+	const type = String( ( field && field.type ) || '' );
+	return isActionField( field ) && ( type === 'switch' || type === 'checkbox' );
 }
 
 /**
@@ -72,14 +88,14 @@ export function isActionField( field ) {
 export function actionSlug( field ) {
 	const attributes = attributesOf( field );
 
-	if ( attributes[ 'data-wpcd-action' ] ) {
-		return String( attributes[ 'data-wpcd-action' ] );
+	if ( attributes[ 'data-sstk-action' ] ) {
+		return String( attributes[ 'data-sstk-action' ] );
 	}
 
 	const id = String( field && field.id ? field.id : '' );
 
-	if ( id.startsWith( 'wpcd_app_action_' ) ) {
-		return id.slice( 'wpcd_app_action_'.length );
+	if ( id.startsWith( 'sstk_app_action_' ) ) {
+		return id.slice( 'sstk_app_action_'.length );
 	}
 
 	return '';
@@ -94,17 +110,17 @@ export function actionSlug( field ) {
 export function paramNameOf( field ) {
 	const attributes = attributesOf( field );
 
-	if ( attributes[ 'data-wpcd-name' ] ) {
-		return String( attributes[ 'data-wpcd-name' ] );
+	if ( attributes[ 'data-sstk-name' ] ) {
+		return String( attributes[ 'data-sstk-name' ] );
 	}
 
 	/* Fall back to the element id, which is what the legacy renderer used as `name`. */
 	const id = String( field && field.id ? field.id : '' );
-	return id.startsWith( 'wpcd_app_action_' ) ? id.slice( 'wpcd_app_action_'.length ) : id;
+	return id.startsWith( 'sstk_app_action_' ) ? id.slice( 'sstk_app_action_'.length ) : id;
 }
 
 /**
- * Index every field by its DOM id so `data-wpcd-fields` selectors can be resolved.
+ * Index every field by its DOM id so `data-sstk-fields` selectors can be resolved.
  *
  * @param {Array} fields Flat field list.
  * @return {Map<string, Object>} id -> field.
@@ -122,13 +138,13 @@ export function indexById( fields ) {
 }
 
 /**
- * Parse a button's `data-wpcd-fields` selector list.
+ * Parse a button's `data-sstk-fields` selector list.
  *
  * @param {Object} field Action field.
  * @return {string[]} Element ids without the leading `#`.
  */
 export function dependencyIds( field ) {
-	const raw = attributesOf( field )[ 'data-wpcd-fields' ];
+	const raw = attributesOf( field )[ 'data-sstk-fields' ];
 
 	if ( ! raw ) {
 		return [];
@@ -157,9 +173,10 @@ export function dependencyIds( field ) {
  * @param {Object} actionField The button pressed.
  * @param {Map}    index       Result of indexById().
  * @param {Object} values      Current control values, keyed by element id.
+ * @param {Object} overrides   Immediate values keyed by element id, such as a switch's new state.
  * @return {Object} Parameter map.
  */
-export function collectActionParams( actionField, index, values ) {
+export function collectActionParams( actionField, index, values, overrides = {} ) {
 	const params = {};
 
 	dependencyIds( actionField ).forEach( ( id ) => {
@@ -177,6 +194,18 @@ export function collectActionParams( actionField, index, values ) {
 
 		params[ key ] = encodeValue( dependency, values[ id ] );
 	} );
+
+	if ( isActionToggle( actionField ) ) {
+		const id = String( actionField.id || '' );
+		const key = paramNameOf( actionField );
+		const value = Object.prototype.hasOwnProperty.call( overrides, id )
+			? overrides[ id ]
+			: values[ id ];
+
+		if ( key ) {
+			params[ key ] = encodeValue( actionField, value );
+		}
+	}
 
 	return params;
 }
@@ -220,7 +249,7 @@ export function initialValues( fields ) {
 	const values = {};
 
 	( fields || [] ).forEach( ( field ) => {
-		if ( ! field || ! field.id || isActionField( field ) ) {
+		if ( ! field || ! field.id || ( isActionField( field ) && ! isActionToggle( field ) ) ) {
 			return;
 		}
 
@@ -261,9 +290,7 @@ export function describeField( field ) {
 
 	let kind = 'text';
 
-	if ( isActionField( field ) ) {
-		kind = 'action';
-	} else if ( LABEL_TYPES.has( type ) ) {
+	if ( LABEL_TYPES.has( type ) ) {
 		kind = 'label';
 	} else if ( RAW_HTML_TYPES.has( type ) ) {
 		kind = 'html';
@@ -285,6 +312,8 @@ export function describeField( field ) {
 		kind = 'file';
 	} else if ( type === 'time' || type === 'date' || type === 'datetime' ) {
 		kind = 'temporal';
+	} else if ( isActionField( field ) ) {
+		kind = 'action';
 	}
 
 	return {
@@ -300,7 +329,7 @@ export function describeField( field ) {
 		value: declaredValue( field ),
 		action: isActionField( field ) ? actionSlug( field ) : '',
 		param: paramNameOf( field ),
-		confirm: String( attributes[ 'data-wpcd-confirmation-prompt' ] || '' ),
+		confirm: String( attributes[ 'data-sstk-confirmation-prompt' ] || '' ),
 		showLog: Boolean( attributes[ 'data-show-log-console' ] ),
 		logMessage: String( attributes[ 'data-initial-console-message' ] || '' ),
 		raw: String( field.std || field.value || '' ),
@@ -339,7 +368,7 @@ function normaliseOptions( options ) {
 	} ) );
 }
 
-const CARD_WIDTH_PATTERN = /wpcd-card-(half|third|two-thirds|full)\b/;
+const CARD_WIDTH_PATTERN = /sstk-card-(half|third|two-thirds|full)\b/;
 
 /**
  * Convert a flat field list for one tab into an ordered element list.

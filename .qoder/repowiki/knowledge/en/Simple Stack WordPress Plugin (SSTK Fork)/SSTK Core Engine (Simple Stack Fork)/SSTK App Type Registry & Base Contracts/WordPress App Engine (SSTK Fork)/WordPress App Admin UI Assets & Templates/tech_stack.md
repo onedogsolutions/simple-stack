@@ -1,1 +1,1 @@
-Plain PHP templates + vanilla jQuery AJAX against WordPress `admin-ajax.php`; Magnific Popup is used for the log-console modal; CSS uses WordPress dashicons and custom `--wpcd-*` CSS variables rather than a framework.
+Plain PHP templates + vanilla jQuery AJAX against WordPress `admin-ajax.php`; Magnific Popup is used for the log-console modal; CSS uses WordPress dashicons and custom `--sstk-*` CSS variables rather than a framework.

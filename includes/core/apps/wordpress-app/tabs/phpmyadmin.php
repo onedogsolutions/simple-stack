@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * PHPMYADMIN Database tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,35 +11,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_PHPMYADMIN.
+ * Class SSTK_WORDPRESS_TABS_PHPMYADMIN.
  */
-class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_PHPMYADMIN extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		/* add_filter( 'wpcd_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		/* add_filter( 'sstk_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -188,9 +189,9 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 		delete_post_meta( $id, 'wpapp_temp_db_pass' );
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -218,7 +219,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Database', 'wpcd' ),
+				'label' => __( 'Database', 'simple-stack' ),
 				'icon'  => 'fad fa-database',
 			);
 		}
@@ -234,11 +235,11 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -253,15 +254,15 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'install-phpmyadmin', 'update-phpmyadmin', 'remove-phpmyadmin', 'remote-database', 'local-database', 'copy-database-from-local-to-remote', 'copy-database-from-remote-to-local' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -311,7 +312,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the domain we're working on.
@@ -334,13 +335,13 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 		);
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -363,7 +364,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get params of fields.
@@ -387,7 +388,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 				// Double-check just in case of errors.
 				if ( empty( $local_dbname ) || empty( $local_dbuser ) || empty( $local_dbpass ) ) {
-					return new \WP_Error( __( 'Database name, username & password required for the switch to the local database', 'wpcd' ) );
+					return new \WP_Error( __( 'Database name, username & password required for the switch to the local database', 'simple-stack' ) );
 				}
 
 				$run_cmd = $this->turn_script_into_command(
@@ -420,7 +421,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 				// Double-check just in case of errors.
 				if ( empty( $remote_dbhost ) || empty( $remote_dbname ) || empty( $remote_dbuser ) || empty( $remote_dbpass ) ) {
-					return new \WP_Error( __( 'Database name, host, username & password required for the switch to the remote database', 'wpcd' ) );
+					return new \WP_Error( __( 'Database name, host, username & password required for the switch to the remote database', 'simple-stack' ) );
 				}
 
 				$run_cmd = $this->turn_script_into_command(
@@ -455,7 +456,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 				// Double-check just in case of errors.
 				if ( empty( $remote_dbhost_for_copy ) || empty( $remote_dbname_for_copy ) || empty( $remote_dbuser_for_copy ) || empty( $remote_dbpass_for_copy ) ) {
-					return new \WP_Error( __( 'Database name, host, username & password required for the copy database from local to remote', 'wpcd' ) );
+					return new \WP_Error( __( 'Database name, host, username & password required for the copy database from local to remote', 'simple-stack' ) );
 				}
 
 				$run_cmd = $this->turn_script_into_command(
@@ -480,7 +481,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 				// Double-check just in case of errors.
 				if ( empty( $local_dbname_for_copy ) || empty( $local_dbuser_for_copy ) || empty( $local_dbpass_for_copy ) ) {
-					return new \WP_Error( __( 'Database name, username & password required for the copy database from remote to local', 'wpcd' ) );
+					return new \WP_Error( __( 'Database name, username & password required for the copy database from remote to local', 'simple-stack' ) );
 				}
 
 				$run_cmd = $this->turn_script_into_command(
@@ -500,13 +501,13 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -542,7 +543,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 		// Force refresh?
 		if ( ! is_wp_error( $result ) ) {
 			$result = array(
-				'msg'     => __( 'The local PHPMyAdmin status has been toggled.', 'wpcd' ),
+				'msg'     => __( 'The local PHPMyAdmin status has been toggled.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 		} else {
@@ -580,7 +581,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 		$fields = $this->get_php_myadmin_fields( $fields, $id );
 
-		if ( wpcd_is_admin() ) {
+		if ( sstk_is_admin() ) {
 			$fields = $this->get_local_remote_db_fields( $fields, $id );
 		}
 
@@ -611,36 +612,36 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 
 		// Set some text for the header depending on whether we have a local or remote database in use.
 		if ( 'yes' === $is_remote_database ) {
-			$section_heading              = __( 'Remote Database - Switch To Local Database [Beta]', 'wpcd' );
-			$running_database_server_name = __( 'This site is currently using a remote database. To switch to a local database please enter the local database information and click the SWITCH button.', 'wpcd' );
+			$section_heading              = __( 'Remote Database - Switch To Local Database [Beta]', 'simple-stack' );
+			$running_database_server_name = __( 'This site is currently using a remote database. To switch to a local database please enter the local database information and click the SWITCH button.', 'simple-stack' );
 		} else {
-			$section_heading              = __( 'Local Database - Switch To Remote Database [Beta]', 'wpcd' );
-			$running_database_server_name = __( 'This site is currently using a local database.  To switch to a remote database please enter the remote database information and click the SWITCH button.', 'wpcd' );
+			$section_heading              = __( 'Local Database - Switch To Remote Database [Beta]', 'simple-stack' );
+			$running_database_server_name = __( 'This site is currently using a local database.  To switch to a remote database please enter the remote database information and click the SWITCH button.', 'simple-stack' );
 		}
-		$running_database_server_name .= '<br />' . __( 'Please note that that switching databases does NOT automatically copy the database between local and remote or vice-versa.', 'wpcd' );
-		$running_database_server_name .= '<br />' . __( 'You can use the options in the COPY DATABASE section below to copy the data BEFORE switching the database.', 'wpcd' );
+		$running_database_server_name .= '<br />' . __( 'Please note that that switching databases does NOT automatically copy the database between local and remote or vice-versa.', 'simple-stack' );
+		$running_database_server_name .= '<br />' . __( 'You can use the options in the COPY DATABASE section below to copy the data BEFORE switching the database.', 'simple-stack' );
 
 		// Show the current database info if we have it.
 		if ( ! empty( $current_db_host ) || ! empty( $current_db_port ) || ! empty( $current_db_name ) || ! empty( $current_db_user ) || ! empty( $current_db_pass_decrypted ) ) {
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$fields[] = array(
-				'name' => __( 'Current Database Connection Information', 'wpcd' ),
+				'name' => __( 'Current Database Connection Information', 'simple-stack' ),
 				'tab'  => 'database',
 				'type' => 'heading',
-				'desc' => __( 'The following is the information we have saved from prior database operations. If you have directly updated the wp-config.php file then this information is likely not correct.', 'wpcd' ),
+				'desc' => __( 'The following is the information we have saved from prior database operations. If you have directly updated the wp-config.php file then this information is likely not correct.', 'simple-stack' ),
 			);
 
-			$db_info  = sprintf( __( 'Host: %s', 'wpcd' ), $current_db_host );
+			$db_info  = sprintf( __( 'Host: %s', 'simple-stack' ), $current_db_host );
 			$db_info .= '<br />';
-			$db_info .= sprintf( __( 'Port: %s', 'wpcd' ), $current_db_port );
+			$db_info .= sprintf( __( 'Port: %s', 'simple-stack' ), $current_db_port );
 			$db_info .= '<br />';
-			$db_info .= sprintf( __( 'DB Name: %s', 'wpcd' ), $current_db_name );
+			$db_info .= sprintf( __( 'DB Name: %s', 'simple-stack' ), $current_db_name );
 			$db_info .= '<br />';
-			$db_info .= sprintf( __( 'DB User: %s', 'wpcd' ), $current_db_user );
+			$db_info .= sprintf( __( 'DB User: %s', 'simple-stack' ), $current_db_user );
 			$db_info .= '<br />';
-			$db_info .= sprintf( __( 'DB Pass: %s', 'wpcd' ), $current_db_pass_decrypted );
+			$db_info .= sprintf( __( 'DB Pass: %s', 'simple-stack' ), $current_db_pass_decrypted );
 
 			$fields[] = array(
 				'tab'  => 'database',
@@ -649,7 +650,7 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
@@ -658,24 +659,24 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
-			'name' => __( 'Local/Remote Database Status', 'wpcd' ),
+			'name' => __( 'Local/Remote Database Status', 'simple-stack' ),
 			'tab'  => 'database',
 			'type' => 'heading',
 			'desc' => $running_database_server_name,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		/**
 		 * Section for switching between remote and local databases.
 		 */
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$fields[] = array(
 			'name' => $section_heading,
@@ -689,32 +690,32 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			// Local database name.
 			$fields[] = array(
 				'id'         => 'local-dbname',
-				'name'       => __( 'DB Name:', 'wpcd' ),
+				'name'       => __( 'DB Name:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'local-dbname',
+					'data-sstk-action' => 'local-dbname',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbname_for_local_database',
+					'data-sstk-name'   => 'dbname_for_local_database',
 				),
 			);
 
 			// Local database username.
 			$fields[] = array(
 				'id'         => 'local-dbuser',
-				'name'       => __( 'DB Username:', 'wpcd' ),
+				'name'       => __( 'DB Username:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'local-dbuser',
+					'data-sstk-action' => 'local-dbuser',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbuser_for_local_database',
+					'data-sstk-name'   => 'dbuser_for_local_database',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -722,16 +723,16 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			// Local database password.
 			$fields[] = array(
 				'id'         => 'local-dbpass',
-				'name'       => __( 'DB Password:', 'wpcd' ),
+				'name'       => __( 'DB Password:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'password',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'local-dbpass',
+					'data-sstk-action' => 'local-dbpass',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbpass_for_local_database',
+					'data-sstk-name'   => 'dbpass_for_local_database',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -742,67 +743,67 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Switch To Local Database', 'wpcd' ),
+				'std'        => __( 'Switch To Local Database', 'simple-stack' ),
 				'attributes' => array(
 					// Get User Name & Password.
-					'data-wpcd-fields'              => json_encode( array( '#local-dbname', '#local-dbuser', '#local-dbpass' ) ),
+					'data-sstk-fields'              => json_encode( array( '#local-dbname', '#local-dbuser', '#local-dbpass' ) ),
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'local-database',
+					'data-sstk-action'              => 'local-database',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like switch to local database?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like switch to local database?', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing switch to local database.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing switch to local database.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			// Copy database remote to local.
 			$fields[] = array(
-				'name' => __( 'Copy Database - Remote to local [Beta]', 'wpcd' ),
+				'name' => __( 'Copy Database - Remote to local [Beta]', 'simple-stack' ),
 				'tab'  => 'database',
 				'type' => 'heading',
-				'desc' => __( 'Enter connection information for the local database.', 'wpcd' ),
+				'desc' => __( 'Enter connection information for the local database.', 'simple-stack' ),
 			);
 
 			// Local database name.
 			$fields[] = array(
 				'id'         => 'local-dbname-for-copy',
-				'name'       => __( 'DB Name:', 'wpcd' ),
+				'name'       => __( 'DB Name:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'local-dbname-for-copy',
+					'data-sstk-action' => 'local-dbname-for-copy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'local_dbname_for_copy',
+					'data-sstk-name'   => 'local_dbname_for_copy',
 				),
 			);
 
 			// Local database username.
 			$fields[] = array(
 				'id'         => 'local-dbuser-for-copy',
-				'name'       => __( 'DB Username:', 'wpcd' ),
+				'name'       => __( 'DB Username:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'local-dbuser-for-copy',
+					'data-sstk-action' => 'local-dbuser-for-copy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'local_dbuser_for_copy',
+					'data-sstk-name'   => 'local_dbuser_for_copy',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -810,16 +811,16 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			// Local database password.
 			$fields[] = array(
 				'id'         => 'local-dbpass-for-copy',
-				'name'       => __( 'DB Password:', 'wpcd' ),
+				'name'       => __( 'DB Password:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'password',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'local-dbpass-for-copy',
+					'data-sstk-action' => 'local-dbpass-for-copy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'local_dbpass_for_copy',
+					'data-sstk-name'   => 'local_dbpass_for_copy',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -830,89 +831,89 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Copy Database From Remote To Local', 'wpcd' ),
+				'std'        => __( 'Copy Database From Remote To Local', 'simple-stack' ),
 				'attributes' => array(
 					// Get User Name & Password.
-					'data-wpcd-fields'              => json_encode( array( '#local-dbname-for-copy', '#local-dbuser-for-copy', '#local-dbpass-for-copy' ) ),
+					'data-sstk-fields'              => json_encode( array( '#local-dbname-for-copy', '#local-dbuser-for-copy', '#local-dbpass-for-copy' ) ),
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'copy-database-from-remote-to-local',
+					'data-sstk-action'              => 'copy-database-from-remote-to-local',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like copy database from remote to local?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like copy database from remote to local?', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to copy your database from remote to local.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to copy your database from remote to local.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		} else {
 
 			// Remote database host.
 			$fields[] = array(
 				'id'         => 'remote-dbhost',
-				'name'       => __( 'DB Host:', 'wpcd' ),
+				'name'       => __( 'DB Host:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
-					'data-wpcd-action' => 'remote-dbhost',
+					'data-sstk-action' => 'remote-dbhost',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbhost_for_remote_database',
+					'data-sstk-name'   => 'dbhost_for_remote_database',
 				),
 			);
 
 			// Remote database port.
 			$fields[] = array(
 				'id'         => 'remote-dbport',
-				'name'       => __( 'DB Port:', 'wpcd' ),
+				'name'       => __( 'DB Port:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbport',
+					'data-sstk-action' => 'remote-dbport',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbport_for_remote_database',
+					'data-sstk-name'   => 'dbport_for_remote_database',
 				),
 			);
 
 			// Remote database name.
 			$fields[] = array(
 				'id'         => 'remote-dbname',
-				'name'       => __( 'DB Name:', 'wpcd' ),
+				'name'       => __( 'DB Name:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbname',
+					'data-sstk-action' => 'remote-dbname',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbname_for_remote_database',
+					'data-sstk-name'   => 'dbname_for_remote_database',
 				),
 			);
 
 			// Remote database username.
 			$fields[] = array(
 				'id'         => 'remote-dbuser',
-				'name'       => __( 'DB Username:', 'wpcd' ),
+				'name'       => __( 'DB Username:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbuser',
+					'data-sstk-action' => 'remote-dbuser',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbuser_for_remote_database',
+					'data-sstk-name'   => 'dbuser_for_remote_database',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -920,16 +921,16 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			// Remote database password.
 			$fields[] = array(
 				'id'         => 'remote-dbpass',
-				'name'       => __( 'DB Password:', 'wpcd' ),
+				'name'       => __( 'DB Password:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'password',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbpass',
+					'data-sstk-action' => 'remote-dbpass',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'dbpass_for_remote_database',
+					'data-sstk-name'   => 'dbpass_for_remote_database',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -940,38 +941,38 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Switch To Remote Database', 'wpcd' ),
+				'std'        => __( 'Switch To Remote Database', 'simple-stack' ),
 				'attributes' => array(
 					// Get User Name & Password.
-					'data-wpcd-fields'              => json_encode( array( '#remote-dbhost', '#remote-dbport', '#remote-dbname', '#remote-dbuser', '#remote-dbpass' ) ),
+					'data-sstk-fields'              => json_encode( array( '#remote-dbhost', '#remote-dbport', '#remote-dbname', '#remote-dbuser', '#remote-dbpass' ) ),
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'remote-database',
+					'data-sstk-action'              => 'remote-database',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like switch to remote database?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like switch to remote database?', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to switch to remote database.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to switch to remote database.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			// Copy database local to remote.
-			$desc  = __( 'To copy your data to a remote database please enter the connection information for the remote database and then click the COPY DATABASE button.', 'wpcd' );
+			$desc  = __( 'To copy your data to a remote database please enter the connection information for the remote database and then click the COPY DATABASE button.', 'simple-stack' );
 			$desc .= '<br/>';
-			$desc  = __( 'You should perform this action before switching your database to a remote database for the first time. Otherwise your data will not be present in the remote database and you will encounter a WordPress WSOD error.', 'wpcd' );
-			$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc  = __( 'You should perform this action before switching your database to a remote database for the first time. Otherwise your data will not be present in the remote database and you will encounter a WordPress WSOD error.', 'simple-stack' );
+			$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$fields[] = array(
-				'name' => __( 'Copy Database - Local to remote [Beta]', 'wpcd' ),
+				'name' => __( 'Copy Database - Local to remote [Beta]', 'simple-stack' ),
 				'tab'  => 'database',
 				'type' => 'heading',
 				'desc' => $desc,
@@ -980,63 +981,63 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			// Remote database host.
 			$fields[] = array(
 				'id'         => 'remote-dbhost-for-copy',
-				'name'       => __( 'DB Host:', 'wpcd' ),
+				'name'       => __( 'DB Host:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
-					'data-wpcd-action' => 'remote-dbhost-for-copy',
+					'data-sstk-action' => 'remote-dbhost-for-copy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'remote_dbhost_for_copy',
+					'data-sstk-name'   => 'remote_dbhost_for_copy',
 				),
 			);
 
 			// Remote database port.
 			$fields[] = array(
 				'id'         => 'remote-dbport-for-copy',
-				'name'       => __( 'DB Port:', 'wpcd' ),
+				'name'       => __( 'DB Port:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbport-for-coy',
+					'data-sstk-action' => 'remote-dbport-for-coy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'remote_dbport_for_copy',
+					'data-sstk-name'   => 'remote_dbport_for_copy',
 				),
 			);
 
 			// Remote database name.
 			$fields[] = array(
 				'id'         => 'remote-dbname-for-copy',
-				'name'       => __( 'DB Name:', 'wpcd' ),
+				'name'       => __( 'DB Name:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbname-for-copy',
+					'data-sstk-action' => 'remote-dbname-for-copy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'remote_dbname_for_copy',
+					'data-sstk-name'   => 'remote_dbname_for_copy',
 				),
 			);
 
 			// Remote database username.
 			$fields[] = array(
 				'id'         => 'remote-dbuser-for-copy',
-				'name'       => __( 'DB Username:', 'wpcd' ),
+				'name'       => __( 'DB Username:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'text',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbuser-for-copy',
+					'data-sstk-action' => 'remote-dbuser-for-copy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'remote_dbuser_for_copy',
+					'data-sstk-name'   => 'remote_dbuser_for_copy',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -1044,16 +1045,16 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			// Remote database password.
 			$fields[] = array(
 				'id'         => 'remote-dbpass-for-copy',
-				'name'       => __( 'DB Password:', 'wpcd' ),
+				'name'       => __( 'DB Password:', 'simple-stack' ),
 				'tab'        => 'database',
 				'type'       => 'password',
 				'attributes' => array(
 					'desc'             => '',
 					// the _action that will be called in ajax.
-					'data-wpcd-action' => 'remote-dbpass-for-copy',
+					'data-sstk-action' => 'remote-dbpass-for-copy',
 					'std'              => '',
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name'   => 'remote_dbpass_for_copy',
+					'data-sstk-name'   => 'remote_dbpass_for_copy',
 					'spellcheck'       => 'false',
 				),
 			);
@@ -1064,26 +1065,26 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Copy Database From Local To Remote', 'wpcd' ),
+				'std'        => __( 'Copy Database From Local To Remote', 'simple-stack' ),
 				'attributes' => array(
 					// Get User Name & Password.
-					'data-wpcd-fields'              => json_encode( array( '#remote-dbhost-for-copy', '#remote-dbport-for-copy', '#remote-dbname-for-copy', '#remote-dbuser-for-copy', '#remote-dbpass-for-copy' ) ),
+					'data-sstk-fields'              => json_encode( array( '#remote-dbhost-for-copy', '#remote-dbport-for-copy', '#remote-dbname-for-copy', '#remote-dbuser-for-copy', '#remote-dbpass-for-copy' ) ),
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'copy-database-from-local-to-remote',
+					'data-sstk-action'              => 'copy-database-from-local-to-remote',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like copy database from local to remote?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like copy database from local to remote?', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to copy database from local to remote.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to copy database from local to remote.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 		}
 
 		return $fields;
@@ -1100,58 +1101,41 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_php_myadmin_fields( array $fields, $id ) {
 
-		// Bail if certain 6G or 7G firewall items are enabled.
-		$fw_6g = get_post_meta( $id, 'wpapp_6g_status', true );
+		// Bail if certain 7G firewall items are enabled.
 		$fw_7g = get_post_meta( $id, 'wpapp_7g_status', true );
-		if ( ! empty( $fw_6g ) && ! empty( $fw_6g['6g_query_string'] ) && 'on' === $fw_6g['6g_query_string'] ) {
-			// Start new card.
-			$fields[] = wpcd_start_full_card( $this->get_tab_slug() );
-
-			$fields[] = array(
-				'name' => __( 'Database Management With PHPMyAdmin [Disabled]', 'wpcd' ),
-				'tab'  => 'database',
-				'type' => 'heading',
-				'desc' => __( 'You must disable the 6G firewall QUERY STRING rules before PHPMyAdmin can be used.', 'wpcd' ),
-			);
-
-			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
-
-			return $fields;
-		}
 		if ( ! empty( $fw_7g ) && ! empty( $fw_7g['7g_query_string'] ) && 'on' === $fw_7g['7g_query_string'] ) {
 			// Start new card.
-			$fields[] = wpcd_start_full_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_full_card( $this->get_tab_slug() );
 
 			$fields[] = array(
-				'name' => __( 'Database Management With PHPMyAdmin [Disabled]', 'wpcd' ),
+				'name' => __( 'Database Management With PHPMyAdmin [Disabled]', 'simple-stack' ),
 				'tab'  => 'database',
 				'type' => 'heading',
-				'desc' => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before PHPMyAdmin can be used.', 'wpcd' ),
+				'desc' => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before PHPMyAdmin can be used.', 'simple-stack' ),
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			return $fields;
 		}
 		if ( ! empty( $fw_7g ) && ! empty( $fw_7g['7g_query_string'] ) && 'on' === $fw_7g['7g_request_string'] ) {
 			// Start new card.
-			$fields[] = wpcd_start_full_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_full_card( $this->get_tab_slug() );
 
 			$fields[] = array(
-				'name' => __( 'Database Management With PHPMyAdmin [Disabled]', 'wpcd' ),
+				'name' => __( 'Database Management With PHPMyAdmin [Disabled]', 'simple-stack' ),
 				'tab'  => 'database',
 				'type' => 'heading',
-				'desc' => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before PHPMyAdmin can be used.', 'wpcd' ),
+				'desc' => __( 'You must disable the 7G firewall QUERY STRING and REQUEST STRING rules before PHPMyAdmin can be used.', 'simple-stack' ),
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			return $fields;
 		}
-		// End Bail if certain 6G or 7G firewall items are enabled.
+		// End bail if certain 7G firewall items are enabled.
 
 		// What is the status of PHPMyAdmin?
 		$pa_status = get_post_meta( $id, 'wpapp_phpmyadmin_status', true );
@@ -1160,19 +1144,19 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$desc  = __( 'Use PHPMyAdmin to access and manage the data in your WordPress database.', 'wpcd' );
+		$desc  = __( 'Use PHPMyAdmin to access and manage the data in your WordPress database.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'This is a very powerful tool with which you can easily corrupt your database beyond repair.', 'wpcd' );
+		$desc .= __( 'This is a very powerful tool with which you can easily corrupt your database beyond repair.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'Before performing any actions with it, we urge you to backup your site!', 'wpcd' );
+		$desc .= __( 'Before performing any actions with it, we urge you to backup your site!', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'Finally, because this tool is accessible from the internet we suggest that you remove it when you are done using it.  Or, at least, restrict access to it by your IP address.', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc .= __( 'Finally, because this tool is accessible from the internet we suggest that you remove it when you are done using it.  Or, at least, restrict access to it by your IP address.', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$fields[] = array(
-			'name' => __( 'Database Manager', 'wpcd' ),
+			'name' => __( 'Database Manager', 'simple-stack' ),
 			'tab'  => 'database',
 			'type' => 'heading',
 			'desc' => $desc,
@@ -1185,21 +1169,21 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Install PHPMyAdmin', 'wpcd' ),
+				'std'        => __( 'Install PHPMyAdmin', 'simple-stack' ),
 				'desc'       => '',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'install-phpmyadmin',
+					'data-sstk-action'              => 'install-phpmyadmin',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to install the PHPMyAdmin tool?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to install the PHPMyAdmin tool?', 'simple-stack' ),
 					// show log console?
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to install PHPMyAdmin.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to install PHPMyAdmin.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 		} else {
@@ -1218,25 +1202,25 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				$phpmyadmin_url = 'http://' . $this->get_domain_name( $id ) . '/' . 'phpMyAdmin';
 			}
 
-			$phpmyadmin_details  = '<div class="wpcd_tool_details">';
-			$phpmyadmin_details .= __( 'User Id: ', 'wpcd' ) . wpcd_wrap_clipboard_copy( $phpmyadmin_user_id );
+			$phpmyadmin_details  = '<div class="sstk_tool_details">';
+			$phpmyadmin_details .= __( 'User Id: ', 'simple-stack' ) . sstk_wrap_clipboard_copy( $phpmyadmin_user_id );
 			$phpmyadmin_details .= '</div>';
 
-			$phpmyadmin_details .= '<div class="wpcd_tool_details">';
-			$phpmyadmin_details .= __( 'Password: ', 'wpcd' ) . wpcd_wrap_clipboard_copy( $phpmyadmin_password );
+			$phpmyadmin_details .= '<div class="sstk_tool_details">';
+			$phpmyadmin_details .= __( 'Password: ', 'simple-stack' ) . sstk_wrap_clipboard_copy( $phpmyadmin_password );
 			$phpmyadmin_details .= '</div>';
 
-			if ( true === wpcd_is_admin() ) {
+			if ( true === sstk_is_admin() ) {
 				// We'll be showing the options to switch local and remote databases to admins.
 				// So need to warn them that phpMyAdmin needs to be reinstalled if they do so.
 				$phpmyadmin_details .= '<br />';
-				$phpmyadmin_details .= '<hr />' . __( 'Admin Note: If you have switched between local and remote databases AFTER installing PHPMyAdmin, it is critical that you uninstall and reinstall it so that the new database information is entered into the PHPMyAdmin configuration files.  Otherwise you will end up connecting to the old database! ', 'wpcd' ) . '<hr />';
+				$phpmyadmin_details .= '<hr />' . __( 'Admin Note: If you have switched between local and remote databases AFTER installing PHPMyAdmin, it is critical that you uninstall and reinstall it so that the new database information is entered into the PHPMyAdmin configuration files.  Otherwise you will end up connecting to the old database! ', 'simple-stack' ) . '<hr />';
 			}
 
 			$fields[] = array(
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Launch PHPMyAdmin', 'wpcd' ),
+				'std'        => __( 'Launch PHPMyAdmin', 'simple-stack' ),
 				'attributes' => array(
 					'onclick' => "window.open('" . $phpmyadmin_url . "')",
 				),
@@ -1251,16 +1235,16 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 			 * New fields section for update and remove of phpmyadmin.
 			 */
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-			$desc = __( 'Use the buttons below to update and/or remove PHPMyAdmin from this site.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = __( 'Use the buttons below to update and/or remove PHPMyAdmin from this site.', 'simple-stack' );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$fields[] = array(
-				'name' => __( 'Database Tools - Update and Remove', 'wpcd' ),
+				'name' => __( 'Database Tools - Update and Remove', 'simple-stack' ),
 				'tab'  => 'database',
 				'type' => 'heading',
 				'desc' => $desc,
@@ -1272,19 +1256,19 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Update PHPMyAdmin', 'wpcd' ),
+				'std'        => __( 'Update PHPMyAdmin', 'simple-stack' ),
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'update-phpmyadmin',
+					'data-sstk-action'              => 'update-phpmyadmin',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to update the PHPMyAdmin tool? This is a risky operation and should only be done if there are security issues that need to be addressed!', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to update the PHPMyAdmin tool? This is a risky operation and should only be done if there are security issues that need to be addressed!', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to update PHPMyAdmin.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to update PHPMyAdmin.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
@@ -1294,29 +1278,29 @@ class WPCD_WORDPRESS_TABS_PHPMYADMIN extends WPCD_WORDPRESS_TABS {
 				'name'       => '',
 				'tab'        => 'database',
 				'type'       => 'button',
-				'std'        => __( 'Remove PHPMyAdmin', 'wpcd' ),
+				'std'        => __( 'Remove PHPMyAdmin', 'simple-stack' ),
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'remove-phpmyadmin',
+					'data-sstk-action'              => 'remove-phpmyadmin',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to remove the PHPAdmin tool from this site?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to remove the PHPAdmin tool from this site?', 'simple-stack' ),
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to remove PHPMyAdmin.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to remove PHPMyAdmin.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 		}
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $fields;
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_PHPMYADMIN();
+new SSTK_WORDPRESS_TABS_PHPMYADMIN();

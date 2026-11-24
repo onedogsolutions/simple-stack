@@ -3,27 +3,27 @@
 <cite>
 **Referenced Files in This Document**   
 - [README.md](file://README.md)
-- [wpcd.php](file://wpcd.php)
+- [simple-stack.php](file://simple-stack.php)
 - [package.json](file://package.json)
 - [vite.config.js](file://vite.config.js)
 - [src/admin/index.jsx](file://src/admin/index.jsx)
 - [src/admin/App.jsx](file://src/admin/App.jsx)
 - [src/admin/lib/api.js](file://src/admin/lib/api.js)
-- [includes/core/wp-cloud-deploy.php](file://includes/core/wp-cloud-deploy.php)
-- [includes/core/api/class-simplestack-rest-api.php](file://includes/core/api/class-simplestack-rest-api.php)
-- [includes/core/api/class-simplestack-rest-controller-base.php](file://includes/core/api/class-simplestack-rest-controller-base.php)
-- [includes/core/api/class-simplestack-rest-servers.php](file://includes/core/api/class-simplestack-rest-servers.php)
-- [includes/core/api/class-simplestack-rest-sites.php](file://includes/core/api/class-simplestack-rest-sites.php)
+- [includes/core/simple-stack.php](file://includes/core/simple-stack.php)
+- [includes/core/api/class-sstk-rest-api.php](file://includes/core/api/class-sstk-rest-api.php)
+- [includes/core/api/class-sstk-rest-controller-base.php](file://includes/core/api/class-sstk-rest-controller-base.php)
+- [includes/core/api/class-sstk-rest-servers.php](file://includes/core/api/class-sstk-rest-servers.php)
+- [includes/core/api/class-sstk-rest-sites.php](file://includes/core/api/class-sstk-rest-sites.php)
 - [includes/core/providers/class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
-- [includes/core/apps/class-wpcd-ssh.php](file://includes/core/apps/class-wpcd-ssh.php)
+- [includes/core/apps/class-sstk-ssh.php](file://includes/core/apps/class-sstk-ssh.php)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Updated architecture to reflect complete transformation from WPCloudDeploy to SimpleStack
+- Updated architecture for the hard-cutover Simple Stack release
 - Added documentation for modern React 19 frontend with Tailwind CSS v4
 - Documented new REST API layer (`simple-stack/v1`) with enhanced security
-- Expanded cloud provider support documentation (Vultr v2, UpCloud 1.3, Custom Server)
+- Limited cloud provider documentation to Vultr v2 and UpCloud 1.3
 - Updated component interactions to show hybrid WordPress + React architecture
 - Enhanced security boundaries and authentication mechanisms documentation
 
@@ -40,16 +40,16 @@
 10. [Conclusion](#conclusion)
 
 ## Introduction
-SimpleStack is a hybrid WordPress plugin that combines a React 19 admin frontend with a PHP 8.1+ backend to provision and manage remote servers and WordPress sites. The WordPress admin interface acts as the control plane, while a dedicated `simple-stack/v1` REST API exposes server and site operations. Provisioning is performed through cloud provider APIs (Vultr v2, UpCloud 1.3, or custom servers), and remote server configuration is driven by shell scripts executed over SSH.
+Simple Stack is a WordPress plugin that combines a React 19 admin frontend with a PHP 8.1+ backend to provision and manage remote servers and WordPress sites. The WordPress admin interface is the control plane, while a dedicated `simple-stack/v1` REST API exposes server and site operations. Provisioning uses Vultr API v2 or UpCloud API 1.3, and remote server configuration is driven by the fixed OpenLiteSpeed-only `scripts/v2` set executed over SSH.
 
-The system intentionally keeps all operator interactions inside `wp-admin`, avoids external SaaS in the control path, and separates local WordPress operations from remote server management. This represents a complete architectural transformation from the original WPCloudDeploy, featuring a modern React frontend, enhanced REST API layer, and expanded cloud provider support.
+The system keeps operator interactions inside `wp-admin`, avoids external SaaS in the control path, and separates local WordPress operations from remote server management. It is a hard-cutover fork of the upstream 5.8.0 release: there is no compatibility layer for retired identifiers, providers, data keys, hooks, or script versions.
 
 **Section sources**
 - [README.md:1-25](file://README.md#L1-L25)
 - [README.md:27-46](file://README.md#L27-L46)
 
 ## Project Structure
-At a high level, SimpleStack consists of:
+At a high level, Simple Stack consists of:
 
 - **WordPress plugin bootstrap**: defines constants, loads core classes, registers menus, and initializes the REST layer.
 - **React admin client**: built with Vite and Tailwind CSS v4, mounted into a container rendered by the PHP layer.
@@ -59,15 +59,15 @@ At a high level, SimpleStack consists of:
 
 ```mermaid
 graph TB
-WP["WordPress Admin"] --> Menu["SimpleStack Menus<br/>wp-cloud-deploy.php"]
+WP["WordPress Admin"] --> Menu["Simple Stack Menus<br/>simple-stack.php"]
 Menu --> Container["Mount Container<br/>#simplestack-admin"]
 Container --> ReactIndex["React Entry<br/>src/admin/index.jsx"]
 ReactIndex --> AppRoot["App Router<br/>src/admin/App.jsx"]
 AppRoot --> ApiClient["REST Client<br/>src/admin/lib/api.js"]
-ApiClient --> RestNamespace["simple-stack/v1<br/>class-simplestack-rest-api.php"]
+ApiClient --> RestNamespace["simple-stack/v1<br/>class-sstk-rest-api.php"]
 RestNamespace --> ServersController["Servers Controller"]
 RestNamespace --> SitesController["Sites Controller"]
-ServersController --> ServerEngine["WPCD Server Engine"]
+ServersController --> ServerEngine["SSTK Server Engine"]
 SitesController --> AppEngine["WordPress App Engine"]
 ServerEngine --> ProviderBase["CLOUD_PROVIDER_API"]
 ProviderBase --> Vultr["Vultr v2"]
@@ -76,16 +76,16 @@ AppEngine --> SSHLayer["SSH Execution Layer"]
 ```
 
 **Diagram sources**
-- [includes/core/wp-cloud-deploy.php:225-336](file://includes/core/wp-cloud-deploy.php#L225-L336)
+- [includes/core/simple-stack.php:225-336](file://includes/core/simple-stack.php#L225-L336)
 - [src/admin/index.jsx:1-47](file://src/admin/index.jsx#L1-L47)
 - [src/admin/App.jsx:1-70](file://src/admin/App.jsx#L1-L70)
 - [src/admin/lib/api.js:1-55](file://src/admin/lib/api.js#L1-L55)
-- [includes/core/api/class-simplestack-rest-api.php:12-53](file://includes/core/api/class-simplestack-rest-api.php#L12-L53)
+- [includes/core/api/class-sstk-rest-api.php:12-53](file://includes/core/api/class-sstk-rest-api.php#L12-L53)
 - [includes/core/providers/class-cloud-provider-api.php:12-167](file://includes/core/providers/class-cloud-provider-api.php#L12-L167)
 
 **Section sources**
-- [wpcd.php:16-130](file://wpcd.php#L16-L130)
-- [wpcd.php:267-416](file://wpcd.php#L267-L416)
+- [simple-stack.php:16-130](file://simple-stack.php#L16-L130)
+- [simple-stack.php:267-416](file://simple-stack.php#L267-L416)
 - [package.json:1-25](file://package.json#L1-L25)
 - [vite.config.js:1-45](file://vite.config.js#L1-L45)
 
@@ -94,32 +94,32 @@ This section summarizes the major architectural components and their responsibil
 
 | Component | Responsibility | Key Implementation |
 |---|---|---|
-| Plugin Bootstrap | Defines constants, required files, activation hooks, cron schedules, and REST initialization | `wpcd.php` |
-| Admin UI Bootstrap | Renders the mount container, seeds the initial route, and mounts the React app | `includes/core/wp-cloud-deploy.php`, `src/admin/index.jsx` |
+| Plugin Bootstrap | Defines constants, required files, activation hooks, cron schedules, and REST initialization | `simple-stack.php` |
+| Admin UI Bootstrap | Renders the mount container, seeds the initial route, and mounts the React app | `includes/core/simple-stack.php`, `src/admin/index.jsx` |
 | React Application | Routes between servers, sites, providers, and activity screens; calls the REST client | `src/admin/App.jsx`, `src/admin/lib/api.js` |
-| REST Namespace Registrar | Loads controller files and registers the `simple-stack/v1` namespace | `includes/core/api/class-simplestack-rest-api.php` |
-| REST Base Controller | Enforces `manage_options`, normalizes responses, sanitizes arguments, and dispatches tab actions | `includes/core/api/class-simplestack-rest-controller-base.php` |
-| Servers Controller | Lists, creates, reads, deletes, and runs actions against servers | `includes/core/api/class-simplestack-rest-servers.php` |
-| Sites Controller | Lists, deploys, reads, deletes, and runs actions against WordPress sites | `includes/core/api/class-simplestack-rest-sites.php` |
+| REST Namespace Registrar | Loads controller files and registers the `simple-stack/v1` namespace | `includes/core/api/class-sstk-rest-api.php` |
+| REST Base Controller | Enforces `manage_options`, normalizes responses, sanitizes arguments, and dispatches tab actions | `includes/core/api/class-sstk-rest-controller-base.php` |
+| Servers Controller | Lists, creates, reads, deletes, and runs actions against servers | `includes/core/api/class-sstk-rest-servers.php` |
+| Sites Controller | Lists, deploys, reads, deletes, and runs actions against WordPress sites | `includes/core/api/class-sstk-rest-sites.php` |
 | Cloud Provider Base | Shared provider state, feature flags, credential helpers, caching, and common methods | `includes/core/providers/class-cloud-provider-api.php` |
 | Vultr Provider | Implements Vultr v2 REST API behavior, including power status inference | `includes/core/providers/class-vultr-v2.php` |
 | UpCloud Provider | Implements UpCloud 1.3 REST API behavior, including username/password authentication | `includes/core/providers/class-upcloud.php` |
-| SSH Execution Layer | Executes commands and transfers files over SSH/SFTP using phpseclib | `includes/core/apps/class-wpcd-ssh.php` |
+| SSH Execution Layer | Executes commands and transfers files over SSH/SFTP using phpseclib | `includes/core/apps/class-sstk-ssh.php` |
 
 **Section sources**
-- [wpcd.php:16-130](file://wpcd.php#L16-L130)
-- [wpcd.php:267-416](file://wpcd.php#L267-L416)
-- [includes/core/wp-cloud-deploy.php:225-336](file://includes/core/wp-cloud-deploy.php#L225-L336)
+- [simple-stack.php:16-130](file://simple-stack.php#L16-L130)
+- [simple-stack.php:267-416](file://simple-stack.php#L267-L416)
+- [includes/core/simple-stack.php:225-336](file://includes/core/simple-stack.php#L225-L336)
 - [src/admin/index.jsx:1-47](file://src/admin/index.jsx#L1-L47)
 - [src/admin/App.jsx:1-70](file://src/admin/App.jsx#L1-L70)
 - [src/admin/lib/api.js:1-55](file://src/admin/lib/api.js#L1-L55)
-- [includes/core/api/class-simplestack-rest-api.php:12-118](file://includes/core/api/class-simplestack-rest-api.php#L12-L118)
-- [includes/core/api/class-simplestack-rest-controller-base.php:12-60](file://includes/core/api/class-simplestack-rest-controller-base.php#L12-L60)
+- [includes/core/api/class-sstk-rest-api.php:12-118](file://includes/core/api/class-sstk-rest-api.php#L12-L118)
+- [includes/core/api/class-sstk-rest-controller-base.php:12-60](file://includes/core/api/class-sstk-rest-controller-base.php#L12-L60)
 - [includes/core/providers/class-cloud-provider-api.php:12-167](file://includes/core/providers/class-cloud-provider-api.php#L12-L167)
-- [includes/core/apps/class-wpcd-ssh.php:20-50](file://includes/core/apps/class-wpcd-ssh.php#L20-L50)
+- [includes/core/apps/class-sstk-ssh.php:20-50](file://includes/core/apps/class-sstk-ssh.php#L20-L50)
 
 ## Architecture Overview
-SimpleStack follows a layered architecture:
+Simple Stack follows a layered architecture:
 
 1. **Control Plane**: WordPress admin pages render the React application.
 2. **Frontend Layer**: React components use a small REST client to call `simple-stack/v1`.
@@ -133,11 +133,11 @@ sequenceDiagram
 participant Operator as "Operator"
 participant WPAdmin as "WordPress Admin"
 participant React as "React Admin Client"
-participant REST as "SimpleStack REST API"
+participant REST as "Simple Stack REST API"
 participant Engine as "Server / App Engine"
 participant Provider as "Cloud Provider API"
 participant Remote as "Remote Server"
-Operator->>WPAdmin : Open SimpleStack menu
+Operator->>WPAdmin : Open Simple Stack menu
 WPAdmin->>React : Render #simplestack-admin
 React->>REST : GET /servers or POST /servers
 REST->>Engine : create_server() or list_servers()
@@ -158,14 +158,14 @@ REST-->>React : action response
 ```
 
 **Diagram sources**
-- [includes/core/wp-cloud-deploy.php:287-336](file://includes/core/wp-cloud-deploy.php#L287-L336)
+- [includes/core/simple-stack.php:287-336](file://includes/core/simple-stack.php#L287-L336)
 - [src/admin/index.jsx:15-47](file://src/admin/index.jsx#L15-L47)
 - [src/admin/lib/api.js:67-120](file://src/admin/lib/api.js#L67-L120)
-- [includes/core/api/class-simplestack-rest-api.php:51-99](file://includes/core/api/class-simplestack-rest-api.php#L51-L99)
-- [includes/core/api/class-simplestack-rest-servers.php:172-249](file://includes/core/api/class-simplestack-rest-servers.php#L172-L249)
+- [includes/core/api/class-sstk-rest-api.php:51-99](file://includes/core/api/class-sstk-rest-api.php#L51-L99)
+- [includes/core/api/class-sstk-rest-servers.php:172-249](file://includes/core/api/class-sstk-rest-servers.php#L172-L249)
 - [includes/core/providers/class-vultr-v2.php:183-249](file://includes/core/providers/class-vultr-v2.php#L183-L249)
 - [includes/core/providers/class-upcloud.php:310-371](file://includes/core/providers/class-upcloud.php#L310-L371)
-- [includes/core/apps/class-wpcd-ssh.php:45-101](file://includes/core/apps/class-wpcd-ssh.php#L45-L101)
+- [includes/core/apps/class-sstk-ssh.php:45-101](file://includes/core/apps/class-sstk-ssh.php#L45-L101)
 
 ## Detailed Component Analysis
 
@@ -173,21 +173,21 @@ REST-->>React : action response
 The PHP bootstrap defines plugin metadata, constants, activation/deactivation hooks, cron schedules, and the main initialization flow. It also enqueues the React bundle when the Vite manifest is present and renders the `#simplestack-admin` container with an initial route.
 
 Key behaviors:
-- Constants such as `WPCD_VERSION`, `WPCD_REST_VERSION`, and brand colors are defined early.
+- Constants such as `SSTK_VERSION`, `SSTK_REST_VERSION`, and brand colors are defined early.
 - Required classes are loaded during `init`.
-- The SimpleStack REST API is registered after app classes are available.
-- The SimpleStack menu and submenu pages are added under a top-level `SimpleStack` entry.
+- The Simple Stack REST API is registered after app classes are available.
+- The Simple Stack menu and submenu pages are added under a top-level `Simple Stack` entry.
 - Each screen maps to an initial hash route so the React router starts on the correct page.
 
 ```mermaid
 flowchart TD
-Start(["Plugin Load"]) --> DefineConstants["Define WPCD Constants"]
+Start(["Plugin Load"]) --> DefineConstants["Define SSTK Constants"]
 DefineConstants --> InitHooks["Register Activation, Deactivation, Cron, Notices"]
 InitHooks --> RequiredFiles["Load Core Classes and Providers"]
-RequiredFiles --> RESTInit["Load SimpleStack REST API"]
+RequiredFiles --> RESTInit["Load Simple Stack REST API"]
 RESTInit --> MainClass["Instantiate Main Class"]
-MainClass --> AdminMenu["Add SimpleStack Menus"]
-AdminMenu --> RenderScreen{"Is SimpleStack Screen?"}
+MainClass --> AdminMenu["Add Simple Stack Menus"]
+AdminMenu --> RenderScreen{"Is Simple Stack Screen?"}
 RenderScreen --> |Yes| MountContainer["Render #simplestack-admin + data-route"]
 RenderScreen --> |No| End(["End"])
 MountContainer --> CheckManifest["Check Vite Manifest"]
@@ -196,14 +196,14 @@ CheckManifest --> |Present| EnqueueBundle["Enqueue Built Assets"]
 ```
 
 **Diagram sources**
-- [wpcd.php:16-130](file://wpcd.php#L16-L130)
-- [wpcd.php:267-416](file://wpcd.php#L267-L416)
-- [includes/core/wp-cloud-deploy.php:225-336](file://includes/core/wp-cloud-deploy.php#L225-L336)
+- [simple-stack.php:16-130](file://simple-stack.php#L16-L130)
+- [simple-stack.php:267-416](file://simple-stack.php#L267-L416)
+- [includes/core/simple-stack.php:225-336](file://includes/core/simple-stack.php#L225-L336)
 
 **Section sources**
-- [wpcd.php:16-130](file://wpcd.php#L16-L130)
-- [wpcd.php:267-416](file://wpcd.php#L267-L416)
-- [includes/core/wp-cloud-deploy.php:225-336](file://includes/core/wp-cloud-deploy.php#L225-L336)
+- [simple-stack.php:16-130](file://simple-stack.php#L16-L130)
+- [simple-stack.php:267-416](file://simple-stack.php#L267-L416)
+- [includes/core/simple-stack.php:225-336](file://includes/core/simple-stack.php#L225-L336)
 
 ### React Admin Frontend
 The React frontend is a single-page application mounted into the WordPress admin. It uses a lightweight internal router based on the URL hash rather than full navigation, because WordPress owns the real URL.
@@ -235,23 +235,23 @@ Screens --> ApiClient["src/admin/lib/api.js"]
 - [src/admin/App.jsx:1-70](file://src/admin/App.jsx#L1-L70)
 
 ### REST API Layer
-The REST layer is the only public surface the React client talks to. It uses the `simple-stack/v1` namespace and gates every route behind `manage_options`.
+The React client talks to the six admin SPA controllers under `simple-stack/v1`. Those controllers require `manage_options`. The WordPress App controller family shares the namespace but authorizes through `sstk_is_admin()`. Two callbacks in the same namespace are intentionally public and authenticate independently with a pending-command transient or GitHub HMAC signature.
 
 Design characteristics:
-- A central registrar loads controller files and instantiates each controller.
-- Every controller extends a base controller that provides permission checks, response envelopes, argument helpers, paging helpers, and tab-action dispatch.
-- Responses are wrapped in `{ ok, data, meta }`, and sensitive values are redacted before leaving the process.
-- Tab actions reuse existing legacy handlers by mapping REST parameters back onto `$_POST` temporarily.
+- `SSTK_REST_API` loads and instantiates the six admin SPA controllers; WordPress App controllers and public callbacks register separately.
+- Admin SPA controllers extend `SSTK_REST_Controller_Base`, which provides permission checks, response envelopes, argument helpers, paging helpers, and tab-action dispatch.
+- SPA responses are wrapped in `{ ok, data, meta }`, and payloads returned through `respond()` are redacted. Other response paths do not inherit that envelope or redaction contract.
+- Tab actions reuse the existing app/tab handlers by mapping REST parameters back onto `$_POST` temporarily.
 
 ```mermaid
 classDiagram
-class SimpleStack_REST_API {
+class SSTK_REST_API {
 +register_routes()
 +load_files()
 +get_controllers()
 +get_namespace()
 }
-class SimpleStack_REST_Controller_Base {
+class SSTK_REST_Controller_Base {
 <<abstract>>
 +permissions_check() bool
 +respond(data, status)
@@ -267,36 +267,36 @@ class SimpleStack_REST_Controller_Base {
 +paging(request)
 +paging_args()
 }
-class SimpleStack_REST_Servers {
+class SSTK_REST_Servers {
 +list_servers(request)
 +create_server(request)
 +get_server(request)
 +delete_server(request)
 +run_action(request)
 }
-class SimpleStack_REST_Sites {
+class SSTK_REST_Sites {
 +list_sites(request)
 +deploy_site(request)
 +get_site(request)
 +delete_site(request)
 +run_action(request)
 }
-SimpleStack_REST_API --> SimpleStack_REST_Controller_Base : "instantiates"
-SimpleStack_REST_Servers --|> SimpleStack_REST_Controller_Base
-SimpleStack_REST_Sites --|> SimpleStack_REST_Controller_Base
+SSTK_REST_API --> SSTK_REST_Controller_Base : "instantiates"
+SSTK_REST_Servers --|> SSTK_REST_Controller_Base
+SSTK_REST_Sites --|> SSTK_REST_Controller_Base
 ```
 
 **Diagram sources**
-- [includes/core/api/class-simplestack-rest-api.php:12-118](file://includes/core/api/class-simplestack-rest-api.php#L12-L118)
-- [includes/core/api/class-simplestack-rest-controller-base.php:12-446](file://includes/core/api/class-simplestack-rest-controller-base.php#L12-L446)
-- [includes/core/api/class-simplestack-rest-servers.php:12-88](file://includes/core/api/class-simplestack-rest-servers.php#L12-L88)
-- [includes/core/api/class-simplestack-rest-sites.php:12-86](file://includes/core/api/class-simplestack-rest-sites.php#L12-L86)
+- [includes/core/api/class-sstk-rest-api.php:12-118](file://includes/core/api/class-sstk-rest-api.php#L12-L118)
+- [includes/core/api/class-sstk-rest-controller-base.php:12-446](file://includes/core/api/class-sstk-rest-controller-base.php#L12-L446)
+- [includes/core/api/class-sstk-rest-servers.php:12-88](file://includes/core/api/class-sstk-rest-servers.php#L12-L88)
+- [includes/core/api/class-sstk-rest-sites.php:12-86](file://includes/core/api/class-sstk-rest-sites.php#L12-L86)
 
 **Section sources**
-- [includes/core/api/class-simplestack-rest-api.php:12-118](file://includes/core/api/class-simplestack-rest-api.php#L12-L118)
-- [includes/core/api/class-simplestack-rest-controller-base.php:12-60](file://includes/core/api/class-simplestack-rest-controller-base.php#L12-L60)
-- [includes/core/api/class-simplestack-rest-controller-base.php:125-162](file://includes/core/api/class-simplestack-rest-controller-base.php#L125-L162)
-- [includes/core/api/class-simplestack-rest-controller-base.php:343-406](file://includes/core/api/class-simplestack-rest-controller-base.php#L343-L406)
+- [includes/core/api/class-sstk-rest-api.php:12-118](file://includes/core/api/class-sstk-rest-api.php#L12-L118)
+- [includes/core/api/class-sstk-rest-controller-base.php:12-60](file://includes/core/api/class-sstk-rest-controller-base.php#L12-L60)
+- [includes/core/api/class-sstk-rest-controller-base.php:125-162](file://includes/core/api/class-sstk-rest-controller-base.php#L125-L162)
+- [includes/core/api/class-sstk-rest-controller-base.php:343-406](file://includes/core/api/class-sstk-rest-controller-base.php#L343-L406)
 
 ### Server Management Flow
 The servers controller exposes listing, creation, retrieval, deletion, and action execution endpoints. Creation delegates to the server engine, which creates both the provider instance and the local post record, then queues a pending task.
@@ -304,9 +304,9 @@ The servers controller exposes listing, creation, retrieval, deletion, and actio
 ```mermaid
 sequenceDiagram
 participant React as "React ProvisionServer"
-participant REST as "SimpleStack_REST_Servers"
-participant ServerEngine as "WPCD_SERVER"
-participant AppEngine as "WPCD_WORDPRESS_APP"
+participant REST as "SSTK_REST_Servers"
+participant ServerEngine as "SSTK_SERVER"
+participant AppEngine as "SSTK_WORDPRESS_APP"
 participant TaskLog as "Pending Tasks Log"
 React->>REST : POST /servers { name, provider, region, size, os }
 REST->>REST : Validate provider and email
@@ -319,11 +319,11 @@ REST-->>React : { server_id, task_id, server }
 ```
 
 **Diagram sources**
-- [includes/core/api/class-simplestack-rest-servers.php:172-249](file://includes/core/api/class-simplestack-rest-servers.php#L172-L249)
+- [includes/core/api/class-sstk-rest-servers.php:172-249](file://includes/core/api/class-sstk-rest-servers.php#L172-L249)
 
 **Section sources**
-- [includes/core/api/class-simplestack-rest-servers.php:36-88](file://includes/core/api/class-simplestack-rest-servers.php#L36-L88)
-- [includes/core/api/class-simplestack-rest-servers.php:172-249](file://includes/core/api/class-simplestack-rest-servers.php#L172-L249)
+- [includes/core/api/class-sstk-rest-servers.php:36-88](file://includes/core/api/class-sstk-rest-servers.php#L36-L88)
+- [includes/core/api/class-sstk-rest-servers.php:172-249](file://includes/core/api/class-sstk-rest-servers.php#L172-L249)
 
 ### Site Deployment Flow
 The sites controller handles listing, deployment, retrieval, deletion, and tab-driven actions. Deployment validates inputs using the same validation logic as the legacy installer and binds the requested PHP version before the installer runs.
@@ -331,28 +331,28 @@ The sites controller handles listing, deployment, retrieval, deletion, and tab-d
 ```mermaid
 sequenceDiagram
 participant React as "React DeploySite"
-participant REST as "SimpleStack_REST_Sites"
-participant AppEngine as "WPCD_WORDPRESS_APP"
-participant PostApp as "WPCD_POSTS_APP"
+participant REST as "SSTK_REST_Sites"
+participant AppEngine as "SSTK_WORDPRESS_APP"
+participant PostApp as "SSTK_POSTS_APP"
 React->>REST : POST /sites { server_id, domain, admin_user, admin_email, admin_password, wp_version }
 REST->>REST : Validate server exists
 REST->>AppEngine : install_wp_validate(args)
 AppEngine-->>REST : validation result or error
 REST->>AppEngine : set_php_version_for_app(app_id, php_version)
 React->>REST : DELETE /sites/{id}
-REST->>PostApp : wpcd_app_delete_post(id, true)
+REST->>PostApp : sstk_app_delete_post(id, true)
 PostApp-->>REST : allowed or forbidden
 REST-->>React : deleted response or 403
 ```
 
 **Diagram sources**
-- [includes/core/api/class-simplestack-rest-sites.php:158-205](file://includes/core/api/class-simplestack-rest-sites.php#L158-L205)
-- [includes/core/api/class-simplestack-rest-sites.php:242-267](file://includes/core/api/class-simplestack-rest-sites.php#L242-L267)
+- [includes/core/api/class-sstk-rest-sites.php:158-205](file://includes/core/api/class-sstk-rest-sites.php#L158-L205)
+- [includes/core/api/class-sstk-rest-sites.php:242-267](file://includes/core/api/class-sstk-rest-sites.php#L242-L267)
 
 **Section sources**
-- [includes/core/api/class-simplestack-rest-sites.php:35-86](file://includes/core/api/class-simplestack-rest-sites.php#L35-L86)
-- [includes/core/api/class-simplestack-rest-sites.php:158-205](file://includes/core/api/class-simplestack-rest-sites.php#L158-L205)
-- [includes/core/api/class-simplestack-rest-sites.php:242-267](file://includes/core/api/class-simplestack-rest-sites.php#L242-L267)
+- [includes/core/api/class-sstk-rest-sites.php:35-86](file://includes/core/api/class-sstk-rest-sites.php#L35-L86)
+- [includes/core/api/class-sstk-rest-sites.php:158-205](file://includes/core/api/class-sstk-rest-sites.php#L158-L205)
+- [includes/core/api/class-sstk-rest-sites.php:242-267](file://includes/core/api/class-sstk-rest-sites.php#L242-L267)
 
 ### Cloud Provider Abstractions
 All supported providers extend a shared base class. The base class manages provider identity, feature flags, credential fingerprints, caching, state translation, and helper methods. Concrete providers implement provider-specific authentication, endpoint mapping, and operational quirks.
@@ -441,12 +441,12 @@ EmptyCheck --> |No| ReturnOutput["Return Command Output"]
 ```
 
 **Diagram sources**
-- [includes/core/apps/class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [includes/core/apps/class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 
 **Section sources**
-- [includes/core/apps/class-wpcd-ssh.php:20-50](file://includes/core/apps/class-wpcd-ssh.php#L20-L50)
-- [includes/core/apps/class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
-- [includes/core/apps/class-wpcd-ssh.php:153-244](file://includes/core/apps/class-wpcd-ssh.php#L153-L244)
+- [includes/core/apps/class-sstk-ssh.php:20-50](file://includes/core/apps/class-sstk-ssh.php#L20-L50)
+- [includes/core/apps/class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
+- [includes/core/apps/class-sstk-ssh.php:153-244](file://includes/core/apps/class-sstk-ssh.php#L153-L244)
 
 ## Dependency Analysis
 The following diagram shows how the React frontend depends on the REST API, which in turn depends on server/app engines, provider abstractions, and the SSH execution layer.
@@ -455,15 +455,15 @@ The following diagram shows how the React frontend depends on the REST API, whic
 graph LR
 ReactIndex["src/admin/index.jsx"] --> AppJSX["src/admin/App.jsx"]
 AppJSX --> ApiJS["src/admin/lib/api.js"]
-ApiJS --> RESTAPI["class-simplestack-rest-api.php"]
-RESTAPI --> BaseCtrl["class-simplestack-rest-controller-base.php"]
-RESTAPI --> ServersCtrl["class-simplestack-rest-servers.php"]
-RESTAPI --> SitesCtrl["class-simplestack-rest-sites.php"]
+ApiJS --> RESTAPI["class-sstk-rest-api.php"]
+RESTAPI --> BaseCtrl["class-sstk-rest-controller-base.php"]
+RESTAPI --> ServersCtrl["class-sstk-rest-servers.php"]
+RESTAPI --> SitesCtrl["class-sstk-rest-sites.php"]
 ServersCtrl --> ProviderBase["class-cloud-provider-api.php"]
 SitesCtrl --> ProviderBase
 ProviderBase --> Vultr["class-vultr-v2.php"]
 ProviderBase --> UpCloud["class-upcloud.php"]
-ServersCtrl --> SSH["class-wpcd-ssh.php"]
+ServersCtrl --> SSH["class-sstk-ssh.php"]
 SitesCtrl --> SSH
 ```
 
@@ -471,18 +471,18 @@ SitesCtrl --> SSH
 - [src/admin/index.jsx:1-47](file://src/admin/index.jsx#L1-L47)
 - [src/admin/App.jsx:1-70](file://src/admin/App.jsx#L1-L70)
 - [src/admin/lib/api.js:1-55](file://src/admin/lib/api.js#L1-L55)
-- [includes/core/api/class-simplestack-rest-api.php:12-118](file://includes/core/api/class-simplestack-rest-api.php#L12-L118)
-- [includes/core/api/class-simplestack-rest-controller-base.php:12-60](file://includes/core/api/class-simplestack-rest-controller-base.php#L12-L60)
-- [includes/core/api/class-simplestack-rest-servers.php:12-88](file://includes/core/api/class-simplestack-rest-servers.php#L12-L88)
-- [includes/core/api/class-simplestack-rest-sites.php:12-86](file://includes/core/api/class-simplestack-rest-sites.php#L12-L86)
+- [includes/core/api/class-sstk-rest-api.php:12-118](file://includes/core/api/class-sstk-rest-api.php#L12-L118)
+- [includes/core/api/class-sstk-rest-controller-base.php:12-60](file://includes/core/api/class-sstk-rest-controller-base.php#L12-L60)
+- [includes/core/api/class-sstk-rest-servers.php:12-88](file://includes/core/api/class-sstk-rest-servers.php#L12-L88)
+- [includes/core/api/class-sstk-rest-sites.php:12-86](file://includes/core/api/class-sstk-rest-sites.php#L12-L86)
 - [includes/core/providers/class-cloud-provider-api.php:12-167](file://includes/core/providers/class-cloud-provider-api.php#L12-L167)
 - [includes/core/providers/class-vultr-v2.php:12-127](file://includes/core/providers/class-vultr-v2.php#L12-L127)
 - [includes/core/providers/class-upcloud.php:12-128](file://includes/core/providers/class-upcloud.php#L12-L128)
-- [includes/core/apps/class-wpcd-ssh.php:20-50](file://includes/core/apps/class-wpcd-ssh.php#L20-L50)
+- [includes/core/apps/class-sstk-ssh.php:20-50](file://includes/core/apps/class-sstk-ssh.php#L20-L50)
 
 **Section sources**
 - [src/admin/lib/api.js:153-291](file://src/admin/lib/api.js#L153-L291)
-- [includes/core/api/class-simplestack-rest-api.php:30-37](file://includes/core/api/class-simplestack-rest-api.php#L30-L37)
+- [includes/core/api/class-sstk-rest-api.php:30-37](file://includes/core/api/class-sstk-rest-api.php#L30-L37)
 - [includes/core/providers/class-cloud-provider-api.php:480-585](file://includes/core/providers/class-cloud-provider-api.php#L480-L585)
 
 ## Performance Considerations
@@ -494,21 +494,21 @@ SitesCtrl --> SSH
 [No sources needed since this section provides general guidance]
 
 ## Security Architecture
-SimpleStack implements multiple layers of security to protect sensitive operations and credentials:
+Simple Stack implements multiple layers of security to protect sensitive operations and credentials:
 
 ### Authentication and Authorization
-- All REST endpoints require `manage_options` capability through the base controller's `permissions_check()` method.
-- WordPress session nonce verification is enforced for all API requests.
-- User authentication is handled by WordPress core, ensuring consistent access control.
+- Admin controllers in `simple-stack/v1` require `manage_options` through the base controller's `permissions_check()` method.
+- Cookie-authenticated admin requests use the WordPress REST nonce. The remote command callback and GitHub webhook are public by design and perform their own token/signature verification before side effects.
+- User authentication is handled by WordPress core for the admin control plane.
 
 ### Credential Protection
-- API keys and SSH keys are encrypted before storage using WordPress encryption functions.
-- The `SimpleStack_Secret_Redactor` automatically redacts sensitive fields from all API responses.
+- API keys, passwords, and private SSH keys are encrypted before storage with AES-128-CBC, a random IV, and HMAC-SHA256 authentication. The key comes from `SSTK_ENCRYPTION_KEY` or the persistent `sstk_encryption_key_v2` fallback; legacy envelopes are rejected.
+- `SSTK_Secret_Redactor` automatically redacts payloads returned through `SSTK_REST_Controller_Base::respond()`; custom WordPress App and public-callback responses require their own safeguards.
 - Credentials are never exposed in browser payloads or logs.
 - Provider connection tests report success/failure without exposing actual credentials.
 
 ### Data Validation and Sanitization
-- All REST parameters go through strict type validation using the base controller's argument helpers.
+- Parameters registered by the admin SPA controllers go through strict type validation using the base controller's argument helpers; WordPress App and public-callback routes use their own validation paths.
 - Input is sanitized using appropriate WordPress sanitization functions.
 - File uploads are validated and processed securely.
 - SQL queries use prepared statements through WordPress database APIs.
@@ -520,8 +520,8 @@ SimpleStack implements multiple layers of security to protect sensitive operatio
 - Firewall rules restrict access to sensitive services like OpenLiteSpeed WebAdmin.
 
 **Section sources**
-- [includes/core/api/class-simplestack-rest-controller-base.php:53-60](file://includes/core/api/class-simplestack-rest-controller-base.php#L53-L60)
-- [includes/core/api/class-simplestack-rest-controller-base.php:125-162](file://includes/core/api/class-simplestack-rest-controller-base.php#L125-L162)
+- [includes/core/api/class-sstk-rest-controller-base.php:53-60](file://includes/core/api/class-sstk-rest-controller-base.php#L53-L60)
+- [includes/core/api/class-sstk-rest-controller-base.php:125-162](file://includes/core/api/class-sstk-rest-controller-base.php#L125-L162)
 - [src/admin/lib/api.js:67-120](file://src/admin/lib/api.js#L67-L120)
 
 ## Troubleshooting Guide
@@ -529,28 +529,28 @@ Common operational issues and where they appear in the codebase:
 
 | Symptom | Likely Cause | Relevant Code Path |
 |---|---|---|
-| React admin page is blank | Vite manifest missing or build output absent | `includes/core/wp-cloud-deploy.php` |
-| REST requests fail with 403/401 | User lacks `manage_options` or WordPress session nonce mismatch | `class-simplestack-rest-controller-base.php` |
-| Server creation fails immediately | Invalid provider slug, invalid email, or provider API rejects request | `class-simplestack-rest-servers.php` |
-| Site deployment fails validation | Duplicate domain, unsafe password, invalid email, or invalid username | `class-simplestack-rest-sites.php` |
+| React admin page is blank | Vite manifest missing or build output absent | `includes/core/simple-stack.php` |
+| REST requests fail with 403/401 | User lacks `manage_options` or WordPress session nonce mismatch | `class-sstk-rest-controller-base.php` |
+| Server creation fails immediately | Invalid provider slug, invalid email, or provider API rejects request | `class-sstk-rest-servers.php` |
+| Site deployment fails validation | Duplicate domain, unsafe password, invalid email, or invalid username | `class-sstk-rest-sites.php` |
 | Provider connection test fails | Missing or invalid API key, username/password, or SSH key material | `class-cloud-provider-api.php`, provider classes |
-| Remote command returns no output | SSH connection failed, script produced empty output, or action expects specific feedback | `class-wpcd-ssh.php` |
+| Remote command returns no output | SSH connection failed, script produced empty output, or action expects specific feedback | `class-sstk-ssh.php` |
 | Power operation never completes | Provider did not return expected state signal; transient timeout should expire it | `class-vultr-v2.php`, `class-upcloud.php` |
 | Build fails during development | Missing Node dependencies or incorrect Vite configuration | `package.json`, `vite.config.js` |
 | CSS isolation violations | Tailwind styles escaping `#simplestack-admin` scope | `tools/verify-css-isolation.mjs` |
 
 **Section sources**
-- [includes/core/wp-cloud-deploy.php:324-336](file://includes/core/wp-cloud-deploy.php#L324-L336)
-- [includes/core/api/class-simplestack-rest-controller-base.php:53-60](file://includes/core/api/class-simplestack-rest-controller-base.php#L53-L60)
-- [includes/core/api/class-simplestack-rest-servers.php:172-249](file://includes/core/api/class-simplestack-rest-servers.php#L172-L249)
-- [includes/core/api/class-simplestack-rest-sites.php:158-205](file://includes/core/api/class-simplestack-rest-sites.php#L158-L205)
+- [includes/core/simple-stack.php:324-336](file://includes/core/simple-stack.php#L324-L336)
+- [includes/core/api/class-sstk-rest-controller-base.php:53-60](file://includes/core/api/class-sstk-rest-controller-base.php#L53-L60)
+- [includes/core/api/class-sstk-rest-servers.php:172-249](file://includes/core/api/class-sstk-rest-servers.php#L172-L249)
+- [includes/core/api/class-sstk-rest-sites.php:158-205](file://includes/core/api/class-sstk-rest-sites.php#L158-L205)
 - [includes/core/providers/class-cloud-provider-api.php:644-704](file://includes/core/providers/class-cloud-provider-api.php#L644-L704)
-- [includes/core/apps/class-wpcd-ssh.php:45-151](file://includes/core/apps/class-wpcd-ssh.php#L45-L151)
+- [includes/core/apps/class-sstk-ssh.php:45-151](file://includes/core/apps/class-sstk-ssh.php#L45-L151)
 - [includes/core/providers/class-vultr-v2.php:500-553](file://includes/core/providers/class-vultr-v2.php#L500-L553)
 - [includes/core/providers/class-upcloud.php:642-687](file://includes/core/providers/class-upcloud.php#L642-L687)
 
 ## Conclusion
-SimpleStack's hybrid architecture cleanly separates concerns:
+Simple Stack's hybrid architecture cleanly separates concerns:
 
 - The **WordPress admin** remains the operator's control plane.
 - The **React frontend** provides a modern, routed interface without replacing WordPress's routing model.
@@ -558,4 +558,4 @@ SimpleStack's hybrid architecture cleanly separates concerns:
 - The **provider abstraction layer** isolates cloud provider differences behind a stable contract.
 - The **SSH execution layer** safely executes remote commands and file operations.
 
-This design supports multiple cloud providers, preserves legacy tab behavior through action bridges, and keeps sensitive credentials out of browser payloads and logs. The transformation from WPCloudDeploy to SimpleStack brings modern development practices, enhanced security, and improved maintainability while preserving the core functionality that makes it effective for hosting management. Future extensions should follow the established patterns: new providers extend the base provider class, new REST endpoints go through the base controller, and remote operations continue to be expressed as scripts executed over SSH.
+This design supports the two approved cloud providers, reuses the existing tab behaviors through action bridges, and keeps sensitive credentials out of browser payloads and logs. Future changes should preserve the hard-cutover boundary: no retired identifiers or providers, admin REST routes must use the base controller's permission and redaction helpers, and remote operations remain fixed to the supported OpenLiteSpeed `scripts/v2` pipeline.

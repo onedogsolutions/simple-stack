@@ -9,8 +9,8 @@
 - [after-prepare-server.php](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/after-prepare-server.php)
 - [01-prepare_server.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt)
 - [02-install_wordpress_site.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt)
-- [66-simplestack_post_install.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt)
-- [class-wpcd-app.php](file://includes/core/apps/class-wpcd-app.php)
+- [66-sstk_post_install.txt](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt)
+- [class-sstk-app.php](file://includes/core/apps/class-sstk-app.php)
 - [class-wordpress-app-settings.php](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php)
 </cite>
 
@@ -19,7 +19,7 @@
 - Updated to reflect the complete rewrite of WordPress application deployment system with new v2 script structure
 - Added detailed documentation for hardened v2 scripts with Ubuntu 24.04/26.04 support
 - Enhanced security documentation for OpenLiteSpeed-only provisioning
-- Updated script versioning strategy documentation
+- Documented the fixed `scripts/v2` provisioning contract
 - Added comprehensive environment variable handling documentation
 - Expanded troubleshooting guide for v2-specific issues
 
@@ -35,11 +35,11 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-SimpleStack is a private WordPress plugin that provisions cloud servers and installs a single, hardened OpenLiteSpeed-based stack with WordPress. It runs entirely from `wp-admin`, uses a React admin UI, and executes Bash provisioning scripts over SSH. The WordPress application engine is the `wordpress-app` app type: it registers tabs, REST endpoints, script handlers, hooks, and post-install automation for server preparation, site installation, SSL, caching, backups, monitoring, security hardening, and ongoing maintenance.
+Simple Stack is a private WordPress plugin that provisions cloud servers and installs a single, hardened OpenLiteSpeed-based stack with WordPress. It runs entirely from `wp-admin`, uses a React admin UI, and executes Bash provisioning scripts over SSH. The WordPress application engine is the `wordpress-app` app type: it registers tabs, REST endpoints, script handlers, hooks, and post-install automation for server preparation, site installation, SSL, caching, backups, monitoring, security hardening, and ongoing maintenance.
 
 The engine's lifecycle is:
 1. Provider API call creates or selects a server.
-2. A versioned Bash provisioning script prepares Ubuntu, OpenLiteSpeed, PHP, MariaDB, Redis, Certbot, firewall, and tools.
+2. The fixed `scripts/v2` Bash provisioning set prepares Ubuntu, OpenLiteSpeed, PHP, MariaDB, Redis, Certbot, firewall, and tools.
 3. A site installation script creates a database user, site directory, Linux user, OpenLiteSpeed vhost, WordPress files, cache configuration, and optional blueprint assets.
 4. A post-install hook enforces hardening and optionally installs configured security plugins.
 5. Ongoing operations are dispatched through tabs and REST actions back to the same script set.
@@ -51,10 +51,10 @@ The engine's lifecycle is:
 - [SIMPLESTACK.md:15-63](file://docs/SIMPLESTACK.md#L15-L63)
 
 ## Project Structure
-At a high level, SimpleStack separates:
+At a high level, Simple Stack separates:
 - Plugin bootstrap and core classes under `includes/core/`.
 - The WordPress application engine under `includes/core/apps/wordpress-app/`.
-- Versioned provisioning scripts under `includes/core/apps/wordpress-app/scripts/v1/` and `scripts/v2/`.
+- Provisioning and management scripts under `includes/core/apps/wordpress-app/scripts/v2/`.
 - A built React admin UI under `assets/dist/`, sourced from `src/admin/`.
 - REST controllers under `includes/core/api/`.
 
@@ -62,9 +62,9 @@ At a high level, SimpleStack separates:
 graph TB
 WP["WordPress Admin"]
 REST["simple-stack/v1 REST"]
-APP["WPCD_WORDPRESS_APP<br/>wordpress-app engine"]
+APP["SSTK_WORDPRESS_APP<br/>wordpress-app engine"]
 TABS["Site & Server Tabs"]
-SCRIPTS["Provisioning Scripts<br/>v1 / v2"]
+SCRIPTS["Provisioning Scripts<br/>scripts/v2"]
 SERVER["Remote Server"]
 PROVIDER["Cloud Provider API"]
 WP --> REST
@@ -84,7 +84,7 @@ APP --> PROVIDER
 - [SIMPLESTACK.md:15-32](file://docs/SIMPLESTACK.md#L15-L32)
 
 ## Core Components
-The WordPress application engine is implemented by `WPCD_WORDPRESS_APP`, which extends the base app class and composes several traits:
+The WordPress application engine is implemented by `SSTK_WORDPRESS_APP`, which extends the base app class and composes several traits:
 - After-server-preparation tasks.
 - Security tab logic.
 - Command and log handling.
@@ -103,7 +103,7 @@ Key responsibilities include:
 
 ```mermaid
 classDiagram
-class WPCD_WORDPRESS_APP {
+class SSTK_WORDPRESS_APP {
 +__construct()
 +init()
 +hooks()
@@ -115,15 +115,15 @@ class WPCD_WORDPRESS_APP {
 +add_script_args_app()
 +script_placeholders()
 }
-class wpcd_wpapp_after_prepare_server {
-+wpcd_wpapp_core_prepare_server_completed()
+class sstk_wpapp_after_prepare_server {
++sstk_wpapp_core_prepare_server_completed()
 }
-class wpcd_wpapp_script_handlers {
+class sstk_wpapp_script_handlers {
 +is_ssh_successful()
 +build_command_arguments()
 }
-WPCD_WORDPRESS_APP --> wpcd_wpapp_after_prepare_server : "uses"
-WPCD_WORDPRESS_APP --> wpcd_wpapp_script_handlers : "uses"
+SSTK_WORDPRESS_APP --> sstk_wpapp_after_prepare_server : "uses"
+SSTK_WORDPRESS_APP --> sstk_wpapp_script_handlers : "uses"
 ```
 
 **Diagram sources**
@@ -139,21 +139,21 @@ WPCD_WORDPRESS_APP --> wpcd_wpapp_script_handlers : "uses"
 ## Architecture Overview
 The engine coordinates three layers:
 1. **Control plane:** React UI calls `simple-stack/v1` REST endpoints.
-2. **PHP engine:** Controllers and `WPCD_WORDPRESS_APP` validate input, select the correct script version, build arguments, execute commands over SSH, and record logs.
+2. **PHP engine:** Controllers and `SSTK_WORDPRESS_APP` validate input, resolve files from the fixed `scripts/v2` set, build arguments, execute commands over SSH, and record logs.
 3. **Remote execution:** Bash scripts perform OS-level provisioning and site management.
 
 ```mermaid
 sequenceDiagram
 participant Admin as "Admin UI"
 participant REST as "REST Controller"
-participant App as "WPCD_WORDPRESS_APP"
+participant App as "SSTK_WORDPRESS_APP"
 participant Handler as "Script Handlers"
 participant SSH as "SSH Executor"
-participant Script as "Versioned Script"
+participant Script as "scripts/v2 Script"
 participant Remote as "Remote Server"
 Admin->>REST : POST /servers or /sites
 REST->>App : do_instance_action(id, action, data)
-App->>Handler : resolve script version and file
+App->>Handler : resolve v2 script file
 Handler->>Handler : build placeholders and environment
 Handler->>SSH : execute command
 SSH->>Script : download or template script
@@ -180,7 +180,7 @@ REST-->>Admin : status and logs
 Server preparation is handled by `01-prepare_server.txt`. It performs:
 - Root and noninteractive package manager checks.
 - Common function loading.
-- Normalization of `SIMPLE_STACK_ADMIN_IP`.
+- Normalization of `SSTK_ADMIN_IP`.
 - Webserver validation (OpenLiteSpeed only).
 - Ubuntu release validation against supported versions.
 - Repository refresh and LiteSpeed repository setup.
@@ -200,7 +200,7 @@ Server preparation is handled by `01-prepare_server.txt`. It performs:
 flowchart TD
 Start(["Start prepare_server"]) --> CheckRoot["Check root and noninteractive mode"]
 CheckRoot --> LoadCommon["Load common functions"]
-LoadCommon --> NormalizeIP["Normalize SIMPLE_STACK_ADMIN_IP"]
+LoadCommon --> NormalizeIP["Normalize SSTK_ADMIN_IP"]
 NormalizeIP --> ValidateWebserver["Validate webserver_type"]
 ValidateWebserver --> ValidateUbuntu["Validate Ubuntu release"]
 ValidateUbuntu --> Repos["Refresh repositories and add LiteSpeed repo"]
@@ -245,7 +245,7 @@ Site installation is handled by `02-install_wordpress_site.txt`. It performs:
 - Webserver restart.
 - Per-site SSH public key authentication setup.
 - Optional site-level post-processing script execution.
-- Invocation of the SimpleStack post-install hook.
+- Invocation of the Simple Stack post-install hook.
 - Optional blueprint-driven theme/plugin/file deployment.
 
 **Updated** The v2 script includes enhanced security hardening through the post-install hook and improved error handling throughout the installation process.
@@ -265,7 +265,7 @@ InstallCache --> EnableRedis["Enable Redis object cache if available"]
 EnableRedis --> RestartWebserver["Restart webserver"]
 RestartWebserver --> SetupSSH["Configure per-site SSH keys"]
 SetupSSH --> SitePostProcess["Run optional site post-processing script"]
-SitePostProcess --> RunHook["Call simplestack_post_site_install"]
+SitePostProcess --> RunHook["Call sstk_post_site_install"]
 RunHook --> Blueprint["Apply blueprint themes/plugins/files if provided"]
 Blueprint --> End(["Site installed"])
 ```
@@ -282,8 +282,8 @@ Blueprint --> End(["Site installed"])
 
 ### Shell Script Execution System
 The shell script system has two delivery modes:
-- Raw scripts under `scripts/vN/raw/*.txt` are downloaded verbatim over HTTP from `SCRIPT_URL`.
-- Template scripts under `scripts/vN/*.txt` are processed by PHP, substituting `##TOKEN##` placeholders before being sent as a command.
+- Raw scripts under `scripts/v2/raw/*.txt` are downloaded verbatim over HTTP from `SCRIPT_URL`.
+- Template scripts under `scripts/v2/*.txt` are processed by PHP, substituting `##TOKEN##` placeholders before being sent as a command.
 
 The script handler trait maps tab actions to script names, builds `SCRIPT_URL`, `SCRIPT_NAME`, `SCRIPT_LOGS`, and `CALLBACK_URL`, and merges them with common arguments. Success detection is script-specific, based on expected output strings rather than exit codes alone.
 
@@ -291,7 +291,7 @@ The script handler trait maps tab actions to script names, builds `SCRIPT_URL`, 
 
 ```mermaid
 flowchart TD
-Action["Tab action selected"] --> Resolve["Resolve script_version and script file"]
+Action["Tab action selected"] --> Resolve["Resolve scripts/v2 file"]
 Resolve --> BuildArgs["Build SCRIPT_URL, SCRIPT_NAME, SCRIPT_LOGS, CALLBACK_URL"]
 BuildArgs --> Placeholders["Substitute ##TOKEN## placeholders"]
 Placeholders --> Execute["Execute over SSH"]
@@ -309,37 +309,33 @@ Parse --> Log["Record command log and activity"]
 - [SIMPLESTACK.md:154-170](file://docs/SIMPLESTACK.md#L154-L170)
 - [script-handlers.php:1394-1702](file://includes/core/apps/wordpress-app/traits/traits-for-class-wordpress-app/script-handlers.php#L1394-L1702)
 
-### Script Versioning Strategy
-SimpleStack maintains two script sets:
-- `scripts/v1/`: upstream scripts, preserved for legacy servers.
-- `scripts/v2/`: SimpleStack-hardened scripts.
+### Fixed `scripts/v2` Contract
+Simple Stack provisions and manages servers only through `includes/core/apps/wordpress-app/scripts/v2/`. There is no script-version setting, per-server version metadata, directory selector, or `scripts/v1` fallback. `get_configured_scripts_version()` returns `v2`, and script URLs are built from that fixed directory.
 
-The default script version is `v2`, but each server retains its own `wpcd_server_scripts_version` meta value. Servers provisioned before the fork continue using `v1`; new servers use `v2`. The version dropdown lists both folders.
-
-**Updated** Key differences in `v2`:
+The shipped script set provides:
 - Ubuntu 24.04 and 26.04 support with explicit codename mapping.
-- Removal of nginx/LEMP branches - OpenLiteSpeed only.
-- Explicit `lsphp83/84/85` installation loop with deterministic package management.
-- Pinned `ols1clk.sh` tag (v3.1) and optional checksum verification.
-- Hardened OpenLiteSpeed admin console handling with fail-closed security.
-- Improved HTTPS and certificate management.
-- New post-install hook for security hardening.
-- Enhanced error handling and checkpoint-based recovery.
+- OpenLiteSpeed-only execution; nginx, PHP-FPM and LiteSpeed Enterprise branches are not supported.
+- Explicit `lsphp83/84/85` installation with `lsphp84` as the default.
+- `ols1clk.sh` tag `v3.1` and optional `SSTK_OLS1CLK_SHA256` verification.
+- Fail-closed OpenLiteSpeed WebAdmin handling for port 7080.
+- HTTPS and certificate management for OpenLiteSpeed vhosts.
+- The `sstk_post_site_install` hardening hook.
+- Checkpoint-based recovery and command logging.
 
 **Section sources**
 - [SIMPLESTACK.md:172-191](file://docs/SIMPLESTACK.md#L172-L191)
 - [README.md:101-102](file://README.md#L101-L102)
-- [class-wpcd-app.php:200-250](file://includes/core/apps/class-wpcd-app.php#L200-L250)
+- [class-sstk-app.php:200-250](file://includes/core/apps/class-sstk-app.php#L200-L250)
 
 ### Environment Variable Handling
 Environment variables bridge PHP configuration and remote Bash execution:
 - `webserver_type`: validated early; defaults to `ols` and rejects unsupported values.
-- `SIMPLE_STACK_ADMIN_IP`: normalized once, exported, and used for firewall and OpenLiteSpeed WebAdmin binding.
-- `SIMPLE_STACK_OLS1CLK_SHA256`: optional SHA256 pin for the OpenLiteSpeed one-click installer.
+- `SSTK_ADMIN_IP`: normalized once, exported, and used for firewall and OpenLiteSpeed WebAdmin binding.
+- `SSTK_OLS1CLK_SHA256`: optional SHA256 pin for the OpenLiteSpeed one-click installer.
 - `post_processing_script_server`: optional URL for server-level post-processing.
 - `post_processing_script_site`: optional URL for site-level post-processing.
 - `blueprint`: JSON describing blueprint themes, plugins, and files.
-- `SIMPLE_STACK_SECURITY_PLUGINS`: list of WordPress plugin slugs installed and activated after site installation.
+- `SSTK_SECURITY_PLUGINS`: list of WordPress plugin slugs installed and activated after site installation.
 
 **Updated** Validation occurs at multiple layers with enhanced security:
 - PHP validates REST inputs and provider credentials.
@@ -352,15 +348,15 @@ Environment variables bridge PHP configuration and remote Bash execution:
 - [01-prepare_server.txt:236-249](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L236-L249)
 - [01-prepare_server.txt:693-703](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L693-L703)
 - [02-install_wordpress_site.txt:224-240](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L224-L240)
-- [66-simplestack_post_install.txt:48-80](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L48-L80)
-- [class-wpcd-app.php:252-350](file://includes/core/apps/class-wpcd-app.php#L252-L350)
+- [66-sstk_post_install.txt:48-80](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L48-L80)
+- [class-sstk-app.php:252-350](file://includes/core/apps/class-sstk-app.php#L252-L350)
 
 ### Provisioning Scripts: OpenLiteSpeed, PHP, Database, SSL, Security
 - **OpenLiteSpeed:** Installed via a pinned `ols1clk.sh` tag (v3.1), with syntax checking and optional SHA verification. The script also configures webroot links, PHP binaries, and service status checks.
 - **PHP:** Multiple `lsphp` versions are installed explicitly (83, 84, 85), with extension packages checked individually so missing optional extensions do not abort provisioning. Default PHP is set to `lsphp84`.
 - **Database:** MariaDB is installed with a provider-specific Dpkg option to force new configuration files. Database creation for sites uses shared helper functions.
 - **SSL:** Certbot is installed via Snap with DNS provider plugins. Port 7080 is denied by default and opened only for a configured admin IP.
-- **Security:** UFW denies incoming traffic by default, allows SSH/HTTP/HTTPS, denies OpenLiteSpeed WebAdmin globally, and conditionally allows it from `SIMPLE_STACK_ADMIN_IP`. Post-install hardening sets `DISALLOW_FILE_EDIT` and can install configured security plugins.
+- **Security:** UFW denies incoming traffic by default, allows SSH/HTTP/HTTPS, denies OpenLiteSpeed WebAdmin globally, and conditionally allows it from `SSTK_ADMIN_IP`. Post-install hardening sets `DISALLOW_FILE_EDIT` and can install configured security plugins.
 
 **Updated** The v2 scripts implement a hardened security model with fail-closed defaults, explicit version pinning, and comprehensive validation throughout the provisioning process.
 
@@ -371,17 +367,17 @@ Environment variables bridge PHP configuration and remote Bash execution:
 - [SIMPLESTACK.md:193-205](file://docs/SIMPLESTACK.md#L193-L205)
 
 ### Post-Installation Hooks and Customization
-The post-install hook `simplestack_post_site_install` runs after WordPress and any post-processing scripts have finished. Its responsibilities include:
+The post-install hook `sstk_post_site_install` runs after WordPress and any post-processing scripts have finished. Its responsibilities include:
 - Ensuring `wp-config.php` exists.
 - Setting `DISALLOW_FILE_EDIT true`.
-- Installing and activating plugins listed in `SIMPLE_STACK_SECURITY_PLUGINS`.
+- Installing and activating plugins listed in `SSTK_SECURITY_PLUGINS`.
 - Validating plugin slugs to prevent arbitrary command injection.
 
 Customization points:
 - **Server-level customization:** Provide `post_processing_script_server` to run an additional script after server preparation.
 - **Site-level customization:** Provide `post_processing_script_site` to run an additional script after site installation.
 - **Blueprint customization:** Provide a `blueprint` JSON array to deploy themes, plugins, or arbitrary files during site installation.
-- **Security plugin customization:** Filter `simplestack_post_site_install_plugins` to return a list of plugin slugs to install and activate automatically.
+- **Security plugin customization:** Filter `sstk_post_site_install_plugins` to return a list of plugin slugs to install and activate automatically.
 - **Tab extension:** Add new tabs through the existing filter mechanism; the React UI renders them generically from the schema.
 
 **Updated** The v2 implementation includes enhanced security validation for plugin slugs and improved error handling throughout the post-install process.
@@ -389,14 +385,14 @@ Customization points:
 ```mermaid
 sequenceDiagram
 participant Installer as "install_wordpress_site"
-participant Hook as "simplestack_post_site_install"
+participant Hook as "sstk_post_site_install"
 participant WP as "WP-CLI"
 participant Plugins as "Security Plugins"
 Installer->>Installer : finish WordPress and post-processing
 Installer->>Hook : call with domain, user_name, webserver_type
 Hook->>Hook : validate inputs and wp-config
 Hook->>WP : set DISALLOW_FILE_EDIT
-Hook->>Plugins : iterate SIMPLE_STACK_SECURITY_PLUGINS
+Hook->>Plugins : iterate SSTK_SECURITY_PLUGINS
 Plugins->>WP : install plugin slug
 Plugins->>WP : activate plugin slug
 Hook-->>Installer : complete
@@ -404,10 +400,10 @@ Hook-->>Installer : complete
 
 **Diagram sources**
 - [02-install_wordpress_site.txt:236-240](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L236-L240)
-- [66-simplestack_post_install.txt:16-84](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L16-L84)
+- [66-sstk_post_install.txt:16-84](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L16-L84)
 
 **Section sources**
-- [66-simplestack_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L1-L86)
+- [66-sstk_post_install.txt:1-86](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L1-L86)
 - [SIMPLESTACK.md:247-275](file://docs/SIMPLESTACK.md#L247-L275)
 
 ### Ongoing Maintenance and Operational Capabilities
@@ -426,9 +422,9 @@ These are dispatched through the same script handler and success-parsing pipelin
 
 ## Dependency Analysis
 The WordPress application engine depends on:
-- **Provider APIs:** Vultr, UpCloud, custom server, and optionally DigitalOcean.
+- **Provider APIs:** Vultr API v2 and UpCloud API 1.3 only.
 - **REST layer:** Thin adapters over the app engine's action dispatch.
-- **Script handlers:** Mapping tab actions to versioned scripts and parsing results.
+- **Script handlers:** Mapping tab actions to fixed `scripts/v2` files and parsing results.
 - **Traits:** Reusable behaviors for post-installation, security, commands, logs, push callbacks, backups, upgrades, and multi-tenancy.
 - **Tabs:** Site and server UI panels that define fields and actions.
 
@@ -436,10 +432,10 @@ The WordPress application engine depends on:
 graph LR
 Providers["Provider APIs"]
 RESTAPI["REST Controllers"]
-AppEngine["WPCD_WORDPRESS_APP"]
+AppEngine["SSTK_WORDPRESS_APP"]
 Traits["Traits"]
 Tabs["Site & Server Tabs"]
-Scripts["v1/v2 Scripts"]
+Scripts["scripts/v2"]
 Providers --> AppEngine
 RESTAPI --> AppEngine
 AppEngine --> Traits
@@ -476,17 +472,17 @@ Common failure areas and recovery procedures:
 |---|---|---|---|
 | Provider connection | Credentials saved but test fails | Provider API returns error or network issue | Verify API keys, region availability, and provider status |
 | Server provisioning | Script exits early | Checkpoint file present but block did not complete | Inspect command logs; recreate server if block 150 failed |
-| OpenLiteSpeed install | One-click installer fails | Syntax check or checksum mismatch | Verify `SIMPLE_STACK_OLS1CLK_SHA256` and network access |
+| OpenLiteSpeed install | One-click installer fails | Syntax check or checksum mismatch | Verify `SSTK_OLS1CLK_SHA256` and network access |
 | Ubuntu version | Unsupported OS detected | Not running Ubuntu 24.04 or 26.04 | Use supported Ubuntu LTS version |
 | MariaDB install | Configuration conflict | Dpkg option required | Ensure provider image allows forced config replacement |
 | Certbot install | Snap or DNS plugin fails | Snapd unhealthy or DNS credentials invalid | Check `systemctl status snapd` and DNS provider configuration |
-| Firewall lockout | Cannot reach port 7080 | Admin IP not configured or wrong | Use SSH tunnel or correct `simplestack_admin_ip` setting |
+| Firewall lockout | Cannot reach port 7080 | Admin IP not configured or wrong | Use SSH tunnel or correct `sstk_admin_ip` setting |
 | Site install | WordPress admin login fails | Password hash mismatch | Re-run site install or reset admin password via WP-CLI |
-| Post-install hook | Security plugins not installed | Invalid slug or empty list | Filter `simplestack_post_site_install_plugins` and verify slugs |
+| Post-install hook | Security plugins not installed | Invalid slug or empty list | Filter `sstk_post_site_install_plugins` and verify slugs |
 | Logs | No activity feed | REST disabled or insufficient permissions | Enable REST API and ensure `manage_options` capability |
-| Script version | Wrong scripts executing | Incorrect `wordpress_app_script_version` setting | Check settings and verify v2 folder exists |
+| Script files | Provisioning URL returns 404 | The shipped `scripts/v2` tree is missing or unreadable | Restore the plugin's complete `scripts/v2` directory and verify PHP can read it |
 
-**Updated** New v2-specific troubleshooting items include Ubuntu version validation, OpenLiteSpeed installer verification, and script version resolution issues.
+Troubleshooting also covers Ubuntu release validation, OpenLiteSpeed installer verification, and missing `scripts/v2` files.
 
 Log analysis should focus on:
 - Command logs for script stdout/stderr.
@@ -496,24 +492,22 @@ Log analysis should focus on:
 
 Recovery procedures:
 - For partial server provisioning, inspect checkpoint files and rerun the prepare script if safe.
-- For site provisioning failures, delete stale `/etc/wpcd/<domain>` metadata and retry installation.
+- For site provisioning failures, delete stale `/etc/simple-stack/<domain>` metadata and retry installation.
 - For OpenLiteSpeed WebAdmin access issues, confirm firewall rules and admin IP normalization.
 - For security plugin installation failures, validate plugin slugs and WordPress CLI availability.
 - For Ubuntu version issues, ensure running supported LTS releases (24.04 or 26.04).
-- For script version problems, verify `wordpress_app_script_version` setting and v2 folder existence.
+- For script delivery problems, verify the complete `scripts/v2` tree exists and is readable; there is no alternate version to select.
 
 **Section sources**
 - [01-prepare_server.txt:74-93](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L74-L93)
 - [01-prepare_server.txt:427-444](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L427-L444)
 - [01-prepare_server.txt:647-668](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L647-L668)
 - [02-install_wordpress_site.txt:87-96](file://includes/core/apps/wordpress-app/scripts/v2/raw/02-install_wordpress_site.txt#L87-L96)
-- [66-simplestack_post_install.txt:24-36](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-simplestack_post_install.txt#L24-L36)
+- [66-sstk_post_install.txt:24-36](file://includes/core/apps/wordpress-app/scripts/v2/raw/66-sstk_post_install.txt#L24-L36)
 - [SIMPLESTACK.md:93-114](file://docs/SIMPLESTACK.md#L93-L114)
-- [class-wpcd-app.php:200-250](file://includes/core/apps/class-wpcd-app.php#L200-L250)
+- [class-sstk-app.php:200-250](file://includes/core/apps/class-sstk-app.php#L200-L250)
 
 ## Conclusion
-SimpleStack's WordPress application engine centralizes server provisioning, WordPress installation, and ongoing site management behind a secure, versioned Bash script system. The v2 script structure represents a complete rewrite focused on hardened security, explicit version pinning, and simplified OpenLiteSpeed-only deployments. It enforces OpenLiteSpeed-only operation, validates environments, pins critical installer versions, and applies hardening at both server and site levels. The React admin UI and REST API provide a modern control surface while preserving the proven script-based execution model. Operators can customize deployments through server/site post-processing scripts, blueprints, and the post-install hook, and they can extend operational capabilities by adding tabs and REST controllers without reimplementing the underlying dispatch pipeline.
-
-**Updated** The v2 architecture provides enhanced security through fail-closed defaults, explicit version validation, and comprehensive error handling, making it more reliable and secure than the legacy v1 scripts while maintaining backward compatibility for existing deployments.
+Simple Stack's WordPress application engine centralizes server provisioning, WordPress installation, and ongoing site management through the fixed `scripts/v2` Bash script set. It enforces OpenLiteSpeed-only operation on Ubuntu 24.04/26.04, validates environments, pins critical installer versions, and applies hardening at both server and site levels. The React admin UI and REST API provide the control surface for the script-based execution model. Operators can customize deployments through server/site post-processing scripts, blueprints, and the post-install hook, and can extend operational capabilities by adding tabs and REST controllers without reimplementing the dispatch pipeline. There is no legacy script-selection or compatibility path.
 
 [No sources needed since this section summarizes without analyzing specific files]

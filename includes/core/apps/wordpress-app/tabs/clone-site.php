@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Clone site tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,38 +11,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_CLONE_SITE
+ * Class SSTK_WORDPRESS_TABS_CLONE_SITE
  */
-class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_CLONE_SITE extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		/* add_filter( 'wpcd_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		/* add_filter( 'sstk_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 		// Allow the clone action to be triggered via an action hook.  Will primarily be used by the REST API and WOOCOMMERCE.
-		add_action( "wpcd_{$this->get_app_name()}_do_clone_site", array( $this, 'do_clone_site_action' ), 10, 2 ); // Hook: wpcd_wordpress-app_do_clone_site.
+		add_action( "sstk_{$this->get_app_name()}_do_clone_site", array( $this, 'do_clone_site_action' ), 10, 2 ); // Hook: sstk_wordpress-app_do_clone_site.
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -62,9 +63,6 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 			$success = $this->is_ssh_successful( $logs, 'clone_site.txt' );
 
 			if ( true == $success ) {
-
-				// Get Webserver Type.
-				$webserver_type = $this->get_web_server_type( $id );
 
 				// get new domain from temporary meta.
 				$new_domain = get_post_meta( $id, 'wpapp_domain_clone_site_target_domain', true );
@@ -104,7 +102,7 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 
 							// Update the new record to make sure it belongs to the same team(s).
 							// @TODO: Only the first team is copied.  If the site has more than one team, only the first one is copied over.
-							update_post_meta( $new_app_post_id, 'wpcd_assigned_teams', get_post_meta( $id, 'wpcd_assigned_teams', true ) );
+							update_post_meta( $new_app_post_id, 'sstk_assigned_teams', get_post_meta( $id, 'sstk_assigned_teams', true ) );
 
 							// Was SSL enabled for the cloned site?  If so, flip the SSL metavalues.
 							$this->set_ssl_status( $new_app_post_id, 'off' ); // Assume off for now.
@@ -134,27 +132,15 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 							}
 
 							/*
-							 *** Note: 6G/7G Flags and http auth status flags are not copied here.
+							 *** Note: 7G flags and http auth status flags are not copied here.
 							 * This is because the clone bash script creates new vhost configuration files instead
 							 * of copying from the original site.
 							 */
 
-							// Update the PHP version to match the original version.
-							// This only changes the metas. In the future we might want to run the script to change the PHP version.
-							// In that case, look to the site-sync tab for how that should be done. It's a bit tricky.
-							switch ( $webserver_type ) {
-								case 'ols':
-								case 'ols-enterprise':
-									$this->set_php_version_for_app( $new_app_post_id, $this->get_wpapp_default_php_version() );
-									break;
+							// New OpenLiteSpeed vhosts use the default PHP version.
+							$this->set_php_version_for_app( $new_app_post_id, $this->get_wpapp_default_php_version() );
 
-								case 'nginx':
-								default:
-									$this->set_php_version_for_app( $new_app_post_id, $this->get_php_version_for_app( $id ) );
-									break;
-							}
-
-							/**
+							/*
 							 * Handle multi-tenant metas (which includes the standard TEMPLATE flag.)
 							 */
 							$this->clone_mt_metas( $id, $new_app_post_id );  // Function located in traits file multi-tenant-app.php.
@@ -163,7 +149,7 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 							update_post_meta( $new_app_post_id, 'wpapp_cloned_from', $this->get_domain_name( $id ) );
 
 							// Wrapup - let things hook in here - primarily the multisite add-on and the REST API.
-							do_action( "wpcd_{$this->get_app_name()}_site_clone_new_post_completed", $new_app_post_id, $id, $name );
+							do_action( "sstk_{$this->get_app_name()}_site_clone_new_post_completed", $new_app_post_id, $id, $name );
 
 						}
 					}
@@ -174,15 +160,15 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 
 			} else {
 				// Add action hook to indicate failure...
-				$message = __( 'Clone Site command failed - check the command logs for more information.', 'wpcd' );
-				do_action( "wpcd_{$this->get_app_name()}_clone_site_failed", $id, $command_array[0], $message, array() );  // Keeping 4 parameters for the action hook to maintain consistency even though we have nothing for the last parameter.
+				$message = __( 'Clone Site command failed - check the command logs for more information.', 'simple-stack' );
+				do_action( "sstk_{$this->get_app_name()}_clone_site_failed", $id, $command_array[0], $message, array() );  // Keeping 4 parameters for the action hook to maintain consistency even though we have nothing for the last parameter.
 			}
 		}
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -212,7 +198,7 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Clone Site', 'wpcd' ),
+				'label' => __( 'Clone Site', 'simple-stack' ),
 				'icon'  => 'fad fa-clone',
 			);
 		}
@@ -228,11 +214,11 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -247,9 +233,9 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -257,15 +243,15 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
 		if ( in_array( $action, $valid_actions, true ) ) {
 			// Allow a third party to determine if we should proceed.
-			// Full filter name: wpcd_app_wordpress-app_tab_actions_general_security_check.
+			// Full filter name: sstk_app_wordpress-app_tab_actions_general_security_check.
 			$addl_security_check = apply_filters(
-				"wpcd_app_{$this->get_app_name()}_tab_actions_general_security_check",
+				"sstk_app_{$this->get_app_name()}_tab_actions_general_security_check",
 				array(
 					'check' => true,
 					'msg'   => '',
@@ -277,7 +263,7 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 			if ( ! $addl_security_check['check'] ) {
 				if ( empty( $addl_security_check['msg'] ) ) {
 					/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-					return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+					return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 				} else {
 					return new \WP_Error( $addl_security_check['msg'] );
 				}
@@ -317,12 +303,12 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 
 		// Bail if certain things are empty...
 		if ( empty( $args['new_domain'] ) ) {
-			$message = __( 'The new domain must be provided', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
+			$message = __( 'The new domain must be provided', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		} else {
 			$new_domain         = strtolower( sanitize_text_field( $args['new_domain'] ) );
-			$new_domain         = wpcd_clean_domain( $new_domain );
+			$new_domain         = sstk_clean_domain( $new_domain );
 			$args['new_domain'] = $new_domain;
 		}
 
@@ -332,16 +318,16 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action );
-			do_action( "wpcd_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action );
+			do_action( "sstk_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
 		// Allow developers to validate the new domain and bailout if necessary.
-		if ( ! apply_filters( 'wpcd_wpapp_validate_domain_on_clone', true, $args['new_domain'] ) ) {
+		if ( ! apply_filters( 'sstk_wpapp_validate_domain_on_clone', true, $args['new_domain'] ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$message = sprintf( __( 'The new domain has failed validation.  Please try again: %s', 'wpcd' ), $action );
-			do_action( "wpcd_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'The new domain has failed validation.  Please try again: %s', 'simple-stack' ), $action );
+			do_action( "sstk_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
@@ -376,10 +362,10 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 		// 1. What's the server post id?
 		$server_id = $this->get_server_id_by_app_id( $id );
 		// 2. What's the IP of the server?
-		$ipv4 = WPCD_SERVER()->get_ipv4_address( $server_id );
-		$ipv6 = WPCD_SERVER()->get_ipv6_address( $server_id );
+		$ipv4 = SSTK_SERVER()->get_ipv4_address( $server_id );
+		$ipv6 = SSTK_SERVER()->get_ipv6_address( $server_id );
 		// 3. Add the DNS
-		$dns_success = WPCD_DNS()->set_dns_for_domain( $new_domain, $ipv4, $ipv6 );
+		$dns_success = SSTK_DNS()->set_dns_for_domain( $new_domain, $ipv4, $ipv6 );
 
 		// Setup unique command name.
 		$command             = sprintf( '%s---%s---%d', $action, $domain, time() );
@@ -403,8 +389,8 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			$message = sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action );
-			do_action( "wpcd_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action );
+			do_action( "sstk_{$this->get_app_name()}_clone_site_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
@@ -414,7 +400,7 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -424,7 +410,7 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Trigger the site clone from an action hook.
 	 *
-	 * Action Hook: wpcd_{$this->get_app_name()}_do_clone_site | wpcd_wordpress-app_do_clone_site
+	 * Action Hook: sstk_{$this->get_app_name()}_do_clone_site | sstk_wordpress-app_do_clone_site
 	 *
 	 * @param string $id ID of app where domain change has to take place.
 	 * @param array  $args array arguments that the change domain function needs.
@@ -458,105 +444,87 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 		}
 
 		// If the number of sites allowed on the server have been exceeded, return.
-		if ( $this->get_has_server_exceeded_sites_allowed( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_has_server_exceeded_sites_allowed( $id ) && ! sstk_is_admin() ) {
 			return array_merge( $fields, $this->get_max_sites_exceeded_header_field( 'clone-site' ) );
 		}
 
 		// Allow a third party to show a different set of fields instead.
 		// This can be useful if a custom plugin determines that clone operations are not allowed.
-		// For example, the WOOCOMMERCE add-on uses this to disable cloning when the number of sites a user is allowed is exceeded.
-		// Full filter name: wpcd_app_wordpress-app_clone-site_get_fields.
-		$over_ride_fields = apply_filters( "wpcd_app_{$this->get_app_name()}_clone-site_get_fields", array(), $fields, $id );
+		// Integrations can use this filter to disable cloning when a site limit is reached.
+		// Full filter name: sstk_app_wordpress-app_clone-site_get_fields.
+		$over_ride_fields = apply_filters( "sstk_app_{$this->get_app_name()}_clone-site_get_fields", array(), $fields, $id );
 		if ( ! empty( $over_ride_fields ) ) {
 			return array_merge( $fields, $over_ride_fields );
-		}
-
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
-
-		// Get HTTP2 status since we cannot clone a site with HTTP2 turned on.
-		$http2_status = $this->http2_status( $id );
-		if ( 'on' === $http2_status && 'nginx' === $webserver_type ) {
-			$desc = __( 'You cannot clone this site at this time because HTTP2 is enabled. Please disable it before attempting this operation.', 'wpcd' );
-
-			$fields[] = array(
-				'name' => __( 'Clone Site', 'wpcd' ),
-				'tab'  => 'clone-site',
-				'type' => 'heading',
-				'desc' => $desc,
-			);
-
-			return $fields;
 		}
 
 		// We got here so ok to show fields related to cloning the site.
 
 		// Start new card.
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
-		$desc  = __( 'This function makes a copy of this site to a new domain name.', 'wpcd' );
+		$desc  = __( 'This function makes a copy of this site to a new domain name.', 'simple-stack' );
 		$desc .= '<br />';
 		$desc .= '<br />';
-		$desc .= __( 'If you would like new SSL certificates to be issued as part of this operation please make sure you point your DNS for the new site to this server\'s IP address BEFORE you start the clone operation. ', 'wpcd' );
-		$desc .= __( 'Otherwise you will need to request new certificates on the SSL tab after the operation is complete and you have updated your DNS.', 'wpcd' );
-		$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc .= __( 'If you would like new SSL certificates to be issued as part of this operation please make sure you point your DNS for the new site to this server\'s IP address BEFORE you start the clone operation. ', 'simple-stack' );
+		$desc .= __( 'Otherwise you will need to request new certificates on the SSL tab after the operation is complete and you have updated your DNS.', 'simple-stack' );
+		$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
-		$default_domain = WPCD_DNS()->get_full_temp_domain();
+		$default_domain = SSTK_DNS()->get_full_temp_domain();
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_duplicate_icon( __( '%s Clone Site', 'wpcd' ) ),
+			'name' => sstk_apply_duplicate_icon( __( '%s Clone Site', 'simple-stack' ) ),
 			'tab'  => 'clone-site',
 			'type' => 'heading',
 			'desc' => $desc,
 		);
 		$fields[] = array(
-			'name'        => __( 'New Domain', 'wpcd' ),
-			'id'          => 'wpcd_app_clone_site_domain_new_domain',
+			'name'        => __( 'New Domain', 'simple-stack' ),
+			'id'          => 'sstk_app_clone_site_domain_new_domain',
 			'tab'         => 'clone-site',
 			'type'        => 'text',
 			'save_field'  => false,
 			'attributes'  => array(
 				'maxlength'      => '32',
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'new_domain',
+				'data-sstk-name' => 'new_domain',
 			),
-			'placeholder' => __( 'Domain without www or http - e.g: mydomain.com', 'wpcd' ),
+			'placeholder' => __( 'Domain without www or http - e.g: mydomain.com', 'simple-stack' ),
 			'std'         => $default_domain,
 		);
 
 		$clone_desc = '';
 		if ( 'yes' === $this->is_remote_db( $id ) ) {
-			$clone_desc .= '<b>' . __( 'Warning: This site appears to be using a remote database server.  The server on which this site resides should have a local database server since the database server will be switched to localhost when cloning this site.', 'wpcd' ) . '</b>';
+			$clone_desc .= '<b>' . __( 'Warning: This site appears to be using a remote database server.  The server on which this site resides should have a local database server since the database server will be switched to localhost when cloning this site.', 'simple-stack' ) . '</b>';
 		}
 		$fields[] = array(
-			'id'         => 'wpcd_app_clone_site',
+			'id'         => 'sstk_app_clone_site',
 			'name'       => '',
 			'tab'        => 'clone-site',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_duplicate_icon( __( '%s Clone Site', 'wpcd' ) ),
+			'std'        => sstk_apply_duplicate_icon( __( '%s Clone Site', 'simple-stack' ) ),
 			'desc'       => $clone_desc,
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'clone-site',
+				'data-sstk-action'              => 'clone-site',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => wp_json_encode( array( '#wpcd_app_clone_site_domain_new_domain' ) ),
+				'data-sstk-fields'              => wp_json_encode( array( '#sstk_app_clone_site_domain_new_domain' ) ),
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to copy this site to a new domain?', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to copy this site to a new domain?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to clone this site to a new site at the specified domain...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to clone this site to a new site at the specified domain...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		// Close up prior card.
-		$fields[] = wpcd_end_card( $this->get_tab_slug() );
+		$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		return $fields;
 
@@ -564,4 +532,4 @@ class WPCD_WORDPRESS_TABS_CLONE_SITE extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_CLONE_SITE();
+new SSTK_WORDPRESS_TABS_CLONE_SITE();

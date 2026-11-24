@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 
 if [[ "$EUID" -ne 0 ]]; then
     echo "Sorry, you need to run this as root"
@@ -48,7 +49,7 @@ fix_permissions_on_configs_ols_lsws(){
     fi
 }
 
-# equals to 1 year (31536000) for most WordPress sites, 
+# equals to 1 year (31536000) for most WordPress sites,
 # but I chose 7d like in Nextcloud
 # where users can add content in a completely unpredictable way
 CACHE_MAX_AGE="7d"
@@ -73,7 +74,7 @@ exit_script() {
 select_domain () {
 while [[ -z $domain ]]; do
     clear
-    gf_select_domain_nginx_ols
+    gf_select_domain_ols
     get_domain_config_path "$domain"
     get_domain_htaccess_path "$domain"
     set_user_name
@@ -150,7 +151,7 @@ while [[ -z $action ]]; do
     # echo "   $((i++))) Remove timezone for OLS (use OS timezone settings) (all sites)"
     # echo "   $((i++))) Set timezone for PHP (domain)"
     # echo "   $((i++))) Remove timezone for PHP (use OS timezone settings) (domain)"
-    echo 
+    echo
     echo "$((i--))" > /dev/null
     read -p "Action: " action
     until [[ -z "${action}" || "${action}" -ge "1" && "${action}" -le "${i}" ]]; do
@@ -241,18 +242,18 @@ is_cache_settings() {
     else
         return $(false)
     fi
-    
+
 }
 
 is_cache_on() {
-    # This is kinda pointless is_cache_settings will only ever has that block if its enabled. otherwise its deleted entirely 
+    # This is kinda pointless is_cache_settings will only ever has that block if its enabled. otherwise its deleted entirely
     # there isn't a bool besides in wp settings
     if grep -qE "${has_cache_settings}" "${domain_htaccess}"; then
         return $(true)
     else
         return $(false)
     fi
-    
+
 }
 # https://docs.litespeedtech.com/lscache/lscwp/cache/#how-to-set-it-up
 # https://docs.litespeedtech.com/lscache/lscwp/cache/#browser-tab
@@ -381,7 +382,7 @@ fi
 
 
 is_xmlrpc_disabled(){
-    # cat "/var/www/$domain/html/.htaccess" | grep -qE "WPCD security header - Disable XMLRPC"
+    # cat "/var/www/$domain/html/.htaccess" | grep -qE "SSTK security header - Disable XMLRPC"
     cat "/var/www/$domain/html/.htaccess" | grep -qE "### DISABLE XMLRPC start"
 }
 
@@ -441,7 +442,7 @@ is_restapi_disabled() {
 if [[ "${action}" == 'enable_restapi' || "${action}" == "$((i++))" ]]; then
     select_domain
     if is_restapi_disabled; then
-		su - "${user_name}" -c "wp plugin uninstall --deactivate disable-json-api" > /dev/null        		
+		su - "${user_name}" -c "wp plugin uninstall --deactivate disable-json-api" > /dev/null
         if is_restapi_disabled; then
             echo -e "${RED}ERROR: restapi enabling error for '${domain}'${NC}" >&2 # ERROR
         else
@@ -460,7 +461,7 @@ if [[ "${action}" == 'disable_restapi' || "${action}" == "$((i++))" ]]; then
     if is_restapi_disabled; then
         echo -e "${BLUE}restapi is already disabled for '${domain}'${NC}" # SKIP
     else
-		su - "${user_name}" -c "wp plugin install --activate disable-json-api" > /dev/nul        
+		su - "${user_name}" -c "wp plugin install --activate disable-json-api" > /dev/nul
         if is_restapi_disabled; then
             echo -e "${GREEN} ${SUCCESSFUL} restapi disabled for '${domain}'${NC}" # ACTION
         else
@@ -965,7 +966,7 @@ if [[ "${action}" == 'enable_default_pp' || "${action}" == "$((i++))" ]]; then
                     OLS_RELOAD=1
                 else
                     echo -e "${RED}ERROR: default Permissions-Policy enabling error (after custom Permissions-Policy disabled) for '${domain}'${NC}" >&2 # ERROR
-                    # NGINX_RELOAD=1
+
                 fi
             fi
         fi
@@ -1101,13 +1102,13 @@ is_max_req_body_size_enabled() {
 
 disable_max_req_body_size() {
     # Let's maybe comment it out so we can easily re enable it later : https://stackoverflow.com/a/29685539/1621381
-    sed -i '/^[^#]/ s/\(^.*maxReqBodySize.*$\)/#\ \1/' "${OLS_CONF}" 
+    sed -i '/^[^#]/ s/\(^.*maxReqBodySize.*$\)/#\ \1/' "${OLS_CONF}"
 }
 
 ask_max_req_body_size() {
     if [[ -z "${max_req_body_size}" ]]; then # client_max_body_size
         echo "Please enter a value for the 'max_req_body_size' directive" # client_max_body_size
-        echo 
+        echo
         read -p "Value (size)): " max_req_body_size
         while [[ -z "${max_req_body_size}" ]]; do
             echo "Invalid value!!"
@@ -1191,14 +1192,14 @@ is_conn_timeout_enabled() {
 
 disable_conn_timeout() {
     # Let's maybe comment it out so we can easily re enable it later : https://stackoverflow.com/a/29685539/1621381
-    sed -i '/^[^#]/ s/\(^.*connTimeout.*$\)/#\ \1/' "${OLS_CONF}" 
+    sed -i '/^[^#]/ s/\(^.*connTimeout.*$\)/#\ \1/' "${OLS_CONF}"
 }
 
 
 ask_conn_timeout() {
     if [[ -z "${conn_timeout}" ]]; then # old send_timeout
         echo "Please enter a value for the 'connTimeout' directive"
-        echo 
+        echo
         read -p "Value (an integer): " conn_timeout
         until [[ "${conn_timeout}" =~ ^[0-9]+$ && "${conn_timeout}" -ge '1' ]]; do
             echo "Invalid value!!"
@@ -1274,13 +1275,12 @@ fi
 
 ## Update PHP Global Restricted Functions For all PHP Versions
 if [[ "${action}" == 'update_global_php_restricted_functions' || "${action}" == "$((i++))" ]]; then
-	for phpver in $(ls -1 /usr/local/lsws/ |grep lsphp | sed 's/lsphp//g') 
+	for phpver in $(ls -1 /usr/local/lsws/ |grep lsphp | sed 's/lsphp//g')
 	do
 		echo "Handling LSPHP $phpver" ; # Disable useless echo but leave for debugging
-		lsphpver=$(echo $phpver | sed 's/^\(.\{1\}\)/\1./');		
+		lsphpver=$(echo $phpver | sed 's/^\(.\{1\}\)/\1./');
 
-		# Unlike NGINX, we have to allow global proc_open and proc_close for proper OLS operations. 
-		# So those are not included in the global restricted functions list.
+		# proc_open and proc_close remain available for OpenLiteSpeed site operations.
 		sed -i "s/^disable_functions.*/disable_functions = dl, exec, fpassthru, getmypid, getmyuid, highlight_file, link, opcache_get_configuration, passthru, pcntl_exec, pcntl_get_last_error, pcntl_setpriority, pcntl_strerror, pcntl_wifcontinued, phpinfo, popen, posix_ctermid, posix_getcwd, posix_getegid, posix_geteuid, posix_getgid, posix_getgrgid, posix_getgrnam, posix_getgroups, posix_getlogin, posix_getpgid, posix_getpgrp, posix_getpid, posix_getppid, posix_getpwnam, posix_getpwuid, posix_getrlimit, posix_getsid, posix_getuid, posix_isatty, posix_kill, posix_mkfifo, posix_setegid, posix_seteuid, posix_setgid, posix_setpgid, posix_setsid, posix_setuid, posix_times, posix_ttyname, posix_uname, proc_get_status, proc_nice, proc_terminate, shell_exec, show_source, source, system, virtual/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
 		
 	done
@@ -1304,7 +1304,7 @@ fi
 # ask_timezone() {
 #     if [[ -z "${timezone}" ]]; then
 #         echo "Please enter a value for the 'timezone' e.g. Asia/Krasnoyarsk"
-#         echo 
+#         echo
 #         read -p "Timezone: " timezone
 #         while [[ -z "${timezone}" ]]; do
 #             echo "Invalid value!!"
@@ -1323,8 +1323,8 @@ fi
 # }
 
 # set_timezone() {
-#     for phpver in $(ls -1 /usr/local/lsws/ |grep lsphp | sed 's/lsphp//g') ; do 
-#         sed -i -e 's|^date.timezone.*|date.timezone = "'${timezone}'"|g' /usr/local/lsws/lsphp${phpver}/etc/php/$(echo $phpver | sed 's/^\(.\{1\}\)/\1./')/litespeed/php.ini; 
+#     for phpver in $(ls -1 /usr/local/lsws/ |grep lsphp | sed 's/lsphp//g') ; do
+#         sed -i -e 's|^date.timezone.*|date.timezone = "'${timezone}'"|g' /usr/local/lsws/lsphp${phpver}/etc/php/$(echo $phpver | sed 's/^\(.\{1\}\)/\1./')/litespeed/php.ini;
 #     done;
 # }
 
@@ -1395,7 +1395,7 @@ fi
 #                 echo -e "${RED}Error. Could not get the php version. The vhost php conf file was not found for '${domain}'${NC}" >&2 # ERROR
 #                 exit 1
 #             fi
-        
+
 #             get_domain_config_path "$domain"
 #             php_version=$(grep -sEo 'lsphp[0-9]{2}' ${VHDIR}/$domain/$g_vhost_conf|head -n1)
 #             php_domain_conf=domain_conf

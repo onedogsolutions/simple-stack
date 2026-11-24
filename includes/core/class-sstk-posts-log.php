@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class is used for posts log.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,9 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /* Parent class for all logging classes - ssh, command, error and others */
 
 /**
- * Class WPCD_POSTS_LOG
+ * Class SSTK_POSTS_LOG
  */
-class WPCD_POSTS_LOG extends WPCD_Posts_Base {
+class SSTK_POSTS_LOG extends SSTK_Posts_Base {
 
 	/**
 	 * The primary post type being handled by this class.
@@ -36,7 +37,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	private $post_search_fields = array();
 
 	/**
-	 * WPCD_POSTS_LOG instance.
+	 * SSTK_POSTS_LOG instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -46,7 +47,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * WPCD_POSTS_LOG constructor.
+	 * SSTK_POSTS_LOG constructor.
 	 */
 	public function __construct() {
 		$this->log_hooks(); // register hooks to make things happen.
@@ -60,10 +61,10 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	public function log_hooks() {
 
 		// Remove edit and quick-edit from log-list rows.
-		add_filter( 'post_row_actions', array( $this, 'wpcd_post_row_actions' ), 10, 2 );
+		add_filter( 'post_row_actions', array( $this, 'sstk_post_row_actions' ), 10, 2 );
 
 		// Get rid of publish metabox on the log detail cpt screen.
-		add_action( 'admin_menu', array( $this, 'wpcd_modify_admin_menu' ) );
+		add_action( 'admin_menu', array( $this, 'sstk_modify_admin_menu' ) );
 
 		// Action hook to remove all log.
 		add_action( 'wp_ajax_purge_log', array( $this, 'remove_all_logs' ) );
@@ -75,19 +76,19 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 10, 1 );
 
 		// Action hook to extend admin search.
-		add_action( 'pre_get_posts', array( $this, 'wpcd_logs_extend_admin_search' ), 10, 1 );
-		add_action( 'pre_get_posts', array( $this, 'wpcd_logs_meta_or_title_search' ), 10, 1 );
+		add_action( 'pre_get_posts', array( $this, 'sstk_logs_extend_admin_search' ), 10, 1 );
+		add_action( 'pre_get_posts', array( $this, 'sstk_logs_meta_or_title_search' ), 10, 1 );
 
 		// Filter hook to modify where clause.
-		add_filter( 'posts_where', array( $this, 'wpcd_logs_posts_where' ), 10, 2 );
+		add_filter( 'posts_where', array( $this, 'sstk_logs_posts_where' ), 10, 2 );
 
-		// Action hook to check if user has capability to access add new, edit or listing screen for wpcd_posts_log cpt.
-		add_action( 'load-edit.php', array( $this, 'wpcd_posts_log_load' ) );
-		add_action( 'load-post-new.php', array( $this, 'wpcd_posts_log_load' ) );
-		add_action( 'load-post.php', array( $this, 'wpcd_posts_log_load' ) );
+		// Action hook to check if user has capability to access add new, edit or listing screen for sstk_posts_log cpt.
+		add_action( 'load-edit.php', array( $this, 'sstk_posts_log_load' ) );
+		add_action( 'load-post-new.php', array( $this, 'sstk_posts_log_load' ) );
+		add_action( 'load-post.php', array( $this, 'sstk_posts_log_load' ) );
 
 		// Action hook to add custom back to list button.
-		add_action( 'admin_footer-post.php', array( $this, 'wpcd_logs_backtolist_btn' ) );
+		add_action( 'admin_footer-post.php', array( $this, 'sstk_logs_backtolist_btn' ) );
 	}
 
 	/**
@@ -137,40 +138,40 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 */
 	public function enqueue_scripts( $hook ) {
 		if ( in_array( $hook, array( 'edit.php' ), true ) ) {
-			$exclude_posttypes = array( 'wpcd_notify_user' );
+			$exclude_posttypes = array( 'sstk_notify_user' );
 			$screen            = get_current_screen();
 			if ( ! in_array( $screen->post_type, $exclude_posttypes, true ) ) {
 				if ( is_object( $screen ) && $screen->post_type === $this->get_post_type() ) {
 
-					if ( 'wpcd_notify_log' === $screen->post_type ) {
-						$purge_title = __( 'Purge All', 'wpcd' );
+					if ( 'sstk_notify_log' === $screen->post_type ) {
+						$purge_title = __( 'Purge All', 'simple-stack' );
 					} else {
-						$purge_title = __( 'Purge', 'wpcd' );
+						$purge_title = __( 'Purge', 'simple-stack' );
 					}
 
-					wp_enqueue_script( 'wpcd-logs-common', wpcd_url . 'assets/js/wpcd-logs-common.js', array( 'jquery' ), wpcd_scripts_version, true );
+					wp_enqueue_script( 'sstk-logs-common', SSTK_URL . 'assets/js/sstk-logs-common.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, true );
 					wp_localize_script(
-						'wpcd-logs-common',
+						'sstk-logs-common',
 						'params',
 						array(
 							'action'          => 'purge_log',
 							'unsent_action'   => 'purge_unsent_log',
 							'clean_up_action' => 'clean_up_pending_logs_action',
 							'post_type'       => $screen->post_type,
-							'nonce'           => wp_create_nonce( 'wpcd-log' ),
-							'unsent_nonce'    => wp_create_nonce( 'wpcd-unsent-log' ),
-							'clean_up_nonce'  => wp_create_nonce( 'wpcd-clean-up-pending-log' ),
+							'nonce'           => wp_create_nonce( 'sstk-log' ),
+							'unsent_nonce'    => wp_create_nonce( 'sstk-unsent-log' ),
+							'clean_up_nonce'  => wp_create_nonce( 'sstk-clean-up-pending-log' ),
 							'l10n'            => array(
-								'prompt'             => __( 'Are you sure? This will delete all the logs.', 'wpcd' ),
-								'unsent_prompt'      => __( 'Are you sure? This will delete all the sent logs.', 'wpcd' ),
-								'clean_up_prompt'    => __( 'Are you sure? This will clean up all the pending logs.', 'wpcd' ),
-								'wait_msg'           => __( 'Please wait...', 'wpcd' ),
+								'prompt'             => __( 'Are you sure? This will delete all the logs.', 'simple-stack' ),
+								'unsent_prompt'      => __( 'Are you sure? This will delete all the sent logs.', 'simple-stack' ),
+								'clean_up_prompt'    => __( 'Are you sure? This will clean up all the pending logs.', 'simple-stack' ),
+								'wait_msg'           => __( 'Please wait...', 'simple-stack' ),
 								'purge_title'        => $purge_title,
 								'purge_unsent_title' => __(
 									'Purge All Except Unsent',
-									'wpcd'
+									'simple-stack'
 								),
-								'clean_up_title'     => __( 'Clean Up', 'wpcd' ),
+								'clean_up_title'     => __( 'Clean Up', 'simple-stack' ),
 							),
 						)
 					);
@@ -239,27 +240,24 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 			$error_log_entries = $count_posts->private + $count_posts->publish;
 		}
 
-		if ( 'wpcd_notify_log' === $post_type ) {
-			$auto_trim_log_limit = (int) wpcd_get_early_option( 'auto_trim_notification_log_limit' );
+		if ( 'sstk_notify_log' === $post_type ) {
+			$auto_trim_log_limit = (int) sstk_get_early_option( 'auto_trim_notification_log_limit' );
 		}
-		if ( 'wpcd_notify_sent' === $post_type ) {
-			$auto_trim_log_limit = (int) wpcd_get_early_option( 'auto_trim_notification_sent_log_limit' );
+		if ( 'sstk_notify_sent' === $post_type ) {
+			$auto_trim_log_limit = (int) sstk_get_early_option( 'auto_trim_notification_sent_log_limit' );
 		}
-		if ( 'wpcd_ssh_log' === $post_type ) {
-			$auto_trim_log_limit = (int) wpcd_get_early_option( 'auto_trim_ssh_log_limit' );
+		if ( 'sstk_ssh_log' === $post_type ) {
+			$auto_trim_log_limit = (int) sstk_get_early_option( 'auto_trim_ssh_log_limit' );
 		}
-		if ( 'wpcd_command_log' === $post_type ) {
-			$auto_trim_log_limit = (int) wpcd_get_early_option( 'auto_trim_command_log_limit' );
+		if ( 'sstk_command_log' === $post_type ) {
+			$auto_trim_log_limit = (int) sstk_get_early_option( 'auto_trim_command_log_limit' );
 		}
-		if ( 'wpcd_error_log' === $post_type ) {
-			$auto_trim_log_limit = (int) wpcd_get_early_option( 'auto_trim_error_log_limit' );
-		}
-		if ( 'wpcd_app_update_log' === $post_type ) {
-			$auto_trim_log_limit = (int) wpcd_get_early_option( 'auto_trim_update_plan_log_limit' );
+		if ( 'sstk_error_log' === $post_type ) {
+			$auto_trim_log_limit = (int) sstk_get_early_option( 'auto_trim_error_log_limit' );
 		}
 
-		if ( defined( 'WPCD_AUTO_TRIM_LOG_LIMIT' ) ) {
-			$auto_trim_log_limit = WPCD_AUTO_TRIM_LOG_LIMIT;
+		if ( defined( 'SSTK_AUTO_TRIM_LOG_LIMIT' ) ) {
+			$auto_trim_log_limit = SSTK_AUTO_TRIM_LOG_LIMIT;
 		}
 		if ( empty( $auto_trim_log_limit ) || $auto_trim_log_limit <= 0 ) {
 			$auto_trim_log_limit = 999;
@@ -268,7 +266,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 		if ( $error_log_entries >= $auto_trim_log_limit && $error_log_entries > 0 && $auto_trim_log_limit > 0 ) {
 
 			// Figure out maximum number of records to delete.
-			$delete_at_most = wpcd_get_early_option( 'most_items_to_delete' );
+			$delete_at_most = sstk_get_early_option( 'most_items_to_delete' );
 			if ( empty( $delete_at_most ) ) {
 				$delete_at_most = 100;
 			}
@@ -297,7 +295,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 							wp_delete_post( $post_to_delete->ID, true );
 						} else {
 							// Log an error because we somehow attempted to delete the wrong post type record!
-							do_action( 'wpcd_log_error', 'We attempted to delete an incorrect post type when pruning logs.  We were supposed to delete a record of posttype ' . $post_type . ' but ID ' . (string) $post_to_delete->ID . ' is not of that post type!', 'error', __FILE__, __LINE__ );
+							do_action( 'sstk_log_error', 'We attempted to delete an incorrect post type when pruning logs.  We were supposed to delete a record of posttype ' . $post_type . ' but ID ' . (string) $post_to_delete->ID . ' is not of that post type!', 'error', __FILE__, __LINE__ );
 						}
 						// Counter increment deliberately left outside the IF statement above.  $max_posts_to_delete is really about the maximum number of loops we want to do before exiting this function.
 						if ( $counter >= $max_posts_to_delete ) {
@@ -319,13 +317,13 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_log_bulk_actions( $actions ) {
+	public function sstk_log_bulk_actions( $actions ) {
 		unset( $actions['edit'] );
 		return $actions;
 	}
 
 	/**
-	 * This filter modifies post rows for "wpcd_command_log", "wpcd_ssh_log" and "wpcd_error_log".
+	 * This filter modifies post rows for "sstk_command_log", "sstk_ssh_log" and "sstk_error_log".
 	 * post rows such as "Edit", "Quick Edit".
 	 *
 	 * Action hook: post_row_actions
@@ -335,7 +333,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_post_row_actions( $actions, $post ) {
+	public function sstk_post_row_actions( $actions, $post ) {
 
 		if ( $post->post_type === $this->get_post_type() ) {
 			// Removes "Edit".
@@ -351,7 +349,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * Action hook: admin_menu
 	 */
-	public function wpcd_modify_admin_menu() {
+	public function sstk_modify_admin_menu() {
 		remove_meta_box( 'submitdiv', $this->get_post_type(), 'side' );
 	}
 
@@ -361,13 +359,13 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	public function remove_all_logs() {
 
 		// Nonce check.
-		if ( ! check_ajax_referer( 'wpcd-log', 'nonce', false ) ) {
-			wp_send_json_error( array( 'msg' => __( 'Invalid request.', 'wpcd' ) ) );
+		if ( ! check_ajax_referer( 'sstk-log', 'nonce', false ) ) {
+			wp_send_json_error( array( 'msg' => __( 'Invalid request.', 'simple-stack' ) ) );
 		}
 
 		// Access check.
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - purge logs.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - purge logs.', 'simple-stack' ) ) );
 		}
 
 		$post_type   = sanitize_text_field( $_POST['params']['post_type'] );
@@ -397,16 +395,16 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 					wp_delete_post( $post_to_delete->ID, true );
 				} else {
 					// Log an error because we somehow attempted to delete the wrong post type record!
-					do_action( 'wpcd_log_error', 'We attempted to delete an incorrect post type when pruning logs.  We were supposed to delete a record of posttype ' . $post_type . ' but ID ' . (string) $post_to_delete->ID . ' is not of that post type!', 'error', __FILE__, __LINE__ );
+					do_action( 'sstk_log_error', 'We attempted to delete an incorrect post type when pruning logs.  We were supposed to delete a record of posttype ' . $post_type . ' but ID ' . (string) $post_to_delete->ID . ' is not of that post type!', 'error', __FILE__, __LINE__ );
 				}
 			}
 
-			$msg = __( 'All log entries have been removed.', 'wpcd' );
+			$msg = __( 'All log entries have been removed.', 'simple-stack' );
 			wp_send_json_success( array( 'msg' => $msg ) );
 
 		}
 
-		wp_send_json_error( array( 'msg' => __( 'No Entries for deletion.', 'wpcd' ) ) );
+		wp_send_json_error( array( 'msg' => __( 'No Entries for deletion.', 'simple-stack' ) ) );
 	}
 
 
@@ -416,13 +414,13 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	public function remove_all_log_except_unsent_logs() {
 
 		// Nonce check.
-		if ( ! check_ajax_referer( 'wpcd-unsent-log', 'nonce', false ) ) {
-			wp_send_json_error( array( 'msg' => __( 'Invalid request.', 'wpcd' ) ) );
+		if ( ! check_ajax_referer( 'sstk-unsent-log', 'nonce', false ) ) {
+			wp_send_json_error( array( 'msg' => __( 'Invalid request.', 'simple-stack' ) ) );
 		}
 
 		// Access check.
-		if ( ! wpcd_is_admin() ) {
-			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - purge logs.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() ) {
+			wp_send_json_error( array( 'msg' => __( 'You are not authorized to perform this action - purge logs.', 'simple-stack' ) ) );
 		}
 
 		$post_type   = sanitize_text_field( $_POST['params']['post_type'] );
@@ -459,16 +457,16 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 					wp_delete_post( $post_to_delete->ID, true );
 				} else {
 					// Log an error because we somehow attempted to delete the wrong post type record!
-					do_action( 'wpcd_log_error', 'We attempted to delete an incorrect post type when pruning logs.  We were supposed to delete a record of posttype ' . $post_type . ' but ID ' . (string) $post_to_delete->ID . ' is not of that post type!', 'error', __FILE__, __LINE__ );
+					do_action( 'sstk_log_error', 'We attempted to delete an incorrect post type when pruning logs.  We were supposed to delete a record of posttype ' . $post_type . ' but ID ' . (string) $post_to_delete->ID . ' is not of that post type!', 'error', __FILE__, __LINE__ );
 				}
 			}
 
-			$msg = __( 'All sent log entries have been removed.', 'wpcd' );
+			$msg = __( 'All sent log entries have been removed.', 'simple-stack' );
 
 			wp_send_json_success( array( 'msg' => $msg ) );
 		}
 
-		wp_send_json_error( array( 'msg' => __( 'No Entries for deletion.', 'wpcd' ) ) );
+		wp_send_json_error( array( 'msg' => __( 'No Entries for deletion.', 'simple-stack' ) ) );
 	}
 
 	/**
@@ -480,7 +478,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * @return null
 	 */
-	public function wpcd_logs_extend_admin_search( $query ) {
+	public function sstk_logs_extend_admin_search( $query ) {
 
 		global $typenow;
 
@@ -528,13 +526,13 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Meta or title search for wpcd_app_server post type
+	 * Meta or title search for sstk_app_server post type
 	 *
 	 * Action hook: pre_get_posts
 	 *
 	 * @param  object $query query.
 	 */
-	public function wpcd_logs_meta_or_title_search( $query ) {
+	public function sstk_logs_meta_or_title_search( $query ) {
 
 		global $typenow;
 
@@ -561,11 +559,11 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 						mb_substr( $sql['where'], 5, mb_strlen( $sql['where'] ) )
 					);
 
-					// Only run if post type is wpcd_command_log or wpcd_ssh_log.
-					if ( in_array( $post_type, array( 'wpcd_command_log', 'wpcd_ssh_log' ), true ) ) {
+					// Only run if post type is sstk_command_log or sstk_ssh_log.
+					if ( in_array( $post_type, array( 'sstk_command_log', 'sstk_ssh_log' ), true ) ) {
 						$server_meta_search = ' OR ';
 
-						$server_meta_search .= $wpdb->prepare( "({$wpdb->postmeta}.meta_key = 'parent_post_id' AND {$wpdb->postmeta}.meta_value IN ( SELECT P.ID FROM {$wpdb->posts} AS P LEFT JOIN {$wpdb->postmeta} AS PM on PM.post_id = P.ID WHERE P.post_type = 'wpcd_app_server' and P.post_status = 'private' and ( ( PM.meta_key = 'wpcd_server_name' AND PM.meta_value LIKE '%s' ) ) ) ) ", esc_sql( '%' . $wpdb->esc_like( $title ) . '%' ) );
+						$server_meta_search .= $wpdb->prepare( "({$wpdb->postmeta}.meta_key = 'parent_post_id' AND {$wpdb->postmeta}.meta_value IN ( SELECT P.ID FROM {$wpdb->posts} AS P LEFT JOIN {$wpdb->postmeta} AS PM on PM.post_id = P.ID WHERE P.post_type = 'sstk_app_server' and P.post_status = 'private' and ( ( PM.meta_key = 'sstk_server_name' AND PM.meta_value LIKE '%s' ) ) ) ) ", esc_sql( '%' . $wpdb->esc_like( $title ) . '%' ) );
 
 						$sql['where'] .= $server_meta_search;
 					}
@@ -586,7 +584,7 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * @return string
 	 */
-	public function wpcd_logs_posts_where( $where, $wp_query ) {
+	public function sstk_logs_posts_where( $where, $wp_query ) {
 		global $wpdb, $typenow;
 
 		$post_type = $this->get_post_type();
@@ -717,12 +715,12 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_posts_log_load() {
+	public function sstk_posts_log_load() {
 		$screen = get_current_screen();
 
 		if ( $screen->post_type === $this->get_post_type() ) {
-			if ( ! current_user_can( 'wpcd_manage_logs' ) ) {
-				wp_die( esc_html( __( 'You don\'t have access to this page.', 'wpcd' ) ) );
+			if ( ! current_user_can( 'sstk_manage_logs' ) ) {
+				wp_die( esc_html( __( 'You don\'t have access to this page.', 'simple-stack' ) ) );
 			}
 		}
 	}
@@ -732,14 +730,14 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_logs_backtolist_btn() {
+	public function sstk_logs_backtolist_btn() {
 		$screen    = get_current_screen();
 		$post_type = $this->get_post_type();
 
 		if ( $screen->id === $post_type ) {
 			$query          = sprintf( 'edit.php?post_type=%s', $post_type );
 			$backtolist_url = admin_url( $query );
-			$backtolist_txt = __( 'Back To List', 'wpcd' );
+			$backtolist_txt = __( 'Back To List', 'simple-stack' );
 			?>
 			<script type="text/javascript">
 				jQuery(document).ready(function($){
@@ -758,9 +756,9 @@ class WPCD_POSTS_LOG extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_get_pw_terms_to_clean() {
+	public function sstk_get_pw_terms_to_clean() {
 
-		$terms = WPCD()->wpcd_get_pw_terms_to_clean();
+		$terms = SSTK()->sstk_get_pw_terms_to_clean();
 
 		return $terms;
 

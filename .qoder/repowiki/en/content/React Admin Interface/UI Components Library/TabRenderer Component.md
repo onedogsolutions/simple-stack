@@ -6,7 +6,7 @@
 - [schema.js](file://src/admin/lib/schema.js)
 - [ServerDetail.jsx](file://src/admin/routes/ServerDetail.jsx)
 - [SiteDetail.jsx](file://src/admin/routes/SiteDetail.jsx)
-- [class-simplestack-rest-tabs.php](file://includes/core/api/class-simplestack-rest-tabs.php)
+- [class-sstk-rest-tabs.php](file://includes/core/api/class-sstk-rest-tabs.php)
 </cite>
 
 ## Table of Contents
@@ -21,7 +21,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-The `TabRenderer` component is the generic React renderer for tabbed interfaces used by the SimpleStack admin UI. It consumes a server- or site-specific schema describing tabs and form-like fields, renders interactive controls, dispatches actions to backend handlers, and integrates with live log drawers. Rather than implementing per-tab screens, it translates Meta Box field arrays into renderable elements, allowing the same component to cover both server and site management tabs.
+The `TabRenderer` component is the generic React renderer for tabbed interfaces used by the Simple Stack admin UI. It consumes a server- or site-specific schema describing tabs and form-like fields, renders interactive controls, dispatches actions to backend handlers, and integrates with live log drawers. Rather than implementing per-tab screens, it translates Meta Box field arrays into renderable elements, allowing the same component to cover both server and site management tabs.
 
 Key responsibilities:
 - Render tab navigation and switch active content based on tab slugs.
@@ -38,7 +38,7 @@ The tabbed interface is composed of three layers:
 
 ```mermaid
 graph TB
-ServerRoute["ServerDetail.jsx"] --> API["REST Tabs Controller<br/>class-simplestack-rest-tabs.php"]
+ServerRoute["ServerDetail.jsx"] --> API["REST Tabs Controller<br/>class-sstk-rest-tabs.php"]
 SiteRoute["SiteDetail.jsx"] --> API
 API --> SchemaJS["schema.js"]
 SchemaJS --> TabRenderer["TabRenderer.jsx"]
@@ -49,14 +49,14 @@ TabRenderer --> Card["Card.jsx"]
 **Diagram sources**
 - [ServerDetail.jsx:39-52](file://src/admin/routes/ServerDetail.jsx#L39-L52)
 - [SiteDetail.jsx:39-52](file://src/admin/routes/SiteDetail.jsx#L39-L52)
-- [class-simplestack-rest-tabs.php:41-54](file://includes/core/api/class-simplestack-rest-tabs.php#L41-L54)
+- [class-sstk-rest-tabs.php:41-54](file://includes/core/api/class-sstk-rest-tabs.php#L41-L54)
 - [schema.js:1-19](file://src/admin/lib/schema.js#L1-L19)
 - [TabRenderer.jsx:13-24](file://src/admin/components/TabRenderer.jsx#L13-L24)
 
 **Section sources**
 - [ServerDetail.jsx:1-20](file://src/admin/routes/ServerDetail.jsx#L1-L20)
 - [SiteDetail.jsx:1-20](file://src/admin/routes/SiteDetail.jsx#L1-L20)
-- [class-simplestack-rest-tabs.php:12-26](file://includes/core/api/class-simplestack-rest-tabs.php#L12-L26)
+- [class-sstk-rest-tabs.php:12-26](file://includes/core/api/class-sstk-rest-tabs.php#L12-L26)
 - [schema.js:1-19](file://src/admin/lib/schema.js#L1-L19)
 - [TabRenderer.jsx:1-24](file://src/admin/components/TabRenderer.jsx#L1-L24)
 
@@ -65,14 +65,14 @@ TabRenderer --> Card["Card.jsx"]
 - `FieldControl`: Internal helper rendering individual controls based on normalized field descriptors.
 - `schema.js`: Utilities translating Meta Box field arrays into renderable elements, parameter encoders, value initializers, and row grouping logic.
 - Route consumers (`ServerDetail.jsx`, `SiteDetail.jsx`): Fetch data, handle actions, manage log drawer visibility, and pass props to `TabRenderer`.
-- REST controller (`SimpleStack_REST_Tabs`): Exposes tab schemas and sanitizes field definitions for safe JSON transmission.
+- REST controller (`SSTK_REST_Tabs`): Exposes tab schemas and sanitizes field definitions for safe JSON transmission.
 
 **Section sources**
 - [TabRenderer.jsx:36-53](file://src/admin/components/TabRenderer.jsx#L36-L53)
 - [schema.js:43-53](file://src/admin/lib/schema.js#L43-L53)
 - [ServerDetail.jsx:181-193](file://src/admin/routes/ServerDetail.jsx#L181-L193)
 - [SiteDetail.jsx:165-172](file://src/admin/routes/SiteDetail.jsx#L165-L172)
-- [class-simplestack-rest-tabs.php:134-154](file://includes/core/api/class-simplestack-rest-tabs.php#L134-L154)
+- [class-sstk-rest-tabs.php:134-154](file://includes/core/api/class-sstk-rest-tabs.php#L134-L154)
 
 ## Architecture Overview
 The tabbed interface follows a schema-driven architecture:
@@ -107,14 +107,14 @@ Route-->>User : Toast, optional refresh, log drawer
 **Diagram sources**
 - [ServerDetail.jsx:39-72](file://src/admin/routes/ServerDetail.jsx#L39-L72)
 - [SiteDetail.jsx:39-69](file://src/admin/routes/SiteDetail.jsx#L39-L69)
-- [class-simplestack-rest-tabs.php:65-125](file://includes/core/api/class-simplestack-rest-tabs.php#L65-L125)
+- [class-sstk-rest-tabs.php:65-125](file://includes/core/api/class-sstk-rest-tabs.php#L65-L125)
 - [schema.js:154-182](file://src/admin/lib/schema.js#L154-L182)
 - [TabRenderer.jsx:108-144](file://src/admin/components/TabRenderer.jsx#L108-L144)
 
 ## Detailed Component Analysis
 
 ### Tab Configuration
-Tabs are described by the REST controller as an array of objects containing at least `slug` and `label`. The controller also prepares field arrays, which define every control visible under each tab. Field arrays include metadata such as type, id, label, description, options, and attributes like `data-wpcd-action`, `data-wpcd-fields`, and `data-show-log-console`.
+Tabs are described by the REST controller as an array of objects containing at least `slug` and `label`. The controller also prepares field arrays, which define every control visible under each tab. Field arrays include metadata such as type, id, label, description, options, and attributes like `data-sstk-action`, `data-sstk-fields`, and `data-show-log-console`.
 
 Important behaviors:
 - Tab list normalization ensures JSON-safe scalars and consistent structure.
@@ -122,8 +122,8 @@ Important behaviors:
 - Fields are scoped by `tab` so only relevant controls appear when a tab is active.
 
 **Section sources**
-- [class-simplestack-rest-tabs.php:134-154](file://includes/core/api/class-simplestack-rest-tabs.php#L134-L154)
-- [class-simplestack-rest-tabs.php:193-221](file://includes/core/api/class-simplestack-rest-tabs.php#L193-L221)
+- [class-sstk-rest-tabs.php:134-154](file://includes/core/api/class-sstk-rest-tabs.php#L134-L154)
+- [class-sstk-rest-tabs.php:193-221](file://includes/core/api/class-sstk-rest-tabs.php#L193-L221)
 - [schema.js:354-384](file://src/admin/lib/schema.js#L354-L384)
 
 ### Dynamic Tab Creation
@@ -308,7 +308,7 @@ SiteDetail["SiteDetail.jsx"] --> TabRenderer
 TabRenderer --> Button["Button.jsx"]
 TabRenderer --> Card["Card.jsx"]
 TabRenderer --> Schema["schema.js"]
-ServerDetail --> REST["class-simplestack-rest-tabs.php"]
+ServerDetail --> REST["class-sstk-rest-tabs.php"]
 SiteDetail --> REST
 ```
 
@@ -316,7 +316,7 @@ SiteDetail --> REST
 - [ServerDetail.jsx:15-20](file://src/admin/routes/ServerDetail.jsx#L15-L20)
 - [SiteDetail.jsx:15-20](file://src/admin/routes/SiteDetail.jsx#L15-L20)
 - [TabRenderer.jsx:15-24](file://src/admin/components/TabRenderer.jsx#L15-L24)
-- [class-simplestack-rest-tabs.php:41-54](file://includes/core/api/class-simplestack-rest-tabs.php#L41-L54)
+- [class-sstk-rest-tabs.php:41-54](file://includes/core/api/class-sstk-rest-tabs.php#L41-L54)
 
 **Section sources**
 - [ServerDetail.jsx:15-20](file://src/admin/routes/ServerDetail.jsx#L15-L20)
@@ -362,4 +362,4 @@ Common issues and resolutions:
 - [ServerDetail.jsx:187-191](file://src/admin/routes/ServerDetail.jsx#L187-L191)
 
 ## Conclusion
-`TabRenderer` provides a robust, schema-driven foundation for tabbed interfaces in the SimpleStack admin. By delegating layout and behavior to Meta Box field arrays, it enables a single component to replace dozens of legacy screens while preserving existing backend contracts. Its strengths include dynamic tab creation, efficient content switching, clear action parameter collection, and straightforward integration with routes and log drawers. Future enhancements should focus on accessibility improvements, optional tab persistence, and performance refinements for complex tab sets.
+`TabRenderer` provides a robust, schema-driven foundation for tabbed interfaces in the Simple Stack admin. By delegating layout and behavior to Meta Box field arrays, it enables a single component to replace dozens of legacy screens while preserving existing backend contracts. Its strengths include dynamic tab creation, efficient content switching, clear action parameter collection, and straightforward integration with routes and log drawers. Future enhancements should focus on accessibility improvements, optional tab persistence, and performance refinements for complex tab sets.

@@ -19,32 +19,32 @@
 /**
  * Add nonce for security and authentication.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
-wp_nonce_field( 'wpcd_app_nonce_meta_action', 'app_meta' );
+wp_nonce_field( 'sstk_app_nonce_meta_action', 'app_meta' );
 ?>
 <div class="notify_sent_log_meta_field">
-	<label for="notify_sent_success"><?php echo esc_html( __( 'Notification Sent Success', 'wpcd' ) ); ?></label>
+	<label for="notify_sent_success"><?php echo esc_html( __( 'Notification Sent Success', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notify_sent_success ); ?></p>
 </div>
 <hr />
 <div class="notify_sent_log_meta_field">
-	<label for="notify_sent_to_platform"><?php echo esc_html( __( 'Notification Sent To', 'wpcd' ) ); ?></label>
+	<label for="notify_sent_to_platform"><?php echo esc_html( __( 'Notification Sent To', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notify_sent_to_platform ); ?></p>
 </div>
 <hr />
 <div class="notify_sent_log_meta_field">
-	<label for="notify_sent_types"><?php echo esc_html( __( 'Notification Sent Type', 'wpcd' ) ); ?></label>
+	<label for="notify_sent_types"><?php echo esc_html( __( 'Notification Sent Type', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notify_sent_types ); ?></p>
 </div>
 <hr />
 <div class="notify_sent_log_meta_field">
-	<label for="notify_sent_references"><?php echo esc_html( __( 'Notification Sent Reference', 'wpcd' ) ); ?></label>
+	<label for="notify_sent_references"><?php echo esc_html( __( 'Notification Sent Reference', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notify_sent_references ); ?></p>
 </div>
 <hr />
 <div class="notify_sent_log_meta_field">
-	<label for="notify_sent_message"><?php echo esc_html( __( 'Notification Sent Message', 'wpcd' ) ); ?></label>
+	<label for="notify_sent_message"><?php echo esc_html( __( 'Notification Sent Message', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $notify_sent_message ); ?></p>
 </div>

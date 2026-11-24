@@ -1,3 +1,4 @@
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 ###################################################################################################
 # Coding standards
 #
@@ -20,7 +21,7 @@ GV_UBUNTU_VERSION_STRING=$(lsb_release -r)  # Full line such as "Release:\t24.04
 GV_UBUNTU_VERSION=$(lsb_release -rs)  # Version number only such as "24.04"
 GV_UBUNTU_CODENAME=$(lsb_release -cs)  # Codename only such as "noble" or "resolute"
 
-## Ubuntu releases SimpleStack supports. 24.04 is noble, 26.04 is resolute.
+## Ubuntu releases Simple Stack supports. 24.04 is noble, 26.04 is resolute.
 GV_SUPPORTED_UBUNTU_VERSION_1="24.04"
 GV_SUPPORTED_UBUNTU_CODENAME_1="noble"
 GV_SUPPORTED_UBUNTU_VERSION_2="26.04"
@@ -62,7 +63,7 @@ LSDIR='/usr/local/lsws'
 WEBCF="${LSDIR}/conf/httpd_config.conf"
 VHDIR="${LSDIR}/conf/vhosts"
 BOTCRON='/etc/cron.d/certbot'
-# SimpleStack provisions lsphp84 by default; 83 and 85 are selectable per site.
+# Simple Stack provisions lsphp84 by default; 83 and 85 are selectable per site.
 PHPVER=lsphp84
 # Every lsphp version this script family knows how to install and configure.
 g_php_versions=(83 84 85)
@@ -70,7 +71,6 @@ g_php_versions=(83 84 85)
 g_default_php_short=84
 
 ## Misc Variables.
-## @TODO: Need to update the NGINX routines and any other related functions with this global var instead of the hard-coded list.
 GS_DISABLED_PHP_FUNCTIONS_LIST="dl, exec, fpassthru, getmypid, getmyuid, highlight_file, link, opcache_get_configuration, passthru, pcntl_exec, pcntl_get_last_error, pcntl_setpriority, pcntl_strerror, pcntl_wifcontinued, phpinfo, popen, posix_ctermid, posix_getcwd, posix_getegid, posix_geteuid, posix_getgid, posix_getgrgid, posix_getgrnam, posix_getgroups, posix_getlogin, posix_getpgid, posix_getpgrp, posix_getpid, posix_getppid, posix_getpwnam, posix_getpwuid, posix_getrlimit, posix_getsid, posix_getuid, posix_isatty, posix_kill, posix_mkfifo, posix_setegid, posix_seteuid, posix_setgid, posix_setpgid, posix_setsid, posix_setuid, posix_times, posix_ttyname, posix_uname, proc_close, proc_get_status, proc_nice, proc_open, proc_terminate, shell_exec, show_source, source, system, virtual"
 
 
@@ -187,15 +187,12 @@ function g_flush_cache()
 		fi
 	fi
 
-	# flush object caches as well
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		su - $user_name -c "wp litespeed-option set object false > /dev/null 2>&1"
-		su - $user_name -c "wp cache flush 2>/dev/null"
-	fi
+	# Flush the LiteSpeed object cache and the WordPress object cache.
+	su - $user_name -c "wp litespeed-option set object false > /dev/null 2>&1"
+	su - $user_name -c "wp cache flush 2>/dev/null"
 
-	# reset object cache again should hit nginx here (multiple flushes for if ols is active might be overkill but no harm done.)
-	su - $user_name -c "wp cache flush 2>/dev/null"	
+	# Flush once more after the LiteSpeed object-cache setting has changed.
+	su - $user_name -c "wp cache flush 2>/dev/null"
 
 }
 
@@ -270,30 +267,24 @@ function g_backup_with_updraft()
 }
 
 ###################################################################
-## Checks which webserver is installed: openlitespeed or nginx.
-## It sets the global g_webserver_type variable which is used
-## by almost every other script.
+## Confirms that the installed web server is OpenLiteSpeed and sets the
+## global vhost configuration filename used by the remaining scripts.
 ## 
 ## @export: g_webserver_type 
 ###################################################################
 function gf_check_webserver() {
+	g_webserver_type='ols'
+	g_vhost_conf='vhconf.conf'
 	if [ -e /usr/local/lsws/bin/lshttpd ]
 	then
-		if /usr/local/lsws/bin/lshttpd -v | grep -q Open
+		if ! /usr/local/lsws/bin/lshttpd -v | grep -q Open
 		then
-			# echo 'You have OpenLiteSpeed installed...'
-			g_webserver_type='ols'
-			g_vhost_conf='vhconf.conf'
-		elif /usr/local/lsws/bin/lshttpd -v | grep -q Enterprise
-		then
-			# LiteSpeed/x.x.x Enterprise
-			# echo 'You have LiteSpeed Enterprise installed...'
-			g_webserver_type='ols-enterprise'
-			g_vhost_conf='vhconf.xml'
+			echo "Simple Stack supports OpenLiteSpeed only."
+			exit 1
 		fi
 	else
-		# echo 'You have Nginx installed...'
-		g_webserver_type='nginx'
+		# OpenLiteSpeed is not installed yet during initial provisioning.
+		:
 	fi
 }
 gf_check_webserver
@@ -316,6 +307,15 @@ gf_check_webserver
 function gf_set_default_php()
 {
 	local short=$1
+
+	case "$short" in
+		83|84|85) ;;
+		*)
+			echo "gf_set_default_php: unsupported LSPHP version ${short}"
+			return 1
+			;;
+	esac
+
 	local dir="${LSDIR}/lsphp${short}"
 	# Split the version number and add a period: 74 becomes 7.4, 84 becomes 8.4.
 	local dotted
@@ -375,17 +375,17 @@ function gf_list_installed_php()
 }
 
 ###################################################################
-## Validates the SIMPLE_STACK_ADMIN_IP value before it is used.
+## Validates the SSTK_ADMIN_IP value before it is used.
 ##
 ## The value arrives from a script placeholder, so it can legitimately be:
 ##   - an empty string          -> admin IP not configured
-##   - '##SIMPLE_STACK_ADMIN_IP##' -> placeholder never replaced
+##   - '##SSTK_ADMIN_IP##' -> placeholder never replaced
 ##   - an IPv4/IPv6 address or CIDR block
 ## Anything else is treated as "not configured". This fails closed: a bad
 ## value can only ever keep port 7080 closed, never open it. Printing an
 ## empty string is therefore the safe answer for every unexpected input.
 ##
-## Usage: SIMPLE_STACK_ADMIN_IP=$(gf_normalise_admin_ip "$SIMPLE_STACK_ADMIN_IP")
+## Usage: SSTK_ADMIN_IP=$(gf_normalise_admin_ip "$SSTK_ADMIN_IP")
 ###################################################################
 function gf_normalise_admin_ip()
 {
@@ -456,60 +456,25 @@ function gf_select_user() {
 }
 
 ###################################################################
-#### select domain from nginx ols sites enabled option
+#### Select a domain from the installed OpenLiteSpeed vhosts.
 ###################################################################
-function gf_select_domain_nginx_ols() {
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		ls /etc/nginx/sites-enabled/ | grep -v '^default$\|^monit$\|^monitorix$' | nl
+function gf_select_domain_ols() {
+	ls ${VHDIR}/ | grep -Ev "^Example|htgroup|htpasswd|$g_vhost_conf" | nl
+	read -p "Select site: " site_number
+	number_of_sites=$(ls ${VHDIR}/ | grep -Ev "^Example|htgroup|htpasswd|$g_vhost_conf" | wc -l)
+	until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -ge 1 && "$site_number" -le "$number_of_sites" ]]
+	do
+		echo "$site_number: invalid selection."
 		read -p "Select site: " site_number
-		number_of_sites=$(ls /etc/nginx/sites-enabled/ | grep -v '^default$\|^monit$\|^monitorix$' | wc -l)
-		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-		do
-			echo "$site_number: invalid selection."
-			read -p "Select site: " site_number
-		done
-		domain=$(ls /etc/nginx/sites-enabled/ | grep -v '^default$\|^monit$\|^monitorix$' | sed -n "$site_number"p)
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		ls ${VHDIR}/ | grep -Ev "^Example|htgroup|htpasswd|$g_vhost_conf" | nl
-		read -p "Select site: " site_number
-		number_of_sites=$(ls ${VHDIR}/ | grep -Ev "^Example|htgroup|htpasswd|$g_vhost_conf" | wc -l)
-		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-		do
-			echo "$site_number: invalid selection."
-			read -p "Select site: " site_number
-		done
-		domain=$(ls ${VHDIR}/ | grep -Ev "^Example|htgroup|htpasswd|$g_vhost_conf" | sed -n "$site_number"p)
-	fi
+	done
+	domain=$(ls ${VHDIR}/ | grep -Ev "^Example|htgroup|htpasswd|$g_vhost_conf" | sed -n "$site_number"p)
 }
 
 ###################################################################
-#### Restart Webserver ols or nginx
+#### Restart OpenLiteSpeed.
 ###################################################################
-# shellcheck disable=SC2120
 function gf_restart_webserver() {
-	local killall
-	killall="${1:-false}"
-	# Restart Appropriate Webserver
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		# restart nginx
-		systemctl restart nginx
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		if [ "$killall" = "true" ]
-		then
-			# rm -rf /usr/local/lsws/cachedata/*
-			# kill detached lsphp processes and restart ols
-			/usr/local/lsws/bin/lswsctrl stop >/dev/null 2>&1
-			killall -9 lsphp >/dev/null 2>&1
-			systemctl stop lsws >/dev/null 2>&1
-			systemctl start lsws
-		else
-			systemctl restart lsws
-		fi
-	fi
+	systemctl restart lsws
 }
 
 #####################################################################
@@ -540,75 +505,6 @@ function gf_is_ssl_ols() {
 }
 
 ###################################################################
-#### Check if ssl enabled for ols enterprise site
-###################################################################
-function gf_is_ssl_ols_enterprise() {
-	local olsdomain
-	olsdomain=$1
-	# <keyFile>/etc/letsencrypt/live/$VH_NAME/privkey.pem</keyFile>
-	grep -qE "<keyFile>[ ]*/etc/letsencrypt/live" ${VHDIR}/$olsdomain/$g_vhost_conf
-}
-
-
-###################################################################
-#### Enable certbot ssl for nginx domain
-###################################################################
-function gf_enable_certbot_nginx_site() {
-	local nginxdomain
-	local nginxconf
-	nginxdomain=$1
-	nginxconf=$2
-
-	if grep -qs "listen 443" /etc/nginx/sites-enabled/$nginxconf;
-	then
-		echo "SSL Already Enabled";
-		exit
-	else
-		if [[ -z $email ]]
-		then
-			echo "Specify an email for administrative notifications about your certificate"
-			read -p "Email address: " email
-		fi
-		certbot --non-interactive --reinstall --expand --nginx --agree-tos -m $email --allow-subset-of-names --redirect -d $nginxdomain -d www.$nginxdomain || certbot --non-interactive --reinstall --expand --nginx --agree-tos -m $email --allow-subset-of-names --redirect -d $nginxdomain
-		if ! grep -qs "listen 443" /etc/nginx/sites-enabled/$nginxconf
-		then
-			echo "SSL could not be enabled for $nginxdomain"
-			# important that we exit here. Otherwise script #4 which uses this will proceed as if nothing happened.
-			# That in turn will inform any UI using these scripts that SSL was successful - which it was NOT.
-			# If we need a calling script to continue even after SSL has failed then we need a way to return a value
-			# to the calling script and make sure that script #4 and other ssl handling scripts make use of the returned value.			
-			exit 1
-		else
-			echo
-			echo "SSL has been enabled for $nginxdomain"		
-		fi
-		systemctl restart nginx
-	fi
-}
-
-###################################################################
-#### Disable certbot ssl for nginx domain
-###################################################################
-function gf_disable_certbot_nginx_site() {
-	local nginxdomain
-	local nginxconf
-	nginxdomain=$1
-	nginxconf=$2
-	if grep -qs "managed by Certbot" /etc/nginx/sites-enabled/$nginxconf;
-	then
-		certbot --non-interactive delete --cert-name $nginxdomain
-		sed -i -n '/if ($host/q;p' /etc/nginx/sites-enabled/$nginxconf
-		sed -i '$ d' /etc/nginx/sites-enabled/$nginxconf
-		sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/$nginxconf
-		sed -i '/managed by Certbot/d' /etc/nginx/sites-enabled/$nginxconf
-		systemctl restart nginx
-	else
-		echo "SSL Not enabled for $nginxdomain";
-		exit
-	fi
-}
-
-###################################################################
 #### Disable certbot ssl for ols domain
 ###################################################################
 function gf_disable_certbot_ols_site() {
@@ -623,8 +519,8 @@ function gf_disable_certbot_ols_site() {
 	then
 		certbot delete --cert-name $olsdomain --noninteractive
 	fi
-	sed -i "s|/etc/letsencrypt/live/$olsdomain/privkey.pem|/usr/local/lsws/conf/example.key|g" ${VHDIR}/${olsdomain}/$g_vhost_conf > /dev/null 2>&1
-	sed -i "s|/etc/letsencrypt/live/$olsdomain/fullchain.pem|/usr/local/lsws/conf/example.crt|g" ${VHDIR}/${olsdomain}/$g_vhost_conf > /dev/null 2>&1
+	sed -i "s|^[[:space:]]*keyFile.*|  keyFile                 /usr/local/lsws/conf/example.key|" ${VHDIR}/${olsdomain}/$g_vhost_conf > /dev/null 2>&1
+	sed -i "s|^[[:space:]]*certFile.*|  certFile                /usr/local/lsws/conf/example.crt|" ${VHDIR}/${olsdomain}/$g_vhost_conf > /dev/null 2>&1
 	echo "certificate has been successfully uninstalled..."
 	gf_restart_webserver
 }
@@ -678,6 +574,7 @@ function gf_disable_https_redirect_ols_htaccess() {
 function gf_enable_https_redirect_ols_vhost() {
 	local olsdomain
 	local vhost_conf_name
+	local default_vhost_conf_name
 	olsdomain=$1
 	default_vhost_conf_name="$olsdomain"
     vhost_conf_name="${2:-$default_vhost_conf_name}" # optional param so we can selectively change vhost conf name from default 'domain.tld' only if provided
@@ -686,6 +583,12 @@ function gf_enable_https_redirect_ols_vhost() {
 	# insert redirect to https inside the rewrite under wellknown rule just under <<<END_rules
 	# RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS
 	# RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS
+	if grep -Fq 'RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS' "${VHDIR}/${vhost_conf_name}/$g_vhost_conf"
+	then
+		echo
+		echo "HTTPS redirect already enabled for $vhost_conf_name"
+		return 0
+	fi
 	sed -i "${VHDIR}/${vhost_conf_name}/$g_vhost_conf" -re "/<<<END_rules/a RewriteCond %{SERVER_PORT} ^80$ # Enable HTTPS\nRewriteRule .* https:\/\/%{SERVER_NAME}%{REQUEST_URI} [R=301,L] # Enable HTTPS"
 	chown -R lsadm:lsadm ${VHDIR}/${vhost_conf_name}/*
 	echo
@@ -699,6 +602,7 @@ function gf_enable_https_redirect_ols_vhost() {
 function gf_disable_https_redirect_ols_vhost() {
 	local olsdomain
 	local vhost_conf_name
+	local default_vhost_conf_name
 	olsdomain=$1
 	default_vhost_conf_name="$olsdomain"
     vhost_conf_name="${2:-$default_vhost_conf_name}" # optional param so we can selectively change vhost conf name from default 'domain.tld' only if provided
@@ -717,16 +621,23 @@ function gf_disable_https_redirect_ols_vhost() {
 #### Enable certbot ssl for ols domain
 #### $1: Domain name
 #### $2: Register Unsafely (optional, any value)
+#### $3: Redirect scope - htaccess (default) or vhost
+#### $4: Optional vhost config name (defaults to the domain)
+#### $5: Optional webroot (defaults to /var/www/<domain>/html)
 ###################################################################
 function gf_enable_certbot_ols_site() {
 	local olsdomain
 	local register_unsafely
+	local redirect_scope
+	local vhost_conf_name
+	local doc_root
 	local DOCHM
-	local l_user_name
 	
 	olsdomain=$1
 	register_unsafely=$2
-	l_user_name=$(echo $olsdomain | cut -c1-32)
+	redirect_scope="${3:-htaccess}"
+	vhost_conf_name="${4:-$olsdomain}"
+	doc_root="${5:-/var/www/${olsdomain}/html}"
 	
 	# only ask for email if register_unsafely flag isn't set.
 	if [[ -z $register_unsafely ]]
@@ -737,7 +648,7 @@ function gf_enable_certbot_ols_site() {
 			read -p "Email address: " email
 		fi
 	fi
-	DOCHM="/var/www/${olsdomain}/html"
+	DOCHM="${doc_root}"
 	
 	# Call certbot.
 	if [[ -z $email ]] 
@@ -751,11 +662,16 @@ function gf_enable_certbot_ols_site() {
 	
 	if [[ -e /etc/letsencrypt/live/$olsdomain/fullchain.pem ]]
 	then
-		sed -i "s|/usr/local/lsws/conf/example.key|/etc/letsencrypt/live/$olsdomain/privkey.pem|g" ${VHDIR}/${olsdomain}/$g_vhost_conf > /dev/null 2>&1
-		sed -i "s|/usr/local/lsws/conf/example.crt|/etc/letsencrypt/live/$olsdomain/fullchain.pem|g" ${VHDIR}/${olsdomain}/$g_vhost_conf > /dev/null 2>&1
+		sed -i "s|^[[:space:]]*keyFile.*|  keyFile                 /etc/letsencrypt/live/$olsdomain/privkey.pem|" ${VHDIR}/${vhost_conf_name}/$g_vhost_conf > /dev/null 2>&1
+		sed -i "s|^[[:space:]]*certFile.*|  certFile                /etc/letsencrypt/live/$olsdomain/fullchain.pem|" ${VHDIR}/${vhost_conf_name}/$g_vhost_conf > /dev/null 2>&1
 		# Should we check that https works before reporting this? If so uncomment the below line.
 		# gf_check_ssl_valid "$olsdomain"
-		gf_enable_https_redirect_ols_htaccess "$olsdomain" # The calling program might handle this redirect but it doesn't hurt to do it here as well, just in case.
+		if [ "$redirect_scope" = "vhost" ]
+		then
+			gf_enable_https_redirect_ols_vhost "$olsdomain" "$vhost_conf_name"
+		else
+			gf_enable_https_redirect_ols_htaccess "$olsdomain"
+		fi
 		gf_restart_webserver			
 		echo
 		echo "SSL has been enabled for $olsdomain"
@@ -834,9 +750,6 @@ function gf_disable_http2_ols_site() {
 ##########################################################################
 #### Install certbot ssl for ols domain when ssl config already enabled
 ####
-#### @TODO: Why are we using certonly here for ols instead of reinstall
-####        like we do for NGINX?
-####
 #### @param $1 The domain we're managing.
 ####
 #### *** Does not look like this function is used anywhere right now.
@@ -846,7 +759,7 @@ function gf_install_certbot_ols_site() {
 	local DOCHM
 	olsdomain=$1
 	DOCHM="/var/www/${olsdomain}/html"
-	if gf_is_ssl_ols $olsdomain || gf_is_ssl_ols_enterprise $olsdomain
+	if gf_is_ssl_ols "$olsdomain"
 	then
 		# certbot certonly --non-interactive --agree-tos -m ${email} --webroot -w ${DOCHM} -d ${olsdomain} -d www.${olsdomain}||certbot certonly --non-interactive --agree-tos -m ${email} --webroot -w ${DOCHM} -d ${olsdomain}
 		certbot certonly --non-interactive -q --expand --agree-tos --register-unsafely-without-email --allow-subset-of-names --webroot -w ${DOCHM} -d ${olsdomain} -d www.${olsdomain}||certbot certonly --non-interactive -q --expand --agree-tos --register-unsafely-without-email --allow-subset-of-names --webroot -w ${DOCHM} -d ${olsdomain}
@@ -878,135 +791,6 @@ CREATE DATABASE $DB_NAME;
 GRANT ALL ON $DB_NAME.* TO '$DB_USERNAME'@'$DB_HOST' IDENTIFIED BY '$DB_PASSWORD' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 QUERY
-}
-
-###################################################################
-#### Add php fpm conf for domain with specific username
-####
-#### @param $1: Domain
-#### @param $2: User name (usually the first 32 chars of the domain name)
-#### @param $3: PHP Version (usually 8.1)
-###################################################################
-function gf_add_php_conf() {
-	local php_domain
-	local php_user
-	local php_version
-	php_domain=$1
-	php_user=$2
-	php_version=$3
-	echo "[$php_domain]
-user = $php_user
-group = www-data
-listen = /run/php/php-fpm-$php_domain.sock
-listen.owner = $php_user
-listen.group = www-data
-pm = dynamic
-pm.max_children = 5
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
-php_admin_value[open_basedir] = \"/var/www/$php_domain/html/:/tmp/\"
-php_admin_value[allow_url_fopen] = 0
-php_admin_value[allow_url_include] = 0
-php_admin_value[disable_functions] =  dl, exec, fpassthru, getmypid, getmyuid, highlight_file, link, opcache_get_configuration, passthru, pcntl_exec, pcntl_get_last_error, pcntl_setpriority, pcntl_strerror, pcntl_wifcontinued, phpinfo, popen, posix_ctermid, posix_getcwd, posix_getegid, posix_geteuid, posix_getgid, posix_getgrgid, posix_getgrnam, posix_getgroups, posix_getlogin, posix_getpgid, posix_getpgrp, posix_getpid, posix_getppid, posix_getpwnam, posix_getpwuid, posix_getrlimit, posix_getsid, posix_getuid, posix_isatty, posix_kill, posix_mkfifo, posix_setegid, posix_seteuid, posix_setgid, posix_setpgid, posix_setsid, posix_setuid, posix_times, posix_ttyname, posix_uname, proc_close, proc_get_status, proc_nice, proc_open, proc_terminate, shell_exec, show_source, source, system, virtual
-php_admin_value[session.use_strict_mode] = 1
-php_admin_value[session.cookie_httponly] = 1
-php_admin_value[session.use_cookies] = 1
-php_admin_value[session.use_only_cookies] = 1
-php_admin_value[session.use_trans_sid] = 0" > /etc/php/$php_version/fpm/pool.d/$php_domain.conf
-	if [[ ! -f /etc/wpcd/php-versions-disabled/$php_version ]]
-	then
-		systemctl restart php$php_version-fpm
-	fi
-}
-
-###################################################################
-#### add nginx conf for newly created site
-###################################################################
-function gf_add_nginx_conf() {
-	local nginx_domain
-	local nginx_webroot
-	local nginx_site
-	nginx_domain=$1
-	nginx_webroot=$2
-	nginx_site=$3
-	# it's very important to escape the variables and quotes within the echo
-	echo "include /etc/nginx/common/7g[.]conf;
-include /etc/nginx/userconfigs/http/*.conf;		#user custom configuration
-
-server {
-
-    include /etc/nginx/common/deny*.conf;
-    include /etc/nginx/userconfigs/server/*.conf;	#user custom configuration
-
-    listen 80;
-    listen [::]:80;
-
-    root /var/www/$nginx_webroot/html;
-    index index.php index.html index.htm;
-
-    server_name $nginx_domain www.$nginx_domain;
-
-    client_max_body_size 25M;
-
-    # Needed for page-level caching when cache-enabler plugin is installed
-    include /etc/nginx/common/cache_enabler.conf;
-
-    # Compress certain files with gzip.
-    include /etc/nginx/common/gzip[.]conf;
-
-    # Cache certain filetypes in the browser
-    include /etc/nginx/common/browsercache[.]conf;
-
-    # Prepare for phpmyadmin when it's installed
-    location ~ /phpMyAdmin/.*\.php$ {
-        allow all;
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php-fpm-$nginx_webroot.sock;
-    }
-
-    # Handler for PHP files
-    location ~ \.php$ {
-        # Restrict wp-login to 10 requests per period
-        location ~ \wp-login.php$ {
-            limit_req zone=WPLOGIN;
-            include snippets/fastcgi-php.conf;
-            fastcgi_pass unix:/run/php/php-fpm-$nginx_webroot.sock;
-        }
-
-        fastcgi_param PHP_VALUE \"
-        \";
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php-fpm-$nginx_webroot.sock;
-        fastcgi_buffers 16 32k;
-        fastcgi_buffer_size 64k;
-        fastcgi_busy_buffers_size 64k;
-    }
-
-    location / {
-        try_files \$cache_enabler_uri \$cache_enabler_uri2 @cachemiss; 
-    }
-
-    location @cachemiss {
-        try_files \$uri \$uri/ \$custom_subdir/index.php?\$args; 
-    }
-
-    # Security Headers	
-    add_header X-Frame-Options \"SAMEORIGIN\" always;
-    add_header X-XSS-Protection \"1; mode=block\" always;
-    add_header X-Content-Type-Options \"nosniff\" always;
-    add_header Referrer-Policy \"no-referrer, strict-origin-when-cross-origin\" always;
-    add_header X-Download-Options \"noopen\";
-    add_header Strict-Transport-Security \"max-age=30000000; includeSubDomains; preload\" always;
-
-    # OSCP Settings
-    ssl_stapling on;
-    ssl_stapling_verify on;	
-
-    # include user custom configurations
-    include /etc/nginx/userconfigs/site/$nginx_webroot-*.conf;
-
-}" > /etc/nginx/sites-enabled/$nginx_site
 }
 
 ###################################################################
@@ -1255,10 +1039,10 @@ function gf_add_ols_main_conf() {
 	}
 
 	# Commented out for future use if we actually need this
-	# vhTemplate WPCDDefault {
-	#   templateFile            \$SERVER_ROOT/conf/templates/wpcd-default.conf
+	# vhTemplate SSTKDefault {
+	#   templateFile            \$SERVER_ROOT/conf/templates/sstk-default.conf
 	#   listeners               Default, Defaultssl
-	#   note                    custom ols vhost template for wp-cloud-deploy admins to modify
+	#   note                    custom ols vhost template for simple-stack admins to modify
 	# }
 	EOF
 	chmod 750 ${WEBCF} > /dev/null 2>&1
@@ -1304,21 +1088,21 @@ function gf_harden_ols_conf() {
 	# any work rather than leaving the site silently unprotected behind a clean exit.
 	if ! grep -q 'rules[[:space:]]*<<<END_rules' "${conf_file}"
 	then
-		echo "WARNING: ${conf_file} has no rewrite block - re-create the vhost to apply the SimpleStack rules!"
+		echo "WARNING: ${conf_file} has no rewrite block - re-create the vhost to apply the Simple Stack rules!"
 	fi
 
 	tmp_file="$(mktemp)"
 
 	# Passed through the environment rather than with -v so awk cannot reinterpret the
 	# backslashes that OLS needs in its regexes.
-	SIMPLE_STACK_HARD_CONTEXT='context exp:error_log|wp-config-sample\.php|\.pl|\.cgi|\.lua|\.perl|\.sql|\.sh|wp-config\.php|php\.ini|\.log|\.env|\.git|\.htaccess|\.htpasswd|composer\.(json|lock)|\.user\.ini {' \
-	SIMPLE_STACK_HARD_RULES='RewriteRule ^/wp-content/(uploads|files|updraft|cache)/.*\.(php|phtml|phar|php[0-9])$ - [F,L]
+	SSTK_HARD_CONTEXT='context exp:error_log|wp-config-sample\.php|\.pl|\.cgi|\.lua|\.perl|\.sql|\.sh|wp-config\.php|php\.ini|\.log|\.env|\.git|\.htaccess|\.htpasswd|composer\.(json|lock)|\.user\.ini {' \
+	SSTK_HARD_RULES='RewriteRule ^/wp-content/(uploads|files|updraft|cache)/.*\.(php|phtml|phar|php[0-9])$ - [F,L]
 RewriteRule ^/wp-content/updraft/.*$ - [F,L]
 RewriteRule "(^|/)\.(?!well-known/)" - [F,L]' \
 	awk '
 		BEGIN {
-			hard_context = ENVIRON["SIMPLE_STACK_HARD_CONTEXT"]
-			hard_rules   = ENVIRON["SIMPLE_STACK_HARD_RULES"]
+			hard_context = ENVIRON["SSTK_HARD_CONTEXT"]
+			hard_rules   = ENVIRON["SSTK_HARD_RULES"]
 			in_rules     = 0
 			rules_done   = 0
 			has_acme     = 0
@@ -1602,14 +1386,28 @@ function gf_add_ols_conf() {
 #### Add domain to httpd conf for ols
 ####
 #### @param $1 domain
+#### @param $2 Optional vhost config name (defaults to the domain)
+#### @param $3 Optional vhost root (defaults to /var/www/<domain>)
 ###################################################################
 function gf_add_domain_ols_httpd_conf() {
 	local olsdomain
 	local vhost_conf_name
+	local vh_root
+	local default_vhost_conf_name
+	local NEWKEY
+	local PORT_ARR
+	local PORT
 	olsdomain=$1
 	default_vhost_conf_name="$olsdomain"
     vhost_conf_name="${2:-$default_vhost_conf_name}" # optional param so we can selectively change vhost conf name from default 'domain.tld' only if provided
-	
+	vh_root="${3:-/var/www/${olsdomain}}"
+
+	if grep -Fq "virtualhost ${olsdomain} {" "${WEBCF}"
+	then
+		gf_harden_ols_conf "${olsdomain}" "${vhost_conf_name}"
+		return 0
+	fi
+
 
 	NEWKEY="  map                     ${olsdomain} www.${olsdomain}, ${olsdomain}"
 	PORT_ARR=$(grep "address.*:[0-9]"  ${WEBCF} | awk '{print substr($2,3)}'|uniq)
@@ -1624,7 +1422,7 @@ function gf_add_domain_ols_httpd_conf() {
 	fi
 	echo "
 virtualhost ${olsdomain} {
-vhRoot                  /var/www/${olsdomain}
+vhRoot                  ${vh_root}
 configFile              ${VHDIR}/${vhost_conf_name}/$g_vhost_conf
 allowSymbolLink         1
 enableScript            1
@@ -1634,7 +1432,7 @@ setUIDMode              2
 
 	# The virtualhost block above carries no rewrite or context scope of its own, so the
 	# only place those rules can live is the per-vhost conf.  Registering a domain is
-	# also how a restored vhost comes back, so re-assert the SimpleStack protections here
+	# also how a restored vhost comes back, so re-assert the Simple Stack protections here
 	# rather than assuming gf_add_ols_conf() wrote them.
 	gf_harden_ols_conf "${olsdomain}" "${vhost_conf_name}"
 
@@ -1646,52 +1444,54 @@ setUIDMode              2
 ###################################################################
 function gf_remove_domain_ols_httpd_conf() {
 	local olsdomain
+	local tmp_file
 	olsdomain="$1"
 
-	# remove the block like below
-	# virtualhost somedomain.tld {
-	# vhRoot                  /var/www/somedomain.tld
-	# configFile              ${VHDIR}/somedomain.tld/$g_vhost_conf
-	# allowSymbolLink         1
-	# enableScript            1
-	# restrained              1
-	# setUIDMode              2
-	# user                    $VH_USER
-	# group                   $VH_USER
-	# }
-	sed -i -re "/virtualhost ${olsdomain} \{/{:a;N;/\}/!ba};/vhRoot                  \/var\/www\/$olsdomain/d" ${WEBCF}
-	# remove the map lines inserted on the multiple listeners blocks like below
-	# map                     somedomain.tld somedomain.tld
-	sed -i "/[ ]*map[ ]*${olsdomain} www.${olsdomain}, ${olsdomain}/d" ${WEBCF}
+	tmp_file="$(mktemp)"
+	awk -v vhost="$olsdomain" '
+		$1 == "virtualhost" && $2 == vhost && $3 == "{" { skip_block = 1; next }
+		skip_block { if ( $1 == "}" ) skip_block = 0; next }
+		$1 == "map" {
+			if ( $2 == vhost ) next
+		}
+		{ print }
+	' "${WEBCF}" > "${tmp_file}"
+	if [ -s "${tmp_file}" ]
+	then
+		cat "${tmp_file}" > "${WEBCF}"
+	else
+		echo "Removing ${olsdomain} from ${WEBCF} would empty the file, keeping it unchanged!"
+	fi
+	rm -f "${tmp_file}"
 	systemctl restart lsws
 }
 
 #####################################################################
-### select phpversion for nginx fpm
+### List installed LSPHP versions supported by Simple Stack.
 #####################################################################
-function gf_select_phpversion
-{
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		ls /etc/php/ | nl
+function gf_installed_php_services() {
+	local short
+	for short in 83 84 85
+	do
+		if [ -x "${LSDIR}/lsphp${short}/bin/lsphp" ]
+		then
+			echo "lsphp${short}"
+		fi
+	done
+}
+
+#####################################################################
+### Select an installed, supported LSPHP version.
+#####################################################################
+function gf_select_phpversion() {
+	gf_installed_php_services | nl
+	read -p "Select PHP version: " site_number
+	number_of_sites=$(gf_installed_php_services | wc -l)
+	until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -ge 1 && "$site_number" -le "$number_of_sites" ]]
+	do
+		echo "$site_number: invalid selection."
 		read -p "Select PHP version: " site_number
-		number_of_sites=$(ls /etc/php/ | wc -l)
-		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-		do
-			echo "$site_number: invalid selection."
-			read -p "Select PHP version: " site_number
-		done
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		ls /usr/local/lsws|grep lsphp | nl
-		read -p "Select PHP version: " site_number
-		number_of_sites=$(ls /usr/local/lsws|grep lsphp | wc -l)
-		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
-		do
-			echo "$site_number: invalid selection."
-			read -p "Select PHP version: " site_number
-		done
-	fi
+	done
 }
 
 #####################################################################
@@ -1782,95 +1582,31 @@ function gf_7g_ols_disable {
 }
 
 #####################################################################
-### 6G firewall enable for ols
-#####################################################################
-function gf_6g_ols_enable {
-        local module
-        module=$1
-        grep -q "# 6G:\[$module\]" /var/www/$domain/html/.htaccess
-        if [ $? -ne 0 ]
-        then
-                sed -n "/# 6G:\[$module\]/, /# 6G:\[$module\] END/p" 6G-Firewall-OLS.txt >> /var/www/$domain/html/.htaccess
-                user_name=$(echo $domain | cut -c1-32)
-                chown "${user_name}" /var/www/$domain/html/.htaccess
-        fi
-}
-
-#####################################################################
-### 6G firewall rule disable for ols
-#####################################################################
-function gf_6g_ols_disable {
-        local module
-        module=$1
-        grep -q "# 6G:\[$module\]" /var/www/$domain/html/.htaccess
-        if [ $? -eq 0 ]
-        then
-                sed -i "/# 6G:\[$module\]/,/# 6G:\[$module\] END/d" /var/www/$domain/html/.htaccess
-                user_name=$(echo $domain | cut -c1-32)
-                chown "${user_name}" /var/www/$domain/html/.htaccess
-        fi
-}
-
-#####################################################################
-### Remove an NGINX Site.
-###
-### @param $1 Domain
-### @param $2 Skip_Certbot  (optional - if set, do not delete certificates)
-#####################################################################
-function gf_remove_nginx_site() {
-	local domain
-	domain=$1
-	skip_certbot=$2
-
-	# Maybe delete ssl certificates
-	if [[ -z $skip_certbot ]]
-	then
-		if grep -qs "listen 443" /etc/nginx/sites-enabled/$domain
-		then
-			certbot delete --cert-name $domain --noninteractive
-		fi
-	fi
-
-	rm -f /etc/nginx/sites-*/$domain*
-	rm -f /etc/nginx/htpasswd/*$domain
-	echo "restarting web server..."
-	systemctl restart nginx
-	local php_version
-	php_version=$(ls /etc/php/*/fpm/pool.d/$domain.conf | cut -d '/' -f 4)
-	echo "removing php configuration and restarting php process..."
-	rm -f /etc/php/$php_version/fpm/pool.d/$domain.conf
-	if [[ ! -f /etc/wpcd/php-versions-disabled/$php_version ]]
-	then
-		systemctl restart php$php_version-fpm
-	fi
-}
-
-#####################################################################
 ### Remove an ols Site.
 ###
 ### @param $1 Domain
-### @param $2 Skip_Certbot  (optional - if set, do not delete certificates)
+### @param $2 Vhost config name (optional - defaults to the domain)
+### @param $3 Skip_Certbot (optional - if set, do not delete certificates)
 #####################################################################
 function gf_remove_ols_site() {
 	local domain
 	local vhost_conf_name
+	local skip_certbot
 	domain=$1
-	skip_certbot=$2
-	
-	default_vhost_conf_name="$domain"
-    vhost_conf_name="${2:-$default_vhost_conf_name}"
+	vhost_conf_name="${2:-$domain}"
+	skip_certbot=$3
 	
 	# Maybe delete ssl certificates
 	if [[ -z $skip_certbot ]]
 	then	
 		if [ -d "/etc/letsencrypt/live/$domain" ]
 		then
-			certbot delete --cert-name $domain --noninteractive
+			certbot delete --cert-name "$domain" --noninteractive
 		fi
 	fi
 	
-	rm -rf ${VHDIR}/$vhost_conf_name
-	rm -rf ${LSDIR}/conf/vhosts-disabled/$vhost_conf_name
+	rm -rf "${VHDIR}/$vhost_conf_name"
+	rm -rf "${LSDIR}/conf/vhosts-disabled/$vhost_conf_name"
 	gf_remove_domain_ols_httpd_conf "$domain"
 }
 
@@ -1885,33 +1621,13 @@ function gf_restore_ols_site() {
 	rsync -az vhosts/$domain ${VHDIR}/
 	chown -R lsadm:lsadm ${VHDIR}/$domain
 	# A restored vhost conf carries whatever hardening existed when the backup was taken,
-	# which may predate the SimpleStack rules.  Re-assert them before the site is served.
+	# which may predate the Simple Stack rules.  Re-assert them before the site is served.
 	gf_harden_ols_conf $domain
 	if ! grep -qw "virtualhost $domain " ${WEBCF}
 	then
 		gf_add_domain_ols_httpd_conf $domain
 	fi
 }	
-
-#####################################################################
-### Restore an nginx Site.
-###
-### We are assuming that we are in the /root/wp-backups/$domain/temp folder
-### when this function is called!!!!
-### @see 08-backup.sh around line 306 & 992 as well as 
-### 41-wp-backup2.sh around line 490.
-###
-### @param $1 Domain
-#####################################################################
-function gf_restore_nginx_site() {
-	local domain
-	domain=$1
-	user_name="$(echo $domain | cut -c1-32)"
-	mv sites-enabled/*$domain /etc/nginx/sites-enabled/
-	mv htpasswd/*$domain /etc/nginx/htpasswd/ 2>/dev/null
-
-	gf_add_php_conf $domain $user_name 8.1
-}
 
 #####################################################################
 ### Reset file permissions for a site
@@ -1934,25 +1650,14 @@ function gf_reset_file_permissions_for_domain() {
 		echo $msg
 		exit 1
 	else
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			chown -R root:root /var/www/$domain/
-			chown -R www-data:www-data /var/www/$domain/html/
-			chmod -R g+w /var/www/$domain/html
-			chmod -R g+s /var/www/$domain/html
-			find /var/www/$domain/html -type f -exec chmod 664 {} +
-			find /var/www/$domain/html -type d -exec chmod 2775 {} +
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			chown -R root:root /var/www/"$domain"/
-			chown -R "${user_name}":www-data /var/www/"$domain"/html/
-			chown -R "${user_name}":www-data /var/www/"$domain"/html/logs/
-			# Hidden files test support: https://serverfault.com/a/156481
-			chown -R "${user_name}":www-data /var/www/"$domain"/html/.[^.]*
-			chmod -R g+ws "/var/www/$domain/html"
-			find /var/www/$domain/html -type f -exec chmod 664 {} +
-			find /var/www/$domain/html -type d -exec chmod 2775 {} +
-		fi
+		chown -R root:root /var/www/"$domain"/
+		chown -R "${user_name}":www-data /var/www/"$domain"/html/
+		chown -R "${user_name}":www-data /var/www/"$domain"/html/logs/
+		# Hidden files test support: https://serverfault.com/a/156481
+		chown -R "${user_name}":www-data /var/www/"$domain"/html/.[^.]*
+		chmod -R g+ws "/var/www/$domain/html"
+		find /var/www/$domain/html -type f -exec chmod 664 {} +
+		find /var/www/$domain/html -type d -exec chmod 2775 {} +
 	fi
 }
 
@@ -1980,25 +1685,14 @@ function gf_reset_file_permissions_alt_for_domain() {
 		echo $msg
 		exit 1
 	else
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			chown -R root:root /var/www/$domain/
-			chown -R www-data:www-data /var/www/$domain/html/
-			chmod -R g+w /var/www/$domain/html
-			chmod -R g+s /var/www/$domain/html
-			find /var/www/$domain/html -type f -exec chmod 644 {} +
-			find /var/www/$domain/html -type d -exec chmod 775 {} +
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			chown -R root:root /var/www/"$domain"/
-			chown -R "${user_name}":www-data /var/www/"$domain"/html/
-			chown -R "${user_name}":www-data /var/www/"$domain"/html/logs/
-			# Hidden files test support: https://serverfault.com/a/156481
-			chown -R "${user_name}":www-data /var/www/"$domain"/html/.[^.]*
-			chmod -R g+ws "/var/www/$domain/html"
-			find /var/www/$domain/html -type f -exec chmod 644 {} +
-			find /var/www/$domain/html -type d -exec chmod 775 {} +
-		fi
+		chown -R root:root /var/www/"$domain"/
+		chown -R "${user_name}":www-data /var/www/"$domain"/html/
+		chown -R "${user_name}":www-data /var/www/"$domain"/html/logs/
+		# Hidden files test support: https://serverfault.com/a/156481
+		chown -R "${user_name}":www-data /var/www/"$domain"/html/.[^.]*
+		chmod -R g+ws "/var/www/$domain/html"
+		find /var/www/$domain/html -type f -exec chmod 644 {} +
+		find /var/www/$domain/html -type d -exec chmod 775 {} +
 	fi
 }
 
@@ -2172,20 +1866,20 @@ function gf_set_server_metadata(){
 	local metavalue;
 	metakey=$1
 	metavalue=$2
-	mkdir -p /etc/wpcd
+	mkdir -p /etc/simple-stack
 	
 	# Move metadata file from old location to new location on legacy servers.
-	if [ -f /opt/wpcd-server-info.txt ]
+	if [ -f /opt/sstk-server-info.txt ]
 	then
-		if [ ! -f /etc/wpcd/wpcd-server-info.txt ]
+		if [ ! -f /etc/simple-stack/sstk-server-info.txt ]
 		then
-			mv /opt/wpcd-server-info.txt /etc/wpcd/wpcd-server-info.txt
+			mv /opt/sstk-server-info.txt /etc/simple-stack/sstk-server-info.txt
 		fi
 	fi
 	
-	touch /etc/wpcd/wpcd-server-info.txt;
-	sed -i "/$metakey=/d" /etc/wpcd/wpcd-server-info.txt
-	echo "$metakey=$metavalue" >> /etc/wpcd/wpcd-server-info.txt
+	touch /etc/simple-stack/sstk-server-info.txt;
+	sed -i "/$metakey=/d" /etc/simple-stack/sstk-server-info.txt
+	echo "$metakey=$metavalue" >> /etc/simple-stack/sstk-server-info.txt
 }
 
 #####################################################################
@@ -2200,10 +1894,10 @@ function gf_set_sites_metadata(){
 	local metavalue;
 	metakey=$1
 	metavalue=$2
-	mkdir -p /etc/wpcd
-	touch /etc/wpcd/wpcd-sites-info.txt;
-	sed -i "/$metakey=/d" /etc/wpcd/wpcd-sites-info.txt
-	echo "$metakey=$metavalue" >> /etc/wpcd/wpcd-sites-info.txt
+	mkdir -p /etc/simple-stack
+	touch /etc/simple-stack/sstk-sites-info.txt;
+	sed -i "/$metakey=/d" /etc/simple-stack/sstk-sites-info.txt
+	echo "$metakey=$metavalue" >> /etc/simple-stack/sstk-sites-info.txt
 }
 
 #####################################################################
@@ -2220,11 +1914,11 @@ function gf_set_domain_metadata(){
 	metakey=$1
 	metavalue=$2
 	domain=$3
-	mkdir -p /etc/wpcd
-	mkdir -p /etc/wpcd/$domain
-	touch /etc/wpcd//$domain/$domain;
-	sed -i "/$metakey=/d" /etc/wpcd/$domain/$domain
-	echo "$metakey=$metavalue" >> /etc/wpcd/$domain/$domain
+	mkdir -p /etc/simple-stack
+	mkdir -p /etc/simple-stack/$domain
+	touch /etc/simple-stack//$domain/$domain;
+	sed -i "/$metakey=/d" /etc/simple-stack/$domain/$domain
+	echo "$metakey=$metavalue" >> /etc/simple-stack/$domain/$domain
 }
 
 
@@ -2238,7 +1932,7 @@ function gf_set_domain_metadata(){
 ### Default value - the default value to use if no data is found for the requested key.
 ### Domain - Only required if requesting data of type 'domain'
 ###
-### @return: wpcd_metavalue is global variable in which requested metadata will be placed.
+### @return: sstk_metavalue is global variable in which requested metadata will be placed.
 ###############################################################################################
 function gf_get_metadata(){
 	local metatype;
@@ -2257,17 +1951,17 @@ function gf_get_metadata(){
 	done
 	if [ "$metatype" == "server" ]
 	then
-		wpcd_metavalue=$(grep "$metakey=" /etc/wpcd/wpcd-server-info.txt|cut -d'=' -f2)
+		sstk_metavalue=$(grep "$metakey=" /etc/simple-stack/sstk-server-info.txt|cut -d'=' -f2)
 	elif [ "$metatype" == "sites" ]
 	then
-		wpcd_metavalue=$(grep "$metakey=" /etc/wpcd/wpcd-sites-info.txt|cut -d'=' -f2)
+		sstk_metavalue=$(grep "$metakey=" /etc/simple-stack/sstk-sites-info.txt|cut -d'=' -f2)
 	elif [ "$metatype" == "domain" ]
 	then
-		wpcd_metavalue=$(grep "$metakey=" /etc/wpcd/$domain/$domain|cut -d'=' -f2)
+		sstk_metavalue=$(grep "$metakey=" /etc/simple-stack/$domain/$domain|cut -d'=' -f2)
 	fi
-	if [ -z $wpcd_metavalue ]
+	if [ -z $sstk_metavalue ]
 	then
-		wpcd_metavalue=$defaultvalue
+		sstk_metavalue=$defaultvalue
 	fi
 }
 
@@ -2288,45 +1982,25 @@ function gf_mt_set_openbasedir(){
 	domain=$3
 
 	# Figure out the MT version folder.
-	mt_version_folder="/var/wpcd-mt-versions/$mt_template_domain/versions/$git_tag"
+	mt_version_folder="/var/simple-stack-mt-versions/$mt_template_domain/versions/$git_tag"
 
-	if [ "$g_webserver_type" = "nginx" ]
-	then	
-		phpversion=(7.4 8.0 8.1 8.2 8.3)
-		for ver in "${phpversion[@]}"
-		do	
-			if [ -f /etc/php/$ver/fpm/pool.d/$domain.conf ]; then
-				echo "Updating open_basedir in /etc/php/$ver/fpm/pool.d/$domain.conf to allow reading from the multi-tenant version folder."
-				# delete openbase directive.
-				sed -i '/open_basedir/d' /etc/php/$ver/fpm/pool.d/$domain.conf
-				# add the new one back in.
-				echo "php_admin_value[open_basedir] = \"/var/www/$domain/html/:/tmp/:$mt_version_folder/\"" >> /etc/php/$ver/fpm/pool.d/$domain.conf
-				# restart fpm
-				sudo systemctl restart php$ver-fpm
-			fi
-		done
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		echo "ols-is not supported - this operation probably broke your ols site."
-		# search and replace needs to be done in this file: ${VHDIR}/${$domain}/$g_vhost_conf 
-		# search for php_admin_value open_basedir "/var/www/$domain/html:/tmp/"
-		# replace with php_admin_value open_basedir "/var/www/$domain/html:/tmp/:$mt_version_folder/"
-	fi
+	echo "Updating open_basedir in ${VHDIR}/${domain}/$g_vhost_conf to allow reading from the multi-tenant version folder."
+	sed -i "s%php_admin_value open_basedir.*%php_admin_value open_basedir \"/var/www/$domain/html:/tmp/:$mt_version_folder\"%g" ${VHDIR}/${domain}/$g_vhost_conf
 
 }
 
 #####################################################################
-### SimpleStack post site install hook
+### Simple Stack post site install hook
 #####################################################################
-# The hook lives in 66-simplestack_post_install.txt so it can be replaced or extended
+# The hook lives in 66-sstk_post_install.txt so it can be replaced or extended
 # without editing the common functions. The no-op below guarantees that callers always
 # have a function to call, and the source then replaces it whenever the file made it to
 # the server - a failed download must not be able to break a site install.
-function simplestack_post_site_install() {
+function sstk_post_site_install() {
 	:
 }
 
-if [ -f 66-simplestack_post_install.sh ]
+if [ -f 66-sstk_post_install.sh ]
 then
-	source 66-simplestack_post_install.sh
+	source 66-sstk_post_install.sh
 fi

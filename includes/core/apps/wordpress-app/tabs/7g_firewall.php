@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * 7G firewall tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,18 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_7G_FIREWALL
+ * Class SSTK_WORDPRESS_TABS_7G_FIREWALL
  */
-class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_7G_FIREWALL extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
 	}
 
@@ -50,7 +51,7 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( '7G WAF', 'wpcd' ),
+				'label' => __( '7G WAF', 'simple-stack' ),
 				'icon'  => 'fad fa-user-shield',
 			);
 		}
@@ -66,11 +67,11 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -87,15 +88,15 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Verify that the user is even allowed to view the app before proceeding to do anything else
 		 */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( '7g_all', '7g_user_agent', '7g_referrer', '7g_query_string', '7g_request_string', '7g_request_method' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -133,7 +134,7 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %1$s in file %2$s', 'wpcd' ), $action, __FILE__ ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %1$s in file %2$s', 'simple-stack' ), $action, __FILE__ ) );
 		}
 
 		// Now, we need to figure out from the action request what the bash action should be.
@@ -153,13 +154,13 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		);  // Notice that, unlike other scripts, we're passing a different var for 'action'.
 
 		// log.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, '7g_firewall.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to perform action %1$s for site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Now that we know we're successful, lets update a meta indicating the new status on the meta...
@@ -167,7 +168,7 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 
 		// Success message and force refresh.
 		if ( ! is_wp_error( $result ) ) {
-			$success_msg = __( '7G Rules has been updated for this site.', 'wpcd' );
+			$success_msg = __( '7G Rules has been updated for this site.', 'simple-stack' );
 			$result      = array(
 				'msg'     => $success_msg,
 				'refresh' => 'yes',
@@ -203,25 +204,10 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 			return array_merge( $fields, $this->get_disabled_header_field( '7g_waf' ) );
 		}
 
-		// Get Webserver Type.
-		$webserver_type = $this->get_web_server_type( $id );
-
-		// Set heading description based on web server type.
-		switch ( $webserver_type ) {
-			case 'ols':
-			case 'ols-enterprise':
-				$heading_name = __( '7G Web Application Firewall / Powered by the Litespeed Web Server Engine', 'wpcd' );
-				break;
-
-			case 'nginx':
-			default:
-				$heading_name = __( '7G Web Application Firewall / Powered by the Nginx Web Server Engine', 'wpcd' );
-				break;
-
-		}
+		$heading_name = __( '7G Web Application Firewall / Powered by OpenLiteSpeed', 'simple-stack' );
 
 		// Basic checks passed, ok to proceed.
-		$desc  = __( 'Manage the 7G WAF.', 'wpcd' );
+		$desc  = __( 'Manage the 7G WAF.', 'simple-stack' );
 		$desc .= '<br />';
 
 		$fields[] = array(
@@ -240,33 +226,33 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'simple-stack' );
 		}
 
 		$fields[] = array(
 			'id'         => '7g-all-toggle',
-			'name'       => __( 'Toggle ALL 7G Rules', 'wpcd' ),
+			'name'       => __( 'Toggle ALL 7G Rules', 'simple-stack' ),
 			'tab'        => '7g_waf',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => $status === 'on',
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => '7g_all',
+				'data-sstk-action'              => '7g_all',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
 		$fields[] = array(
-			'name' => __( 'Toggle Individual Components', 'wpcd' ),
+			'name' => __( 'Toggle Individual Components', 'simple-stack' ),
 			'type' => 'heading',
 			'tab'  => '7g_waf',
 		);
@@ -279,27 +265,27 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'simple-stack' );
 		}
 		$fields[] = array(
 			'id'         => '7g-toggle-user-agent',
-			'name'       => __( 'User Agent Rules', 'wpcd' ),
+			'name'       => __( 'User Agent Rules', 'simple-stack' ),
 			'tab'        => '7g_waf',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => $status === 'on',
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => '7g_user_agent',
+				'data-sstk-action'              => '7g_user_agent',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -311,27 +297,27 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'simple-stack' );
 		}
 		$fields[] = array(
 			'id'         => '7g-all-toggle-referrer',
-			'name'       => __( 'Referrer Rules', 'wpcd' ),
+			'name'       => __( 'Referrer Rules', 'simple-stack' ),
 			'tab'        => '7g_waf',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => $status === 'on',
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => '7g_referrer',
+				'data-sstk-action'              => '7g_referrer',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -343,27 +329,27 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'simple-stack' );
 		}
 		$fields[] = array(
 			'id'         => '7g-all-toggle-query-strings',
-			'name'       => __( 'Query String Rules', 'wpcd' ),
+			'name'       => __( 'Query String Rules', 'simple-stack' ),
 			'tab'        => '7g_waf',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => $status === 'on',
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => '7g_query_string',
+				'data-sstk-action'              => '7g_query_string',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -375,27 +361,27 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'simple-stack' );
 		}
 		$fields[] = array(
 			'id'         => '7g-all-toggle-request-string',
-			'name'       => __( 'Request String Rules', 'wpcd' ),
+			'name'       => __( 'Request String Rules', 'simple-stack' ),
 			'tab'        => '7g_waf',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => $status === 'on',
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => '7g_request_string',
+				'data-sstk-action'              => '7g_request_string',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
@@ -407,55 +393,45 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 		/* Set the confirmation prompt based on the the current status of this flag */
 		$confirmation_prompt = '';
 		if ( 'on' === $status ) {
-			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn off this 7G WAF option for this site?', 'simple-stack' );
 		} else {
-			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'wpcd' );
+			$confirmation_prompt = __( 'Are you sure you would like to turn on this 7G WAF option for this site?', 'simple-stack' );
 		}
 		$fields[] = array(
 			'id'         => '7g-all-toggle-request-method',
-			'name'       => __( 'Request Method Rules', 'wpcd' ),
+			'name'       => __( 'Request Method Rules', 'simple-stack' ),
 			'tab'        => '7g_waf',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => $status === 'on',
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => '7g_request_method',
+				'data-sstk-action'              => '7g_request_method',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
-		/* Important Notes - only applies on versions of WPCD earlier than 5.2.6. */
-		if ( ! $this->is_526_or_later( $id ) ) {
-			$fields[] = array(
-				'name' => __( 'Important Notes', 'wpcd' ),
-				'tab'  => '7g_waf',
-				'type' => 'heading',
-				'desc' => __( 'There is no need to activate both the 7G and 6G firewalls. The 7G firewall is an updated version of the 6G firewall.  We are including both because some sites still use the 6G firewall. And the 6G firewall has had more time in the real world.  New sites should start with the 7G firewall and then downgrade to 6G if there are issues.', 'wpcd' ),
-			);
-		}
-
 		/* About WAFs */
-		$desc  = __( 'A WAF is a web application firewall and operates at a higher level than your standard firewall.  It generally has more "smarts" since it sees data the way a web-browser would see the data.', 'wpcd' );
+		$desc  = __( 'A WAF is a web application firewall and operates at a higher level than your standard firewall.  It generally has more "smarts" since it sees data the way a web-browser would see the data.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'Once traffic has passed through a regular firewall, the 7G firewall takes a look at the content and applies web-specific rules to it to see if the traffic should be allowed.', 'wpcd' );
+		$desc .= __( 'Once traffic has passed through a regular firewall, the 7G firewall takes a look at the content and applies web-specific rules to it to see if the traffic should be allowed.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'In this case the firewall is actually a set of very specific NGINX server rules.  Thus, the rules are applied before any traffic even hits your WordPress installation which helps with performance.', 'wpcd' );
+		$desc .= __( 'The firewall rules are applied by OpenLiteSpeed before requests reach WordPress, which helps protect the site without adding work to PHP.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'The WAF filters out known bad bots and common web application attacks.', 'wpcd' );
+		$desc .= __( 'The WAF filters out known bad bots and common web application attacks.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'However, it is possible that certain types of good traffic could get caught up in the net which is why we allow you to turn on the rules selectively.', 'wpcd' );
+		$desc .= __( 'However, it is possible that certain types of good traffic could get caught up in the net which is why we allow you to turn on the rules selectively.', 'simple-stack' );
 		$desc .= '<br />';
-		$desc .= __( 'Note: If you are using a proxy such as CloudFlare then you probably do not need to turn these on since CloudFlare likely applies a superset of these rules to filter traffic before it hits your site.', 'wpcd' );
+		$desc .= __( 'Note: If you are using a proxy such as CloudFlare then you probably do not need to turn these on since CloudFlare likely applies a superset of these rules to filter traffic before it hits your site.', 'simple-stack' );
 
 		$fields[] = array(
-			'name' => __( 'About Web Application Firewalls', 'wpcd' ),
+			'name' => __( 'About Web Application Firewalls', 'simple-stack' ),
 			'tab'  => '7g_waf',
 			'type' => 'heading',
 			'desc' => $desc,
@@ -463,10 +439,10 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 
 		/* Credits */
 		$fields[] = array(
-			'name' => __( 'Credits', 'wpcd' ),
+			'name' => __( 'Credits', 'simple-stack' ),
 			'tab'  => '7g_waf',
 			'type' => 'heading',
-			'desc' => __( 'The 6G and 7G firewalls are published by the kind folks over at Perishable Press.', 'wpcd' ),
+			'desc' => __( 'The 7G firewall is published by the kind folks over at Perishable Press.', 'simple-stack' ),
 		);
 
 		return $fields;
@@ -484,7 +460,7 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 	public function get_7g_status( $id, $action ) {
 
 		// Get a full status array for all 7G statuses..
-		$status_array = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
+		$status_array = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
 		if ( empty( $status_array ) ) {
 			$status_array = array();
 		}
@@ -517,7 +493,7 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 			}
 		} else {
 			// Get a full current status array for all 7G statuses..
-			$status_array = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
+			$status_array = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
 			if ( empty( $status_array ) ) {
 				$status_array = array();
 			}
@@ -541,7 +517,7 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 	 */
 	public function convert_short_action_to_bash_action( $id, $action ) {
 
-		$status_array = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
+		$status_array = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_7g_status', true ) );
 
 		if ( isset( $status_array[ $action ] ) ) {
 			$status = $status_array[ $action ];
@@ -593,4 +569,4 @@ class WPCD_WORDPRESS_TABS_7G_FIREWALL extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_7G_FIREWALL();
+new SSTK_WORDPRESS_TABS_7G_FIREWALL();

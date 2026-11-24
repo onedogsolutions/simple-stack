@@ -14,12 +14,12 @@
 - [ServerDetail.jsx](file://src/admin/routes/ServerDetail.jsx)
 - [SitesList.jsx](file://src/admin/routes/SitesList.jsx)
 - [SiteDetail.jsx](file://src/admin/routes/SiteDetail.jsx)
-- [class-simplestack-rest-api.php](file://includes/core/api/class-simplestack-rest-api.php)
-- [class-simplestack-rest-controller-base.php](file://includes/core/api/class-simplestack-rest-controller-base.php)
-- [class-simplestack-rest-servers.php](file://includes/core/api/class-simplestack-rest-servers.php)
-- [class-simplestack-rest-sites.php](file://includes/core/api/class-simplestack-rest-sites.php)
-- [class-simplestack-rest-tabs.php](file://includes/core/api/class-simplestack-rest-tabs.php)
-- [class-simplestack-rest-security.php](file://includes/core/api/class-simplestack-rest-security.php)
+- [class-sstk-rest-api.php](file://includes/core/api/class-sstk-rest-api.php)
+- [class-sstk-rest-controller-base.php](file://includes/core/api/class-sstk-rest-controller-base.php)
+- [class-sstk-rest-servers.php](file://includes/core/api/class-sstk-rest-servers.php)
+- [class-sstk-rest-sites.php](file://includes/core/api/class-sstk-rest-sites.php)
+- [class-sstk-rest-tabs.php](file://includes/core/api/class-sstk-rest-tabs.php)
+- [class-sstk-rest-security.php](file://includes/core/api/class-sstk-rest-security.php)
 </cite>
 
 ## Table of Contents
@@ -34,7 +34,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s React state management approach inside the WordPress admin. The application is a client-side React app mounted into a dedicated container. It owns its navigation through the URL hash, keeps local component state for lists and forms, and synchronizes with the WordPress backend through a `simple-stack/v1` REST API.
+This document explains Simple Stack’s React state management approach inside the WordPress admin. The application is a client-side React app mounted into a dedicated container. It owns its navigation through the URL hash, keeps local component state for lists and forms, and synchronizes with the WordPress backend through a `simple-stack/v1` REST API.
 
 Key principles:
 - Application state is small and local to each route.
@@ -87,7 +87,7 @@ ApiClient --> Backend["WordPress REST API<br/>simple-stack/v1"]
 - **API client**: Provides namespaced methods for servers, sites, tabs, logs, and providers. Every request builds an absolute URL, attaches a nonce header when available, handles JSON and multipart bodies, unwraps the response envelope, and throws a typed `ApiError`.
 - **Formatting utilities**: Convert WordPress GMT dates, format bytes, title-case slugs, map status strings to badge tones, and safely display scalar values.
 - **Schema utilities**: Translate Meta Box field arrays returned by the tabs endpoint into renderable descriptors, collect action parameters, normalize options, group fields into card rows, and encode control values for legacy tab handlers.
-- **App shell**: Renders the SimpleStack chrome, primary navigation, breadcrumbs, and page actions without touching wp-admin’s global layout.
+- **App shell**: Renders the Simple Stack chrome, primary navigation, breadcrumbs, and page actions without touching wp-admin’s global layout.
 - **Tab renderer**: Renders any tab schema generically, manages local form state, file uploads, pending actions, confirmation prompts, and opens the log drawer for streaming actions.
 
 **Section sources**
@@ -101,7 +101,7 @@ ApiClient --> Backend["WordPress REST API<br/>simple-stack/v1"]
 - [TabRenderer.jsx:46-210](file://src/admin/components/TabRenderer.jsx#L46-L210)
 
 ## Architecture Overview
-SimpleStack uses a clear separation between the React frontend and the WordPress backend:
+Simple Stack uses a clear separation between the React frontend and the WordPress backend:
 
 ```mermaid
 sequenceDiagram
@@ -109,7 +109,7 @@ participant User as "Admin User"
 participant Route as "Route Component"
 participant Api as "api.js Client"
 participant Controller as "PHP Controller"
-participant Engine as "WPCD Engine"
+participant Engine as "SSTK Engine"
 participant Provider as "Cloud Provider"
 User->>Route : Open Servers or Sites screen
 Route->>Api : List or get resource
@@ -135,10 +135,10 @@ Route->>Route : Show toast, refresh, or navigate
 - [ServersList.jsx:32-74](file://src/admin/routes/ServersList.jsx#L32-L74)
 - [SiteDetail.jsx:58-69](file://src/admin/routes/SiteDetail.jsx#L58-L69)
 - [api.js:67-120](file://src/admin/lib/api.js#L67-L120)
-- [class-simplestack-rest-servers.php:99-160](file://includes/core/api/class-simplestack-rest-servers.php#L99-L160)
-- [class-simplestack-rest-sites.php:97-143](file://includes/core/api/class-simplestack-rest-sites.php#L97-L143)
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
-- [class-simplestack-rest-sites.php:283-312](file://includes/core/api/class-simplestack-rest-sites.php#L283-L312)
+- [class-sstk-rest-servers.php:99-160](file://includes/core/api/class-sstk-rest-servers.php#L99-L160)
+- [class-sstk-rest-sites.php:97-143](file://includes/core/api/class-sstk-rest-sites.php#L97-L143)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
+- [class-sstk-rest-sites.php:283-312](file://includes/core/api/class-sstk-rest-sites.php#L283-L312)
 
 ## Detailed Component Analysis
 
@@ -280,7 +280,7 @@ The site detail screen:
 - [SiteDetail.jsx:28-186](file://src/admin/routes/SiteDetail.jsx#L28-L186)
 
 ### Generic Tab Rendering and Field Schema
-The tab renderer is the core of SimpleStack’s state-driven configuration UI:
+The tab renderer is the core of Simple Stack’s state-driven configuration UI:
 - It receives raw Meta Box field arrays from the backend.
 - It translates them into renderable elements and groups them into card rows.
 - It tracks local control values keyed by field id.
@@ -324,69 +324,69 @@ Formatting functions keep routes free of presentation logic:
 
 ### WordPress REST API Layer
 The backend exposes a single `simple-stack/v1` namespace:
-- `SimpleStack_REST_API` registers controller classes.
-- `SimpleStack_REST_Controller_Base` enforces admin-only permissions, standard envelopes, argument helpers, paging normalization, and a tab-action dispatcher.
+- `SSTK_REST_API` registers controller classes.
+- `SSTK_REST_Controller_Base` enforces admin-only permissions, standard envelopes, argument helpers, paging normalization, and a tab-action dispatcher.
 - Servers and sites controllers provide list, detail, create, delete, and action endpoints.
 - Tabs controller returns sanitized tab names and field definitions.
 - Security controller performs read-only SSH probes against remote sites.
 
 ```mermaid
 classDiagram
-class SimpleStack_REST_API {
+class SSTK_REST_API {
 +register_routes()
 +get_controllers()
 +get_namespace()
 }
-class SimpleStack_REST_Controller_Base {
+class SSTK_REST_Controller_Base {
 +permissions_check()
 +respond(data, status)
 +error(code, message, status)
 +paging(request)
 +dispatch_tab_action(id, action, params, files)
 }
-class SimpleStack_REST_Servers {
+class SSTK_REST_Servers {
 +list_servers()
 +create_server()
 +get_server()
 +delete_server()
 +run_action()
 }
-class SimpleStack_REST_Sites {
+class SSTK_REST_Sites {
 +list_sites()
 +deploy_site()
 +get_site()
 +delete_site()
 +run_action()
 }
-class SimpleStack_REST_Tabs {
+class SSTK_REST_Tabs {
 +server_tabs()
 +site_tabs()
 }
-class SimpleStack_REST_Security {
+class SSTK_REST_Security {
 +security_status()
 }
-SimpleStack_REST_API --> SimpleStack_REST_Controller_Base : "instantiates"
-SimpleStack_REST_Servers --|> SimpleStack_REST_Controller_Base
-SimpleStack_REST_Sites --|> SimpleStack_REST_Controller_Base
-SimpleStack_REST_Tabs --|> SimpleStack_REST_Controller_Base
-SimpleStack_REST_Security --|> SimpleStack_REST_Controller_Base
+SSTK_REST_API --> SSTK_REST_Controller_Base : "instantiates"
+SSTK_REST_Servers --|> SSTK_REST_Controller_Base
+SSTK_REST_Sites --|> SSTK_REST_Controller_Base
+SSTK_REST_Tabs --|> SSTK_REST_Controller_Base
+SSTK_REST_Security --|> SSTK_REST_Controller_Base
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-api.php:21-118](file://includes/core/api/class-simplestack-rest-api.php#L21-L118)
-- [class-simplestack-rest-controller-base.php:22-446](file://includes/core/api/class-simplestack-rest-controller-base.php#L22-L446)
-- [class-simplestack-rest-servers.php:22-88](file://includes/core/api/class-simplestack-rest-servers.php#L22-L88)
-- [class-simplestack-rest-sites.php:21-86](file://includes/core/api/class-simplestack-rest-sites.php#L21-L86)
-- [class-simplestack-rest-tabs.php:27-54](file://includes/core/api/class-simplestack-rest-tabs.php#L27-L54)
-- [class-simplestack-rest-security.php:19-38](file://includes/core/api/class-simplestack-rest-security.php#L19-L38)
+- [class-sstk-rest-api.php:21-118](file://includes/core/api/class-sstk-rest-api.php#L21-L118)
+- [class-sstk-rest-controller-base.php:22-446](file://includes/core/api/class-sstk-rest-controller-base.php#L22-L446)
+- [class-sstk-rest-servers.php:22-88](file://includes/core/api/class-sstk-rest-servers.php#L22-L88)
+- [class-sstk-rest-sites.php:21-86](file://includes/core/api/class-sstk-rest-sites.php#L21-L86)
+- [class-sstk-rest-tabs.php:27-54](file://includes/core/api/class-sstk-rest-tabs.php#L27-L54)
+- [class-sstk-rest-security.php:19-38](file://includes/core/api/class-sstk-rest-security.php#L19-L38)
 
 **Section sources**
-- [class-simplestack-rest-api.php:21-136](file://includes/core/api/class-simplestack-rest-api.php#L21-L136)
-- [class-simplestack-rest-controller-base.php:22-446](file://includes/core/api/class-simplestack-rest-controller-base.php#L22-L446)
-- [class-simplestack-rest-servers.php:22-458](file://includes/core/api/class-simplestack-rest-servers.php#L22-L458)
-- [class-simplestack-rest-sites.php:21-392](file://includes/core/api/class-simplestack-rest-sites.php#L21-L392)
-- [class-simplestack-rest-tabs.php:27-223](file://includes/core/api/class-simplestack-rest-tabs.php#L27-L223)
-- [class-simplestack-rest-security.php:19-253](file://includes/core/api/class-simplestack-rest-security.php#L19-L253)
+- [class-sstk-rest-api.php:21-136](file://includes/core/api/class-sstk-rest-api.php#L21-L136)
+- [class-sstk-rest-controller-base.php:22-446](file://includes/core/api/class-sstk-rest-controller-base.php#L22-L446)
+- [class-sstk-rest-servers.php:22-458](file://includes/core/api/class-sstk-rest-servers.php#L22-L458)
+- [class-sstk-rest-sites.php:21-392](file://includes/core/api/class-sstk-rest-sites.php#L21-L392)
+- [class-sstk-rest-tabs.php:27-223](file://includes/core/api/class-sstk-rest-tabs.php#L27-L223)
+- [class-sstk-rest-security.php:19-253](file://includes/core/api/class-sstk-rest-security.php#L19-L253)
 
 ## Dependency Analysis
 The React client depends on:
@@ -397,7 +397,7 @@ The React client depends on:
 - Reusable components such as `AppShell`, `Button`, `DataTable`, `Card`, `Modal`, `Toast`, and `TabRenderer`.
 
 The backend depends on:
-- WPCD core classes for server and site models.
+- SSTK core classes for server and site models.
 - Cloud provider integrations for provisioning and lifecycle actions.
 - SSH access for read-only security probes.
 
@@ -422,7 +422,7 @@ Base --> SecurityCtrl["Security Controller"]
 - [ServerDetail.jsx:12-21](file://src/admin/routes/ServerDetail.jsx#L12-L21)
 - [SiteDetail.jsx:12-21](file://src/admin/routes/SiteDetail.jsx#L12-L21)
 - [api.js:153-290](file://src/admin/lib/api.js#L153-L290)
-- [class-simplestack-rest-api.php:30-37](file://includes/core/api/class-simplestack-rest-api.php#L30-L37)
+- [class-sstk-rest-api.php:30-37](file://includes/core/api/class-sstk-rest-api.php#L30-L37)
 
 **Section sources**
 - [ServersList.jsx:10-16](file://src/admin/routes/ServersList.jsx#L10-L16)
@@ -430,7 +430,7 @@ Base --> SecurityCtrl["Security Controller"]
 - [ServerDetail.jsx:12-21](file://src/admin/routes/ServerDetail.jsx#L12-L21)
 - [SiteDetail.jsx:12-21](file://src/admin/routes/SiteDetail.jsx#L12-L21)
 - [api.js:153-290](file://src/admin/lib/api.js#L153-L290)
-- [class-simplestack-rest-api.php:30-37](file://includes/core/api/class-simplestack-rest-api.php#L30-L37)
+- [class-sstk-rest-api.php:30-37](file://includes/core/api/class-sstk-rest-api.php#L30-L37)
 
 ## Performance Considerations
 - **Local state per route**: Each route owns only the data it needs. Lists store paginated slices rather than entire datasets.
@@ -451,7 +451,7 @@ Common issues and how to diagnose them:
 
 - **Blank screen after reload**: Verify the hash seeding logic and ensure the container has the expected `data-route` attribute.
 - **401 or nonce errors**: Confirm that `window.simplestackAdmin.nonce` is present and that the REST root resolves correctly.
-- **Tab controls do not submit**: Check that the field has an action slug, that `data-wpcd-fields` selectors resolve to valid field ids, and that `encodeValue` produces the expected `'on'`/`'off'` string for switches.
+- **Tab controls do not submit**: Check that the field has an action slug, that `data-sstk-fields` selectors resolve to valid field ids, and that `encodeValue` produces the expected `'on'`/`'off'` string for switches.
 - **Multipart uploads fail**: Ensure file inputs are mapped to the correct field id and that the API client sends `FormData` when files are present.
 - **Actions appear disabled**: Inspect `disabledReason` passed to `TabRenderer`; server or site actions may be blocked until the target is reachable.
 - **Errors not visible**: Confirm that `ApiError` messages are caught and displayed through `ErrorPanel` or toast notifications.
@@ -462,9 +462,9 @@ Common issues and how to diagnose them:
 - [api.js:67-120](file://src/admin/lib/api.js#L67-L120)
 - [schema.js:162-210](file://src/admin/lib/schema.js#L162-L210)
 - [TabRenderer.jsx:108-144](file://src/admin/components/TabRenderer.jsx#L108-L144)
-- [class-simplestack-rest-controller-base.php:136-162](file://includes/core/api/class-simplestack-rest-controller-base.php#L136-L162)
+- [class-sstk-rest-controller-base.php:136-162](file://includes/core/api/class-sstk-rest-controller-base.php#L136-L162)
 
 ## Conclusion
-SimpleStack’s React state management is intentionally lightweight: routes own their data, the API client centralizes networking, and the generic tab renderer turns server-provided field schemas into interactive forms. This design avoids duplicating dozens of legacy screens while preserving compatibility with existing tab handlers. For future improvements, consider adding explicit client-side caching, structured error boundaries, and performance profiling hooks around heavy tab rendering.
+Simple Stack’s React state management is intentionally lightweight: routes own their data, the API client centralizes networking, and the generic tab renderer turns server-provided field schemas into interactive forms. This design avoids duplicating dozens of legacy screens while preserving compatibility with existing tab handlers. For future improvements, consider adding explicit client-side caching, structured error boundaries, and performance profiling hooks around heavy tab rendering.
 
 [No sources needed since this section summarizes without analyzing specific files]

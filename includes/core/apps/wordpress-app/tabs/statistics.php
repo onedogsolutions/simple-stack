@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Statistics tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,18 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_STATISTICS
+ * Class SSTK_WORDPRESS_TABS_STATISTICS
  */
-class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_STATISTICS extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 	}
 
 	/**
@@ -49,7 +50,7 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Statistics', 'wpcd' ),
+				'label' => __( 'Statistics', 'simple-stack' ),
 				'icon'  => 'fad fa-chart-pie',
 			);
 		}
@@ -65,17 +66,17 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the STATISTICS tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -105,15 +106,15 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'show-diskspace-used', 'show-vnstat' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -173,31 +174,31 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 		/* Disk Space Used */
 
 		// Start new card.
-		$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+		$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 		$actions['show-diskspace-used-header'] = array(
-			'label'          => __( 'Disk Space', 'wpcd' ),
+			'label'          => __( 'Disk Space', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'View the disk space used by this app', 'wpcd' ),
+				'desc' => __( 'View the disk space used by this app', 'simple-stack' ),
 			),
 		);
 
 		/* Get any disk space data we might have stored already */
 		$disk_used = get_post_meta( $id, 'wpapp_diskspace_used', true );
 		if ( ! empty( $disk_used ) ) {
-			$desc = sprintf( __( '<b>%s.</b>', 'wpcd' ), $disk_used );
+			$desc = sprintf( __( '<b>%s.</b>', 'simple-stack' ), $disk_used );
 		} else {
-			$desc = __( 'Re-calculate the amount of disk space used by this app', 'wpcd' );
+			$desc = __( 'Re-calculate the amount of disk space used by this app', 'simple-stack' );
 		}
 
 		/* Set the text of the confirmation prompt */
-		$confirmation_prompt = __( 'Are you sure you would like to calculate the diskspace used for this site?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to calculate the diskspace used for this site?', 'simple-stack' );
 
 		$actions['show-diskspace-used'] = array(
-			'label'          => __( 'Calculate used disk space', 'wpcd' ),
+			'label'          => __( 'Calculate used disk space', 'simple-stack' ),
 			'raw_attributes' => array(
-				'std'                 => __( 'Re-calculate', 'wpcd' ),
+				'std'                 => __( 'Re-calculate', 'simple-stack' ),
 				'desc'                => $desc,
 				'confirmation_prompt' => $confirmation_prompt,
 			),
@@ -205,19 +206,19 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 		);
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $this->get_tab_slug() );
+		$actions[] = sstk_end_card( $this->get_tab_slug() );
 		/* End Disk Space Used */
 
 		/* VNSTAT */
-		if ( wpcd_get_early_option( 'wordpress_app_show_vnstat_in_app' ) ) {
+		if ( sstk_get_early_option( 'wordpress_app_show_vnstat_in_app' ) ) {
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['show-vnstat-header'] = array(
-				'label'          => __( 'VNSTAT', 'wpcd' ),
+				'label'          => __( 'VNSTAT', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'VNSTAT is a lightweight traffic statistics program in Linux that provides a formatted text output. View those statistics here. <br /> Note that these statistics are for the entire server and not just for this site!', 'wpcd' ),
+					'desc' => __( 'VNSTAT is a lightweight traffic statistics program in Linux that provides a formatted text output. View those statistics here. <br /> Note that these statistics are for the entire server and not just for this site!', 'simple-stack' ),
 				),
 			);
 
@@ -225,13 +226,13 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 			$vnstat = get_post_meta( $id, 'wpapp_vnstat_data', true );
 
 			/* Set the text of the confirmation prompt */
-			$confirmation_prompt_vnstat = __( 'Are you sure you would like to vnstat data for this site?', 'wpcd' );
+			$confirmation_prompt_vnstat = __( 'Are you sure you would like to vnstat data for this site?', 'simple-stack' );
 
 			$actions['show-vnstat'] = array(
-				'label'          => __( 'Get VNSTAT Data', 'wpcd' ),
+				'label'          => __( 'Get VNSTAT Data', 'simple-stack' ),
 				'raw_attributes' => array(
-					'std'                 => __( 'VNSTAT', 'wpcd' ),
-					'desc'                => __( 'Collect VNSTAT Data', 'wpcd' ),
+					'std'                 => __( 'VNSTAT', 'simple-stack' ),
+					'desc'                => __( 'Collect VNSTAT Data', 'simple-stack' ),
 					'confirmation_prompt' => $confirmation_prompt_vnstat,
 				),
 				'type'           => 'button',
@@ -239,7 +240,7 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 
 			if ( ! empty( $vnstat ) ) {
 				$actions['vnstat-data'] = array(
-					'label'          => __( 'VNStat Data', 'wpcd' ),
+					'label'          => __( 'VNStat Data', 'simple-stack' ),
 					'raw_attributes' => array(
 						'std' => $vnstat,
 					),
@@ -247,19 +248,19 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 				);
 			}
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 		}
 		/* End VNSTAT */
 
 		/* Point back to server for additional data */
-		if ( true === (bool) wpcd_get_early_option( 'wordpress_app_hide_addl_stats_explanatory_text' ) && ( ! wpcd_is_admin() ) ) {
+		if ( true === (bool) sstk_get_early_option( 'wordpress_app_hide_addl_stats_explanatory_text' ) && ( ! sstk_is_admin() ) ) {
 			// Do nothing.
 		} else {
 			// Start new card.
-			$actions[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$actions[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			$actions['stats-addl-data-location'] = array(
-				'label'          => __( 'Additional Statistics', 'wpcd' ),
+				'label'          => __( 'Additional Statistics', 'simple-stack' ),
 				'raw_attributes' => array(
 					'desc' => __( 'You can view additional statistics in the STATISTICS tab on the server that is holding this site.' ),
 				),
@@ -267,7 +268,7 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Close up prior card.
-			$actions[] = wpcd_end_card( $this->get_tab_slug() );
+			$actions[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
@@ -289,7 +290,7 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -307,18 +308,18 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 
 		// Get the last 3 lines of the result which should contain the data...
-		$result = wpcd_get_last_lines_from_string( trim( $result ), 3, '<br />' );
+		$result = sstk_get_last_lines_from_string( trim( $result ), 3, '<br />' );
 
 		// update the data...
 		update_post_meta( $id, 'wpapp_diskspace_used', $result . '<br />Last calculated on ' . date( 'Y-m-d H:i:s', current_time( 'timestamp' ) ) );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( sprintf( __( '%s', 'wpcd' ), $result ) );
+		return new \WP_Error( sprintf( __( '%s', 'simple-stack' ), $result ) );
 
 	}
 
@@ -335,7 +336,7 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => 'sudo vnstat' ) );
@@ -346,10 +347,10 @@ class WPCD_WORDPRESS_TABS_STATISTICS extends WPCD_WORDPRESS_TABS {
 		update_post_meta( $id, 'wpapp_vnstat_data_oneline', '<pre>' . $result2 . '<pre/>' );
 
 		// Return the data as an error so it can be shown in a dialog box.
-		return new \WP_Error( __( 'VNSTAT data has been collected. This page will now refresh.  Navigate back to this tab to see the new data!', 'wpcd' ) );
+		return new \WP_Error( __( 'VNSTAT data has been collected. This page will now refresh.  Navigate back to this tab to see the new data!', 'simple-stack' ) );
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_STATISTICS();
+new SSTK_WORDPRESS_TABS_STATISTICS();

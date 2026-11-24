@@ -1,17 +1,18 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Log Console
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 ?>
-<div class="wpcd-popup-log-console">
-	<div class="wpcd-log-wrap">
-		<div class="wpcd-log-title"><?php echo esc_html( __( 'Command Results', 'wpcd' ) ); ?></div>
-		<div class="wpcd-log-console"></div>		
-		<div class="wpcd-log-close-wrap">
-			<div class="wpcd-log-close-button button"><a href="#"><?php echo esc_html( __( 'Close', 'wpcd' ) ); ?></a></div>
+<div class="sstk-popup-log-console">
+	<div class="sstk-log-wrap">
+		<div class="sstk-log-title"><?php echo esc_html( __( 'Command Results', 'simple-stack' ) ); ?></div>
+		<div class="sstk-log-console"></div>
+		<div class="sstk-log-close-wrap">
+			<div class="sstk-log-close-button button"><a href="#"><?php echo esc_html( __( 'Close', 'simple-stack' ) ); ?></a></div>
 		</div>
 	</div>
 </div>

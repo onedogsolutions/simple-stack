@@ -2,8 +2,8 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [class-wpcd-email-notifications.php](file://includes/core/class-wpcd-email-notifications.php)
-- [class-wpcd-posts-notify-sent-log.php](file://includes/core/class-wpcd-posts-notify-sent-log.php)
+- [class-sstk-email-notifications.php](file://includes/core/class-sstk-email-notifications.php)
+- [class-sstk-posts-notify-sent-log.php](file://includes/core/class-sstk-posts-notify-sent-log.php)
 - [class-wordpress-app-settings.php](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php)
 - [services.php](file://includes/core/apps/wordpress-app/tabs-server/services.php)
 - [14-mail.txt](file://includes/core/apps/wordpress-app/scripts/v1/raw/14-mail.txt)
@@ -22,7 +22,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s email notification system, focusing on the WPCD_EMAIL_NOTIFICATIONS class and related components that send automated alerts, status updates, and operational notifications. It covers supported SMTP configuration options, template customization capabilities, notification triggers (including server provisioning events, backup completion, security alerts, and maintenance reminders), conditional notifications, integration with external services, deliverability best practices, spam prevention measures, and troubleshooting steps.
+This document explains Simple Stack’s email notification system, focusing on the SSTK_EMAIL_NOTIFICATIONS class and related components that send automated alerts, status updates, and operational notifications. It covers supported SMTP configuration options, template customization capabilities, notification triggers (including server provisioning events, backup completion, security alerts, and maintenance reminders), conditional notifications, integration with external services, deliverability best practices, spam prevention measures, and troubleshooting steps.
 
 ## Project Structure
 The email notification system spans several files:
@@ -37,8 +37,8 @@ subgraph "WordPress Admin"
 UI["Admin UI<br/>Compose & Sent Emails"]
 end
 subgraph "PHP Core"
-EN["WPCD_EMAIL_NOTIFICATIONS<br/>Email Composition & Sending"]
-NSL["WPCD_NOTIFY_SENT_LOG<br/>Notification Dispatch & Logging"]
+EN["SSTK_EMAIL_NOTIFICATIONS<br/>Email Composition & Sending"]
+NSL["SSTK_NOTIFY_SENT_LOG<br/>Notification Dispatch & Logging"]
 end
 subgraph "Server Side"
 SMTP["SMTP Gateway Config<br/>(Settings + Scripts)"]
@@ -58,18 +58,18 @@ NSL -.-> SMTP
 ```
 
 **Diagram sources**
-- [class-wpcd-email-notifications.php:30-99](file://includes/core/class-wpcd-email-notifications.php#L30-L99)
-- [class-wpcd-posts-notify-sent-log.php:325-486](file://includes/core/class-wpcd-posts-notify-sent-log.php#L325-L486)
+- [class-sstk-email-notifications.php:30-99](file://includes/core/class-sstk-email-notifications.php#L30-L99)
+- [class-sstk-posts-notify-sent-log.php:325-486](file://includes/core/class-sstk-posts-notify-sent-log.php#L325-L486)
 - [class-wordpress-app-settings.php:2686-2749](file://includes/core/apps/wordpress-app/class-wordpress-app-settings.php#L2686-L2749)
 - [services.php:862-933](file://includes/core/apps/wordpress-app/tabs-server/services.php#L862-L933)
 
 **Section sources**
-- [class-wpcd-email-notifications.php:15-34](file://includes/core/class-wpcd-email-notifications.php#L15-L34)
-- [class-wpcd-posts-notify-sent-log.php:15-34](file://includes/core/class-wpcd-posts-notify-sent-log.php#L15-L34)
+- [class-sstk-email-notifications.php:15-34](file://includes/core/class-sstk-email-notifications.php#L15-L34)
+- [class-sstk-posts-notify-sent-log.php:15-34](file://includes/core/class-sstk-posts-notify-sent-log.php#L15-L34)
 
 ## Core Components
-- WPCD_EMAIL_NOTIFICATIONS: Manages email address management, compose-and-send workflows, scheduled sends, and sent email logs.
-- WPCD_NOTIFY_SENT_LOG: Scans pending notifications, applies user-level filters, and dispatches messages to email, Slack, or Zapier while logging outcomes.
+- SSTK_EMAIL_NOTIFICATIONS: Manages email address management, compose-and-send workflows, scheduled sends, and sent email logs.
+- SSTK_NOTIFY_SENT_LOG: Scans pending notifications, applies user-level filters, and dispatches messages to email, Slack, or Zapier while logging outcomes.
 - WordPress App Settings and Services: Provide SMTP gateway configuration fields and defaults used by server-side mail delivery.
 
 Key responsibilities:
@@ -80,8 +80,8 @@ Key responsibilities:
 - Route notifications based on user preferences and context.
 
 **Section sources**
-- [class-wpcd-email-notifications.php:30-99](file://includes/core/class-wpcd-email-notifications.php#L30-L99)
-- [class-wpcd-posts-notify-sent-log.php:325-486](file://includes/core/class-wpcd-posts-notify-sent-log.php#L325-L486)
+- [class-sstk-email-notifications.php:30-99](file://includes/core/class-sstk-email-notifications.php#L30-L99)
+- [class-sstk-posts-notify-sent-log.php:325-486](file://includes/core/class-sstk-posts-notify-sent-log.php#L325-L486)
 
 ## Architecture Overview
 The system supports two primary flows:
@@ -92,7 +92,7 @@ The system supports two primary flows:
 sequenceDiagram
 participant Admin as "Admin User"
 participant UI as "Admin UI"
-participant EN as "WPCD_EMAIL_NOTIFICATIONS"
+participant EN as "SSTK_EMAIL_NOTIFICATIONS"
 participant WP as "WordPress Cron"
 participant Mail as "wp_mail()"
 participant Log as "Sent Email Log"
@@ -108,13 +108,13 @@ EN->>Mail : Send queued email
 ```
 
 **Diagram sources**
-- [class-wpcd-email-notifications.php:943-1028](file://includes/core/class-wpcd-email-notifications.php#L943-L1028)
-- [class-wpcd-email-notifications.php:1033-1097](file://includes/core/class-wpcd-email-notifications.php#L1033-L1097)
-- [class-wpcd-email-notifications.php:1445-1465](file://includes/core/class-wpcd-email-notifications.php#L1445-L1465)
+- [class-sstk-email-notifications.php:943-1028](file://includes/core/class-sstk-email-notifications.php#L943-L1028)
+- [class-sstk-email-notifications.php:1033-1097](file://includes/core/class-sstk-email-notifications.php#L1033-L1097)
+- [class-sstk-email-notifications.php:1445-1465](file://includes/core/class-sstk-email-notifications.php#L1445-L1465)
 
 ## Detailed Component Analysis
 
-### WPCD_EMAIL_NOTIFICATIONS Class
+### SSTK_EMAIL_NOTIFICATIONS Class
 Responsibilities:
 - Register custom post types for email addresses, sent emails, and batch entries.
 - Provide admin metaboxes for composing emails and viewing sent emails.
@@ -135,43 +135,43 @@ Important methods and behaviors:
 
 ```mermaid
 classDiagram
-class WPCD_EMAIL_NOTIFICATIONS {
+class SSTK_EMAIL_NOTIFICATIONS {
 +instance()
 +__construct()
 +hooks()
 +register()
 +display_email_notifications_metaboxes()
-+wpcd_email_address_fields_save()
-+wpcd_email_address_entry_delete()
-+wpcd_compose_email_save_to_draft()
-+wpcd_compose_email_send_now()
-+wpcd_update_common_fields_for_compose_email_tab()
-+wpcd_get_all_emails_of_server_sites()
-+wpcd_send_compose_email_to_each_email_address()
-+wpcd_common_code_for_send_compose_email()
-+wpcd_sent_email_insert_entries()
-+wpcd_send_compose_email_on_scheduled_time_for_servers_apps()
++sstk_email_address_fields_save()
++sstk_email_address_entry_delete()
++sstk_compose_email_save_to_draft()
++sstk_compose_email_send_now()
++sstk_update_common_fields_for_compose_email_tab()
++sstk_get_all_emails_of_server_sites()
++sstk_send_compose_email_to_each_email_address()
++sstk_common_code_for_send_compose_email()
++sstk_sent_email_insert_entries()
++sstk_send_compose_email_on_scheduled_time_for_servers_apps()
 }
 ```
 
 **Diagram sources**
-- [class-wpcd-email-notifications.php:15-34](file://includes/core/class-wpcd-email-notifications.php#L15-L34)
-- [class-wpcd-email-notifications.php:39-99](file://includes/core/class-wpcd-email-notifications.php#L39-L99)
-- [class-wpcd-email-notifications.php:104-272](file://includes/core/class-wpcd-email-notifications.php#L104-L272)
-- [class-wpcd-email-notifications.php:324-675](file://includes/core/class-wpcd-email-notifications.php#L324-L675)
-- [class-wpcd-email-notifications.php:825-938](file://includes/core/class-wpcd-email-notifications.php#L825-L938)
-- [class-wpcd-email-notifications.php:943-1097](file://includes/core/class-wpcd-email-notifications.php#L943-L1097)
-- [class-wpcd-email-notifications.php:1110-1402](file://includes/core/class-wpcd-email-notifications.php#L1110-L1402)
-- [class-wpcd-email-notifications.php:1445-1465](file://includes/core/class-wpcd-email-notifications.php#L1445-L1465)
+- [class-sstk-email-notifications.php:15-34](file://includes/core/class-sstk-email-notifications.php#L15-L34)
+- [class-sstk-email-notifications.php:39-99](file://includes/core/class-sstk-email-notifications.php#L39-L99)
+- [class-sstk-email-notifications.php:104-272](file://includes/core/class-sstk-email-notifications.php#L104-L272)
+- [class-sstk-email-notifications.php:324-675](file://includes/core/class-sstk-email-notifications.php#L324-L675)
+- [class-sstk-email-notifications.php:825-938](file://includes/core/class-sstk-email-notifications.php#L825-L938)
+- [class-sstk-email-notifications.php:943-1097](file://includes/core/class-sstk-email-notifications.php#L943-L1097)
+- [class-sstk-email-notifications.php:1110-1402](file://includes/core/class-sstk-email-notifications.php#L1110-L1402)
+- [class-sstk-email-notifications.php:1445-1465](file://includes/core/class-sstk-email-notifications.php#L1445-L1465)
 
 **Section sources**
-- [class-wpcd-email-notifications.php:30-99](file://includes/core/class-wpcd-email-notifications.php#L30-L99)
-- [class-wpcd-email-notifications.php:324-675](file://includes/core/class-wpcd-email-notifications.php#L324-L675)
-- [class-wpcd-email-notifications.php:943-1097](file://includes/core/class-wpcd-email-notifications.php#L943-L1097)
-- [class-wpcd-email-notifications.php:1110-1402](file://includes/core/class-wpcd-email-notifications.php#L1110-L1402)
-- [class-wpcd-email-notifications.php:1445-1465](file://includes/core/class-wpcd-email-notifications.php#L1445-L1465)
+- [class-sstk-email-notifications.php:30-99](file://includes/core/class-sstk-email-notifications.php#L30-L99)
+- [class-sstk-email-notifications.php:324-675](file://includes/core/class-sstk-email-notifications.php#L324-L675)
+- [class-sstk-email-notifications.php:943-1097](file://includes/core/class-sstk-email-notifications.php#L943-L1097)
+- [class-sstk-email-notifications.php:1110-1402](file://includes/core/class-sstk-email-notifications.php#L1110-L1402)
+- [class-sstk-email-notifications.php:1445-1465](file://includes/core/class-sstk-email-notifications.php#L1445-L1465)
 
-### Notification Scanner and Dispatch (WPCD_NOTIFY_SENT_LOG)
+### Notification Scanner and Dispatch (SSTK_NOTIFY_SENT_LOG)
 Responsibilities:
 - Scan pending notifications marked as not yet sent.
 - Match notifications against user alert rules (servers/sites, types, references).
@@ -195,12 +195,12 @@ NextLog --> End(["Done"])
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-notify-sent-log.php:325-486](file://includes/core/class-wpcd-posts-notify-sent-log.php#L325-L486)
-- [class-wpcd-posts-notify-sent-log.php:510-562](file://includes/core/class-wpcd-posts-notify-sent-log.php#L510-L562)
+- [class-sstk-posts-notify-sent-log.php:325-486](file://includes/core/class-sstk-posts-notify-sent-log.php#L325-L486)
+- [class-sstk-posts-notify-sent-log.php:510-562](file://includes/core/class-sstk-posts-notify-sent-log.php#L510-L562)
 
 **Section sources**
-- [class-wpcd-posts-notify-sent-log.php:325-486](file://includes/core/class-wpcd-posts-notify-sent-log.php#L325-L486)
-- [class-wpcd-posts-notify-sent-log.php:510-562](file://includes/core/class-wpcd-posts-notify-sent-log.php#L510-L562)
+- [class-sstk-posts-notify-sent-log.php:325-486](file://includes/core/class-sstk-posts-notify-sent-log.php#L325-L486)
+- [class-sstk-posts-notify-sent-log.php:510-562](file://includes/core/class-sstk-posts-notify-sent-log.php#L510-L562)
 
 ### SMTP Configuration and Providers
 Supported configuration:
@@ -249,8 +249,8 @@ Template location:
 - Default server-ready email template is provided for reference and can be extended.
 
 **Section sources**
-- [class-wpcd-email-notifications.php:1363-1402](file://includes/core/class-wpcd-email-notifications.php#L1363-L1402)
-- [class-wpcd-posts-notify-sent-log.php:510-562](file://includes/core/class-wpcd-posts-notify-sent-log.php#L510-L562)
+- [class-sstk-email-notifications.php:1363-1402](file://includes/core/class-sstk-email-notifications.php#L1363-L1402)
+- [class-sstk-posts-notify-sent-log.php:510-562](file://includes/core/class-sstk-posts-notify-sent-log.php#L510-L562)
 - [email-admin.html:1-14](file://includes/core/apps/wordpress-app/templates/email-admin.html#L1-L14)
 
 ### Notification Triggers
@@ -280,7 +280,7 @@ Implementation highlights:
 - Permission checks ensure users only receive notifications for resources they can access.
 
 **Section sources**
-- [class-wpcd-posts-notify-sent-log.php:404-474](file://includes/core/class-wpcd-posts-notify-sent-log.php#L404-L474)
+- [class-sstk-posts-notify-sent-log.php:404-474](file://includes/core/class-sstk-posts-notify-sent-log.php#L404-L474)
 
 ### Integration with External Notification Services
 - Slack webhooks: Messages are constructed with tokens and posted to configured webhook URLs.
@@ -288,22 +288,22 @@ Implementation highlights:
 - Both integrations log success/failure and destination.
 
 **Section sources**
-- [class-wpcd-posts-notify-sent-log.php:585-641](file://includes/core/class-wpcd-posts-notify-sent-log.php#L585-L641)
-- [class-wpcd-posts-notify-sent-log.php:667-747](file://includes/core/class-wpcd-posts-notify-sent-log.php#L667-L747)
+- [class-sstk-posts-notify-sent-log.php:585-641](file://includes/core/class-sstk-posts-notify-sent-log.php#L585-L641)
+- [class-sstk-posts-notify-sent-log.php:667-747](file://includes/core/class-sstk-posts-notify-sent-log.php#L667-L747)
 
 ## Dependency Analysis
-- WPCD_EMAIL_NOTIFICATIONS depends on:
+- SSTK_EMAIL_NOTIFICATIONS depends on:
   - WordPress core functions (wp_mail, wp_schedule_event, wp_clear_scheduled_hook).
   - Token replacement utilities via the WordPress app class.
   - Server metadata helpers to resolve server names and domains.
-- WPCD_NOTIFY_SENT_LOG depends on:
+- SSTK_NOTIFY_SENT_LOG depends on:
   - WordPress core functions (curl for webhooks, transient API).
   - WordPress app class for token replacement.
   - Helper classes to retrieve server and site information.
 
 Coupling and cohesion:
-- Email composition and sending are cohesive within WPCD_EMAIL_NOTIFICATIONS.
-- Notification scanning and dispatch are cohesive within WPCD_NOTIFY_SENT_LOG.
+- Email composition and sending are cohesive within SSTK_EMAIL_NOTIFICATIONS.
+- Notification scanning and dispatch are cohesive within SSTK_NOTIFY_SENT_LOG.
 - SMTP configuration is decoupled from sending logic but influences deliverability.
 
 Potential circular dependencies:
@@ -314,9 +314,9 @@ External dependencies:
 - Slack and Zapier webhooks.
 
 **Section sources**
-- [class-wpcd-email-notifications.php:1385-1402](file://includes/core/class-wpcd-email-notifications.php#L1385-L1402)
-- [class-wpcd-posts-notify-sent-log.php:615-641](file://includes/core/class-wpcd-posts-notify-sent-log.php#L615-L641)
-- [class-wpcd-posts-notify-sent-log.php:720-747](file://includes/core/class-wpcd-posts-notify-sent-log.php#L720-L747)
+- [class-sstk-email-notifications.php:1385-1402](file://includes/core/class-sstk-email-notifications.php#L1385-L1402)
+- [class-sstk-posts-notify-sent-log.php:615-641](file://includes/core/class-sstk-posts-notify-sent-log.php#L615-L641)
+- [class-sstk-posts-notify-sent-log.php:720-747](file://includes/core/class-sstk-posts-notify-sent-log.php#L720-L747)
 
 ## Performance Considerations
 - Batch processing: When sending to multiple recipients, consider batching to reduce overhead.
@@ -340,10 +340,10 @@ Operational checks:
 - Validate SMTP settings and server-side mail gateway installation.
 
 **Section sources**
-- [class-wpcd-email-notifications.php:1283-1402](file://includes/core/class-wpcd-email-notifications.php#L1283-L1402)
-- [class-wpcd-posts-notify-sent-log.php:510-562](file://includes/core/class-wpcd-posts-notify-sent-log.php#L510-L562)
+- [class-sstk-email-notifications.php:1283-1402](file://includes/core/class-sstk-email-notifications.php#L1283-L1402)
+- [class-sstk-posts-notify-sent-log.php:510-562](file://includes/core/class-sstk-posts-notify-sent-log.php#L510-L562)
 
 ## Conclusion
-SimpleStack’s email notification system provides robust mechanisms for composing, scheduling, and sending automated alerts through SMTP, with flexible token-based templates and multi-channel integrations. Administrators can configure SMTP gateways, customize templates, and set up conditional notifications tailored to specific servers, sites, and event types. By following deliverability best practices and leveraging the provided logging and diagnostics, teams can maintain reliable and informative email communications across their infrastructure.
+Simple Stack’s email notification system provides robust mechanisms for composing, scheduling, and sending automated alerts through SMTP, with flexible token-based templates and multi-channel integrations. Administrators can configure SMTP gateways, customize templates, and set up conditional notifications tailored to specific servers, sites, and event types. By following deliverability best practices and leveraging the provided logging and diagnostics, teams can maintain reliable and informative email communications across their infrastructure.
 
 [No sources needed since this section summarizes without analyzing specific files]

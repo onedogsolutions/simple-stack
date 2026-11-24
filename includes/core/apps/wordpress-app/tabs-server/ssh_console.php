@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * SSH Console Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,19 +11,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE
+ * Class SSTK_WORDPRESS_TABS_SERVER_SSH_CONSOLE
  */
-class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
 	}
 
@@ -51,7 +52,7 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'SSH Console', 'wpcd' ),
+				'label' => __( 'SSH Console', 'simple-stack' ),
 				'icon'  => 'fad fa-terminal',
 			);
 		}
@@ -66,13 +67,13 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the SERVICES tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -102,15 +103,15 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'ssh-console-execute', 'ssh-console-clear-history', 'ssh-console-toggle-tab' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -168,18 +169,18 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 
 		// Set up metabox items.
 		$actions    = array();
-		$sshc_desc  = __( 'Danger Zone!', 'wpcd' );
+		$sshc_desc  = __( 'Danger Zone!', 'simple-stack' );
 		$sshc_desc .= '<br />';
-		$sshc_desc .= __( 'This ssh "console" allows to send a single ssh command to your server and displays the results or output of that command.', 'wpcd' );
+		$sshc_desc .= __( 'This ssh "console" allows to send a single ssh command to your server and displays the results or output of that command.', 'simple-stack' );
 		$sshc_desc .= '<br />';
-		$sshc_desc .= __( 'To prevent errors you should always send a command that is guaranteed to return a value. You can do this by using an "&" bash clause at the end of commands that have the potential to execute silently or return no data. ', 'wpcd' );
+		$sshc_desc .= __( 'To prevent errors you should always send a command that is guaranteed to return a value. You can do this by using an "&" bash clause at the end of commands that have the potential to execute silently or return no data. ', 'simple-stack' );
 		$sshc_desc .= '<br />';
-		$sshc_desc .= __( 'Please note that this tool is useful for executing a small number of of commands in a pinch.  If you need to execute a lot of ssh commands, you might be better served by logging into the server via your favorite ssh tool instead.', 'wpcd' );
+		$sshc_desc .= __( 'Please note that this tool is useful for executing a small number of of commands in a pinch.  If you need to execute a lot of ssh commands, you might be better served by logging into the server via your favorite ssh tool instead.', 'simple-stack' );
 		$sshc_desc .= '<br />';
-		$sshc_desc .= __( 'Additionally, you cannot use this for long-running commands - each command is limited by the php script execution time.', 'wpcd' );
+		$sshc_desc .= __( 'Additionally, you cannot use this for long-running commands - each command is limited by the php script execution time.', 'simple-stack' );
 
 		$actions['ssh-console-header'] = array(
-			'label'          => __( 'SSH Console', 'wpcd' ),
+			'label'          => __( 'SSH Console', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $sshc_desc,
@@ -187,14 +188,14 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		);
 
 		$actions['ssh-console-cmd'] = array(
-			'label'          => __( 'Command', 'wpcd' ),
+			'label'          => __( 'Command', 'simple-stack' ),
 			'type'           => 'textarea',
 			'raw_attributes' => array(
-				'label_description' => __( 'Enter a valid bash command that you would like the server to execute.', 'wpcd' ),
+				'label_description' => __( 'Enter a valid bash command that you would like the server to execute.', 'simple-stack' ),
 				'sanitize_callback' => 'none',
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name'    => 'ssh_console_cmd',
-				'placeholder'       => __( 'Enter your ssh command here', 'wpcd' ),
+				'data-sstk-name'    => 'ssh_console_cmd',
+				'placeholder'       => __( 'Enter your ssh command here', 'simple-stack' ),
 				'rows'              => 8,
 			),
 		);
@@ -202,26 +203,26 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		$actions['ssh-console-execute'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Execute', 'wpcd' ),
+				'std'                 => __( 'Execute', 'simple-stack' ),
 				// make sure we give the user a confirmation prompt.
-				'confirmation_prompt' => __( 'Are you sure you would like to execute this command?', 'wpcd' ),
+				'confirmation_prompt' => __( 'Are you sure you would like to execute this command?', 'simple-stack' ),
 				// fields that contribute data for this action.
-				'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_ssh-console-cmd' ) ),
+				'data-sstk-fields'    => json_encode( array( '#sstk_app_action_ssh-console-cmd' ) ),
 				'columns'             => 1,
 			),
 			'type'           => 'button',
 		);
 
 		// Show list of prior commands...
-		$prior_commands_notice = __( 'It seems that no prior commands are available.', 'wpcd' );
-		$prior_commands        = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds', true ) );
+		$prior_commands_notice = __( 'It seems that no prior commands are available.', 'simple-stack' );
+		$prior_commands        = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_ssh_console_cmds', true ) );
 
 		if ( ! empty( $prior_commands ) ) {
-			$prior_commands_notice = __( 'Here is a list of prior commands that were executed on this screen.', 'wpcd' );
+			$prior_commands_notice = __( 'Here is a list of prior commands that were executed on this screen.', 'simple-stack' );
 		}
 
 		$actions['ssh-console-prior-commands'] = array(
-			'label'          => __( 'Prior Commands', 'wpcd' ),
+			'label'          => __( 'Prior Commands', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $prior_commands_notice,
@@ -242,7 +243,7 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 						'std'               => self::decrypt( $prior_cmd ),
 						'rows'              => 1,
 						'sanitize_callback' => 'none', // the key of the field (the key goes in the request).
-						'data-wpcd-name'    => "ssh_console_prior_cmd-$cntr",
+						'data-sstk-name'    => "ssh_console_prior_cmd-$cntr",
 					),
 				);
 				$actions[ "ssh-console-prior-cmd-exec-$cntr" ] = array(
@@ -250,9 +251,9 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 					'type'           => 'button',
 					'raw_attributes' => array(
 						'columns'          => 2,
-						'std'              => __( 'Execute', 'wpcd' ),
+						'std'              => __( 'Execute', 'simple-stack' ),
 						// fields that contribute data for this action.
-						'data-wpcd-fields' => json_encode( array( "#wpcd_app_action_ssh-console-prior-cmd-$cntr" ) ),
+						'data-sstk-fields' => json_encode( array( "#sstk_app_action_ssh-console-prior-cmd-$cntr" ) ),
 					),
 				);
 				$actions[ "ssh-console-prior-cmd-del-$cntr" ]  = array(
@@ -260,9 +261,9 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 					'type'           => 'button',
 					'raw_attributes' => array(
 						'columns'          => 2,
-						'std'              => __( 'Delete', 'wpcd' ),
+						'std'              => __( 'Delete', 'simple-stack' ),
 						// fields that contribute data for this action.
-						'data-wpcd-fields' => json_encode( array( "#wpcd_app_action_ssh-console-prior-cmd-$cntr" ) ),
+						'data-sstk-fields' => json_encode( array( "#sstk_app_action_ssh-console-prior-cmd-$cntr" ) ),
 					),
 				);
 			}
@@ -272,26 +273,26 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		$actions['ssh-console-clear-history'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Clear All History', 'wpcd' ),
-				'confirmation_prompt' => __( 'Are you sure you would like to clear all history?', 'wpcd' ),
+				'std'                 => __( 'Clear All History', 'simple-stack' ),
+				'confirmation_prompt' => __( 'Are you sure you would like to clear all history?', 'simple-stack' ),
 			),
 			'type'           => 'button',
 		);
 
 		// Add a button to toggle the visibilty of the tab.
 		// But only if the wp-config option is not set.
-		if ( ! defined( 'WPCD_HIDE_SSH_CONSOLE' ) ) {
+		if ( ! defined( 'SSTK_HIDE_SSH_CONSOLE' ) ) {
 
 			// Security Warning.
-			$sshc_sec_warning  = __( 'NONE of the fields on this tab are escaped or otherwise sanitized!  This makes this tab VERY dangerous if you allow other untrusted personnel to access this dashboard.', 'wpcd' );
+			$sshc_sec_warning  = __( 'NONE of the fields on this tab are escaped or otherwise sanitized!  This makes this tab VERY dangerous if you allow other untrusted personnel to access this dashboard.', 'simple-stack' );
 			$sshc_sec_warning .= '<br />';
-			$sshc_sec_warning .= __( 'You can quickly remove this tab from the screen by clicking the button below.', 'wpcd' );
+			$sshc_sec_warning .= __( 'You can quickly remove this tab from the screen by clicking the button below.', 'simple-stack' );
 			$sshc_sec_warning .= '<br />';
-			$sshc_sec_warning .= __( 'Once you click this button you can only see this tab again by adding an entry to wp-config.php. ', 'wpcd' );
+			$sshc_sec_warning .= __( 'Once you click this button you can only see this tab again by adding an entry to wp-config.php. ', 'simple-stack' );
 			$sshc_sec_warning .= '<br />';
 
 			$actions['ssh-console-security-warning'] = array(
-				'label'          => __( 'Security Warning', 'wpcd' ),
+				'label'          => __( 'Security Warning', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $sshc_sec_warning,
@@ -299,13 +300,13 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 			);
 
 			// Set prompts based on current status.
-			$option_hide_ssh_console = get_option( 'wpcd_wpapp_ssh_console_hide' );
+			$option_hide_ssh_console = get_option( 'sstk_wpapp_ssh_console_hide' );
 			if ( ! empty( $option_hide_ssh_console ) && true == boolval( $option_hide_ssh_console ) ) {
-				$hide_ssh_console_label        = __( 'Keep Showing This Tab', 'wpcd' );
-				$hide_ssh_console_label_prompt = __( 'Are you sure you would like to keep showing this tab?', 'wpcd' );
+				$hide_ssh_console_label        = __( 'Keep Showing This Tab', 'simple-stack' );
+				$hide_ssh_console_label_prompt = __( 'Are you sure you would like to keep showing this tab?', 'simple-stack' );
 			} else {
-				$hide_ssh_console_label        = __( 'Hide This Tab', 'wpcd' );
-				$hide_ssh_console_label_prompt = __( 'Are you sure you would like to hide this tab? If you proceed you can only restore it with an entry in wp-config.php!', 'wpcd' );
+				$hide_ssh_console_label        = __( 'Hide This Tab', 'simple-stack' );
+				$hide_ssh_console_label_prompt = __( 'Are you sure you would like to hide this tab? If you proceed you can only restore it with an entry in wp-config.php!', 'simple-stack' );
 			}
 
 			// Define button.
@@ -321,11 +322,11 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		} else {
 
 			// Ends up showing a basic security warning message.
-			$sshc_sec_warning                        = __( 'NONE of the fields on this tab are escaped or otherwise sanitized!  This makes this tab VERY dangerous if you allow other untrusted personnel to access this dashboard.', 'wpcd' );
+			$sshc_sec_warning                        = __( 'NONE of the fields on this tab are escaped or otherwise sanitized!  This makes this tab VERY dangerous if you allow other untrusted personnel to access this dashboard.', 'simple-stack' );
 			$sshc_sec_warning                       .= '<br />';
-			$sshc_sec_warning                       .= __( 'You can remove this tab by using a wp-config.php entry - see documentation or contact technical support for details.', 'wpcd' );
+			$sshc_sec_warning                       .= __( 'You can remove this tab by using a wp-config.php entry - see documentation or contact technical support for details.', 'simple-stack' );
 			$actions['ssh-console-security-warning'] = array(
-				'label'          => __( 'Security Warning', 'wpcd' ),
+				'label'          => __( 'Security Warning', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $sshc_sec_warning,
@@ -360,7 +361,7 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		// error out if no command.
 		$ssh_cmd_to_execute = $args['ssh_console_cmd'];
 		if ( empty( $ssh_cmd_to_execute ) ) {
-			return new \WP_Error( 'You must provide a command to execute!', 'wpcd' );
+			return new \WP_Error( 'You must provide a command to execute!', 'simple-stack' );
 		}
 
 		// send the command.
@@ -369,7 +370,7 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		// Add or update in our database the list of commands that were executed.
 		// Not that we're doing this regardless of whether the command was successful or failed.
 		// Get the meta from the database.
-		$prior_commands = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds', true ) );
+		$prior_commands = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_ssh_console_cmds', true ) );
 
 		if ( empty( $prior_commands ) ) {
 			$prior_commands = array();
@@ -388,11 +389,11 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		$prior_commands[ $arrkey ] = self::encrypt( $ssh_cmd_to_execute );
 
 		// Store the array.
-		update_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds', $prior_commands );
+		update_post_meta( $id, 'sstk_wpapp_ssh_console_cmds', $prior_commands );
 
 		// Make sure we handle errors from the executed command.
 		if ( is_wp_error( $result ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because an error occurred: %s', 'wpcd' ), $result->get_error_message() ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because an error occurred: %s', 'simple-stack' ), $result->get_error_message() ) );
 		} else {
 			// Construct an appropriate return message.
 			// Right now '$result' is just a string.
@@ -427,13 +428,13 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 
 		// error out if no command.
 		if ( empty( $args ) ) {
-			return new \WP_Error( 'It looks like there is no command to execute!', 'wpcd' );
+			return new \WP_Error( 'It looks like there is no command to execute!', 'simple-stack' );
 		}
 
 		// Get the first command in $args.  There should be only one!
 		$ssh_cmd_to_execute = array_values( $args )[0];
 		if ( empty( $ssh_cmd_to_execute ) ) {
-			return new \WP_Error( 'You must provide a command to execute!', 'wpcd' );
+			return new \WP_Error( 'You must provide a command to execute!', 'simple-stack' );
 		}
 
 		// send the command.
@@ -442,7 +443,7 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		// Add or update in our database the list of commands that were executed.
 		// Not that we're doing this regardless of whether the command was successful or failed.
 		// Get the meta from the database.
-		$prior_commands = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds', true ) );
+		$prior_commands = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_ssh_console_cmds', true ) );
 
 		if ( empty( $prior_commands ) ) {
 			$prior_commands = array();
@@ -461,11 +462,11 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 		$prior_commands[ $arrkey ] = self::encrypt( $ssh_cmd_to_execute );
 
 		// Store the array.
-		update_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds', $prior_commands );
+		update_post_meta( $id, 'sstk_wpapp_ssh_console_cmds', $prior_commands );
 
 		// Make sure we handle errors from the executed command.
 		if ( is_wp_error( $result ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because an error occurred: %s', 'wpcd' ), $result->get_error_message() ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because an error occurred: %s', 'simple-stack' ), $result->get_error_message() ) );
 		} else {
 			// Construct an appropriate return message.
 			// Right now '$result' is just a string.
@@ -496,17 +497,17 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 
 		// error out if no command.
 		if ( empty( $args ) ) {
-			return new \WP_Error( 'It looks like there is no command to delete!', 'wpcd' );
+			return new \WP_Error( 'It looks like there is no command to delete!', 'simple-stack' );
 		}
 
 		// Get the first command in $args.  There should be only one!
 		$ssh_cmd_to_delete = array_values( $args )[0];
 		if ( empty( $ssh_cmd_to_delete ) ) {
-			return new \WP_Error( 'You must provide a command to delete!', 'wpcd' );
+			return new \WP_Error( 'You must provide a command to delete!', 'simple-stack' );
 		}
 
 		// Retrieve array.
-		$prior_commands = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds', true ) );
+		$prior_commands = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_ssh_console_cmds', true ) );
 
 		// What index should we delete from the array?
 		$arrkey = 'x' . (string) hash( 'md5', $ssh_cmd_to_delete );
@@ -516,12 +517,12 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 			unset( $prior_commands[ $arrkey ] );
 
 			// Save the new array.
-			update_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds', $prior_commands );
+			update_post_meta( $id, 'sstk_wpapp_ssh_console_cmds', $prior_commands );
 		}
 
 		// Send back results.
 		$result = array(
-			'msg'     => __( 'Command removed.', 'wpcd' ),
+			'msg'     => __( 'Command removed.', 'simple-stack' ),
 			'refresh' => 'yes',
 		);
 
@@ -540,11 +541,11 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 	private function ssh_console_clear_all_history( $id, $action ) {
 
 		// Save the new array.
-		delete_post_meta( $id, 'wpcd_wpapp_ssh_console_cmds' );
+		delete_post_meta( $id, 'sstk_wpapp_ssh_console_cmds' );
 
 		// Send back results.
 		$result = array(
-			'msg'     => __( 'History has been deleted.', 'wpcd' ),
+			'msg'     => __( 'History has been deleted.', 'simple-stack' ),
 			'refresh' => 'yes',
 		);
 
@@ -563,20 +564,20 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 	private function ssh_console_toggle_tab_visibility( $id, $action ) {
 
 		// Get current option.
-		$current = get_option( 'wpcd_wpapp_ssh_console_hide' );
+		$current = get_option( 'sstk_wpapp_ssh_console_hide' );
 
 		// delete the option if it exists...
-		delete_option( 'wpcd_wpapp_ssh_console_hide' );
+		delete_option( 'sstk_wpapp_ssh_console_hide' );
 
 		if ( true == boolval( $current ) ) {
-			update_option( 'wpcd_wpapp_ssh_console_hide', false );
+			update_option( 'sstk_wpapp_ssh_console_hide', false );
 		} else {
-			update_option( 'wpcd_wpapp_ssh_console_hide', true );
+			update_option( 'sstk_wpapp_ssh_console_hide', true );
 		}
 
 		// Send back results.
 		$result = array(
-			'msg'     => __( 'Tab visibility has changed.', 'wpcd' ),
+			'msg'     => __( 'Tab visibility has changed.', 'simple-stack' ),
 			'refresh' => 'yes',
 		);
 
@@ -586,4 +587,4 @@ class WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_SSH_CONSOLE();
+new SSTK_WORDPRESS_TABS_SERVER_SSH_CONSOLE();

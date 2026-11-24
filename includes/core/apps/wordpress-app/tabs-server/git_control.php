@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Services Tab
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,35 +11,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL
+ * Class SSTK_WORDPRESS_TABS_SERVER_GIT_CONTROL
  */
-class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_SERVER_GIT_CONTROL extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'wpcd_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_server_{$this->get_app_name()}_tab_action", array( $this, 'tab_action_server' ), 10, 3 );  // This filter has not been defined and called yet in classs-wordpress-app and might never be because we're using the one below.
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );  // This filter says 'sstk_app' because we're using the same functions for server details ajax tabs and app details ajax tabs.
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app_server' ) {
+		if ( get_post_type( $id ) !== 'sstk_app_server' ) {
 			return;
 		}
 
@@ -65,12 +66,12 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		}
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );  // Should really only exist on an app.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action_status" );  // Should really only exist on a server.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action" );  // Should really only exist on a server.
-		delete_post_meta( $id, "wpcd_server_{$this->get_app_name()}_action_args" );  // Should really only exist on a server.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );  // Should really only exist on an app.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action_status" );  // Should really only exist on a server.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action" );  // Should really only exist on a server.
+		delete_post_meta( $id, "sstk_server_{$this->get_app_name()}_action_args" );  // Should really only exist on a server.
 
 	}
 
@@ -99,7 +100,7 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Git', 'wpcd' ),
+				'label' => __( 'Git', 'simple-stack' ),
 				'icon'  => 'fa-duotone fa-code-merge',
 			);
 		}
@@ -114,13 +115,13 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_server_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_server_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Get the fields to be shown in the GIT tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -150,9 +151,9 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the server before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_server( $id ) ) {
+		if ( ! $this->sstk_user_can_view_wp_server( $id ) ) {
 			/* translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -160,7 +161,7 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* Translators: %1s is replaced with an internal action name; %2$s is replaced with the file name; %3$s is replaced with the post id being acted on. %4$s is the user id running this action. */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -220,127 +221,127 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 			$git_defaults = $this->get_git_defaults( $id );
 
 			$actions['git-server-control-default-fields-header'] = array(
-				'label'          => __( 'Git Defaults For Sites on This Server', 'wpcd' ),
+				'label'          => __( 'Git Defaults For Sites on This Server', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'These defaults are used if no similiar values are defined on a site. If nothing is defined here, values from the global settings are used for sites on this server.', 'wpcd' ),
+					'desc' => __( 'These defaults are used if no similiar values are defined on a site. If nothing is defined here, values from the global settings are used for sites on this server.', 'simple-stack' ),
 				),
 			);
 
 			$actions['git-server-control-default-fields-email']                  = array(
-				'label'          => __( 'Email Address', 'wpcd' ),
+				'label'          => __( 'Email Address', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_user_email'],
-					'desc'           => __( 'Email address used by your git provider.', 'wpcd' ),
+					'desc'           => __( 'Email address used by your git provider.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_user_email',
+					'data-sstk-name' => 'git_user_email',
 				),
 				'type'           => 'email',
 			);
 			$actions['git-server-control-default-fields-display-name']           = array(
-				'label'          => __( 'Display Name', 'wpcd' ),
+				'label'          => __( 'Display Name', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_display_name'],
-					'placeholder'    => __( 'The display name used for your user account at your git provider.', 'wpcd' ),
-					'desc'           => __( 'eg: john smith', 'wpcd' ),
+					'placeholder'    => __( 'The display name used for your user account at your git provider.', 'simple-stack' ),
+					'desc'           => __( 'eg: john smith', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_display_name',
+					'data-sstk-name' => 'git_display_name',
 				),
 				'type'           => 'text',
 			);
 			$actions['git-server-control-default-fields-user-name']              = array(
-				'label'          => __( 'User Name', 'wpcd' ),
+				'label'          => __( 'User Name', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_user_name'],
-					'placeholder'    => __( 'The user name used for your account at your git provider.', 'wpcd' ),
-					'desc'           => __( 'eg: janesmith', 'wpcd' ),
+					'placeholder'    => __( 'The user name used for your account at your git provider.', 'simple-stack' ),
+					'desc'           => __( 'eg: janesmith', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_user_name',
+					'data-sstk-name' => 'git_user_name',
 				),
 				'type'           => 'text',
 			);
 			$actions['git-server-control-default-fields-token']                  = array(
-				'label'          => __( 'API Token', 'wpcd' ),
+				'label'          => __( 'API Token', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $this->decrypt( $git_defaults['git_token'] ),
-					'desc'           => __( 'API Token for your git account at your git provider.', 'wpcd' ),
-					'tooltip'        => __( 'API tokens must provide read-write privileges for your repos. Generate one on GitHub under the settings area of your account.', 'wpcd' ),
+					'desc'           => __( 'API Token for your git account at your git provider.', 'simple-stack' ),
+					'tooltip'        => __( 'API tokens must provide read-write privileges for your repos. Generate one on GitHub under the settings area of your account.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_token',
+					'data-sstk-name' => 'git_token',
 					'spellcheck'     => 'false',
 				),
 				'type'           => 'text',
 			);
 			$actions['git-server-control-default-fields-branch']                 = array(
-				'label'          => __( 'Branch', 'wpcd' ),
+				'label'          => __( 'Branch', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_branch'],
-					'desc'           => __( 'The default branch for your repos - eg: main or master.', 'wpcd' ),
+					'desc'           => __( 'The default branch for your repos - eg: main or master.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_branch',
+					'data-sstk-name' => 'git_branch',
 				),
 				'type'           => 'text',
 			);
 			$actions['git-server-control-default-fields-git-ignore-link']        = array(
-				'label'          => __( 'GitIgnore File Link', 'wpcd' ),
+				'label'          => __( 'GitIgnore File Link', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_ignore_url'],
-					'desc'           => __( 'Link to a text file containing git ignore contents.', 'wpcd' ),
-					'tooltip'        => __( 'A raw gist is a good place to locate this file.', 'wpcd' ),
+					'desc'           => __( 'Link to a text file containing git ignore contents.', 'simple-stack' ),
+					'tooltip'        => __( 'A raw gist is a good place to locate this file.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_ignore_url',
+					'data-sstk-name' => 'git_ignore_url',
 				),
 				'type'           => 'url',
 			);
 			$actions['git-server-control-default-fields-pre-process-file-link']  = array(
-				'label'          => __( 'Pre-Processing Script Link', 'wpcd' ),
+				'label'          => __( 'Pre-Processing Script Link', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_pre_processing_script_link'],
-					'desc'           => __( 'Link to bash script that will execute before initializing a site with git.', 'wpcd' ),
-					'tooltip'        => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'wpcd' ),
+					'desc'           => __( 'Link to bash script that will execute before initializing a site with git.', 'simple-stack' ),
+					'tooltip'        => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_pre_processing_script_link',
+					'data-sstk-name' => 'git_pre_processing_script_link',
 				),
 				'type'           => 'url',
 			);
 			$actions['git-server-control-default-fields-post-process-file-link'] = array(
-				'label'          => __( 'Post-Processing Script Link', 'wpcd' ),
+				'label'          => __( 'Post-Processing Script Link', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_post_processing_script_link'],
-					'desc'           => __( 'Link to bash script that will execute after initializing a site with git.', 'wpcd' ),
-					'tooltip'        => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'wpcd' ),
+					'desc'           => __( 'Link to bash script that will execute after initializing a site with git.', 'simple-stack' ),
+					'tooltip'        => __( 'A raw gist is a good place to locate this file as long as it does not have any private data.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_post_processing_script_link',
+					'data-sstk-name' => 'git_post_processing_script_link',
 				),
 				'type'           => 'url',
 			);
 			$actions['git-server-control-default-fields-git-ignore-folders']     = array(
-				'label'          => __( 'Ignore Folders', 'wpcd' ),
+				'label'          => __( 'Ignore Folders', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_exclude_folders'],
-					'desc'           => __( 'A comma-separated list of folders to add to git ignore.', 'wpcd' ),
+					'desc'           => __( 'A comma-separated list of folders to add to git ignore.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_exclude_folders',
+					'data-sstk-name' => 'git_exclude_folders',
 				),
 				'type'           => 'text',
 			);
 			$actions['git-server-control-default-fields-git-ignore-files']       = array(
-				'label'          => __( 'Ignore Files', 'wpcd' ),
+				'label'          => __( 'Ignore Files', 'simple-stack' ),
 				'raw_attributes' => array(
 					'std'            => $git_defaults['git_exclude_files'],
-					'desc'           => __( 'A comma-separated list of files to add to git ignore.', 'wpcd' ),
+					'desc'           => __( 'A comma-separated list of files to add to git ignore.', 'simple-stack' ),
 					'columns'        => 6,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'git_exclude_files',
+					'data-sstk-name' => 'git_exclude_files',
 				),
 				'type'           => 'text',
 			);
@@ -348,20 +349,20 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 			$actions['git-server-control-save-defaults'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'              => __( 'Save Server Defaults', 'wpcd' ),
+					'std'              => __( 'Save Server Defaults', 'simple-stack' ),
 					'columns'          => 6,
-					'data-wpcd-fields' => wp_json_encode(
+					'data-sstk-fields' => wp_json_encode(
 						array(
-							'#wpcd_app_action_git-server-control-default-fields-email',
-							'#wpcd_app_action_git-server-control-default-fields-display-name',
-							'#wpcd_app_action_git-server-control-default-fields-user-name',
-							'#wpcd_app_action_git-server-control-default-fields-token',
-							'#wpcd_app_action_git-server-control-default-fields-branch',
-							'#wpcd_app_action_git-server-control-default-fields-git-ignore-link',
-							'#wpcd_app_action_git-server-control-default-fields-pre-process-file-link',
-							'#wpcd_app_action_git-server-control-default-fields-post-process-file-link',
-							'#wpcd_app_action_git-server-control-default-fields-git-ignore-folders',
-							'#wpcd_app_action_git-server-control-default-fields-git-ignore-files',
+							'#sstk_app_action_git-server-control-default-fields-email',
+							'#sstk_app_action_git-server-control-default-fields-display-name',
+							'#sstk_app_action_git-server-control-default-fields-user-name',
+							'#sstk_app_action_git-server-control-default-fields-token',
+							'#sstk_app_action_git-server-control-default-fields-branch',
+							'#sstk_app_action_git-server-control-default-fields-git-ignore-link',
+							'#sstk_app_action_git-server-control-default-fields-pre-process-file-link',
+							'#sstk_app_action_git-server-control-default-fields-post-process-file-link',
+							'#sstk_app_action_git-server-control-default-fields-git-ignore-folders',
+							'#sstk_app_action_git-server-control-default-fields-git-ignore-files',
 						)
 					),
 				),
@@ -371,7 +372,7 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 			$actions['git-server-control-clear-defaults'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'     => __( 'Clear Defaults', 'wpcd' ),
+					'std'     => __( 'Clear Defaults', 'simple-stack' ),
 					'columns' => 6,
 				),
 				'type'           => 'button',
@@ -381,13 +382,13 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 
 		// Set header message based on whether git is installed or not.
 		if ( true === $git_server_status ) {
-			$header_msg = __( 'Git is installed on this server. If you wish you can upgrade it using the options below', 'wpcd' );
+			$header_msg = __( 'Git is installed on this server. If you wish you can upgrade it using the options below', 'simple-stack' );
 		} else {
-			$header_msg = __( 'Git is not installed on this server.', 'wpcd' );
+			$header_msg = __( 'Git is not installed on this server.', 'simple-stack' );
 		}
 
 		$actions['git-server-control-header'] = array(
-			'label'          => __( 'Git', 'wpcd' ),
+			'label'          => __( 'Git', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $header_msg,
@@ -399,12 +400,12 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 			$actions['git-server-control-update'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Update Git To Latest Version', 'wpcd' ),
-					'confirmation_prompt' => __( 'Are you sure you would like to upgrade to the latest version of Git on this server?', 'wpcd' ),
+					'std'                 => __( 'Update Git To Latest Version', 'simple-stack' ),
+					'confirmation_prompt' => __( 'Are you sure you would like to upgrade to the latest version of Git on this server?', 'simple-stack' ),
 					// show log console?
 					'log_console'         => true,
 					// Initial console message.
-					'console_message'     => __( 'Preparing to upgrade to the latest version of Git on this server!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the installation has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the installation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'console_message'     => __( 'Preparing to upgrade to the latest version of Git on this server!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the installation has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the installation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
 				'type'           => 'button',
 			);
@@ -412,12 +413,12 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 			$actions['git-server-control-install'] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Install Git', 'wpcd' ),
-					'confirmation_prompt' => __( 'Are you sure you would like to install the Git on this server?', 'wpcd' ),
+					'std'                 => __( 'Install Git', 'simple-stack' ),
+					'confirmation_prompt' => __( 'Are you sure you would like to install the Git on this server?', 'simple-stack' ),
 					// show log console?
 					'log_console'         => true,
 					// Initial console message.
-					'console_message'     => __( 'Preparing to install the Git on this server!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the installation has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the installation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'console_message'     => __( 'Preparing to install the Git on this server!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the installation has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the installation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
 				'type'           => 'button',
 			);
@@ -443,11 +444,11 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Setup unique command name.
-		$domain                = 'wpcd-dummy.com';
+		$domain                = 'sstk-dummy.com';
 		$command               = sprintf( '%s---%s---%d', $action, $domain, time() );
 		$instance['command']   = $command;
 		$instance['app_id']    = $id;   // @todo - this is not really the app id - need to test to see if the process will work without this array element.
@@ -467,13 +468,13 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -496,11 +497,11 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the server instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Setup unique command name.
-		$domain                = 'wpcd-dummy.com';
+		$domain                = 'sstk-dummy.com';
 		$command               = sprintf( '%s---%s---%d', $action, $domain, time() );
 		$instance['command']   = $command;
 		$instance['app_id']    = $id;   // @todo - this is not really the app id - need to test to see if the process will work without this array element.
@@ -520,13 +521,13 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
 			/* translators: %s is replaced with the internal action name. */
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -563,10 +564,10 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		}
 
 		// Write git server defaults to the database.
-		update_post_meta( $id, 'wpcd_wpapp_git_defaults', $defaults );
+		update_post_meta( $id, 'sstk_wpapp_git_defaults', $defaults );
 
 		$success = array(
-			'msg'     => __( 'Defaults have been saved.', 'wpcd' ),
+			'msg'     => __( 'Defaults have been saved.', 'simple-stack' ),
 			'refresh' => 'yes',
 		);
 
@@ -588,10 +589,10 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 		$field_names = $this->get_git_default_field_names();
 
 		// Write git server defaults to the database.
-		update_post_meta( $id, 'wpcd_wpapp_git_defaults', $defaults );
+		update_post_meta( $id, 'sstk_wpapp_git_defaults', $defaults );
 
 		$success = array(
-			'msg'     => __( 'Defaults have been cleard.', 'wpcd' ),
+			'msg'     => __( 'Defaults have been cleard.', 'simple-stack' ),
 			'refresh' => 'yes',
 		);
 
@@ -635,7 +636,7 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_git_defaults( $id ) {
 
-		$defaults = wpcd_maybe_unserialize( get_post_meta( $id, 'wpcd_wpapp_git_defaults', true ) );
+		$defaults = sstk_maybe_unserialize( get_post_meta( $id, 'sstk_wpapp_git_defaults', true ) );
 
 		if ( empty( $defaults ) ) {
 			$fields = $this->get_git_default_field_names();
@@ -653,4 +654,4 @@ class WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_SERVER_GIT_CONTROL();
+new SSTK_WORDPRESS_TABS_SERVER_GIT_CONTROL();

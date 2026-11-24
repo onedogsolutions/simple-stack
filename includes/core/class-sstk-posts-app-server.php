@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class handles app server.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,15 +11,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_POSTS_APP_SERVER
+ * Class SSTK_POSTS_APP_SERVER
  */
-class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
+class SSTK_POSTS_APP_SERVER extends SSTK_Posts_Base {
 
 	/* Include traits */
-	use wpcd_get_set_post_type;
-	use wpcd_metaboxes_for_taxonomies_for_servers_and_apps;
-	use wpcd_metaboxes_for_teams_for_servers_and_apps;
-	use wpcd_metaboxes_for_labels_notes_for_servers_and_apps;
+	use sstk_get_set_post_type;
+	use sstk_metaboxes_for_taxonomies_for_servers_and_apps;
+	use sstk_metaboxes_for_teams_for_servers_and_apps;
+	use sstk_metaboxes_for_labels_notes_for_servers_and_apps;
 
 	/**
 	 * Instance function.
@@ -46,13 +47,13 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 		 * The global is needed to prevent an infinite loop as we modify the data
 		 * passed into the get_terms_args filter.
 		 */
-		$wpcd_exclude_server_group = array();
+		$sstk_exclude_server_group = array();
 
 		$this->register();  // register the custom post.
 		$this->hooks();     // register hooks to make the custom post type do things...
-		$this->init_hooks_for_taxonomies_for_servers_and_apps();    // located in the wpcd_metaboxes_for_taxonomies_for_servers_and_apps trait file.
-		$this->init_hooks_for_teams_for_servers_and_apps(); // located in the wpcd_metaboxes_for_teams_for_servers_and_apps trait file.
-		$this->init_hooks_for_labels_notes_for_servers_and_apps();  // located in the wpcd_metaboxes_for_labels_notes_for_servers_and_apps trait file.
+		$this->init_hooks_for_taxonomies_for_servers_and_apps();    // located in the sstk_metaboxes_for_taxonomies_for_servers_and_apps trait file.
+		$this->init_hooks_for_teams_for_servers_and_apps(); // located in the sstk_metaboxes_for_teams_for_servers_and_apps trait file.
+		$this->init_hooks_for_labels_notes_for_servers_and_apps();  // located in the sstk_metaboxes_for_labels_notes_for_servers_and_apps trait file.
 
 	}
 
@@ -64,17 +65,17 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 		// Meta box display callback.
 		add_action( 'add_meta_boxes', array( $this, 'meta_boxes' ) );
 
-		// Save VPN Meta Values.
+		// Save server meta values.
 		add_action( 'save_post', array( $this, 'save_meta_values' ), 10, 2 );
 
 		// Filter hook to add new columns.
-		add_filter( 'manage_wpcd_app_server_posts_columns', array( $this, 'app_server_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_app_server_posts_columns', array( $this, 'app_server_table_head' ), 10, 1 );
 
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_app_server_posts_custom_column', array( $this, 'app_server_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_app_server_posts_custom_column', array( $this, 'app_server_table_content' ), 10, 2 );
 
 		// Filter hook to add sortable columns.
-		add_filter( 'manage_edit-wpcd_app_server_sortable_columns', array( $this, 'app_server_table_sorting' ), 10, 1 );
+		add_filter( 'manage_edit-sstk_app_server_sortable_columns', array( $this, 'app_server_table_sorting' ), 10, 1 );
 
 		// Remove PRIVATE state label from certain custom post types - function is actually in ancestor class.
 		add_filter( 'display_post_states', array( $this, 'display_post_states' ), 20, 2 );
@@ -86,79 +87,79 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 		add_filter( 'post_row_actions', array( $this, 'row_actions' ), 10, 2 );
 
 		// Action hook to add prompt when a post is going to be deleted.
-		add_action( 'admin_footer-edit.php', array( $this, 'wpcd_app_trash_prompt' ) );
-		add_action( 'admin_footer-post.php', array( $this, 'wpcd_app_trash_prompt' ) );
+		add_action( 'admin_footer-edit.php', array( $this, 'sstk_app_trash_prompt' ) );
+		add_action( 'admin_footer-post.php', array( $this, 'sstk_app_trash_prompt' ) );
 
 		// Action hook to extend admin search.
-		add_action( 'pre_get_posts', array( $this, 'wpcd_app_server_extend_admin_search' ), 10, 1 );
-		add_action( 'pre_get_posts', array( $this, 'wpcd_app_server_meta_or_title_search' ), 10, 1 );
+		add_action( 'pre_get_posts', array( $this, 'sstk_app_server_extend_admin_search' ), 10, 1 );
+		add_action( 'pre_get_posts', array( $this, 'sstk_app_server_meta_or_title_search' ), 10, 1 );
 
 		// Filter hook to modify where clause.
-		add_filter( 'posts_where', array( $this, 'wpcd_app_server_posts_where' ), 10, 2 );
+		add_filter( 'posts_where', array( $this, 'sstk_app_server_posts_where' ), 10, 2 );
 
 		// Action hook to extend admin filter options.
-		add_action( 'restrict_manage_posts', array( $this, 'wpcd_app_server_table_filtering' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'sstk_app_server_table_filtering' ) );
 
 		// Filter hook to filter server listing on custom meta data.
-		add_filter( 'parse_query', array( $this, 'wpcd_app_server_parse_query' ), 10, 1 );
+		add_filter( 'parse_query', array( $this, 'sstk_app_server_parse_query' ), 10, 1 );
 
 		// Filter hook to add custom meta box.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'wpcd_app_server_register_meta_boxes' ), 10, 1 );
+		add_filter( 'rwmb_meta_boxes', array( $this, 'sstk_app_server_register_meta_boxes' ), 10, 1 );
 
 		// Action hook to change author for server type post.
-		add_action( 'rwmb_wpcd_change_server_owner_after_save_post', array( $this, 'wpcd_change_server_owner_after_save_post' ), 10, 1 );
+		add_action( 'rwmb_sstk_change_server_owner_after_save_post', array( $this, 'sstk_change_server_owner_after_save_post' ), 10, 1 );
 
 		// Action hook to check if user has permission to edit server.
-		add_action( 'load-post.php', array( $this, 'wpcd_app_server_load_post' ) );
+		add_action( 'load-post.php', array( $this, 'sstk_app_server_load_post' ) );
 
 		// Action hook to check if user has permission to delete server.
-		add_action( 'wp_trash_post', array( $this, 'wpcd_app_server_delete_post' ), 10, 1 );
-		add_action( 'before_delete_post', array( $this, 'wpcd_app_server_delete_post' ), 10, 1 );
+		add_action( 'wp_trash_post', array( $this, 'sstk_app_server_delete_post' ), 10, 1 );
+		add_action( 'before_delete_post', array( $this, 'sstk_app_server_delete_post' ), 10, 1 );
 
 		// Filter hook to change post count on server listing screen based on logged in users permissions.
-		add_filter( 'views_edit-wpcd_app_server', array( $this, 'wpcd_app_server_custom_view_count' ), 10, 1 );
+		add_filter( 'views_edit-sstk_app_server', array( $this, 'sstk_app_server_custom_view_count' ), 10, 1 );
 
 		// Action hook to fire on new site created on WP Multisite.
-		add_action( 'wp_initialize_site', array( $this, 'wpcd_app_server_new_site' ), 10, 2 );
+		add_action( 'wp_initialize_site', array( $this, 'sstk_app_server_new_site' ), 10, 2 );
 
 		// Filter hook to remove delete link from server listing row if delete protection is enabled.
-		add_filter( 'post_row_actions', array( $this, 'wpcd_app_server_post_row_actions' ), 10, 2 );
+		add_filter( 'post_row_actions', array( $this, 'sstk_app_server_post_row_actions' ), 10, 2 );
 
 		// Action hook to hide "Move to trash" link on server detail screen if delete protection is enabled.
-		add_action( 'admin_head-post.php', array( $this, 'wpcd_app_server_hide_delete_link' ) );
+		add_action( 'admin_head-post.php', array( $this, 'sstk_app_server_hide_delete_link' ) );
 
 		// Filter hook to restrict trash post if delete protection is enabled.
-		add_filter( 'pre_trash_post', array( $this, 'wpcd_app_server_restrict_trash_post' ), 10, 2 );
+		add_filter( 'pre_trash_post', array( $this, 'sstk_app_server_restrict_trash_post' ), 10, 2 );
 
 		// Filter hook to restrict change server owner if user does not have right to change.
-		add_action( 'rwmb_wpcd_change_server_owner_before_save_post', array( $this, 'wpcd_change_server_owner_before_save_post' ), 10, 1 );
+		add_action( 'rwmb_sstk_change_server_owner_before_save_post', array( $this, 'sstk_change_server_owner_before_save_post' ), 10, 1 );
 
 		// Filter Hook to add custom column head on network sites listing.
-		add_filter( 'wpmu_blogs_columns', array( $this, 'wpcd_app_server_blogs_columns' ), 10, 1 );
+		add_filter( 'wpmu_blogs_columns', array( $this, 'sstk_app_server_blogs_columns' ), 10, 1 );
 
 		// Action Hook to add custom column content on network sites listing.
-		add_action( 'manage_sites_custom_column', array( $this, 'wpcd_app_server_sites_custom_column' ), 10, 2 );
+		add_action( 'manage_sites_custom_column', array( $this, 'sstk_app_server_sites_custom_column' ), 10, 2 );
 
 		// Filter hook to remove delete bulk action if user is not admin or super admin.
-		add_filter( 'bulk_actions-edit-wpcd_app_server', array( $this, 'wpcd_app_server_bulk_actions' ), 10, 1 );
+		add_filter( 'bulk_actions-edit-sstk_app_server', array( $this, 'sstk_app_server_bulk_actions' ), 10, 1 );
 
 		// Action hook to clean up server meta fields.
-		add_action( 'wp_ajax_wpcd_cleanup_servers', array( $this, 'wpcd_cleanup_servers' ) );
+		add_action( 'wp_ajax_sstk_cleanup_servers', array( $this, 'sstk_cleanup_servers' ) );
 
-		// Filter hook to add custom column header for wpcd_app_server_group listing.
-		add_filter( 'manage_edit-wpcd_app_server_group_columns', array( $this, 'wpcd_manage_wpcd_app_server_group_columns' ) );
+		// Filter hook to add custom column header for sstk_app_server_group listing.
+		add_filter( 'manage_edit-sstk_app_server_group_columns', array( $this, 'sstk_manage_sstk_app_server_group_columns' ) );
 
-		// Filter hook to add custom column content for wpcd_app_server_group listing.
-		add_filter( 'manage_wpcd_app_server_group_custom_column', array( $this, 'wpcd_manage_wpcd_app_server_group_columns_content' ), 10, 3 );
+		// Filter hook to add custom column content for sstk_app_server_group listing.
+		add_filter( 'manage_sstk_app_server_group_custom_column', array( $this, 'sstk_manage_sstk_app_server_group_columns_content' ), 10, 3 );
 
 		// Action hook to add meta values for restored post.
-		add_action( 'untrashed_post', array( $this, 'wpcd_app_server_untrashed_post' ), 10, 1 );
+		add_action( 'untrashed_post', array( $this, 'sstk_app_server_untrashed_post' ), 10, 1 );
 
 		// Action hook to get all server terms - will be used to exclude certain items in the server group metabox.
-		add_action( 'admin_head', array( $this, 'wpcd_exclude_server_group_taxonomy_ids' ), 99 );
+		add_action( 'admin_head', array( $this, 'sstk_exclude_server_group_taxonomy_ids' ), 99 );
 
 		// Filter hook to change the argument to exclude server terms - will be used to exclude certain items in the server group metabox.
-		add_action( 'get_terms_args', array( $this, 'wpcd_exclude_from_server_term_args' ), 1000, 2 );
+		add_action( 'get_terms_args', array( $this, 'sstk_exclude_from_server_term_args' ), 1000, 2 );
 	}
 
 	/**
@@ -171,8 +172,8 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 * @return array    Array of actions.
 	 */
 	public function row_actions( $actions, $post ) {
-		if ( 'wpcd_app_server' === $post->post_type ) {
-			$actions = apply_filters( 'wpcd_actions', $actions, $post->ID );
+		if ( 'sstk_app_server' === $post->post_type ) {
+			$actions = apply_filters( 'sstk_actions', $actions, $post->ID );
 		}
 		return $actions;
 	}
@@ -181,7 +182,7 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 * Register common styles/scripts for the servers/apps.
 	 *
 	 * The legacy select2 / magnific-popup / jQuery admin bundle that used to live here
-	 * has been retired: the server and site screens are rendered by the SimpleStack
+	 * has been retired: the server and site screens are rendered by the Simple Stack
 	 * React app, which enqueues its own bundle from assets/dist.
 	 */
 	public function enqueue_server_post_common_scripts() {
@@ -195,49 +196,49 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	public function enqueue_server_post_chart_scripts() {
 		global $post;
 
-		wp_register_script( 'wpcd-chart-js', wpcd_url . 'assets/js/Chart.min.js', array( 'jquery' ), wpcd_scripts_version, true );
+		wp_register_script( 'sstk-chart-js', SSTK_URL . 'assets/js/Chart.min.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, true );
 
-		wp_enqueue_script( 'wpcd-wpapp-server-chart', wpcd_url . 'includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js', array( 'wpcd-chart-js' ), wpcd_scripts_version, true );
+		wp_enqueue_script( 'sstk-wpapp-server-chart', SSTK_URL . 'includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js', array( 'sstk-chart-js' ), SSTK_SCRIPTS_VERSION, true );
 
 		// Disk Statistics data.
-		$disk_stat_data1 = WPCD_SERVER_STATISTICS()->wpcd_app_server_get_formatted_disk_statistics( $post->ID );
+		$disk_stat_data1 = SSTK_SERVER_STATISTICS()->sstk_app_server_get_formatted_disk_statistics( $post->ID );
 		$disk_stat_data2 = array(
 			'chart_labels' => array(
-				'chart_main_title'       => __( 'Disk Space', 'wpcd' ),
-				'chart_column_1K_blocks' => __( '1K-blocks', 'wpcd' ),
-				'chart_column_Used'      => __( 'Used', 'wpcd' ),
-				'chart_column_Available' => __( 'Available', 'wpcd' ),
+				'chart_main_title'       => __( 'Disk Space', 'simple-stack' ),
+				'chart_column_1K_blocks' => __( '1K-blocks', 'simple-stack' ),
+				'chart_column_Used'      => __( 'Used', 'simple-stack' ),
+				'chart_column_Available' => __( 'Available', 'simple-stack' ),
 			),
 		);
 
 		$params['disk_stat'] = array_merge( $disk_stat_data1, $disk_stat_data2 );
 
 		// VNSTAT Traffic data.
-		$vnstat_data1 = WPCD_SERVER_STATISTICS()->wpcd_app_server_get_formatted_vnstat_data( $post->ID );
+		$vnstat_data1 = SSTK_SERVER_STATISTICS()->sstk_app_server_get_formatted_vnstat_data( $post->ID );
 		$vnstat_data2 = array(
 			'chart_labels' => array(
-				'chart_curr_day_title'   => __( 'VNSTAT Traffic for Today (in KiB)', 'wpcd' ),
-				'chart_curr_month_title' => __( 'VNSTAT Traffic for Month (in KiB)', 'wpcd' ),
-				'chart_all_time_title'   => __( 'VNSTAT Traffic for All Time (in KiB)', 'wpcd' ),
-				'chart_rx_label'         => __( 'Rx', 'wpcd' ),
-				'chart_tx_label'         => __( 'Tx', 'wpcd' ),
+				'chart_curr_day_title'   => __( 'VNSTAT Traffic for Today (in KiB)', 'simple-stack' ),
+				'chart_curr_month_title' => __( 'VNSTAT Traffic for Month (in KiB)', 'simple-stack' ),
+				'chart_all_time_title'   => __( 'VNSTAT Traffic for All Time (in KiB)', 'simple-stack' ),
+				'chart_rx_label'         => __( 'Rx', 'simple-stack' ),
+				'chart_tx_label'         => __( 'Tx', 'simple-stack' ),
 			),
 		);
 
 		$params['vnstat'] = array_merge( $vnstat_data1, $vnstat_data2 );
 
 		// VMSTAT Memory data.
-		$vmstat_data1 = WPCD_SERVER_STATISTICS()->wpcd_app_server_get_formatted_vmstat_data( $post->ID );
+		$vmstat_data1 = SSTK_SERVER_STATISTICS()->sstk_app_server_get_formatted_vmstat_data( $post->ID );
 		$vmstat_data2 = array(
 			'chart_labels' => array(
-				'chart_main_title'    => __( 'VMSTAT (Memory)', 'wpcd' ),
-				'chart_dataset_label' => __( 'Memory', 'wpcd' ),
+				'chart_main_title'    => __( 'VMSTAT (Memory)', 'simple-stack' ),
+				'chart_dataset_label' => __( 'Memory', 'simple-stack' ),
 			),
 		);
 
 		$params['vmstat'] = array_merge( $vmstat_data1, $vmstat_data2 );
 
-		wp_localize_script( 'wpcd-wpapp-server-chart', 'wpcd_server_stat_data', $params );
+		wp_localize_script( 'sstk-wpapp-server-chart', 'sstk_server_stat_data', $params );
 
 	}
 
@@ -250,7 +251,7 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 		if ( in_array( $hook, array( 'edit.php', 'post.php' ), true ) ) {
 
 			$screen = get_current_screen();
-			if ( is_object( $screen ) && 'wpcd_app_server' === $screen->post_type ) {
+			if ( is_object( $screen ) && 'sstk_app_server' === $screen->post_type ) {
 				$this->enqueue_server_post_common_scripts();
 			}
 		}
@@ -259,9 +260,9 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			global $post;
 			$screen = get_current_screen();
 
-			$disk_statistics = get_post_meta( $post->ID, 'wpcd_wpapp_disk_statistics', true );
+			$disk_statistics = get_post_meta( $post->ID, 'sstk_wpapp_disk_statistics', true );
 
-			if ( is_object( $screen ) && 'wpcd_app_server' === $screen->post_type && ! empty( $disk_statistics ) ) {
+			if ( is_object( $screen ) && 'sstk_app_server' === $screen->post_type && ! empty( $disk_statistics ) ) {
 				$this->enqueue_server_post_chart_scripts();
 			}
 		}
@@ -275,29 +276,29 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 */
 	public function get_js_terms() {
 
-		$taking_too_long_message  = __( 'Well, this is embarassing.  It looks like this process is taking a very very long time which is unusual. So here are some things you might want to double-check:', 'wpcd' );
+		$taking_too_long_message  = __( 'Well, this is embarassing.  It looks like this process is taking a very very long time which is unusual. So here are some things you might want to double-check:', 'simple-stack' );
 		$taking_too_long_message .= '<br />';
-		$taking_too_long_message .= '<br />' . __( '1. It is possible that there is a login issue or an api key issue. The two most common issues are incorrectly configured ssh keys and incorrectly configured api keys.', 'wpcd' );
-		$taking_too_long_message .= '<br />' . __( '2. Some cloud providers such as VULTR and UPCLOUD might require you to whitelist your IP address or explicitly require that you enable use of their API.', 'wpcd' );
-		$taking_too_long_message .= '<br />' . __( '3. Is WP-CRON running properly? Without it our background processes will not run and this process cannot be completed.', 'wpcd' );
-		$taking_too_long_message .= '<br />' . __( '4. Verify that ssh port 22 is open on the server on which the WPCD site is installed. Many commercial WordPress hosts do not allow direct ssh connections out of their WordPress servers.', 'wpcd' );
-		$taking_too_long_message .= '<br />' . __( '5. Check to see if there are any messages in your WordPress debug.log file.', 'wpcd' );
-		$taking_too_long_message .= '<br />' . __( '6. Check the SSH LOG screen for error messages that might provide a clue as to what\'s going on.', 'wpcd' );
+		$taking_too_long_message .= '<br />' . __( '1. It is possible that there is a login issue or an api key issue. The two most common issues are incorrectly configured ssh keys and incorrectly configured api keys.', 'simple-stack' );
+		$taking_too_long_message .= '<br />' . __( '2. Some cloud providers such as VULTR and UPCLOUD might require you to whitelist your IP address or explicitly require that you enable use of their API.', 'simple-stack' );
+		$taking_too_long_message .= '<br />' . __( '3. Is WP-CRON running properly? Without it our background processes will not run and this process cannot be completed.', 'simple-stack' );
+		$taking_too_long_message .= '<br />' . __( '4. Verify that ssh port 22 is open on the server on which the Simple Stack site is installed. Many commercial WordPress hosts do not allow direct ssh connections out of their WordPress servers.', 'simple-stack' );
+		$taking_too_long_message .= '<br />' . __( '5. Check to see if there are any messages in your WordPress debug.log file.', 'simple-stack' );
+		$taking_too_long_message .= '<br />' . __( '6. Check the SSH LOG screen for error messages that might provide a clue as to what\'s going on.', 'simple-stack' );
 		$taking_too_long_message .= '<br />';
-		$taking_too_long_message .= '<br />' . __( 'You can opt to cancel this process and restart it or you can wait a bit longer to see if it continues normally.', 'wpcd' );
+		$taking_too_long_message .= '<br />' . __( 'You can opt to cancel this process and restart it or you can wait a bit longer to see if it continues normally.', 'simple-stack' );
 		$taking_too_long_message .= '<br />';
-		$taking_too_long_message .= '<br />' . __( 'If you cancel this process you can delete the server from the server list and then try again.', 'wpcd' );
+		$taking_too_long_message .= '<br />' . __( 'If you cancel this process you can delete the server from the server list and then try again.', 'simple-stack' );
 
-		$server_install_feedback_1 = __( 'Just printing a little message here to let you know that we\'re still working on this...', 'wpcd' );
-		$server_install_feedback_2 = __( 'We\'re not going anywhere - still working...', 'wpcd' );
-		$server_install_feedback_3 = __( 'Sorry that it\'s taking a little longer than we\'d like...', 'wpcd' );
-		$server_install_feedback_4 = __( 'We\'re really cranking away here....', 'wpcd' );
-		$server_install_feedback_5 = __( 'We\'re continuing to work on this. Your next update will be in about 20 minutes...', 'wpcd' );
+		$server_install_feedback_1 = __( 'Just printing a little message here to let you know that we\'re still working on this...', 'simple-stack' );
+		$server_install_feedback_2 = __( 'We\'re not going anywhere - still working...', 'simple-stack' );
+		$server_install_feedback_3 = __( 'Sorry that it\'s taking a little longer than we\'d like...', 'simple-stack' );
+		$server_install_feedback_4 = __( 'We\'re really cranking away here....', 'simple-stack' );
+		$server_install_feedback_5 = __( 'We\'re continuing to work on this. Your next update will be in about 20 minutes...', 'simple-stack' );
 
 		$return = array(
-			'loading'                   => __( 'Loading', 'wpcd' ) . '...',
-			'invalid_server_name'       => __( 'Invalid server name.', 'wpcd' ),
-			'invalid_version'           => __( 'Invalid version. Please select or enter a valid WordPress version.', 'wpcd' ),
+			'loading'                   => __( 'Loading', 'simple-stack' ) . '...',
+			'invalid_server_name'       => __( 'Invalid server name.', 'simple-stack' ),
+			'invalid_version'           => __( 'Invalid version. Please select or enter a valid WordPress version.', 'simple-stack' ),
 			'taking_too_long'           => $taking_too_long_message,
 			'server_install_feedback_1' => $server_install_feedback_1,
 			'server_install_feedback_2' => $server_install_feedback_2,
@@ -315,13 +316,13 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 */
 	public function register() {
 
-		self::wpcd_app_server_register_post_and_taxonomy();
+		self::sstk_app_server_register_post_and_taxonomy();
 
-		$this->set_post_taxonomy( 'wpcd_app_server_group' );
+		$this->set_post_taxonomy( 'sstk_app_server_group' );
 
-		$this->set_group_key( 'wpcd_server_group' );
+		$this->set_group_key( 'sstk_server_group' );
 
-		$this->set_post_type( 'wpcd_app_server' );
+		$this->set_post_type( 'sstk_app_server' );
 	}
 
 	/**
@@ -333,14 +334,14 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 */
 	public function app_server_table_sorting( $columns ) {
 
-		$columns['wpcd_server_provider']    = 'wpcd_server_provider';
-		$columns['wpcd_server_region']      = 'wpcd_server_region';
-		$columns['wpcd_server_instance_id'] = 'wpcd_server_instance_id';
-		$columns['wpcd_server_initial_app'] = 'wpcd_server_initial_app';
-		$columns['wpcd_local_status']       = 'wpcd_local_status';
-		$columns['wpcd_server_app_count']   = 'wpcd_server_app_count';
-		$columns['wpcd_server_group']       = 'wpcd_server_group';
-		$columns['wpcd_server_owner']       = 'wpcd_server_owner';
+		$columns['sstk_server_provider']    = 'sstk_server_provider';
+		$columns['sstk_server_region']      = 'sstk_server_region';
+		$columns['sstk_server_instance_id'] = 'sstk_server_instance_id';
+		$columns['sstk_server_initial_app'] = 'sstk_server_initial_app';
+		$columns['sstk_local_status']       = 'sstk_local_status';
+		$columns['sstk_server_app_count']   = 'sstk_server_app_count';
+		$columns['sstk_server_group']       = 'sstk_server_group';
+		$columns['sstk_server_owner']       = 'sstk_server_owner';
 
 		return $columns;
 	}
@@ -357,13 +358,13 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 		$value = '';
 		switch ( $column_name ) {
-			case 'wpcd_server_short_desc':
+			case 'sstk_server_short_desc':
 				// Display the short description.
-				$value = esc_html( get_post_meta( $post_id, 'wpcd_short_description', true ) );
+				$value = esc_html( get_post_meta( $post_id, 'sstk_short_description', true ) );
 				break;
-			case 'wpcd_server_provider':
+			case 'sstk_server_provider':
 				// Provider.
-				$provider = get_post_meta( $post_id, 'wpcd_server_provider', true );
+				$provider = get_post_meta( $post_id, 'sstk_server_provider', true );
 
 				// If provider is empty for some reason just break.
 				if ( empty( $provider ) || is_wp_error( $provider ) ) {
@@ -371,22 +372,22 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 				}
 
 				// Provider api.
-				$provider_api = WPCD()->get_provider_api( $provider );
+				$provider_api = SSTK()->get_provider_api( $provider );
 				if ( empty( $provider_api ) || is_wp_error( $provider_api ) ) {
 					break;
 				}
 
 				// Provider description.
-				$provider_desc = WPCD()->wpcd_get_cloud_provider_desc( $provider );
+				$provider_desc = SSTK()->sstk_get_cloud_provider_desc( $provider );
 
 				// Region.
-				$region = get_post_meta( $post_id, 'wpcd_server_region', true );
+				$region = get_post_meta( $post_id, 'sstk_server_region', true );
 				$region = $provider_api->get_region_description( $region );
 
 				// Size.
-				$size = get_post_meta( $post_id, 'wpcd_server_size', true );
+				$size = get_post_meta( $post_id, 'sstk_server_size', true );
 				if ( empty( $size ) ) {
-					$size = get_post_meta( $post_id, 'wpcd_server_size_raw', true );
+					$size = get_post_meta( $post_id, 'sstk_server_size_raw', true );
 				}
 				if ( ! empty( $size ) || '0' === (string) $size ) {
 					// A string value of '0' is valid so we include it in the above IF statement.
@@ -398,93 +399,93 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 				}
 
 				// Instance id.
-				$instance_id = get_post_meta( $post_id, 'wpcd_server_provider_instance_id', true );
+				$instance_id = get_post_meta( $post_id, 'sstk_server_provider_instance_id', true );
 
 				// ipv4 & ipv6 for display.
-				$ips = WPCD_SERVER()->get_all_ip_addresses_for_display( $post_id );
+				$ips = SSTK_SERVER()->get_all_ip_addresses_for_display( $post_id );
 
 				// Initial os.
-				$initial_os = WPCD()->get_os_description( WPCD_SERVER()->get_server_os( $post_id ) );
+				$initial_os = SSTK()->get_os_description( SSTK_SERVER()->get_server_os( $post_id ) );
 
 				// Add Provider to final output.
 				$value = strtoupper( $provider_desc );
-				$value = $this->wpcd_column_wrap_string_with_span_and_class( $value, 'provider', 'left' );
-				$value = $this->wpcd_column_wrap_string_with_div_and_class( $value, 'provider' );
+				$value = $this->sstk_column_wrap_string_with_span_and_class( $value, 'provider', 'left' );
+				$value = $this->sstk_column_wrap_string_with_div_and_class( $value, 'provider' );
 
 				// Add initial OS to final output.
 				if ( ! is_admin() ) {
 					// On the front-end we want both a label and the os value.
-					$value2  = $this->wpcd_column_wrap_string_with_span_and_class( __( 'OS:', 'wpcd' ), 'initial_os', 'left' );
-					$value2 .= $this->wpcd_column_wrap_string_with_span_and_class( $initial_os, 'initial_os', 'right' );
-					$value  .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'provider' );
+					$value2  = $this->sstk_column_wrap_string_with_span_and_class( __( 'OS:', 'simple-stack' ), 'initial_os', 'left' );
+					$value2 .= $this->sstk_column_wrap_string_with_span_and_class( $initial_os, 'initial_os', 'right' );
+					$value  .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'provider' );
 				} else {
 					// On the back-end we only want the value.
-					$value2 = $this->wpcd_column_wrap_string_with_span_and_class( $initial_os, 'initial_os', 'left' );
-					$value .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'provider' );
+					$value2 = $this->sstk_column_wrap_string_with_span_and_class( $initial_os, 'initial_os', 'left' );
+					$value .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'provider' );
 				}
 
 				// Add Region to final output.
-				if ( ! boolval( wpcd_get_option( 'wpcd_server_list_region_column' ) ) ) {
-					$value2  = $this->wpcd_column_wrap_string_with_span_and_class( __( 'Region: ', 'wpcd' ), 'region', 'left' );
-					$value2 .= $this->wpcd_column_wrap_string_with_span_and_class( $region, 'region', 'right' );
-					$value  .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'region' );
+				if ( ! boolval( sstk_get_option( 'sstk_server_list_region_column' ) ) ) {
+					$value2  = $this->sstk_column_wrap_string_with_span_and_class( __( 'Region: ', 'simple-stack' ), 'region', 'left' );
+					$value2 .= $this->sstk_column_wrap_string_with_span_and_class( $region, 'region', 'right' );
+					$value  .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'region' );
 				}
 
 				// Add size to final output.
-				$value2  = $this->wpcd_column_wrap_string_with_span_and_class( __( 'Size: ', 'wpcd' ), 'server_size', 'left' );
-				$value2 .= $this->wpcd_column_wrap_string_with_span_and_class( $size, 'server_size', 'right' );
-				$value  .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'server_size' );
+				$value2  = $this->sstk_column_wrap_string_with_span_and_class( __( 'Size: ', 'simple-stack' ), 'server_size', 'left' );
+				$value2 .= $this->sstk_column_wrap_string_with_span_and_class( $size, 'server_size', 'right' );
+				$value  .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'server_size' );
 
 				// Add instance id to final output.
-				if ( boolval( wpcd_get_option( 'wordpress_app_show_server_instance_id_element_in_server_list' ) ) && ( ! boolval( wpcd_get_option( 'wpcd_server_list_instance_id_column' ) ) ) ) {
-					if ( ( ! boolval( wpcd_get_option( 'wpcd_server_list_hide_instance_id_column' ) ) ) || wpcd_is_admin() ) {
-						$value2  = $this->wpcd_column_wrap_string_with_span_and_class( __( 'Instance ID: ', 'wpcd' ), 'instance_id', 'left' );
-						$value2 .= $this->wpcd_column_wrap_string_with_span_and_class( $instance_id, 'instance_id', 'right' );
-						$value  .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'instance_id' );
+				if ( boolval( sstk_get_option( 'wordpress_app_show_server_instance_id_element_in_server_list' ) ) && ( ! boolval( sstk_get_option( 'sstk_server_list_instance_id_column' ) ) ) ) {
+					if ( ( ! boolval( sstk_get_option( 'sstk_server_list_hide_instance_id_column' ) ) ) || sstk_is_admin() ) {
+						$value2  = $this->sstk_column_wrap_string_with_span_and_class( __( 'Instance ID: ', 'simple-stack' ), 'instance_id', 'left' );
+						$value2 .= $this->sstk_column_wrap_string_with_span_and_class( $instance_id, 'instance_id', 'right' );
+						$value  .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'instance_id' );
 					}
 				}
 
 				// Add IPs to final output.
 				if ( ! is_admin() ) {
 					// On the front-end we want both a label and the os value.
-					$value2  = $this->wpcd_column_wrap_string_with_span_and_class( __( 'IP:', 'wpcd' ), 'ips', 'left' );
-					$value2 .= $this->wpcd_column_wrap_string_with_span_and_class( $ips, 'ips', 'right' );
-					$value  .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'ips' );
+					$value2  = $this->sstk_column_wrap_string_with_span_and_class( __( 'IP:', 'simple-stack' ), 'ips', 'left' );
+					$value2 .= $this->sstk_column_wrap_string_with_span_and_class( $ips, 'ips', 'right' );
+					$value  .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'ips' );
 				} else {
 					// On the back-end we only want the value.
-					$value2 = $this->wpcd_column_wrap_string_with_span_and_class( $ips, 'ips', 'left' );
-					$value .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'ips' );
+					$value2 = $this->sstk_column_wrap_string_with_span_and_class( $ips, 'ips', 'left' );
+					$value .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'ips' );
 				}
 
 				break;
-			case 'wpcd_server_size':
+			case 'sstk_server_size':
 				// not used right now.
-				$value = get_post_meta( $post_id, 'wpcd_server_size', true );
+				$value = get_post_meta( $post_id, 'sstk_server_size', true );
 				if ( empty( $value ) ) {
-					$value = get_post_meta( $post_id, 'wpcd_server_size_raw', true );
+					$value = get_post_meta( $post_id, 'sstk_server_size_raw', true );
 				}
 				if ( empty( $value ) && '0' !== (string) $value ) {
 					// A string value of '0' is valid so we excluded it in the above IF statement.
 					$value = 'unknown';
 				}
 				break;
-			case 'wpcd_server_region':
-				$value = get_post_meta( $post_id, 'wpcd_server_region', true );
+			case 'sstk_server_region':
+				$value = get_post_meta( $post_id, 'sstk_server_region', true );
 				break;
-			case 'wpcd_server_instance_id':
-				$value = get_post_meta( $post_id, 'wpcd_server_provider_instance_id', true );
+			case 'sstk_server_instance_id':
+				$value = get_post_meta( $post_id, 'sstk_server_provider_instance_id', true );
 				break;
-			case 'wpcd_local_status':
+			case 'sstk_local_status':
 				// Nothing here - instead individual app classes will use this filter to populate data about the server status.
-				$value = apply_filters( 'wpcd_app_server_admin_list_local_status_column', $value, $post_id );
+				$value = apply_filters( 'sstk_app_server_admin_list_local_status_column', $value, $post_id );
 
 				// If the server has been restored from trash, then there is likely no link to a live server.
-				if ( boolval( get_post_meta( $post_id, 'wpcd_wpapp_disconnected', true ) ) ) {
-					$delete_text  = __( '***************************', 'wpcd' ) . '<br />';
-					$delete_text .= __( 'Record restored from trash.', 'wpcd' ) . '<br />';
-					$delete_text .= __( 'The Server likely has been deleted at your cloud provider.', 'wpcd' ) . '<br />';
-					$delete_text .= __( 'There is no link from this item to any live server.', 'wpcd' ) . '<br />';
-					$delete_text .= __( '***************************', 'wpcd' ) . '<br />';
+				if ( boolval( get_post_meta( $post_id, 'sstk_wpapp_disconnected', true ) ) ) {
+					$delete_text  = __( '***************************', 'simple-stack' ) . '<br />';
+					$delete_text .= __( 'Record restored from trash.', 'simple-stack' ) . '<br />';
+					$delete_text .= __( 'The Server likely has been deleted at your cloud provider.', 'simple-stack' ) . '<br />';
+					$delete_text .= __( 'There is no link from this item to any live server.', 'simple-stack' ) . '<br />';
+					$delete_text .= __( '***************************', 'simple-stack' ) . '<br />';
 					if ( ! empty( $value ) ) {
 						$value = '<br />' . $value . $delete_text;
 					} else {
@@ -493,29 +494,29 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 				} else {
 					// If we have nothing in the $value field so far, therefore we should assume active.
 					if ( empty( $value ) ) {
-						$value = __( 'Active', 'wpcd' );
+						$value = __( 'Active', 'simple-stack' );
 					}
 				}
 
 				// Construct a classname based on whether the status is currently active or not.
 				$partial_class_name = 'local_server_status';
-				if ( __( 'Active', 'wpcd' ) === $value ) {
+				if ( __( 'Active', 'simple-stack' ) === $value ) {
 					$partial_class_name = 'local_server_status_active';
 				}
 
 				// Wrap the status in a div with the constructed class name.
-				$value = $this->wpcd_column_wrap_string_with_div_and_class( $value, $partial_class_name );
+				$value = $this->sstk_column_wrap_string_with_div_and_class( $value, $partial_class_name );
 
 				// If there is a state entered into the database, show it.
-				$state = get_post_meta( $post_id, 'wpcd_server_current_state', true );
+				$state = get_post_meta( $post_id, 'sstk_server_current_state', true );
 
 				// provider.
-				$provider = WPCD_SERVER()->get_server_provider( $post_id );
+				$provider = SSTK_SERVER()->get_server_provider( $post_id );
 
-				$instance_id = WPCD_SERVER()->get_server_provider_instance_id( $post_id ); // instance id so the provider knows which one we're talking about.
+				$instance_id = SSTK_SERVER()->get_server_provider_instance_id( $post_id ); // instance id so the provider knows which one we're talking about.
 
 				$remote_state_text = '';
-				$provider_api      = WPCD()->get_provider_api( $provider );
+				$provider_api      = SSTK()->get_provider_api( $provider );
 				if ( $provider_api && is_object( $provider_api ) ) {
 					// FYI: The remote state is set by the method AJAX_SERVER, case 'update-status' in file class-wordpress-app.php.
 					// It is called when the admin clicks the UPDATE REMOTE STATE link in the server list.
@@ -533,45 +534,45 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 				// Wrap the state in our usual spans and divs with the constructed class name.
 				if ( ! empty( $state ) ) {
-					$value2  = $this->wpcd_column_wrap_string_with_span_and_class( __( 'Remote State: ', 'wpcd' ), $partial_class_name, 'left' );
-					$value2 .= $this->wpcd_column_wrap_string_with_span_and_class( $remote_state_text, $partial_class_name, 'right' );
-					$value  .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, $partial_class_name );
+					$value2  = $this->sstk_column_wrap_string_with_span_and_class( __( 'Remote State: ', 'simple-stack' ), $partial_class_name, 'left' );
+					$value2 .= $this->sstk_column_wrap_string_with_span_and_class( $remote_state_text, $partial_class_name, 'right' );
+					$value  .= $this->sstk_column_wrap_string_with_div_and_class( $value2, $partial_class_name );
 				}
 
 				// Construct a link to give the user the option to get the true remote status of the server.
 				$link_html = sprintf(
-					'<a href="" class="wpcd-update-server-status" data-wpcd-id="%1$s">%2$s</a>',
+					'<a href="" class="sstk-update-server-status" data-sstk-id="%1$s">%2$s</a>',
 					$post_id,
-					__( 'Update Remote State', 'wpcd' )
+					__( 'Update Remote State', 'simple-stack' )
 				);
-				$value2    = $this->wpcd_column_wrap_string_with_span_and_class( $link_html, 'update_remote_state_link', 'left' );
-				$value    .= $this->wpcd_column_wrap_string_with_div_and_class( $value2, 'update_remote_state_link' );
+				$value2    = $this->sstk_column_wrap_string_with_span_and_class( $link_html, 'update_remote_state_link', 'left' );
+				$value    .= $this->sstk_column_wrap_string_with_div_and_class( $value2, 'update_remote_state_link' );
 
 				break;
-			case 'wpcd_server_initial_app':
-				$value = get_post_meta( $post_id, 'wpcd_server_initial_app_name', true );
+			case 'sstk_server_initial_app':
+				$value = get_post_meta( $post_id, 'sstk_server_initial_app_name', true );
 				break;
 
-			case 'wpcd_server_ipv4':
+			case 'sstk_server_ipv4':
 				// not used right now.
-				$value = WPCD_SERVER()->get_ipv4_address( $post_id );
+				$value = SSTK_SERVER()->get_ipv4_address( $post_id );
 				break;
 
-			case 'wpcd_server_ipv6':
+			case 'sstk_server_ipv6':
 				// not used right now.
-				$value = WPCD_SERVER()->get_ipv6_address( $post_id );
+				$value = SSTK_SERVER()->get_ipv6_address( $post_id );
 				break;
 
-			case 'wpcd_server_app_count':
-				$app_count                   = WPCD_SERVER()->get_app_count( $post_id );
-				$url                         = is_admin() ? admin_url( 'edit.php?post_type=wpcd_app&filter_action=Filter&wpcd_app_server_dd=' . $post_id ) : get_permalink( WPCD_WORDPRESS_APP_PUBLIC::get_apps_list_page_id() ) . '?filter_action=Filter&_wpcd_app_server_dd=' . $post_id;
-				$app_count_label             = $this->wpcd_column_wrap_string_with_span_and_class( __( 'App Count:', 'wpcd' ), 'server_app_count', 'left' );
-				$app_count_value_for_display = $this->wpcd_column_wrap_string_with_span_and_class( $app_count, 'server_app_count', 'right' );
+			case 'sstk_server_app_count':
+				$app_count                   = SSTK_SERVER()->get_app_count( $post_id );
+				$url                         = is_admin() ? admin_url( 'edit.php?post_type=sstk_app&filter_action=Filter&sstk_app_server_dd=' . $post_id ) : get_permalink( SSTK_WORDPRESS_APP_PUBLIC::get_apps_list_page_id() ) . '?filter_action=Filter&_sstk_app_server_dd=' . $post_id;
+				$app_count_label             = $this->sstk_column_wrap_string_with_span_and_class( __( 'App Count:', 'simple-stack' ), 'server_app_count', 'left' );
+				$app_count_value_for_display = $this->sstk_column_wrap_string_with_span_and_class( $app_count, 'server_app_count', 'right' );
 				$value                       = sprintf( '%s <a href="%s" target="_blank">%s</a>', $app_count_label, esc_url( $url ), $app_count_value_for_display );
-				$value                       = $this->wpcd_column_wrap_string_with_div_and_class( $value, 'server_app_count' );
+				$value                       = $this->sstk_column_wrap_string_with_div_and_class( $value, 'server_app_count' );
 
 				// Display sites underneath the post count.
-				$num_apps = wpcd_get_option( 'wordpress_app_app_limit_server_list' );
+				$num_apps = sstk_get_option( 'wordpress_app_app_limit_server_list' );
 				if ( '' === (string) $num_apps ) {
 					// Empty string means admin has not entered a value in settings so default it to four.
 					// Important: Do NOT use empty() in the above conditional that triggered this block otherwise '0' will evaluate to empty which is NOT what we want here.
@@ -584,7 +585,7 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 					// Get sites.
 					$args = array(
-						'post_type'      => 'wpcd_app',
+						'post_type'      => 'sstk_app',
 						'post_status'    => 'private',
 						'posts_per_page' => $num_apps,
 						'fields'         => 'ids',
@@ -612,79 +613,79 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 							// If the site is available, show links.
 
-							if ( wpcd_is_admin() || wpcd_user_can( get_current_user_id(), 'view_app', $app_id ) || (int) get_post_field( 'post_author', $app_id ) === get_current_user_id() ) {
+							if ( sstk_is_admin() || sstk_user_can( get_current_user_id(), 'view_app', $app_id ) || (int) get_post_field( 'post_author', $app_id ) === get_current_user_id() ) {
 
 								// Initialize string.
 								$app_link = '';
 
 								// Icons to navigate to front-end or wp-admin.  But only if the site is available.
-								if ( true === WPCD_WORDPRESS_APP()->is_site_available_for_commands( true, $app_id ) ) {
-									if ( 'wordpress-app' === (string) get_post_meta( $post_id, 'wpcd_server_server-type', true ) ) {
-										$app_link  = WPCD_WORDPRESS_APP()->get_formatted_wpadmin_link( $app_id, true );
-										$app_link .= ' ' . WPCD_WORDPRESS_APP()->get_formatted_site_link( $app_id, '', true );
+								if ( true === SSTK_WORDPRESS_APP()->is_site_available_for_commands( true, $app_id ) ) {
+									if ( 'wordpress-app' === (string) get_post_meta( $post_id, 'sstk_server_server-type', true ) ) {
+										$app_link  = SSTK_WORDPRESS_APP()->get_formatted_wpadmin_link( $app_id, true );
+										$app_link .= ' ' . SSTK_WORDPRESS_APP()->get_formatted_site_link( $app_id, '', true );
 									}
 								} else {
 									// No icon - just a note that say 'pending'
 									// Translators: %s is just a label with the word 'Pending' or similar.
-									$app_link = sprintf( '[%s]', __( 'Pending', 'wpcd' ) );
+									$app_link = sprintf( '[%s]', __( 'Pending', 'simple-stack' ) );
 								}
 
 								// Add in the site url label and link to management tabs.
 								$url        = is_admin() ? admin_url( 'post.php?post=' . $app_id . '&action=edit' ) : get_permalink( $app_id );
-								$app_link   = sprintf( $break_char . $app_link . ' ' . '<a href="%s" target="_blank">%s</a>', esc_url( $url ), wpcd_get_the_title( $app_id ) );
-								$app_link   = $this->wpcd_column_wrap_string_with_span_and_class( $app_link, 'server_app_link', 'left' );
+								$app_link   = sprintf( $break_char . $app_link . ' ' . '<a href="%s" target="_blank">%s</a>', esc_url( $url ), sstk_get_the_title( $app_id ) );
+								$app_link   = $this->sstk_column_wrap_string_with_span_and_class( $app_link, 'server_app_link', 'left' );
 								$app_links .= $app_link;
 
 							} else {
-								$app_link   = sprintf( $break_char . '%s ', wpcd_get_the_title( $app_id ) );
-								$app_link   = $this->wpcd_column_wrap_string_with_span_and_class( $app_link, 'server_app_link', 'left' );
+								$app_link   = sprintf( $break_char . '%s ', sstk_get_the_title( $app_id ) );
+								$app_link   = $this->sstk_column_wrap_string_with_span_and_class( $app_link, 'server_app_link', 'left' );
 								$app_links .= $app_link;
 							}
 						}
 
-						$value .= $this->wpcd_column_wrap_string_with_div_and_class( $app_links, 'server_app_links' );
+						$value .= $this->sstk_column_wrap_string_with_div_and_class( $app_links, 'server_app_links' );
 
 					}
 				}
 
 				break;
 
-			case 'wpcd_server_group':
-				$terms = get_the_terms( $post_id, 'wpcd_app_server_group' );
+			case 'sstk_server_group':
+				$terms = get_the_terms( $post_id, 'sstk_app_server_group' );
 				if ( ! empty( $terms ) ) {
 					$value = '';
 					foreach ( $terms as $term ) {
 						$term_id   = $term->term_id;
 						$term_name = $term->name;
-						$color     = get_term_meta( $term_id, 'wpcd_group_color', true );
-						$url       = esc_url( add_query_arg( 'wpcd_app_server_group', $term_id ) );
-						$value    .= sprintf( '<a href="%s"><span class="wpcd-app-server-app-group" style="background-color: %s">%s</span></a>', $url, $color, $term_name );
+						$color     = get_term_meta( $term_id, 'sstk_group_color', true );
+						$url       = esc_url( add_query_arg( 'sstk_app_server_group', $term_id ) );
+						$value    .= sprintf( '<a href="%s"><span class="sstk-app-server-app-group" style="background-color: %s">%s</span></a>', $url, $color, $term_name );
 					}
 				} else {
-					$value = sprintf( '<span class="wpcd-app-server-app-group" style="background-color: %s">%s</span>', 'gray', __( 'None', 'wpcd' ) );
+					$value = sprintf( '<span class="sstk-app-server-app-group" style="background-color: %s">%s</span>', 'gray', __( 'None', 'simple-stack' ) );
 				}
 				break;
 
-			case 'wpcd_server_owner':
+			case 'sstk_server_owner':
 				// Display the name of the owner who set up the server...
 				$server_owner = esc_html( get_user_by( 'ID', get_post( $post_id )->post_author )->user_login );
 				$value        = $server_owner; // @Todo: Make a hyperlink to user profile screens in admin.
 				break;
 
-			case 'wpcd_assigned_teams':
-				$wpcd_assigned_teams = get_post_meta( $post_id, 'wpcd_assigned_teams', false );
+			case 'sstk_assigned_teams':
+				$sstk_assigned_teams = get_post_meta( $post_id, 'sstk_assigned_teams', false );
 
 				$teams = array();
-				if ( $wpcd_assigned_teams ) {
-					foreach ( $wpcd_assigned_teams as $team ) {
+				if ( $sstk_assigned_teams ) {
+					foreach ( $sstk_assigned_teams as $team ) {
 						if ( 'trash' === get_post_status( $team ) || false === (bool) get_post_status( $team ) ) {
 							continue;
 						}
 
 						$user_id         = get_current_user_id();
-						$is_team_manager = wpcd_check_user_is_team_manager( $user_id, $team );
+						$is_team_manager = sstk_check_user_is_team_manager( $user_id, $team );
 
-						if ( current_user_can( 'wpcd_manage_teams' ) && ( get_post( $team )->post_author === $user_id || $is_team_manager ) ) {
+						if ( current_user_can( 'sstk_manage_teams' ) && ( get_post( $team )->post_author === $user_id || $is_team_manager ) ) {
 							$url     = admin_url( sprintf( 'post.php?post=%s&action=edit', $team ) );
 							$teams[] = sprintf( '<a href="%s" target="_blank">%s</a>', $url, get_the_title( $team ) );
 						} else {
@@ -694,14 +695,14 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 					$value = implode( ', ', $teams );
 				} else {
-					$value = __( 'No team assigned.', 'wpcd' );
+					$value = __( 'No team assigned.', 'simple-stack' );
 				}
 
 				break;
 
 		}
 
-		$value = apply_filters( 'wpcd_app_server_table_content', $value, $column_name, $post_id );
+		$value = apply_filters( 'sstk_app_server_table_content', $value, $column_name, $post_id );
 
 		echo $value;
 	}
@@ -719,115 +720,115 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 		// Title.
 		$show_it = true;
-		if ( ! is_admin() && ( boolval( wpcd_get_option( 'wordpress_app_fe_hide_title_in_server_list' ) ) ) ) {
+		if ( ! is_admin() && ( boolval( sstk_get_option( 'wordpress_app_fe_hide_title_in_server_list' ) ) ) ) {
 			$show_it = false;
 		}
 		if ( ! $show_it ) {
 			unset( $defaults['title'] );
 		} else {
 			if ( ! is_admin() ) {
-				$defaults['title'] = __( 'Server Name', 'wpcd' );
+				$defaults['title'] = __( 'Server Name', 'simple-stack' );
 			}
 		}
 
 		// Description.
-		if ( boolval( wpcd_get_option( 'wpcd_show_server_list_short_desc' ) ) ) {
+		if ( boolval( sstk_get_option( 'sstk_show_server_list_short_desc' ) ) ) {
 			$show_it = true;
-			if ( ! is_admin() && ( ! boolval( wpcd_get_option( 'wordpress_app_fe_show_description_in_server_list' ) ) ) ) {
+			if ( ! is_admin() && ( ! boolval( sstk_get_option( 'wordpress_app_fe_show_description_in_server_list' ) ) ) ) {
 				$show_it = false;
 			}
 			if ( $show_it ) {
-				$defaults['wpcd_server_short_desc'] = __( 'Description', 'wpcd' );
+				$defaults['sstk_server_short_desc'] = __( 'Description', 'simple-stack' );
 			}
 		}
 
 		// Server Group.
 		$show_it = true;
-		if ( ! is_admin() && ( ! boolval( wpcd_get_option( 'wordpress_app_fe_show_server_group_in_server_list' ) ) ) ) {
+		if ( ! is_admin() && ( ! boolval( sstk_get_option( 'wordpress_app_fe_show_server_group_in_server_list' ) ) ) ) {
 			$show_it = false;
 		}
 		if ( $show_it ) {
-			$defaults['wpcd_server_group'] = __( 'Server Group', 'wpcd' );
+			$defaults['sstk_server_group'] = __( 'Server Group', 'simple-stack' );
 		}
 
 		// Server Actions.
 		$show_it = true;
-		if ( ! is_admin() && ( boolval( wpcd_get_option( 'wordpress_app_fe_hide_server_actions_in_server_list' ) ) ) ) {
+		if ( ! is_admin() && ( boolval( sstk_get_option( 'wordpress_app_fe_hide_server_actions_in_server_list' ) ) ) ) {
 			$show_it = false;
 		}
 		if ( $show_it ) {
-			$defaults['wpcd_server_actions'] = __( 'Server Actions', 'wpcd' );
+			$defaults['sstk_server_actions'] = __( 'Server Actions', 'simple-stack' );
 		}
 
 		// Server Provider.
 		$show_it = true;
-		if ( ! is_admin() && ( boolval( wpcd_get_option( 'wordpress_app_fe_hide_provider_details_in_server_list' ) ) ) ) {
+		if ( ! is_admin() && ( boolval( sstk_get_option( 'wordpress_app_fe_hide_provider_details_in_server_list' ) ) ) ) {
 			$show_it = false;
 		}
 		if ( $show_it ) {
-			$defaults['wpcd_server_provider'] = __( 'Provider Details', 'wpcd' );
+			$defaults['sstk_server_provider'] = __( 'Provider Details', 'simple-stack' );
 		}
 
 		// Server Region.
-		if ( boolval( wpcd_get_option( 'wpcd_server_list_region_column' ) ) ) {
-			$defaults['wpcd_server_region'] = __( 'Region', 'wpcd' );
+		if ( boolval( sstk_get_option( 'sstk_server_list_region_column' ) ) ) {
+			$defaults['sstk_server_region'] = __( 'Region', 'simple-stack' );
 		}
 
 		// Instance ID.
-		if ( boolval( wpcd_get_option( 'wpcd_server_list_instance_id_column' ) ) ) {
-			$defaults['wpcd_server_instance_id'] = __( 'Instance ID', 'wpcd' );
+		if ( boolval( sstk_get_option( 'sstk_server_list_instance_id_column' ) ) ) {
+			$defaults['sstk_server_instance_id'] = __( 'Instance ID', 'simple-stack' );
 		}
 
 		// Local Status.
 		$show_it = true;
-		if ( ! is_admin() && ( boolval( wpcd_get_option( 'wordpress_app_fe_hide_local_status_in_server_list' ) ) ) ) {
+		if ( ! is_admin() && ( boolval( sstk_get_option( 'wordpress_app_fe_hide_local_status_in_server_list' ) ) ) ) {
 			$show_it = false;
 		}
 		if ( $show_it ) {
-			$defaults['wpcd_local_status'] = __( 'Local Status', 'wpcd' );
+			$defaults['sstk_local_status'] = __( 'Local Status', 'simple-stack' );
 		}
 
 		// Server Type.
-		if ( boolval( wpcd_get_option( 'wpcd_show_server_list_server_type' ) ) ) {
-			$defaults['wpcd_server_initial_app'] = __( 'Initial App/<br />Server Type', 'wpcd' );
+		if ( boolval( sstk_get_option( 'sstk_show_server_list_server_type' ) ) ) {
+			$defaults['sstk_server_initial_app'] = __( 'Initial App/<br />Server Type', 'simple-stack' );
 		}
 
 		// App Count.
 		$show_it = true;
-		if ( ! is_admin() && ( boolval( wpcd_get_option( 'wordpress_app_fe_hide_app_count_in_server_list' ) ) ) ) {
+		if ( ! is_admin() && ( boolval( sstk_get_option( 'wordpress_app_fe_hide_app_count_in_server_list' ) ) ) ) {
 			$show_it = false;
 		}
 		if ( $show_it ) {
-			$defaults['wpcd_server_app_count'] = __( 'Apps', 'wpcd' );
+			$defaults['sstk_server_app_count'] = __( 'Apps', 'simple-stack' );
 		}
 
 		// Date.
-		if ( boolval( wpcd_get_option( 'wpcd_show_server_list_date' ) ) ) {
-			$defaults['date'] = __( 'Date', 'wpcd' );
+		if ( boolval( sstk_get_option( 'sstk_show_server_list_date' ) ) ) {
+			$defaults['date'] = __( 'Date', 'simple-stack' );
 		}
 
 		// Server owner.
-		if ( boolval( wpcd_get_option( 'wpcd_show_server_list_owner' ) ) ) {
+		if ( boolval( sstk_get_option( 'sstk_show_server_list_owner' ) ) ) {
 			$show_it = true;
-			if ( ! is_admin() && ( ! boolval( wpcd_get_option( 'wordpress_app_fe_show_owner_in_server_list' ) ) ) ) {
+			if ( ! is_admin() && ( ! boolval( sstk_get_option( 'wordpress_app_fe_show_owner_in_server_list' ) ) ) ) {
 				$show_it = false;
 			}
 
 			if ( $show_it ) {
-				if ( wpcd_is_admin() || ( ! wpcd_is_admin() && ! boolval( wpcd_get_option( 'wpcd_hide_server_list_owner_non_admins' ) ) ) ) {
-					$defaults['wpcd_server_owner'] = __( 'Owner', 'wpcd' );
+				if ( sstk_is_admin() || ( ! sstk_is_admin() && ! boolval( sstk_get_option( 'sstk_hide_server_list_owner_non_admins' ) ) ) ) {
+					$defaults['sstk_server_owner'] = __( 'Owner', 'simple-stack' );
 				}
 			}
 		}
 
 		// Teams.
-		if ( boolval( wpcd_get_option( 'wpcd_show_server_list_team' ) ) ) {
+		if ( boolval( sstk_get_option( 'sstk_show_server_list_team' ) ) ) {
 			$show_it = true;
-			if ( ! is_admin() && ( ! boolval( wpcd_get_option( 'wordpress_app_fe_show_teams_in_server_list' ) ) ) ) {
+			if ( ! is_admin() && ( ! boolval( sstk_get_option( 'wordpress_app_fe_show_teams_in_server_list' ) ) ) ) {
 				$show_it = false;
 			}
 			if ( $show_it ) {
-				$defaults['wpcd_assigned_teams'] = __( 'Teams', 'wpcd' );
+				$defaults['sstk_assigned_teams'] = __( 'Teams', 'simple-stack' );
 			}
 		}
 
@@ -840,21 +841,21 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	public function meta_boxes() {
 
 		/* Only render for true admins! */
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 			return;
 		}
 
 		/* Only render if the settings option is turned on. */
-		if ( ! (bool) wpcd_get_option( 'show-advanced-metaboxes' ) ) {
+		if ( ! (bool) sstk_get_option( 'show-advanced-metaboxes' ) ) {
 			return;
 		}
 
 		// Add APP SERVER detail meta box into APP SERVER custom post type.
 		add_meta_box(
-			'wpcd_server_detail',
-			__( 'Server Details', 'wpcd' ),
+			'sstk_server_detail',
+			__( 'Server Details', 'simple-stack' ),
 			array( $this, 'render_app_server_details_meta_box' ),
-			'wpcd_app_server',
+			'sstk_app_server',
 			'advanced',
 			'low'
 		);
@@ -871,39 +872,38 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 		$html = '';
 
-		$wpcd_server_title                = $post->post_title;
-		$wpcd_server_region               = get_post_meta( $post->ID, 'wpcd_server_region', true );
-		$wpcd_server_size                 = get_post_meta( $post->ID, 'wpcd_server_size', true );
-		$wpcd_server_size_raw             = get_post_meta( $post->ID, 'wpcd_server_size_raw', true );
-		$wpcd_server_ipv4                 = get_post_meta( $post->ID, 'wpcd_server_ipv4', true );
-		$wpcd_server_ipv6                 = get_post_meta( $post->ID, 'wpcd_server_ipv6', true );
-		$wpcd_server_name                 = get_post_meta( $post->ID, 'wpcd_server_name', true );
-		$wpcd_server_wc_order_id          = get_post_meta( $post->ID, 'wpcd_server_wc_order_id', true );
-		$wpcd_server_provider             = get_post_meta( $post->ID, 'wpcd_server_provider', true );
-		$wpcd_server_provider_instance_id = get_post_meta( $post->ID, 'wpcd_server_provider_instance_id', true );
-		$wpcd_server_created              = get_post_meta( $post->ID, 'wpcd_server_created', true );
-		$wpcd_server_parent_post_id       = get_post_meta( $post->ID, 'wpcd_server_parent_post_id', true );
-		$wpcd_server_scripts_version      = get_post_meta( $post->ID, 'wpcd_server_scripts_version', true );
+		$sstk_server_title                = $post->post_title;
+		$sstk_server_region               = get_post_meta( $post->ID, 'sstk_server_region', true );
+		$sstk_server_size                 = get_post_meta( $post->ID, 'sstk_server_size', true );
+		$sstk_server_size_raw             = get_post_meta( $post->ID, 'sstk_server_size_raw', true );
+		$sstk_server_ipv4                 = get_post_meta( $post->ID, 'sstk_server_ipv4', true );
+		$sstk_server_ipv6                 = get_post_meta( $post->ID, 'sstk_server_ipv6', true );
+		$sstk_server_name                 = get_post_meta( $post->ID, 'sstk_server_name', true );
+		$sstk_server_provider             = get_post_meta( $post->ID, 'sstk_server_provider', true );
+		$sstk_server_provider_instance_id = get_post_meta( $post->ID, 'sstk_server_provider_instance_id', true );
+		$sstk_server_created              = get_post_meta( $post->ID, 'sstk_server_created', true );
+		$sstk_server_parent_post_id       = get_post_meta( $post->ID, 'sstk_server_parent_post_id', true );
+		$sstk_server_scripts_version      = SSTK_WORDPRESS_APP()->get_configured_scripts_version();
 
-		$wpcd_server_init                   = get_post_meta( $post->ID, 'wpcd_server_init', true );
-		$wpcd_server_initial_app_name       = get_post_meta( $post->ID, 'wpcd_server_initial_app_name', true );
-		$wpcd_server_plugin_initial_version = get_post_meta( $post->ID, 'wpcd_server_plugin_initial_version', true );
-		$wpcd_server_plugin_updated_version = get_post_meta( $post->ID, 'wpcd_server_plugin_updated_version', true );
-		$wpcd_server_server_type            = get_post_meta( $post->ID, 'wpcd_server_server-type', true );
-		$wpcd_server_webserver_type         = get_post_meta( $post->ID, 'wpcd_server_webserver_type', true );
-		$wpcd_server_initial_app_name       = get_post_meta( $post->ID, 'wpcd_server_initial_app_name', true );
+		$sstk_server_init                   = get_post_meta( $post->ID, 'sstk_server_init', true );
+		$sstk_server_initial_app_name       = get_post_meta( $post->ID, 'sstk_server_initial_app_name', true );
+		$sstk_server_plugin_initial_version = get_post_meta( $post->ID, 'sstk_server_plugin_initial_version', true );
+		$sstk_server_plugin_updated_version = get_post_meta( $post->ID, 'sstk_server_plugin_updated_version', true );
+		$sstk_server_server_type            = get_post_meta( $post->ID, 'sstk_server_server-type', true );
+		$sstk_server_webserver_type         = get_post_meta( $post->ID, 'sstk_server_webserver_type', true );
+		$sstk_server_initial_app_name       = get_post_meta( $post->ID, 'sstk_server_initial_app_name', true );
 
-		$wpcd_server_action_status              = get_post_meta( $post->ID, 'wpcd_server_action_status', true );
-		$wpcd_server_action                     = get_post_meta( $post->ID, 'wpcd_server_action', true );
-		$wpcd_server_after_create_action_app_id = get_post_meta( $post->ID, 'wpcd_server_after_create_action_app_id', true );
-		$wpcd_server_command_mutex              = get_post_meta( $post->ID, 'wpcd_command_mutex', true );  // Notice the lack of "server" in this post meta field.
-		$wpcd_server_last_upgrade_done          = get_post_meta( $post->ID, 'wpcd_last_upgrade_done', true ); // Notice the lack of "server" in this post meta field.
+		$sstk_server_action_status              = get_post_meta( $post->ID, 'sstk_server_action_status', true );
+		$sstk_server_action                     = get_post_meta( $post->ID, 'sstk_server_action', true );
+		$sstk_server_after_create_action_app_id = get_post_meta( $post->ID, 'sstk_server_after_create_action_app_id', true );
+		$sstk_server_command_mutex              = get_post_meta( $post->ID, 'sstk_command_mutex', true );  // Notice the lack of "server" in this post meta field.
+		$sstk_server_last_upgrade_done          = get_post_meta( $post->ID, 'sstk_last_upgrade_done', true ); // Notice the lack of "server" in this post meta field.
 
 		/* The deferred action field is an array/serialized read-only field */
-		$wpcd_server_last_deferred_action_source = get_post_meta( $post->ID, 'wpcd_server_last_deferred_action_source', true );
-		if ( ! empty( $wpcd_server_last_deferred_action_source ) && is_array( $wpcd_server_last_deferred_action_source ) ) {
-			$wpcd_server_last_deferred_action_source_string = '';
-			foreach ( $wpcd_server_last_deferred_action_source as $key => $value ) {
+		$sstk_server_last_deferred_action_source = get_post_meta( $post->ID, 'sstk_server_last_deferred_action_source', true );
+		if ( ! empty( $sstk_server_last_deferred_action_source ) && is_array( $sstk_server_last_deferred_action_source ) ) {
+			$sstk_server_last_deferred_action_source_string = '';
+			foreach ( $sstk_server_last_deferred_action_source as $key => $value ) {
 
 				/**
 				 * Create a key-value string that looks like this for display:
@@ -919,29 +919,29 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 					$action_date = new DateTime( "@$strdate" );  // Key should be a unix epoch date string.
 				} catch ( Exception $e ) {
 					// just include a note in the string and add the raw data.
-					$wpcd_server_last_deferred_action_source_string .= '<br />' . __( 'recovering from datetime conversion exception, showing raw data for this item below', 'wpcd' );
-					$wpcd_server_last_deferred_action_source_string .= '<br />' . $key . ': ' . $value;
+					$sstk_server_last_deferred_action_source_string .= '<br />' . __( 'recovering from datetime conversion exception, showing raw data for this item below', 'simple-stack' );
+					$sstk_server_last_deferred_action_source_string .= '<br />' . $key . ': ' . $value;
 					continue;
 				}
 
 				if ( $action_date ) {
-					if ( empty( $wpcd_server_last_deferred_action_source_string ) ) {
-						$wpcd_server_last_deferred_action_source_string .= $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $value;
+					if ( empty( $sstk_server_last_deferred_action_source_string ) ) {
+						$sstk_server_last_deferred_action_source_string .= $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $value;
 					} else {
-						$wpcd_server_last_deferred_action_source_string .= '<br />' . $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $value;
+						$sstk_server_last_deferred_action_source_string .= '<br />' . $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $value;
 					}
 				} else {
-					$wpcd_server_last_deferred_action_source_string .= '<br />' . $key . ': ' . $value;
+					$sstk_server_last_deferred_action_source_string .= '<br />' . $key . ': ' . $value;
 				}
 			}
-			$wpcd_server_last_deferred_action_source = $wpcd_server_last_deferred_action_source_string;  // reassign the new string to the orignal array variable.
+			$sstk_server_last_deferred_action_source = $sstk_server_last_deferred_action_source_string;  // reassign the new string to the orignal array variable.
 		}
 
 		/* The server_actions field is an array/serialized read-only field */
-		$wpcd_server_actions = get_post_meta( $post->ID, 'wpcd_server_actions', true );
-		if ( ! empty( $wpcd_server_actions ) && is_array( $wpcd_server_actions ) ) {
-			$wpcd_server_actions_string = '';
-			foreach ( $wpcd_server_actions as $key => $value ) {
+		$sstk_server_actions = get_post_meta( $post->ID, 'sstk_server_actions', true );
+		if ( ! empty( $sstk_server_actions ) && is_array( $sstk_server_actions ) ) {
+			$sstk_server_actions_string = '';
+			foreach ( $sstk_server_actions as $key => $value ) {
 				$action_date = null;
 				$action      = null;
 
@@ -957,40 +957,40 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 					$action      = $key;
 					// $action_date = new DateTime( "@$key" );  // This causes an exception - uncomment to cause an exception for testing.
 				} catch ( Exception $e ) {
-					// oops - problem - maybe the key values are reversed which they are starting in V4.0.0 of WPCD.
+					// oops - problem - maybe the key values are reversed which they are starting in V4.0.0 of SSTK.
 					try {
 						$action_date = new DateTime( "@$key" );  // Value should be a unix epoch date string.
 						$action      = $value;
 					} catch ( Exception $e ) {
 						// still not ok so just include a note in the string and add the raw data.
-						$wpcd_server_actions_string .= '<br />' . __( 'recovering from datetime conversion exception, showing raw data for this item below', 'wpcd' );
-						$wpcd_server_actions_string .= '<br />' . $value . ': ' . $key;
+						$sstk_server_actions_string .= '<br />' . __( 'recovering from datetime conversion exception, showing raw data for this item below', 'simple-stack' );
+						$sstk_server_actions_string .= '<br />' . $value . ': ' . $key;
 						continue;
 					}
 				}
 
 				if ( $action_date ) {
-					if ( empty( $wpcd_server_actions_string ) ) {
-						$wpcd_server_actions_string .= $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $action;
+					if ( empty( $sstk_server_actions_string ) ) {
+						$sstk_server_actions_string .= $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $action;
 					} else {
-						$wpcd_server_actions_string .= '<br />' . $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $action;
+						$sstk_server_actions_string .= '<br />' . $action_date->format( 'Y-m-d H:i:s' ) . ': ' . $action;
 					}
 				} else {
-					$wpcd_server_actions_string .= '<br />' . $value . ': ' . $key;
+					$sstk_server_actions_string .= '<br />' . $value . ': ' . $key;
 				}
 			}
-			$wpcd_server_actions = $wpcd_server_actions_string;   // reassign the new string to the orignal array variable.
+			$sstk_server_actions = $sstk_server_actions_string;   // reassign the new string to the orignal array variable.
 
 		}
 		/* End read-only fields */
 
 		// Convert created date into more readable format.
-		if ( ! empty( $wpcd_server_created ) ) {
-			$wpcd_server_created = gmdate( 'Y-m-d H:i:s', strtotime( $wpcd_server_created ) );
+		if ( ! empty( $sstk_server_created ) ) {
+			$sstk_server_created = gmdate( 'Y-m-d H:i:s', strtotime( $sstk_server_created ) );
 		}
 
 		ob_start();
-		require wpcd_path . 'includes/templates/server_details.php';
+		require SSTK_PATH . 'includes/templates/server_details.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -1007,8 +1007,8 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	public function save_meta_values( $post_id, $post ) {
 
 		// Add nonce for security and authentication.
-		$nonce_name   = sanitize_text_field( filter_input( INPUT_POST, 'vpn_meta', FILTER_UNSAFE_RAW ) );
-		$nonce_action = 'wpcd_server_nonce_meta_action';
+		$nonce_name   = sanitize_text_field( filter_input( INPUT_POST, 'sstk_meta', FILTER_UNSAFE_RAW ) );
+		$nonce_action = 'sstk_server_nonce_meta_action';
 
 		// Check if nonce is valid.
 		if ( ! wp_verify_nonce( $nonce_name, $nonce_action ) ) {
@@ -1030,80 +1030,78 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			return;
 		}
 
-		// Make sure post type is wpcd_app_server.
-		if ( 'wpcd_app_server' !== $post->post_type ) {
+		// Make sure post type is sstk_app_server.
+		if ( 'sstk_app_server' !== $post->post_type ) {
 			return;
 		}
 
-		$wpcd_server_title                = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_title', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_region               = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_region', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_size                 = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_size', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_size_raw             = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_size_raw', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_ipv4                 = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_ipv4', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_ipv6                 = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_ipv6', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_name                 = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_name', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_wc_order_id          = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_wc_order_id', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_provider             = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_provider', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_provider_instance_id = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_provider_instance_id', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_created              = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_created', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_parent_post_id       = filter_input( INPUT_POST, 'wpcd_server_parent_post_id', FILTER_SANITIZE_NUMBER_INT );
-		$wpcd_server_scripts_version      = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_scripts_version', FILTER_UNSAFE_RAW ) );
+		$sstk_server_title                = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_title', FILTER_UNSAFE_RAW ) );
+		$sstk_server_region               = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_region', FILTER_UNSAFE_RAW ) );
+		$sstk_server_size                 = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_size', FILTER_UNSAFE_RAW ) );
+		$sstk_server_size_raw             = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_size_raw', FILTER_UNSAFE_RAW ) );
+		$sstk_server_ipv4                 = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_ipv4', FILTER_UNSAFE_RAW ) );
+		$sstk_server_ipv6                 = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_ipv6', FILTER_UNSAFE_RAW ) );
+		$sstk_server_name                 = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_name', FILTER_UNSAFE_RAW ) );
+		$sstk_server_provider             = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_provider', FILTER_UNSAFE_RAW ) );
+		$sstk_server_provider_instance_id = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_provider_instance_id', FILTER_UNSAFE_RAW ) );
+		$sstk_server_created              = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_created', FILTER_UNSAFE_RAW ) );
+		$sstk_server_parent_post_id       = filter_input( INPUT_POST, 'sstk_server_parent_post_id', FILTER_SANITIZE_NUMBER_INT );
+		$sstk_server_scripts_version      = SSTK_WORDPRESS_APP()->get_configured_scripts_version();
 
-		$wpcd_server_init                   = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_init', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_initial_app_name       = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_initial_app_name', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_plugin_initial_version = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_plugin_initial_version', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_plugin_updated_version = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_plugin_updated_version', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_server_type            = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_server-type', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_webserver_type         = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_webserver_type', FILTER_UNSAFE_RAW ) );
+		$sstk_server_init                   = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_init', FILTER_UNSAFE_RAW ) );
+		$sstk_server_initial_app_name       = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_initial_app_name', FILTER_UNSAFE_RAW ) );
+		$sstk_server_plugin_initial_version = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_plugin_initial_version', FILTER_UNSAFE_RAW ) );
+		$sstk_server_plugin_updated_version = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_plugin_updated_version', FILTER_UNSAFE_RAW ) );
+		$sstk_server_server_type            = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_server-type', FILTER_UNSAFE_RAW ) );
+		$sstk_server_webserver_type         = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_webserver_type', FILTER_UNSAFE_RAW ) );
 
-		$wpcd_server_action_status              = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_action_status', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_action                     = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_action', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_after_create_action_app_id = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_after_create_action_app_id', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_command_mutex              = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_command_mutex', FILTER_UNSAFE_RAW ) );
-		$wpcd_server_last_upgrade_done          = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_server_last_upgrade_done', FILTER_UNSAFE_RAW ) );
+		$sstk_server_action_status              = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_action_status', FILTER_UNSAFE_RAW ) );
+		$sstk_server_action                     = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_action', FILTER_UNSAFE_RAW ) );
+		$sstk_server_after_create_action_app_id = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_after_create_action_app_id', FILTER_UNSAFE_RAW ) );
+		$sstk_server_command_mutex              = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_command_mutex', FILTER_UNSAFE_RAW ) );
+		$sstk_server_last_upgrade_done          = sanitize_text_field( filter_input( INPUT_POST, 'sstk_server_last_upgrade_done', FILTER_UNSAFE_RAW ) );
 
-		$wpcd_server_owner = filter_input( INPUT_POST, 'wpcd_server_owner', FILTER_SANITIZE_NUMBER_INT );
+		$sstk_server_owner = filter_input( INPUT_POST, 'sstk_server_owner', FILTER_SANITIZE_NUMBER_INT );
 
-		if ( ! empty( $wpcd_server_created ) ) {
-			$timestamp                      = strtotime( $wpcd_server_created );
-			$wpcd_server_created            = gmdate( 'Y-m-dTH:i:s', $timestamp );
-			$wpcd_server_actions['created'] = $timestamp;
+		if ( ! empty( $sstk_server_created ) ) {
+			$timestamp                      = strtotime( $sstk_server_created );
+			$sstk_server_created            = gmdate( 'Y-m-dTH:i:s', $timestamp );
+			$sstk_server_actions['created'] = $timestamp;
 		}
 
-		update_post_meta( $post_id, 'wpcd_server_region', $wpcd_server_region );
-		update_post_meta( $post_id, 'wpcd_server_size', $wpcd_server_size );
-		update_post_meta( $post_id, 'wpcd_server_size_raw', $wpcd_server_size_raw );
-		update_post_meta( $post_id, 'wpcd_server_ipv4', $wpcd_server_ipv4 );
-		update_post_meta( $post_id, 'wpcd_server_ipv6', $wpcd_server_ipv6 );
-		update_post_meta( $post_id, 'wpcd_server_name', $wpcd_server_name );
-		update_post_meta( $post_id, 'wpcd_server_wc_order_id', $wpcd_server_wc_order_id );
-		update_post_meta( $post_id, 'wpcd_server_provider', $wpcd_server_provider );
-		update_post_meta( $post_id, 'wpcd_server_provider_instance_id', $wpcd_server_provider_instance_id );
+		update_post_meta( $post_id, 'sstk_server_region', $sstk_server_region );
+		update_post_meta( $post_id, 'sstk_server_size', $sstk_server_size );
+		update_post_meta( $post_id, 'sstk_server_size_raw', $sstk_server_size_raw );
+		update_post_meta( $post_id, 'sstk_server_ipv4', $sstk_server_ipv4 );
+		update_post_meta( $post_id, 'sstk_server_ipv6', $sstk_server_ipv6 );
+		update_post_meta( $post_id, 'sstk_server_name', $sstk_server_name );
+		update_post_meta( $post_id, 'sstk_server_provider', $sstk_server_provider );
+		update_post_meta( $post_id, 'sstk_server_provider_instance_id', $sstk_server_provider_instance_id );
 
-		update_post_meta( $post_id, 'wpcd_server_init', $wpcd_server_init );
-		update_post_meta( $post_id, 'wpcd_server_initial_app_name', $wpcd_server_initial_app_name );
-		update_post_meta( $post_id, 'wpcd_server_plugin_initial_version', $wpcd_server_plugin_initial_version );
-		update_post_meta( $post_id, 'wpcd_server_plugin_updated_version', $wpcd_server_plugin_updated_version );
-		update_post_meta( $post_id, 'wpcd_server_server-type', $wpcd_server_server_type );
-		update_post_meta( $post_id, 'wpcd_server_webserver_type', $wpcd_server_webserver_type );
+		update_post_meta( $post_id, 'sstk_server_init', $sstk_server_init );
+		update_post_meta( $post_id, 'sstk_server_initial_app_name', $sstk_server_initial_app_name );
+		update_post_meta( $post_id, 'sstk_server_plugin_initial_version', $sstk_server_plugin_initial_version );
+		update_post_meta( $post_id, 'sstk_server_plugin_updated_version', $sstk_server_plugin_updated_version );
+		update_post_meta( $post_id, 'sstk_server_server-type', $sstk_server_server_type );
+		update_post_meta( $post_id, 'sstk_server_webserver_type', $sstk_server_webserver_type );
 
-		update_post_meta( $post_id, 'wpcd_server_created', $wpcd_server_created );
-		update_post_meta( $post_id, 'wpcd_server_parent_post_id', $wpcd_server_parent_post_id );
-		update_post_meta( $post_id, 'wpcd_server_actions', $wpcd_server_actions );
-		update_post_meta( $post_id, 'wpcd_server_scripts_version', $wpcd_server_scripts_version );
-		update_post_meta( $post_id, 'wpcd_server_action_status', $wpcd_server_action_status );
-		update_post_meta( $post_id, 'wpcd_server_action', $wpcd_server_action );
-		update_post_meta( $post_id, 'wpcd_server_after_create_action_app_id', $wpcd_server_after_create_action_app_id );
+		update_post_meta( $post_id, 'sstk_server_created', $sstk_server_created );
+		update_post_meta( $post_id, 'sstk_server_parent_post_id', $sstk_server_parent_post_id );
+		update_post_meta( $post_id, 'sstk_server_actions', $sstk_server_actions );
+		update_post_meta( $post_id, 'sstk_server_scripts_version', $sstk_server_scripts_version );
+		update_post_meta( $post_id, 'sstk_server_action_status', $sstk_server_action_status );
+		update_post_meta( $post_id, 'sstk_server_action', $sstk_server_action );
+		update_post_meta( $post_id, 'sstk_server_after_create_action_app_id', $sstk_server_after_create_action_app_id );
 
 		// Notice that these two fields do not have the word "server" in it.
-		update_post_meta( $post_id, 'wpcd_command_mutex', $wpcd_server_command_mutex );
-		update_post_meta( $post_id, 'wpcd_last_upgrade_done', $wpcd_server_last_upgrade_done );
+		update_post_meta( $post_id, 'sstk_command_mutex', $sstk_server_command_mutex );
+		update_post_meta( $post_id, 'sstk_last_upgrade_done', $sstk_server_last_upgrade_done );
 
 		// Update the server title.
-		$post->post_title = $wpcd_server_title;
+		$post->post_title = $sstk_server_title;
 
 		// Update the post author.
-		$post->post_author = $wpcd_server_owner;
+		$post->post_author = $sstk_server_owner;
 
 		remove_action( 'save_post', array( $this, 'save_meta_values' ), 10 ); // remove hook to prevent infinite loop.
 		wp_update_post( $post );
@@ -1115,10 +1113,10 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_app_trash_prompt_messages() {
+	public function sstk_app_trash_prompt_messages() {
 		return array(
-			'delete'  => apply_filters( 'wpcd_server_delete_prompt', __( 'ALL data on this server will be LOST! Are you really really sure you want to proceed and delete this server?', 'wpcd' ) ),
-			'restore' => __( 'Please note: Rstoring this item will not restore your server or your server data - it will just be an orphaned record without a connection to any server.', 'wpcd' ),
+			'delete'  => apply_filters( 'sstk_server_delete_prompt', __( 'ALL data on this server will be LOST! Are you really really sure you want to proceed and delete this server?', 'simple-stack' ) ),
+			'restore' => __( 'Please note: Rstoring this item will not restore your server or your server data - it will just be an orphaned record without a connection to any server.', 'simple-stack' ),
 		);
 	}
 
@@ -1130,10 +1128,10 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return true
 	 */
-	public function wpcd_app_trash_prompt() {
-		$messages = $this->wpcd_app_trash_prompt_messages();
+	public function sstk_app_trash_prompt() {
+		$messages = $this->sstk_app_trash_prompt_messages();
 		$screen   = get_current_screen();
-		if ( in_array( $screen->id, array( 'edit-wpcd_app_server', 'wpcd_app_server' ), true ) ) {
+		if ( in_array( $screen->id, array( 'edit-sstk_app_server', 'sstk_app_server' ), true ) ) {
 			$prompt_message = isset( $messages['delete'] ) ? $messages['delete'] : '';
 			?>
 			<script type="text/javascript">
@@ -1162,7 +1160,7 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			<?php
 		}
 
-		if ( 'edit-wpcd_app_server' === $screen->id ) {
+		if ( 'edit-sstk_app_server' === $screen->id ) {
 			$prompt_message = isset( $messages['restore'] ) ? $messages['restore'] : '';
 			?>
 			<script type="text/javascript">
@@ -1191,28 +1189,28 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return null
 	 */
-	public function wpcd_app_server_extend_admin_search( $query ) {
+	public function sstk_app_server_extend_admin_search( $query ) {
 
 		global $typenow;
 
 		// use your post type.
-		$post_type = 'wpcd_app_server';
+		$post_type = 'sstk_app_server';
 
 		if ( is_admin() && $typenow === $post_type && $query->is_search() ) {
 
 			// Use your Custom fields/column name to search for.
 			$search_fields = array(
-				'wpcd_server_provider',
-				'wpcd_server_size',
-				'wpcd_server_size_raw',
-				'wpcd_server_ipv4',
-				'wpcd_server_ipv6',
-				'wpcd_server_region',
-				'wpcd_server_provider_instance_id',
-				'wpcd_server_current_state',
-				'wpcd_server_initial_app_name',
-				'wpcd_short_description',
-				'wpcd_long_description',
+				'sstk_server_provider',
+				'sstk_server_size',
+				'sstk_server_size_raw',
+				'sstk_server_ipv4',
+				'sstk_server_ipv6',
+				'sstk_server_region',
+				'sstk_server_provider_instance_id',
+				'sstk_server_current_state',
+				'sstk_server_initial_app_name',
+				'sstk_short_description',
+				'sstk_long_description',
 			);
 
 			$search_term = $query->query_vars['s'];
@@ -1248,17 +1246,17 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Meta or title search for wpcd_app_server post type
+	 * Meta or title search for sstk_app_server post type
 	 *
 	 * Action hook: pre_get_posts
 	 *
 	 * @param object $query query object.
 	 */
-	public function wpcd_app_server_meta_or_title_search( $query ) {
+	public function sstk_app_server_meta_or_title_search( $query ) {
 
 		global $typenow;
 
-		$post_type = 'wpcd_app_server';
+		$post_type = 'sstk_app_server';
 		$title     = $query->get( '_meta_or_title' );
 		if ( is_admin() && $typenow === $post_type && $query->is_search() && $title ) {
 			add_filter(
@@ -1295,10 +1293,10 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return string
 	 */
-	public function wpcd_app_server_posts_where( $where, $wp_query ) {
+	public function sstk_app_server_posts_where( $where, $wp_query ) {
 		global $wpdb, $typenow;
 
-		$post_type = 'wpcd_app_server';
+		$post_type = 'sstk_app_server';
 
 		if ( is_admin() && $typenow === $post_type && $wp_query->is_search() ) {
 			if ( isset( $wp_query->query_vars['_meta_or_title'] ) && '' !== $wp_query->query_vars['_meta_or_title'] ) {
@@ -1336,43 +1334,43 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_app_server_table_filtering() {
+	public function sstk_app_server_table_filtering() {
 
 		global $typenow, $pagenow;
 
-		$post_type = 'wpcd_app_server';
+		$post_type = 'sstk_app_server';
 
-		if ( ( is_admin() && $pagenow === 'edit.php' && $typenow === $post_type ) || WPCD_WORDPRESS_APP_PUBLIC::is_servers_list_page() ) {
+		if ( ( is_admin() && $pagenow === 'edit.php' && $typenow === $post_type ) || SSTK_WORDPRESS_APP_PUBLIC::is_servers_list_page() ) {
 
-			$providers = $this->generate_meta_dropdown( $post_type, 'wpcd_server_provider', __( 'All Providers', 'wpcd' ) );
-			echo wpcd_kses_select( $providers );
+			$providers = $this->generate_meta_dropdown( $post_type, 'sstk_server_provider', __( 'All Providers', 'simple-stack' ) );
+			echo sstk_kses_select( $providers );
 
-			$regions = $this->generate_meta_dropdown( $post_type, 'wpcd_server_region', __( 'All Regions', 'wpcd' ) );
-			echo wpcd_kses_select( $regions );
+			$regions = $this->generate_meta_dropdown( $post_type, 'sstk_server_region', __( 'All Regions', 'simple-stack' ) );
+			echo sstk_kses_select( $regions );
 
-			$local_status = $this->generate_meta_dropdown( $post_type, 'wpcd_server_current_state', __( 'Local Status', 'wpcd' ) );
-			echo wpcd_kses_select( $local_status );
+			$local_status = $this->generate_meta_dropdown( $post_type, 'sstk_server_current_state', __( 'Local Status', 'simple-stack' ) );
+			echo sstk_kses_select( $local_status );
 
-			$taxonomy     = 'wpcd_app_server_group';
-			$server_group = $this->generate_term_dropdown( $taxonomy, __( 'Server Groups', 'wpcd' ) );
-			echo wpcd_kses_select( $server_group );
+			$taxonomy     = 'sstk_app_server_group';
+			$server_group = $this->generate_term_dropdown( $taxonomy, __( 'Server Groups', 'simple-stack' ) );
+			echo sstk_kses_select( $server_group );
 
-			$ipv4 = $this->generate_meta_dropdown( $post_type, 'wpcd_server_ipv4', __( 'All IPv4', 'wpcd' ) );
-			echo wpcd_kses_select( $ipv4 );
+			$ipv4 = $this->generate_meta_dropdown( $post_type, 'sstk_server_ipv4', __( 'All IPv4', 'simple-stack' ) );
+			echo sstk_kses_select( $ipv4 );
 
-			if ( wpcd_get_early_option( 'wpcd_show_ipv6' ) ) {
-				$ipv6 = $this->generate_meta_dropdown( $post_type, 'wpcd_server_ipv6', __( 'All IPv6', 'wpcd' ) );
-				echo wpcd_kses_select( $ipv6 );
+			if ( sstk_get_early_option( 'sstk_show_ipv6' ) ) {
+				$ipv6 = $this->generate_meta_dropdown( $post_type, 'sstk_server_ipv6', __( 'All IPv6', 'simple-stack' ) );
+				echo sstk_kses_select( $ipv6 );
 			}
 
-			$server_owners = $this->generate_owner_dropdown( $post_type, 'wpcd_server_owner', __( 'Server Owners', 'wpcd' ) );
-			echo wpcd_kses_select( $server_owners );
+			$server_owners = $this->generate_owner_dropdown( $post_type, 'sstk_server_owner', __( 'Server Owners', 'simple-stack' ) );
+			echo sstk_kses_select( $server_owners );
 
-			$restart_needed = $this->generate_meta_dropdown( $post_type, 'wpcd_server_restart_needed', __( 'Restart Needed', 'wpcd' ) );
-			echo wpcd_kses_select( $restart_needed );
+			$restart_needed = $this->generate_meta_dropdown( $post_type, 'sstk_server_restart_needed', __( 'Restart Needed', 'simple-stack' ) );
+			echo sstk_kses_select( $restart_needed );
 
-			$web_server_type = $this->generate_meta_dropdown( $post_type, 'wpcd_server_webserver_type', __( 'Web Server', 'wpcd' ) );
-			echo wpcd_kses_select( $web_server_type );
+			$web_server_type = $this->generate_meta_dropdown( $post_type, 'sstk_server_webserver_type', __( 'Web Server', 'simple-stack' ) );
+			echo sstk_kses_select( $web_server_type );
 		}
 	}
 
@@ -1385,17 +1383,17 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_app_server_parse_query( $query ) {
+	public function sstk_app_server_parse_query( $query ) {
 
 		global $pagenow;
 
 		$filter_action = sanitize_text_field( filter_input( INPUT_GET, 'filter_action', FILTER_UNSAFE_RAW ) );
 
-		if ( ( ( is_admin() && $query->is_main_query() && $pagenow == 'edit.php' ) || wpcd_is_public_servers_list_query( $query ) ) && $query->query['post_type'] == 'wpcd_app_server' && ! wpcd_is_admin() ) {
+		if ( ( ( is_admin() && $query->is_main_query() && $pagenow == 'edit.php' ) || sstk_is_public_servers_list_query( $query ) ) && $query->query['post_type'] == 'sstk_app_server' && ! sstk_is_admin() ) {
 			$qv          = &$query->query_vars;
 			$post_status = sanitize_text_field( filter_input( INPUT_GET, 'post_status', FILTER_UNSAFE_RAW ) );
 			$post_status = ! empty( $post_status ) ? $post_status : 'private';
-			$post__in    = wpcd_get_posts_by_permission( 'view_server', 'wpcd_app_server', $post_status );
+			$post__in    = sstk_get_posts_by_permission( 'view_server', 'sstk_app_server', $post_status );
 
 			if ( count( $post__in ) ) {
 				$qv['post__in'] = $post__in;
@@ -1404,50 +1402,50 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			}
 		}
 
-		if ( ( ( is_admin() && $query->is_main_query() && $pagenow === 'edit.php' ) || wpcd_is_public_servers_list_query( $query ) ) && $query->query['post_type'] === 'wpcd_app_server' && ( ! empty( $filter_action ) ) ) {
+		if ( ( ( is_admin() && $query->is_main_query() && $pagenow === 'edit.php' ) || sstk_is_public_servers_list_query( $query ) ) && $query->query['post_type'] === 'sstk_app_server' && ( ! empty( $filter_action ) ) ) {
 			$qv = &$query->query_vars;
 
 			// SERVER PROVIDER.
-			if ( isset( $_GET['wpcd_server_provider'] ) && ! empty( $_GET['wpcd_server_provider'] ) ) {
-				$server_provider = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_provider', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_provider'] ) && ! empty( $_GET['sstk_server_provider'] ) ) {
+				$server_provider = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_provider', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_server_provider',
+					'field'   => 'sstk_server_provider',
 					'value'   => $server_provider,
 					'compare' => '=',
 				);
 			}
 
 			// REGION.
-			if ( isset( $_GET['wpcd_server_region'] ) && ! empty( $_GET['wpcd_server_region'] ) ) {
-				$region = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_region', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_region'] ) && ! empty( $_GET['sstk_server_region'] ) ) {
+				$region = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_region', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_server_region',
+					'field'   => 'sstk_server_region',
 					'value'   => $region,
 					'compare' => '=',
 				);
 			}
 
 			// LOCAL STATUS.
-			if ( isset( $_GET['wpcd_server_current_state'] ) && ! empty( $_GET['wpcd_server_current_state'] ) ) {
-				$local_status = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_current_state', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_current_state'] ) && ! empty( $_GET['sstk_server_current_state'] ) ) {
+				$local_status = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_current_state', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_server_current_state',
+					'field'   => 'sstk_server_current_state',
 					'value'   => $local_status,
 					'compare' => '=',
 				);
 			}
 
 			// SERVER GROUP.
-			if ( isset( $_GET['wpcd_app_server_group'] ) && ! empty( $_GET['wpcd_app_server_group'] ) ) {
-				$term_id = filter_input( INPUT_GET, 'wpcd_app_server_group', FILTER_SANITIZE_NUMBER_INT );
+			if ( isset( $_GET['sstk_app_server_group'] ) && ! empty( $_GET['sstk_app_server_group'] ) ) {
+				$term_id = filter_input( INPUT_GET, 'sstk_app_server_group', FILTER_SANITIZE_NUMBER_INT );
 
 				$qv['tax_query'] = array(
 					'relation' => 'OR',
 					array(
-						'taxonomy' => 'wpcd_app_server_group',
+						'taxonomy' => 'sstk_app_server_group',
 						'field'    => 'term_id',
 						'terms'    => array( (int) $term_id ),
 					),
@@ -1456,78 +1454,78 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			}
 
 			// IPv4.
-			if ( isset( $_GET['wpcd_server_ipv4'] ) && ! empty( $_GET['wpcd_server_ipv4'] ) ) {
-				$ipv4 = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_ipv4', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_ipv4'] ) && ! empty( $_GET['sstk_server_ipv4'] ) ) {
+				$ipv4 = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_ipv4', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_server_ipv4',
+					'field'   => 'sstk_server_ipv4',
 					'value'   => $ipv4,
 					'compare' => '=',
 				);
 			}
 
 			// IPv6.
-			if ( isset( $_GET['wpcd_server_ipv6'] ) && ! empty( $_GET['wpcd_server_ipv6'] ) ) {
-				$ipv6 = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_ipv6', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_ipv6'] ) && ! empty( $_GET['sstk_server_ipv6'] ) ) {
+				$ipv6 = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_ipv6', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_server_ipv6',
+					'field'   => 'sstk_server_ipv6',
 					'value'   => $ipv6,
 					'compare' => '=',
 				);
 
 				// Make sure the field exists otherwise all servers will be returned.  Older servers do not have this value and for some reason WP queries will treat empty values as matching the filter.
 				$qv['meta_query'][] = array(
-					'key'     => 'wpcd_server_ipv6',
+					'key'     => 'sstk_server_ipv6',
 					'compare' => 'EXISTS',
 				);
 			}
 
 			// SERVER OWNER.
-			if ( isset( $_GET['wpcd_server_owner'] ) && ! empty( $_GET['wpcd_server_owner'] ) ) {
-				$wpcd_server_owner = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_owner', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_owner'] ) && ! empty( $_GET['sstk_server_owner'] ) ) {
+				$sstk_server_owner = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_owner', FILTER_UNSAFE_RAW ) );
 
-				$qv['author'] = $wpcd_server_owner;
+				$qv['author'] = $sstk_server_owner;
 
 			}
 
 			// RESTART NEEDED.
-			if ( isset( $_GET['wpcd_server_restart_needed'] ) && ! empty( $_GET['wpcd_server_restart_needed'] ) ) {
-				$restart_needed = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_restart_needed', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_restart_needed'] ) && ! empty( $_GET['sstk_server_restart_needed'] ) ) {
+				$restart_needed = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_restart_needed', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_server_restart_needed',
+					'field'   => 'sstk_server_restart_needed',
 					'value'   => $restart_needed,
 					'compare' => '=',
 				);
 
 				// Make sure the field exists otherwise all servers will be returned.  Servers with older callbacks will not have this value and for some reason WP queries will treat empty values as matching the filter.
 				$qv['meta_query'][] = array(
-					'key'     => 'wpcd_server_restart_needed',
+					'key'     => 'sstk_server_restart_needed',
 					'compare' => 'EXISTS',
 				);
 			}
 
 			// WEB SERVER TYPE.
-			if ( isset( $_GET['wpcd_server_webserver_type'] ) && ! empty( $_GET['wpcd_server_webserver_type'] ) ) {
-				$web_server_type = sanitize_text_field( filter_input( INPUT_GET, 'wpcd_server_webserver_type', FILTER_UNSAFE_RAW ) );
+			if ( isset( $_GET['sstk_server_webserver_type'] ) && ! empty( $_GET['sstk_server_webserver_type'] ) ) {
+				$web_server_type = sanitize_text_field( filter_input( INPUT_GET, 'sstk_server_webserver_type', FILTER_UNSAFE_RAW ) );
 
 				$qv['meta_query'][] = array(
-					'field'   => 'wpcd_server_webserver_type',
+					'field'   => 'sstk_server_webserver_type',
 					'value'   => $web_server_type,
 					'compare' => '=',
 				);
 
 				// Make sure the field exists otherwise all servers will be returned.  Older servers might not have this value and for some reason WP queries will treat empty values as matching the filter.
-				// THe side effect of this is that if the wpcd_server_webserver_type meta does not exist, the record will not be returned in any query.
+				// THe side effect of this is that if the sstk_server_webserver_type meta does not exist, the record will not be returned in any query.
 				$qv['meta_query'][] = array(
-					'key'     => 'wpcd_server_webserver_type',
+					'key'     => 'sstk_server_webserver_type',
 					'compare' => 'EXISTS',
 				);
 			}
 		}
 
-		if ( ( ( is_admin() && $query->is_main_query() && $pagenow === 'edit.php' ) || wpcd_is_public_servers_list_query( $query ) ) && $query->query['post_type'] === 'wpcd_app_server' && ! empty( $_GET['team_id'] ) && empty( $filter_action ) ) {
+		if ( ( ( is_admin() && $query->is_main_query() && $pagenow === 'edit.php' ) || sstk_is_public_servers_list_query( $query ) ) && $query->query['post_type'] === 'sstk_app_server' && ! empty( $_GET['team_id'] ) && empty( $filter_action ) ) {
 
 			$qv               = &$query->query_vars;
 			$qv['meta_query'] = array();
@@ -1535,7 +1533,7 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			$team_id = filter_input( INPUT_GET, 'team_id', FILTER_SANITIZE_NUMBER_INT );
 
 			$qv['meta_query'][] = array(
-				'field'   => 'wpcd_assigned_teams',
+				'field'   => 'sstk_assigned_teams',
 				'value'   => $team_id,
 				'compare' => '=',
 				'type'    => 'NUMERIC',
@@ -1543,18 +1541,18 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 
 		}
 
-		if ( ( ( is_admin() && $query->is_main_query() && $pagenow === 'edit.php' ) || wpcd_is_public_servers_list_query( $query ) ) && $query->query['post_type'] === 'wpcd_app_server' && ! empty( $_GET['wpcd_app_server_group'] ) && empty( $filter_action ) ) {
+		if ( ( ( is_admin() && $query->is_main_query() && $pagenow === 'edit.php' ) || sstk_is_public_servers_list_query( $query ) ) && $query->query['post_type'] === 'sstk_app_server' && ! empty( $_GET['sstk_app_server_group'] ) && empty( $filter_action ) ) {
 
 			$qv = &$query->query_vars;
 
-			$wpcd_app_server_group = filter_input( INPUT_GET, 'wpcd_app_server_group', FILTER_SANITIZE_NUMBER_INT );
+			$sstk_app_server_group = filter_input( INPUT_GET, 'sstk_app_server_group', FILTER_SANITIZE_NUMBER_INT );
 
 			$qv['tax_query'] = array(
 				'relation' => 'OR',
 				array(
-					'taxonomy' => 'wpcd_app_server_group',
+					'taxonomy' => 'sstk_app_server_group',
 					'field'    => 'term_id',
-					'terms'    => array( (int) $wpcd_app_server_group ),
+					'terms'    => array( (int) $sstk_app_server_group ),
 				),
 			);
 
@@ -1574,30 +1572,30 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_app_server_register_meta_boxes( $metaboxes ) {
+	public function sstk_app_server_register_meta_boxes( $metaboxes ) {
 
 		// Get some values that we're going to need for fields later.
 		// Start with the author of the post.
-		$author_id = wpcd_get_form_submission_post_author();
+		$author_id = sstk_get_form_submission_post_author();
 
 		$users_to_include = array();
 
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 			$post_id = filter_input( INPUT_GET, 'post', FILTER_VALIDATE_INT );
-			$users   = wpcd_get_users_in_team( $post_id );
+			$users   = sstk_get_users_in_team( $post_id );
 			if ( ! in_array( $author_id, $users ) ) {
 				array_push( $users, $author_id );
 			}
 			$users_to_include = $users;
 		}
 
-		$prefix = 'wpcd_';
+		$prefix = 'sstk_';
 
 		// Register the metabox to change server owner.
 		$metaboxes[] = array(
 			'id'         => $prefix . 'change_server_owner',
-			'title'      => __( 'Change Server Owner', 'wpcd' ),
-			'pages'      => array( 'wpcd_app_server' ), // displays on wpcd_app_server post type only.
+			'title'      => __( 'Change Server Owner', 'simple-stack' ),
+			'pages'      => array( 'sstk_app_server' ), // displays on sstk_app_server post type only.
 			'context'    => 'side',
 			'priority'   => 'low',
 			'fields'     => array(
@@ -1609,7 +1607,7 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 					'id'          => $prefix . 'server_owner',
 					'type'        => 'user',
 					'std'         => $author_id,
-					'placeholder' => __( 'Select Server Owner', 'wpcd' ),
+					'placeholder' => __( 'Select Server Owner', 'simple-stack' ),
 					'query_args'  => array(
 						'include' => $users_to_include,
 					),
@@ -1624,19 +1622,19 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 				),
 				'messages' => array(
 					$prefix . 'server_owner' => array(
-						'required' => __( 'Server Owner is required.', 'wpcd' ),
+						'required' => __( 'Server Owner is required.', 'simple-stack' ),
 					),
 				),
 			),
 		);
 
-		$checked = rwmb_meta( 'wpcd_server_delete_protection' );
+		$checked = rwmb_meta( 'sstk_server_delete_protection' );
 
 		// Register the metabox for delete server protection.
 		$metaboxes[] = array(
 			'id'       => $prefix . 'server_delete_protection_metabox',
-			'title'    => __( 'Server Delete Protection', 'wpcd' ),
-			'pages'    => array( 'wpcd_app_server' ), // displays on wpcd_app_server post type only.
+			'title'    => __( 'Server Delete Protection', 'simple-stack' ),
+			'pages'    => array( 'sstk_app_server' ), // displays on sstk_app_server post type only.
 			'context'  => 'side',
 			'priority' => 'low',
 			'fields'   => array(
@@ -1644,7 +1642,7 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 				// add a checkbox field.
 				array(
 					'name' => '',
-					'desc' => __( 'Check this box to remove all delete links from the screen - it will prevent this server from being accidentally deleted.', 'wpcd' ),
+					'desc' => __( 'Check this box to remove all delete links from the screen - it will prevent this server from being accidentally deleted.', 'simple-stack' ),
 					'id'   => $prefix . 'server_delete_protection',
 					'type' => 'checkbox',
 					'std'  => $checked,
@@ -1658,19 +1656,19 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Removes the wpcd_server_owner meta from the server detail screen.
+	 * Removes the sstk_server_owner meta from the server detail screen.
 	 *
-	 * Action hook: rwmb_wpcd_change_server_owner_after_save_post
+	 * Action hook: rwmb_sstk_change_server_owner_after_save_post
 	 *
 	 * @param integer $post_id post id.
 	 *
 	 * @return void
 	 */
-	public function wpcd_change_server_owner_after_save_post( $post_id ) {
+	public function sstk_change_server_owner_after_save_post( $post_id ) {
 
-		// Remove the wpcd_server_owner meta - we dont' want a separate meta since that could be confusing.
+		// Remove the sstk_server_owner meta - we dont' want a separate meta since that could be confusing.
 		// The post author is the owner so no need to have a separate meta stored in the db.
-		delete_post_meta( $post_id, 'wpcd_server_owner' );
+		delete_post_meta( $post_id, 'sstk_server_owner' );
 
 	}
 
@@ -1679,17 +1677,17 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_app_server_load_post() {
+	public function sstk_app_server_load_post() {
 
 		$screen = get_current_screen();
 
-		if ( 'wpcd_app_server' === $screen->post_type && isset( $_GET['action'] ) && 'edit' === $_GET['action'] && ! wpcd_is_admin() ) {
+		if ( 'sstk_app_server' === $screen->post_type && isset( $_GET['action'] ) && 'edit' === $_GET['action'] && ! sstk_is_admin() ) {
 			$post_id     = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
 			$user_id     = get_current_user_id();
 			$post_author = get_post( $post_id )->post_author;
 
-			if ( ! wpcd_user_can( $user_id, 'view_server', $post_id ) && (int) $post_author !== ( $user_id ) ) {
-				wp_die( esc_html( __( 'You don\'t have permission to edit this post.', 'wpcd' ) ) );
+			if ( ! sstk_user_can( $user_id, 'view_server', $post_id ) && (int) $post_author !== ( $user_id ) ) {
+				wp_die( esc_html( __( 'You don\'t have permission to edit this post.', 'simple-stack' ) ) );
 			}
 		}
 	}
@@ -1705,20 +1703,20 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void|boolean
 	 */
-	public function wpcd_app_server_delete_post( $post_id, $return = false ) {
+	public function sstk_app_server_delete_post( $post_id, $return = false ) {
 
 		// No permissions check if we're running tasks via cron.
 		// We're not doing anything to delete servers via cron right now.
-		// But we might later so adding this check now since we have it in the wpcd_app_delete_post() function.
-		if ( true === wp_doing_cron() || true === wpcd_is_doing_cron() ) {
+		// But we might later so adding this check now since we have it in the sstk_app_delete_post() function.
+		if ( true === wp_doing_cron() || true === sstk_is_doing_cron() ) {
 			return true;
 		}
 
 		$success = true;
-		if ( get_post_type( $post_id ) === 'wpcd_app_server' && ! wpcd_is_admin() ) {
+		if ( get_post_type( $post_id ) === 'sstk_app_server' && ! sstk_is_admin() ) {
 			$user_id     = (int) get_current_user_id();
 			$post_author = (int) get_post( $post_id )->post_author;
-			if ( ! wpcd_user_can( $user_id, 'delete_server', $post_id ) && $post_author !== $user_id ) {
+			if ( ! sstk_user_can( $user_id, 'delete_server', $post_id ) && $post_author !== $user_id ) {
 				$success = false;
 			}
 		}
@@ -1728,20 +1726,20 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 		}
 
 		if ( ! $success ) {
-			wp_die( esc_html( __( 'You don\'t have permission to delete this post.', 'wpcd' ) ) );
+			wp_die( esc_html( __( 'You don\'t have permission to delete this post.', 'simple-stack' ) ) );
 		}
 	}
 
 	/**
-	 * Filters table views for the wpcd_app_server post type
+	 * Filters table views for the sstk_app_server post type
 	 *
 	 * @param  array $views Array of table view links keyed by status slug.
 	 * @return array Filtered views.
 	 */
-	public function wpcd_app_server_custom_view_count( $views ) {
+	public function sstk_app_server_custom_view_count( $views ) {
 		global $current_screen;
-		if ( 'edit-wpcd_app_server' === $current_screen->id && ! wpcd_is_admin() ) {
-			$views = $this->wpcd_app_manipulate_views( 'wpcd_app_server', $views, 'view_server' );
+		if ( 'edit-sstk_app_server' === $current_screen->id && ! sstk_is_admin() ) {
+			$views = $this->sstk_app_manipulate_views( 'sstk_app_server', $views, 'view_server' );
 		}
 		return $views;
 	}
@@ -1759,13 +1757,13 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			$blog_ids = get_sites( array( 'fields' => 'ids' ) );
 			foreach ( $blog_ids as $blog_id ) {
 				switch_to_blog( $blog_id );
-				self::wpcd_app_server_register_post_and_taxonomy();
-				self::wpcd_app_server_create_default_taxonomy_terms();
+				self::sstk_app_server_register_post_and_taxonomy();
+				self::sstk_app_server_create_default_taxonomy_terms();
 				restore_current_blog();
 			}
 		} else {
-			self::wpcd_app_server_register_post_and_taxonomy();
-			self::wpcd_app_server_create_default_taxonomy_terms();
+			self::sstk_app_server_register_post_and_taxonomy();
+			self::sstk_app_server_create_default_taxonomy_terms();
 		}
 	}
 
@@ -1773,37 +1771,37 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 * Registers the custom post type and taxonomy
 	 * Creating custom taxonomy terms after execution of this function
 	 */
-	public static function wpcd_app_server_register_post_and_taxonomy() {
+	public static function sstk_app_server_register_post_and_taxonomy() {
 
 		// Figure out what the capabilities should be for the 'new' button.
 		$new_cap = 'do_not_allow';
-		if ( wpcd_is_admin() ) {
-			$new_cap = 'wpcd_manage_all';  // This ensures that the ADD NEW SERVER RECORD button shows for the admin (since all admins will get the wpcd_manage_all capability).
+		if ( sstk_is_admin() ) {
+			$new_cap = 'sstk_manage_all';  // This ensures that the ADD NEW SERVER RECORD button shows for the admin (since all admins will get the sstk_manage_all capability).
 		}
 
 		register_post_type(
-			'wpcd_app_server',
+			'sstk_app_server',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'Cloud Servers', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'Cloud Server', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => defined( 'WPCD_MENU_NAME' ) ? WPCD_MENU_NAME : _x( 'SimpleStack', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'Cloud Server', 'Add New on Toolbar', 'wpcd' ),
-					'add_new'               => __( 'New Server Record', 'wpcd' ),
-					'add_new_item'          => __( 'New Server Record', 'wpcd' ),
-					'edit_item'             => __( 'Edit Cloud Server', 'wpcd' ),
-					'view_item'             => __( 'View Cloud Server', 'wpcd' ),
-					'all_items'             => __( 'Cloud Servers', 'wpcd' ), // Label to signify all items in a submenu link.
-					'search_items'          => __( 'Search Cloud Servers', 'wpcd' ),
-					'not_found'             => apply_filters( 'wpcd_no_app_servers_found_msg', __( 'No Application Servers were found.', 'wpcd' ) ),
-					'not_found_in_trash'    => __( 'No Application Servers were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter Cloud Servers list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'Cloud Servers list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'Cloud Servers list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'Cloud Servers', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'Cloud Server', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => defined( 'SSTK_MENU_NAME' ) ? SSTK_MENU_NAME : _x( 'Simple Stack', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'Cloud Server', 'Add New on Toolbar', 'simple-stack' ),
+					'add_new'               => __( 'New Server Record', 'simple-stack' ),
+					'add_new_item'          => __( 'New Server Record', 'simple-stack' ),
+					'edit_item'             => __( 'Edit Cloud Server', 'simple-stack' ),
+					'view_item'             => __( 'View Cloud Server', 'simple-stack' ),
+					'all_items'             => __( 'Cloud Servers', 'simple-stack' ), // Label to signify all items in a submenu link.
+					'search_items'          => __( 'Search Cloud Servers', 'simple-stack' ),
+					'not_found'             => apply_filters( 'sstk_no_app_servers_found_msg', __( 'No Application Servers were found.', 'simple-stack' ) ),
+					'not_found_in_trash'    => __( 'No Application Servers were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter Cloud Servers list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'Cloud Servers list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'Cloud Servers list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
 				// The CPT-driven admin menu is retired: every screen the operator needs is
-				// rendered by the React client under the SimpleStack menu (Phase 4). The post
+				// rendered by the React client under the Simple Stack menu (Phase 4). The post
 				// type stays fully registered because the REST layer queries it.
 				'show_in_menu'        => false,
 				'show_in_nav_menus'   => true,
@@ -1821,36 +1819,36 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 					// This value is false so that it does not create the "Add New" menu item.
 					// Creating a server will be handled by a custom button.
 					'create_posts'           => $new_cap,
-					'edit_post'              => 'wpcd_manage_servers',
-					'edit_posts'             => 'wpcd_manage_servers',
-					'edit_others_posts'      => 'wpcd_manage_servers',
-					'edit_published_posts'   => 'wpcd_manage_servers',
-					'delete_post'            => 'wpcd_manage_servers',
-					'publish_posts'          => 'wpcd_manage_servers',
-					'delete_posts'           => 'wpcd_manage_servers',
-					'delete_others_posts'    => 'wpcd_manage_servers',
-					'delete_published_posts' => 'wpcd_manage_servers',
-					'delete_private_posts'   => 'wpcd_manage_servers',
-					'edit_private_posts'     => 'wpcd_manage_servers',
-					'read_private_posts'     => 'wpcd_manage_servers',
+					'edit_post'              => 'sstk_manage_servers',
+					'edit_posts'             => 'sstk_manage_servers',
+					'edit_others_posts'      => 'sstk_manage_servers',
+					'edit_published_posts'   => 'sstk_manage_servers',
+					'delete_post'            => 'sstk_manage_servers',
+					'publish_posts'          => 'sstk_manage_servers',
+					'delete_posts'           => 'sstk_manage_servers',
+					'delete_others_posts'    => 'sstk_manage_servers',
+					'delete_published_posts' => 'sstk_manage_servers',
+					'delete_private_posts'   => 'sstk_manage_servers',
+					'edit_private_posts'     => 'sstk_manage_servers',
+					'read_private_posts'     => 'sstk_manage_servers',
 				),
-				'taxonomies'          => array( 'wpcd_app_server_group' ),
+				'taxonomies'          => array( 'sstk_app_server_group' ),
 			)
 		);
 
 		// Add new taxonomy, make it hierarchical (like categories).
 		$labels = array(
-			'name'              => _x( 'Cloud Server Groups', 'taxonomy general name', 'wpcd' ),
-			'singular_name'     => _x( 'Cloud Server Group', 'taxonomy singular name', 'wpcd' ),
-			'search_items'      => __( 'Search Cloud Server Groups', 'wpcd' ),
-			'all_items'         => __( 'All Cloud Server Groups', 'wpcd' ),
-			'parent_item'       => __( 'Parent Cloud Server Group', 'wpcd' ),
-			'parent_item_colon' => __( 'Parent Cloud Server Group:', 'wpcd' ),
-			'edit_item'         => __( 'Edit Cloud Server Group', 'wpcd' ),
-			'update_item'       => __( 'Update Cloud Server Group', 'wpcd' ),
-			'add_new_item'      => __( 'Add New Cloud Server Group', 'wpcd' ),
-			'new_item_name'     => __( 'New Cloud Server Group Name', 'wpcd' ),
-			'menu_name'         => __( 'Server Groups', 'wpcd' ),
+			'name'              => _x( 'Cloud Server Groups', 'taxonomy general name', 'simple-stack' ),
+			'singular_name'     => _x( 'Cloud Server Group', 'taxonomy singular name', 'simple-stack' ),
+			'search_items'      => __( 'Search Cloud Server Groups', 'simple-stack' ),
+			'all_items'         => __( 'All Cloud Server Groups', 'simple-stack' ),
+			'parent_item'       => __( 'Parent Cloud Server Group', 'simple-stack' ),
+			'parent_item_colon' => __( 'Parent Cloud Server Group:', 'simple-stack' ),
+			'edit_item'         => __( 'Edit Cloud Server Group', 'simple-stack' ),
+			'update_item'       => __( 'Update Cloud Server Group', 'simple-stack' ),
+			'add_new_item'      => __( 'Add New Cloud Server Group', 'simple-stack' ),
+			'new_item_name'     => __( 'New Cloud Server Group Name', 'simple-stack' ),
+			'menu_name'         => __( 'Server Groups', 'simple-stack' ),
 		);
 
 		$args = array(
@@ -1861,29 +1859,29 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			'show_admin_column' => false,
 			'query_var'         => true,
 			'capabilities'      => array(
-				'manage_terms' => 'wpcd_manage_groups',
-				'edit_terms'   => 'wpcd_manage_groups',
-				'delete_terms' => 'wpcd_manage_groups',
-				'assign_terms' => 'wpcd_manage_groups',
+				'manage_terms' => 'sstk_manage_groups',
+				'edit_terms'   => 'sstk_manage_groups',
+				'delete_terms' => 'sstk_manage_groups',
+				'assign_terms' => 'sstk_manage_groups',
 			),
 		);
 
 		// Hide the server group metabox.
-		$hide_server_group_mb = wpcd_get_early_option( 'wpcd_hide_server_group_mb' );
+		$hide_server_group_mb = sstk_get_early_option( 'sstk_hide_server_group_mb' );
 		if ( $hide_server_group_mb ) {
-			if ( ! wpcd_is_admin() ) {
+			if ( ! sstk_is_admin() ) {
 				$args['meta_box_cb'] = false;
 			}
 		}
 
-		register_taxonomy( 'wpcd_app_server_group', array( 'wpcd_app_server' ), $args );
+		register_taxonomy( 'sstk_app_server_group', array( 'sstk_app_server' ), $args );
 	}
 
 	/**
-	 * Creates the default terms for wpcd_app_server_group taxonomy.
+	 * Creates the default terms for sstk_app_server_group taxonomy.
 	 */
-	public static function wpcd_app_server_create_default_taxonomy_terms() {
-		$taxonomy     = 'wpcd_app_server_group';
+	public static function sstk_app_server_create_default_taxonomy_terms() {
+		$taxonomy     = 'sstk_app_server_group';
 		$server_terms = array(
 			array(
 				'name'  => 'Live',
@@ -1927,13 +1925,13 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 			$term = wp_insert_term( $server_term['name'], $taxonomy );
 
 			if ( ! is_wp_error( $term ) ) {
-				add_term_meta( $term['term_id'], 'wpcd_group_color', $server_term['color'] );
+				add_term_meta( $term['term_id'], 'sstk_group_color', $server_term['color'] );
 			}
 		}
 	}
 
 	/**
-	 * To create default terms for wpcd_app_server_group taxonomy for newly created site on WP Multisite.
+	 * To create default terms for sstk_app_server_group taxonomy for newly created site on WP Multisite.
 	 *
 	 * Action hook: wp_initialize_site
 	 *
@@ -1941,15 +1939,15 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 * @param  array  $args args.
 	 * @return void
 	 */
-	public function wpcd_app_server_new_site( $new_site, $args ) {
-		$plugin_name = wpcd_plugin;
+	public function sstk_app_server_new_site( $new_site, $args ) {
+		$plugin_name = SSTK_PLUGIN;
 
 		// To check the plugin is active network-wide.
 		if ( is_plugin_active_for_network( $plugin_name ) ) {
 			$blog_id = $new_site->blog_id;
 
 			switch_to_blog( $blog_id );
-			self::wpcd_app_server_create_default_taxonomy_terms();
+			self::sstk_app_server_create_default_taxonomy_terms();
 			restore_current_blog();
 		}
 	}
@@ -1964,19 +1962,19 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_app_server_post_row_actions( $actions, $post ) {
+	public function sstk_app_server_post_row_actions( $actions, $post ) {
 		$user_id                       = get_current_user_id();
-		$wpcd_server_delete_protection = get_post_meta( $post->ID, 'wpcd_server_delete_protection', true );
+		$sstk_server_delete_protection = get_post_meta( $post->ID, 'sstk_server_delete_protection', true );
 
-		if ( 'wpcd_app_server' === $post->post_type && ! wpcd_user_can( $user_id, 'delete_server', $post->ID ) && (int) $post->post_author !== (int) $user_id ) {
+		if ( 'sstk_app_server' === $post->post_type && ! sstk_user_can( $user_id, 'delete_server', $post->ID ) && (int) $post->post_author !== (int) $user_id ) {
 			unset( $actions['trash'] );
 			unset( $actions['delete'] );
 		}
 
-		if ( 'wpcd_app_server' === $post->post_type && ! empty( $wpcd_server_delete_protection ) ) {
+		if ( 'sstk_app_server' === $post->post_type && ! empty( $sstk_server_delete_protection ) ) {
 			unset( $actions['trash'] );
 			unset( $actions['delete'] );
-			$enable_bulk_delete = (int) wpcd_get_option( 'wordpress_app_enable_bulk_delete_on_server_when_delete_protected' );
+			$enable_bulk_delete = (int) sstk_get_option( 'wordpress_app_enable_bulk_delete_on_server_when_delete_protected' );
 			if ( 1 <> $enable_bulk_delete ) {
 				?>
 				<script type="text/javascript">
@@ -1998,20 +1996,20 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_app_server_hide_delete_link() {
+	public function sstk_app_server_hide_delete_link() {
 		$user_id                       = get_current_user_id();
 		$post_id                       = filter_input( INPUT_GET, 'post', FILTER_VALIDATE_INT );
 		$post                          = get_post( $post_id );
-		$wpcd_server_delete_protection = get_post_meta( $post_id, 'wpcd_server_delete_protection', true );
+		$sstk_server_delete_protection = get_post_meta( $post_id, 'sstk_server_delete_protection', true );
 
-		if ( ( 'wpcd_app_server' === $post->post_type && ! wpcd_user_can( $user_id, 'delete_server', $post->ID ) && $post->post_author !== $user_id ) || ( 'wpcd_app_server' === $post->post_type && ! empty( $wpcd_server_delete_protection ) ) ) {
+		if ( ( 'sstk_app_server' === $post->post_type && ! sstk_user_can( $user_id, 'delete_server', $post->ID ) && $post->post_author !== $user_id ) || ( 'sstk_app_server' === $post->post_type && ! empty( $sstk_server_delete_protection ) ) ) {
 			?>
 			<style>#delete-action { display: none; }</style>
 			<?php
 		}
 
 		// Hide the visibility options from publish metabox.
-		if ( ( 'wpcd_app_server' === $post->post_type || 'wpcd_app' === $post->post_type ) && ! wpcd_is_admin() ) {
+		if ( ( 'sstk_app_server' === $post->post_type || 'sstk_app' === $post->post_type ) && ! sstk_is_admin() ) {
 			?>
 			<script type="text/javascript">
 				jQuery(document).ready(function(){
@@ -2034,11 +2032,11 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return boolean
 	 */
-	public function wpcd_app_server_restrict_trash_post( $trash, $post ) {
+	public function sstk_app_server_restrict_trash_post( $trash, $post ) {
 
-		$wpcd_server_delete_protection = get_post_meta( $post->ID, 'wpcd_server_delete_protection', true );
+		$sstk_server_delete_protection = get_post_meta( $post->ID, 'sstk_server_delete_protection', true );
 
-		if ( 'wpcd_app_server' === $post->post_type && ! empty( $wpcd_server_delete_protection ) ) {
+		if ( 'sstk_app_server' === $post->post_type && ! empty( $sstk_server_delete_protection ) ) {
 			return true;
 		}
 
@@ -2052,24 +2050,24 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_change_server_owner_before_save_post( $post_id ) {
+	public function sstk_change_server_owner_before_save_post( $post_id ) {
 		$user_id     = (int) get_current_user_id();
-		$users       = wpcd_get_users_in_team( $post_id );
+		$users       = sstk_get_users_in_team( $post_id );
 		$post_author = (int) get_post( $post_id )->post_author;
 
 		if ( ! in_array( $post_author, $users, true ) ) {
 			array_push( $users, $post_author );
 		}
 
-		$wpcd_server_owner = (int) filter_input( INPUT_POST, 'wpcd_server_owner', FILTER_VALIDATE_INT );
+		$sstk_server_owner = (int) filter_input( INPUT_POST, 'sstk_server_owner', FILTER_VALIDATE_INT );
 
-		if ( ! wpcd_is_admin() && ! in_array( $user_id, $users, true ) && $post_author !== $wpcd_server_owner ) {
-			wp_die( esc_html( __( 'You are not allowed to change the owner.', 'wpcd' ) ) );
+		if ( ! sstk_is_admin() && ! in_array( $user_id, $users, true ) && $post_author !== $sstk_server_owner ) {
+			wp_die( esc_html( __( 'You are not allowed to change the owner.', 'simple-stack' ) ) );
 		}
 
 		// Update the post author.
 		$post              = get_post( $post_id );
-		$post->post_author = $wpcd_server_owner;
+		$post->post_author = $sstk_server_owner;
 		wp_update_post( $post );
 	}
 
@@ -2080,9 +2078,9 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_app_server_blogs_columns( $sites_columns ) {
+	public function sstk_app_server_blogs_columns( $sites_columns ) {
 
-		$sites_columns['wpcd_server_count'] = __( 'Server Count', 'wpcd' );
+		$sites_columns['sstk_server_count'] = __( 'Server Count', 'simple-stack' );
 
 		return $sites_columns;
 	}
@@ -2095,16 +2093,16 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_app_server_sites_custom_column( $column_name, $blog_id ) {
+	public function sstk_app_server_sites_custom_column( $column_name, $blog_id ) {
 		global $wpdb;
-		$plugin_name = wpcd_plugin;
+		$plugin_name = SSTK_PLUGIN;
 		if ( is_plugin_active_for_network( $plugin_name ) || in_array( $plugin_name, get_blog_option( $blog_id, 'active_plugins' ), true ) ) {
 
 			$value = '';
 			switch ( $column_name ) {
-				case 'wpcd_server_count':
+				case 'sstk_server_count':
 					$db_prefix   = $wpdb->get_blog_prefix( $blog_id );
-					$post_type   = 'wpcd_app_server';
+					$post_type   = 'sstk_app_server';
 					$post_status = 'private';
 					$query       = $wpdb->prepare( "SELECT COUNT(*) FROM {$db_prefix}posts WHERE post_type = '%s' AND post_status = '%s'", $post_type, $post_status );
 					$result      = $wpdb->get_var( $query );
@@ -2119,19 +2117,19 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	/**
 	 * Removes delete option from bulk action on server listing screen if user is not admin or super admin
 	 *
-	 * Filter hook: bulk_actions-edit-wpcd_app_server
+	 * Filter hook: bulk_actions-edit-sstk_app_server
 	 *
 	 * @param  array $actions actions.
 	 *
 	 * @return array
 	 */
-	public function wpcd_app_server_bulk_actions( $actions ) {
-		if ( ! wpcd_is_admin() ) {
+	public function sstk_app_server_bulk_actions( $actions ) {
+		if ( ! sstk_is_admin() ) {
 			unset( $actions['trash'] );
 		}
 
 		// Also disable if the option it set in the SETTINGS screen.
-		$disable_bulk_delete = (int) wpcd_get_option( 'wordpress_app_disable_bulk_delete_on_full_server_list' );
+		$disable_bulk_delete = (int) sstk_get_option( 'wordpress_app_disable_bulk_delete_on_full_server_list' );
 		if ( 1 === $disable_bulk_delete ) {
 			unset( $actions['trash'] );
 		}
@@ -2140,28 +2138,28 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Clean up some of the meta fields for wpcd_app_server posts.
+	 * Clean up some of the meta fields for sstk_app_server posts.
 	 *
-	 * Action hook: wp_ajax_wpcd_cleanup_servers
+	 * Action hook: wp_ajax_sstk_cleanup_servers
 	 *
 	 * @return void
 	 */
-	public function wpcd_cleanup_servers() {
+	public function sstk_cleanup_servers() {
 
 		// Nonce check.
-		check_ajax_referer( 'wpcd-cleanup-servers', 'nonce' );
+		check_ajax_referer( 'sstk-cleanup-servers', 'nonce' );
 
 		// Permissions check.
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 
-			$error_msg = array( 'msg' => __( 'You are not allowed to perform this action - only admins are permitted here.', 'wpcd' ) );
+			$error_msg = array( 'msg' => __( 'You are not allowed to perform this action - only admins are permitted here.', 'simple-stack' ) );
 			wp_send_json_error( $error_msg );
 			wp_die();
 
 		}
 
 		$args = array(
-			'post_type'      => 'wpcd_app_server',
+			'post_type'      => 'sstk_app_server',
 			'post_status'    => 'any',
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
@@ -2172,20 +2170,20 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 		if ( ! empty( $server_ids ) ) {
 			foreach ( $server_ids as $server_id ) {
 
-				do_action( 'wpcd_cleanup_server_before', $server_id );
+				do_action( 'sstk_cleanup_server_before', $server_id );
 
-				delete_post_meta( $server_id, 'wpcd_temp_log_id' );
+				delete_post_meta( $server_id, 'sstk_temp_log_id' );
 
-				do_action( 'wpcd_cleanup_server_after', $server_id );
+				do_action( 'sstk_cleanup_server_after', $server_id );
 
 			}
 
-			do_action( 'wpcd_cleanup_servers_after' );
+			do_action( 'sstk_cleanup_servers_after' );
 
-			$msg = __( 'Clean Up completed!', 'wpcd' );
+			$msg = __( 'Clean Up completed!', 'simple-stack' );
 
 		} else {
-			$msg = __( 'No Server Records found!', 'wpcd' );
+			$msg = __( 'No Server Records found!', 'simple-stack' );
 		}
 
 		$return = array( 'msg' => $msg );
@@ -2196,41 +2194,41 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * Adds custom column header for wpcd_app_server_group taxonomy listing screen.
+	 * Adds custom column header for sstk_app_server_group taxonomy listing screen.
 	 *
-	 * Filter hook: manage_edit-wpcd_app_server_group_columns
+	 * Filter hook: manage_edit-sstk_app_server_group_columns
 	 *
 	 * @param  array $columns columns.
 	 *
 	 * @return array
 	 */
-	public function wpcd_manage_wpcd_app_server_group_columns( $columns ) {
-		$columns['wpcd_color'] = __( 'Color', 'wpcd' );
+	public function sstk_manage_sstk_app_server_group_columns( $columns ) {
+		$columns['sstk_color'] = __( 'Color', 'simple-stack' );
 
 		return $columns;
 	}
 
 	/**
-	 * Adds custom column content for wpcd_app_server_group taxonomy listing screen.
+	 * Adds custom column content for sstk_app_server_group taxonomy listing screen.
 	 *
-	 * Filter hook: manage_wpcd_app_server_group_custom_column
+	 * Filter hook: manage_sstk_app_server_group_custom_column
 	 *
 	 * @param  string $content content.
 	 * @param  string $column_name column name.
 	 * @param  int    $term_id team id.
 	 */
-	public function wpcd_manage_wpcd_app_server_group_columns_content( $content, $column_name, $term_id ) {
-		if ( 'wpcd_color' === $column_name ) {
-			$color_code = get_term_meta( $term_id, 'wpcd_group_color', true );
+	public function sstk_manage_sstk_app_server_group_columns_content( $content, $column_name, $term_id ) {
+		if ( 'sstk_color' === $column_name ) {
+			$color_code = get_term_meta( $term_id, 'sstk_group_color', true );
 			$color      = ! empty( $color_code ) ? $color_code : '#999999';
 
-			$content = sprintf( '<span class="wpcd-app-server-app-group" style="background-color: %s;">%s</span>', $color, $color );
+			$content = sprintf( '<span class="sstk-app-server-app-group" style="background-color: %s;">%s</span>', $color, $color );
 		}
 		return $content;
 	}
 
 	/**
-	 * Adds meta value when wpcd_app_server type post is restored from trash.
+	 * Adds meta value when sstk_app_server type post is restored from trash.
 	 *
 	 * Action hook: untrashed_post
 	 *
@@ -2238,11 +2236,11 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_app_server_untrashed_post( $post_id ) {
+	public function sstk_app_server_untrashed_post( $post_id ) {
 
-		if ( 'wpcd_app_server' === get_post_type( $post_id ) ) {
-			update_post_meta( $post_id, 'wpcd_wpapp_disconnected', 1 );
-			update_post_meta( $post_id, 'wpcd_server_current_state', 'deleted' );
+		if ( 'sstk_app_server' === get_post_type( $post_id ) ) {
+			update_post_meta( $post_id, 'sstk_wpapp_disconnected', 1 );
+			update_post_meta( $post_id, 'sstk_server_current_state', 'deleted' );
 		}
 
 	}
@@ -2259,9 +2257,9 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_app_server_set_deletion_protection_flag( $post_id ) {
+	public function sstk_app_server_set_deletion_protection_flag( $post_id ) {
 
-		update_post_meta( $post_id, 'wpcd_server_delete_protection', '1' );
+		update_post_meta( $post_id, 'sstk_server_delete_protection', '1' );
 
 	}
 
@@ -2269,31 +2267,31 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 * Get all server terms which will going to be excluded
 	 * from the server taxonomy metabox.
 	 * They will be set up in a global variable defined
-	 * in our constructor function - wpcd_exclude_server_group.
+	 * in our constructor function - sstk_exclude_server_group.
 	 */
-	public function wpcd_exclude_server_group_taxonomy_ids() {
-		global $wpcd_exclude_server_group;  // This global is defined in our CONSTRUCTOR function at the top of this file.
+	public function sstk_exclude_server_group_taxonomy_ids() {
+		global $sstk_exclude_server_group;  // This global is defined in our CONSTRUCTOR function at the top of this file.
 
-		if ( 'wpcd_app_server' === get_post_type() ) {
+		if ( 'sstk_app_server' === get_post_type() ) {
 			// This function defined in the metaboxes_for_taxonomies_for_servers_and_apps file.
-			$wpcd_exclude_server_group = $this->wpcd_common_code_server_app_group_metabox( 'wpcd_app_server_group' );
+			$sstk_exclude_server_group = $this->sstk_common_code_server_app_group_metabox( 'sstk_app_server_group' );
 		}
 
 	}
 
 	/**
-	 * Exclude server term ids based on the global variable $wpcd_exclude_server_group
+	 * Exclude server term ids based on the global variable $sstk_exclude_server_group
 	 * defined in our constructor function.
 	 *
 	 * @param array $args args.
 	 * @param array $taxonomies taxonomies.
 	 */
-	public function wpcd_exclude_from_server_term_args( $args, $taxonomies ) {
-		global $wpcd_exclude_server_group; // This global is defined in our CONSTRUCTOR function at the top of this file.
+	public function sstk_exclude_from_server_term_args( $args, $taxonomies ) {
+		global $sstk_exclude_server_group; // This global is defined in our CONSTRUCTOR function at the top of this file.
 
-		if ( in_array( 'wpcd_app_server_group', $taxonomies ) ) {
+		if ( in_array( 'sstk_app_server_group', $taxonomies ) ) {
 			// This function defined in the metaboxes_for_taxonomies_for_servers_and_apps file.
-			$args = $this->wpcd_exclude_term_ids_for_server_app_group( $args, $wpcd_exclude_server_group );
+			$args = $this->sstk_exclude_term_ids_for_server_app_group( $args, $sstk_exclude_server_group );
 		}
 
 		return $args;
@@ -2303,9 +2301,9 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 * Takes a string and wraps it with a span and a class related to the column name.
 	 *
 	 * For example, if we get a string such as "Domain:" we might
-	 * return <span class="wpcd-column-label-domain">Domain:</span>.
+	 * return <span class="sstk-column-label-domain">Domain:</span>.
 	 *
-	 * Calls the global function wpcd_wrap_string_with_span_and_class
+	 * Calls the global function sstk_wrap_string_with_span_and_class
 	 * defined in the functions.php which does the actual wrapping.
 	 *
 	 * @param string $string The string to wrap.
@@ -2314,12 +2312,12 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 *
 	 * @return string
 	 */
-	public function wpcd_column_wrap_string_with_span_and_class( $string, $column, $align ) {
+	public function sstk_column_wrap_string_with_span_and_class( $string, $column, $align ) {
 
 		if ( 'left' === $align ) {
-			return wpcd_wrap_string_with_span_and_class( $string, $column, 'server-col-element-label' );
+			return sstk_wrap_string_with_span_and_class( $string, $column, 'server-col-element-label' );
 		} else {
-			return wpcd_wrap_string_with_span_and_class( $string, $column, 'server-col-element-value' );
+			return sstk_wrap_string_with_span_and_class( $string, $column, 'server-col-element-value' );
 		}
 
 	}
@@ -2328,16 +2326,16 @@ class WPCD_POSTS_APP_SERVER extends WPCD_Posts_Base {
 	 * Takes a string and wraps it with a div.
 	 *
 	 * For example, if we get a string such as "Domain:" we might
-	 * return <div class="wpcd-column-label-domain">Domain:</div>.
+	 * return <div class="sstk-column-label-domain">Domain:</div>.
 	 *
 	 * @param string $string The string to wrap.
 	 * @param string $column The column name.
 	 *
 	 * @return string
 	 */
-	public function wpcd_column_wrap_string_with_div_and_class( $string, $column ) {
+	public function sstk_column_wrap_string_with_div_and_class( $string, $column ) {
 
-		return wpcd_wrap_string_with_div_and_class( $string, $column, 'server-col-element-wrap' );
+		return sstk_wrap_string_with_div_and_class( $string, $column, 'server-col-element-wrap' );
 
 	}
 

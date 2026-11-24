@@ -3,4 +3,4 @@
 - All REST calls go through the typed `api.*` namespace in `lib/api.js`, which normalizes responses by unwrapping the `{ ok, data }` envelope and throws `ApiError` instances carrying `code` and `status`.
 - Page components wrap their content in `AppShell`, passing `path`, `title`, optional `subtitle`/`breadcrumbs`/`action` props to keep header, nav, and breadcrumbs consistent.
 - Server/site tab fields are rendered generically: `lib/schema.js` converts Meta Box field arrays into `{ kind, type, id, value, ... }` descriptors consumed by `TabRenderer`.
-- Action buttons on tabs encode their target via `data-wpcd-action` and collect values via `data-wpcd-fields` selectors, mirroring the legacy jQuery client's parameter shape.
+- Action buttons on tabs encode their target via `data-sstk-action` and collect values via `data-sstk-fields` selectors, mirroring the legacy jQuery client's parameter shape.

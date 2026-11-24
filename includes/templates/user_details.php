@@ -1,26 +1,27 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * User details.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( empty( $server_posts ) && empty( $app_posts ) ) {
 	?>
-	<p><?php echo esc_html( __( 'This user is not assigned to any server or app.', 'wpcd' ) ); ?></p>
+	<p><?php echo esc_html( __( 'This user is not assigned to any server or app.', 'simple-stack' ) ); ?></p>
 	<?php
 }
 
 if ( ! empty( $server_posts ) || ! empty( $app_posts ) ) {
 	?>
-	<h2><?php echo esc_html( __( 'List of Servers and Apps that this user can view', 'wpcd' ) ); ?></h2>
+	<h2><?php echo esc_html( __( 'List of Servers and Apps that this user can view', 'simple-stack' ) ); ?></h2>
 	<?php
 }
 
 // Shows the servers that the user can view.
 if ( $server_posts ) {
 	?>
-	<h4><?php echo esc_html( __( 'Servers', 'wpcd' ) ); ?></h4>
+	<h4><?php echo esc_html( __( 'Servers', 'simple-stack' ) ); ?></h4>
 	<ol>
 		<?php
 		foreach ( $server_posts as $server_post ) {
@@ -43,7 +44,7 @@ if ( $server_posts ) {
 // Shows the apps that the user can view.
 if ( $app_posts ) {
 	?>
-	<h4><?php echo esc_html( __( 'Apps', 'wpcd' ) ); ?></h4>
+	<h4><?php echo esc_html( __( 'Apps', 'simple-stack' ) ); ?></h4>
 	<ol>
 		<?php
 		foreach ( $app_posts as $app_post ) {

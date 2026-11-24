@@ -1,1 +1,2 @@
-WPCloud Deploy WP Management Scripts Version 1
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
+Simple Stack WP Management Scripts Version 1

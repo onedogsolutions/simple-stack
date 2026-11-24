@@ -23,7 +23,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains how SimpleStack manages WP-CLI across WordPress sites and servers. It covers automated installation, upgrade procedures, version management, script execution environment, dependency resolution, compatibility checks, and operational best practices for automation and security. It also provides guidance for managing multiple WordPress installations, configuring WP-CLI aliases, integrating with deployment workflows, troubleshooting common issues, and optimizing performance.
+This document explains how Simple Stack manages WP-CLI across WordPress sites and servers. It covers automated installation, upgrade procedures, version management, script execution environment, dependency resolution, compatibility checks, and operational best practices for automation and security. It also provides guidance for managing multiple WordPress installations, configuring WP-CLI aliases, integrating with deployment workflows, troubleshooting common issues, and optimizing performance.
 
 ## Project Structure
 WP-CLI management is implemented through a combination of server provisioning scripts, dedicated upgrade scripts, and PHP-side version compatibility checks:
@@ -252,7 +252,7 @@ Operational tips:
 - [1070-upgrade_wp_cli.txt:1-10](file://includes/core/apps/wordpress-app/scripts/v1/raw/1070-upgrade_wp_cli.txt#L1-L10)
 
 ## Conclusion
-SimpleStack automates WP-CLI installation and upgrades through robust server provisioning and targeted upgrade scripts, backed by PHP-driven version policy checks. This approach ensures consistent environments, supports automation, and simplifies multi-site management. Following the best practices outlined here will help maintain secure, performant, and reliable WP-CLI operations across your deployments.
+Simple Stack automates WP-CLI installation and upgrades through robust server provisioning and targeted upgrade scripts, backed by PHP-driven version policy checks. This approach ensures consistent environments, supports automation, and simplifies multi-site management. Following the best practices outlined here will help maintain secure, performant, and reliable WP-CLI operations across your deployments.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

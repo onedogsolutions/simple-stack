@@ -1,13 +1,14 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This template file used for load sent emails details data
  *
- * @package wpcd
+ * @package simple-stack
  */
 
-// Check post_id in wpcd_notify_user.
+// Check post_id in sstk_notify_user.
 $entry_args = array(
-	'post_type'      => 'wpcd_sent_emails',
+	'post_type'      => 'sstk_sent_emails',
 	'post_status'    => 'private',
 	'posts_per_page' => -1,
 	'p'              => $post_id,
@@ -17,21 +18,21 @@ $entry_found = get_posts( $entry_args );
 
 $email_body = '';
 if ( ! empty( $entry_found ) ) {
-	$email_body = get_post_meta( $post_id, 'wpcd_sent_email_email_body', true );
+	$email_body = get_post_meta( $post_id, 'sstk_sent_email_email_body', true );
 }
 
 ?>
 
 <!-- Model -->
-<div id="wpcd_sent_email_details_popup_sec" class="wpcd_sent_email_details_modal">
-	<div class="wpcd_popup_header_sec">
-		<span class="wpcd_sent_email_details_close wpcd_close_custom_popup" title="close">×</span>
-	</div>	
-	<div class="wpcd_sent_email_modal_content">        
-		<div class="wpcd_sent_email_details_html">			
-			<div class="wpcd_sent_email_details_row">
+<div id="sstk_sent_email_details_popup_sec" class="sstk_sent_email_details_modal">
+	<div class="sstk_popup_header_sec">
+		<span class="sstk_sent_email_details_close sstk_close_custom_popup" title="close">×</span>
+	</div>
+	<div class="sstk_sent_email_modal_content">
+		<div class="sstk_sent_email_details_html">
+			<div class="sstk_sent_email_details_row">
 				<div class="col-sm-2">
-					<h3><?php echo esc_html( __( 'Email Body', 'wpcd' ) ); ?></h3>
+					<h3><?php echo esc_html( __( 'Email Body', 'simple-stack' ) ); ?></h3>
 				</div>
 				<div class="col-sm-10">
 					<?php

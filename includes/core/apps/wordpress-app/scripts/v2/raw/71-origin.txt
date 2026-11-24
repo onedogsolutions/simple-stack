@@ -140,14 +140,8 @@ homedir=`grep $localuser /etc/passwd|cut -d':' -f6`
 cat /dev/zero | ssh-keygen -f "$homedir/.ssh/id_rsa" -q -N "" > /dev/null 2>&1
 mkdir -p $homedir/.ssh > /dev/null 2>&1
 chown -R $localuser.$localuser "$homedir/.ssh"
-if [ "$g_webserver_type" = "nginx" ]
-then
-	# make it available with nginx
-	cp $homedir/.ssh/id_rsa.pub /var/www/html/51796720716872671235391607993835.pub
-elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-then
-	cp $homedir/.ssh/id_rsa.pub /usr/local/lsws/Example/html/51796720716872671235391607993835.pub
-fi
+# Make the synchronization public key available through the default OpenLiteSpeed site.
+cp $homedir/.ssh/id_rsa.pub /usr/local/lsws/Example/html/51796720716872671235391607993835.pub
 
 # install rsync
 apt-get update

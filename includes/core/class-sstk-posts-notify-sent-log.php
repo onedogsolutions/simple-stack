@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_NOTIFY_SENT class - used to manage post type that holds a log of all notifications sent to users.
+ * SSTK_NOTIFY_SENT class - used to manage post type that holds a log of all notifications sent to users.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,12 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * WPCD_NOTIFY_SENT
+ * SSTK_NOTIFY_SENT
  */
-class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
+class SSTK_NOTIFY_SENT extends SSTK_POSTS_LOG {
 
 	/**
-	 * WPCD_NOTIFY_SENT instance
+	 * SSTK_NOTIFY_SENT instance
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -25,11 +26,11 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 	}
 
 	/**
-	 * WPCD_NOTIFY_SENT constructor.
+	 * SSTK_NOTIFY_SENT constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		$this->register();  // register the custom post type - wpcd_notify_sent.
+		$this->register();  // register the custom post type - sstk_notify_sent.
 		$this->hooks();     // register hooks to make the custom post type do things...
 	}
 
@@ -42,16 +43,16 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_notify_sent_posts_custom_column', array( $this, 'notify_sent_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_notify_sent_posts_custom_column', array( $this, 'notify_sent_table_content' ), 10, 2 );
 
 		// Add filter hook to add new columns on notify sent log listing screen.
-		add_filter( 'manage_wpcd_notify_sent_posts_columns', array( $this, 'notify_sent_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_notify_sent_posts_columns', array( $this, 'notify_sent_table_head' ), 10, 1 );
 
 		// Filter hook to remove edit bulk action from notify sent log listing screen.
-		add_filter( 'bulk_actions-edit-wpcd_notify_sent', array( $this, 'wpcd_log_bulk_actions' ), 10, 1 );
+		add_filter( 'bulk_actions-edit-sstk_notify_sent', array( $this, 'sstk_log_bulk_actions' ), 10, 1 );
 
 		// Action hook to scan new notifications.
-		add_action( 'wpcd_scan_notifications_actions', array( $this, 'wpcd_scan_new_notifications_actions' ), 10 );
+		add_action( 'sstk_scan_notifications_actions', array( $this, 'sstk_scan_new_notifications_actions' ), 10 );
 	}
 
 	/**
@@ -59,25 +60,25 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 	 */
 	public function register() {
 		register_post_type(
-			'wpcd_notify_sent',
+			'sstk_notify_sent',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'Notifications Sent Logs', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'Notifications Sent Log', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => _x( 'Notifications Sent Log', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'Notifications Sent Log', 'Add New on Toolbar', 'wpcd' ),
-					'edit_item'             => __( 'Edit Notification Sent', 'wpcd' ),
-					'view_item'             => __( 'View Notification Sent', 'wpcd' ),
-					'all_items'             => __( 'History', 'wpcd' ), // Label to signify all items in a submenu link.
-					'search_items'          => __( 'Search Logs', 'wpcd' ),
-					'not_found'             => __( 'No Logs were found.', 'wpcd' ),
-					'not_found_in_trash'    => __( 'No Logs were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter Notification Sent Logs list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'Notification Sent Logs list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'Notification Sent Logs list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'Notifications Sent Logs', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'Notifications Sent Log', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => _x( 'Notifications Sent Log', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'Notifications Sent Log', 'Add New on Toolbar', 'simple-stack' ),
+					'edit_item'             => __( 'Edit Notification Sent', 'simple-stack' ),
+					'view_item'             => __( 'View Notification Sent', 'simple-stack' ),
+					'all_items'             => __( 'History', 'simple-stack' ), // Label to signify all items in a submenu link.
+					'search_items'          => __( 'Search Logs', 'simple-stack' ),
+					'not_found'             => __( 'No Logs were found.', 'simple-stack' ),
+					'not_found_in_trash'    => __( 'No Logs were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter Notification Sent Logs list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'Notification Sent Logs list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'Notification Sent Logs list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
-				'show_in_menu'        => 'edit.php?post_type=wpcd_notify_log',
+				'show_in_menu'        => 'edit.php?post_type=sstk_notify_log',
 				'show_in_nav_menus'   => true,
 				'show_in_admin_bar'   => false,
 				'public'              => true,
@@ -90,14 +91,14 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 				'capability_type'     => 'post',
 				'capabilities'        => array(
 					'create_posts' => false,
-					'read_posts'   => 'wpcd_manage_logs',
-					'edit_posts'   => 'wpcd_manage_logs',
+					'read_posts'   => 'sstk_manage_logs',
+					'edit_posts'   => 'sstk_manage_logs',
 				),
 				'map_meta_cap'        => true,
 			)
 		);
 
-		$this->set_post_type( 'wpcd_notify_sent' );
+		$this->set_post_type( 'sstk_notify_sent' );
 
 		$search_fields = array(
 			'notify_sent_parent_id',
@@ -126,7 +127,7 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 
 		switch ( $column_name ) {
 
-			case 'wpcd_notify_sent_parent_id':
+			case 'sstk_notify_sent_parent_id':
 				// Display the name of the server or app.
 				$parent_post_id = get_post_meta( $post_id, 'parent_post_id', true );
 				if ( $parent_post_id ) {
@@ -135,30 +136,30 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 						$title = wp_kses_post( $parent_post->post_title );
 						$value = sprintf( '<a href="%s">' . (string) $parent_post_id . '</a>', get_edit_post_link( $parent_post_id ) );
 					} else {
-						$value = __( 'Parent post not found', 'wpcd' );
+						$value = __( 'Parent post not found', 'simple-stack' );
 					}
 				} else {
-					$value = __( 'Parent post not found', 'wpcd' );
+					$value = __( 'Parent post not found', 'simple-stack' );
 				}
 
 				break;
 
-			case 'wpcd_notify_sent_types':
+			case 'sstk_notify_sent_types':
 				// Display the list of types.
 				$value = get_post_meta( $post_id, 'notify_sent_types', true );
 				break;
 
-			case 'wpcd_notify_sent_message':
+			case 'sstk_notify_sent_message':
 				// Display the notify message.
 				$value = get_post_meta( $post_id, 'notify_sent_message', true );
 				break;
 
-			case 'wpcd_notify_sent_references':
+			case 'sstk_notify_sent_references':
 				// Display the list of references.
 				$value = get_post_meta( $post_id, 'notify_sent_references', true );
 				break;
 
-			case 'wpcd_notify_sent_success':
+			case 'sstk_notify_sent_success':
 				// Display the success or failure.
 				$value = get_post_meta( $post_id, 'notify_sent_success', true );
 				if ( '1' === $value ) {
@@ -168,7 +169,7 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 				}
 				break;
 
-			case 'wpcd_notify_sent_to_platform':
+			case 'sstk_notify_sent_to_platform':
 				// Display the platform where notification was sent to.
 				$value = get_post_meta( $post_id, 'notify_sent_to_platform', true );
 				if ( strlen( $value ) >= 200 ) {
@@ -205,13 +206,13 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 
 		unset( $defaults['date'] );
 
-		$defaults['wpcd_notify_sent_parent_id']     = __( 'Owner/Parent', 'wpcd' );
-		$defaults['wpcd_notify_sent_types']         = __( 'Type', 'wpcd' );
-		$defaults['wpcd_notify_sent_message']       = __( 'Message', 'wpcd' );
-		$defaults['wpcd_notify_sent_references']    = __( 'Reference', 'wpcd' );
-		$defaults['wpcd_notify_sent_success']       = __( 'Sent', 'wpcd' );
-		$defaults['wpcd_notify_sent_to_platform']   = __( 'Sent To', 'wpcd' );
-		$defaults['date']                           = __( 'Date', 'wpcd' );
+		$defaults['sstk_notify_sent_parent_id']     = __( 'Owner/Parent', 'simple-stack' );
+		$defaults['sstk_notify_sent_types']         = __( 'Type', 'simple-stack' );
+		$defaults['sstk_notify_sent_message']       = __( 'Message', 'simple-stack' );
+		$defaults['sstk_notify_sent_references']    = __( 'Reference', 'simple-stack' );
+		$defaults['sstk_notify_sent_success']       = __( 'Sent', 'simple-stack' );
+		$defaults['sstk_notify_sent_to_platform']   = __( 'Sent To', 'simple-stack' );
+		$defaults['date']                           = __( 'Date', 'simple-stack' );
 
 		return $defaults;
 
@@ -223,9 +224,9 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 	public function add_meta_boxes() {
 		add_meta_box(
 			'notify_sent',
-			__( 'Notifications Sent Log Entry', 'wpcd' ),
+			__( 'Notifications Sent Log Entry', 'simple-stack' ),
 			array( $this, 'render_notify_sent_meta_box' ),
-			'wpcd_notify_sent',
+			'sstk_notify_sent',
 			'advanced',
 			'high'
 		);
@@ -250,7 +251,7 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 		$notify_sent_to_platform    = get_post_meta( $post->ID, 'notify_sent_to_platform', true );
 
 		ob_start();
-		require wpcd_path . 'includes/templates/notify_sent_log.php';
+		require SSTK_PATH . 'includes/templates/notify_sent_log.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -286,7 +287,7 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 			}
 			$post_id = wp_insert_post(
 				array(
-					'post_type'   => 'wpcd_notify_sent',
+					'post_type'   => 'sstk_notify_sent',
 					'post_status' => 'private',
 					'post_title'  => 'User notification for ' . $post_title,
 					'post_author' => $author_id,
@@ -322,12 +323,12 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 	/**
 	 * Scan for new notifications and send it to the user
 	 */
-	public function wpcd_scan_new_notifications_actions() {
+	public function sstk_scan_new_notifications_actions() {
 
 		// Get all posts of user notifications post type.
 		$user_alerts = get_posts(
 			array(
-				'post_type'   => 'wpcd_notify_user',
+				'post_type'   => 'sstk_notify_user',
 				'post_status' => 'private',
 				'numberposts' => -1,
 			)
@@ -345,7 +346,7 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 
 		// Create query to get new notifications.
 		$notify_args = array(
-			'post_type'   => 'wpcd_notify_log',
+			'post_type'   => 'sstk_notify_log',
 			'post_status' => 'private',
 			'numberposts' => 10,
 			'orderby'     => 'date',
@@ -383,20 +384,20 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 				$domain_name = '';
 				$site_id     = '';
 
-				if ( get_post_type( $parent_post_id ) === 'wpcd_app_server' ) {
-					$server_name = WPCD_SERVER()->get_server_name( $parent_post_id );
-					$ipv4        = get_post_meta( $parent_post_id, 'wpcd_server_ipv4', true );
-					$ipv6        = get_post_meta( $parent_post_id, 'wpcd_server_ipv6', true );
-					$provider    = get_post_meta( $parent_post_id, 'wpcd_server_provider', true );
+				if ( get_post_type( $parent_post_id ) === 'sstk_app_server' ) {
+					$server_name = SSTK_SERVER()->get_server_name( $parent_post_id );
+					$ipv4        = get_post_meta( $parent_post_id, 'sstk_server_ipv4', true );
+					$ipv6        = get_post_meta( $parent_post_id, 'sstk_server_ipv6', true );
+					$provider    = get_post_meta( $parent_post_id, 'sstk_server_provider', true );
 					$server_id   = $parent_post_id;
-					$site_id     = __( 'N/A', 'wpcd' );
-					$domain_name = __( 'N/A', 'wpcd' );
+					$site_id     = __( 'N/A', 'simple-stack' );
+					$domain_name = __( 'N/A', 'simple-stack' );
 				} else {
 					$server_id   = get_post_meta( $parent_post_id, 'parent_post_id', true );
-					$server_name = WPCD_SERVER()->get_server_name( $server_id );
-					$ipv4        = get_post_meta( $server_id, 'wpcd_server_ipv4', true );
-					$ipv6        = get_post_meta( $server_id, 'wpcd_server_ipv6', true );
-					$provider    = get_post_meta( $server_id, 'wpcd_server_provider', true );
+					$server_name = SSTK_SERVER()->get_server_name( $server_id );
+					$ipv4        = get_post_meta( $server_id, 'sstk_server_ipv4', true );
+					$ipv6        = get_post_meta( $server_id, 'sstk_server_ipv6', true );
+					$provider    = get_post_meta( $server_id, 'sstk_server_provider', true );
 					$domain_name = get_post_meta( $parent_post_id, 'wpapp_domain', true );
 					$site_id     = $parent_post_id;
 				}
@@ -415,39 +416,39 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 								$alert_id = $alert_value['alert_id'];
 
 								// get user alert data.
-								$user_email        = get_post_meta( $alert_id, 'wpcd_notify_user_email_addresses', true );
-								$user_slack        = get_post_meta( $alert_id, 'wpcd_notify_user_slack_webhooks', true );
-								$user_zapier       = get_post_meta( $alert_id, 'wpcd_notify_user_zapier_send', true );
-								$user_zapier_hooks = get_post_meta( $alert_id, 'wpcd_notify_user_zapier_webhooks', true );
+								$user_email        = get_post_meta( $alert_id, 'sstk_notify_user_email_addresses', true );
+								$user_slack        = get_post_meta( $alert_id, 'sstk_notify_user_slack_webhooks', true );
+								$user_zapier       = get_post_meta( $alert_id, 'sstk_notify_user_zapier_send', true );
+								$user_zapier_hooks = get_post_meta( $alert_id, 'sstk_notify_user_zapier_webhooks', true );
 
-								$user_sites     = get_metadata( 'post', $alert_id, 'wpcd_notify_user_sites', false );
-								$user_all_sites = WPCD_POSTS_NOTIFY_USER()->get_user_notify_sites( $alert_user_id );
-								$user_all_sites = WPCD_POSTS_NOTIFY_USER()->wpcd_get_actual_values_notify_fields( $user_all_sites );
+								$user_sites     = get_metadata( 'post', $alert_id, 'sstk_notify_user_sites', false );
+								$user_all_sites = SSTK_POSTS_NOTIFY_USER()->get_user_notify_sites( $alert_user_id );
+								$user_all_sites = SSTK_POSTS_NOTIFY_USER()->sstk_get_actual_values_notify_fields( $user_all_sites );
 								// Default all items - if sites not found.
 								if ( empty( $user_sites ) ) {
 									$user_sites = $user_all_sites;
 								}
 
-								$user_servers     = get_metadata( 'post', $alert_id, 'wpcd_notify_user_servers', false );
-								$user_all_servers = WPCD_POSTS_NOTIFY_USER()->get_user_notify_servers( $alert_user_id );
-								$user_all_servers = WPCD_POSTS_NOTIFY_USER()->wpcd_get_actual_values_notify_fields( $user_all_servers );
+								$user_servers     = get_metadata( 'post', $alert_id, 'sstk_notify_user_servers', false );
+								$user_all_servers = SSTK_POSTS_NOTIFY_USER()->get_user_notify_servers( $alert_user_id );
+								$user_all_servers = SSTK_POSTS_NOTIFY_USER()->sstk_get_actual_values_notify_fields( $user_all_servers );
 								// Default all items - if servers not found.
 								if ( empty( $user_servers ) ) {
 									$user_servers = $user_all_servers;
 								}
 
-								$user_types = get_metadata( 'post', $alert_id, 'wpcd_notify_user_type', false );
+								$user_types = get_metadata( 'post', $alert_id, 'sstk_notify_user_type', false );
 								// Default all items - if types not found.
 								if ( empty( $user_types ) ) {
-									$user_types = WPCD_POSTS_NOTIFY_USER()->get_user_notify_types();
-									$user_types = WPCD_POSTS_NOTIFY_USER()->wpcd_get_actual_values_notify_fields( $user_types );
+									$user_types = SSTK_POSTS_NOTIFY_USER()->get_user_notify_types();
+									$user_types = SSTK_POSTS_NOTIFY_USER()->sstk_get_actual_values_notify_fields( $user_types );
 								}
 
-								$user_references = get_metadata( 'post', $alert_id, 'wpcd_notify_user_reference', false );
+								$user_references = get_metadata( 'post', $alert_id, 'sstk_notify_user_reference', false );
 								// Default all items - if references not found.
 								if ( empty( $user_references ) ) {
-									$user_references = WPCD_POSTS_NOTIFY_USER()->get_user_notify_references();
-									$user_references = WPCD_POSTS_NOTIFY_USER()->wpcd_get_actual_values_notify_fields( $user_references );
+									$user_references = SSTK_POSTS_NOTIFY_USER()->get_user_notify_references();
+									$user_references = SSTK_POSTS_NOTIFY_USER()->sstk_get_actual_values_notify_fields( $user_references );
 								}
 
 								// Compare the notification logs value with user alert.
@@ -458,17 +459,17 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 
 										// Send email notification to user.
 										if ( ! empty( $user_email ) ) {
-											$this->wpcd_send_email_notifications_to_user( $alert_id, $notify_log_id, $user_email, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider );
+											$this->sstk_send_email_notifications_to_user( $alert_id, $notify_log_id, $user_email, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider );
 										}
 
 										// Send slack notification to user.
 										if ( ! empty( $user_slack ) ) {
-											$this->wpcd_send_slack_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_slack, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider );
+											$this->sstk_send_slack_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_slack, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider );
 										}
 
 										// Send zapier notification to user.
 										if ( ! empty( $user_zapier_hooks ) && $user_zapier == '1' ) {
-											$this->wpcd_send_zapier_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_zapier_hooks, $user_login, $alert_user_id, $alert_user_email, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider );
+											$this->sstk_send_zapier_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_zapier_hooks, $user_login, $alert_user_id, $alert_user_email, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider );
 										}
 									}
 								}
@@ -482,7 +483,7 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 			}
 		}
 
-		set_transient( 'wpcd_scan_new_notifications_to_send_is_active', 1, 15 * MINUTE_IN_SECONDS );
+		set_transient( 'sstk_scan_new_notifications_to_send_is_active', 1, 15 * MINUTE_IN_SECONDS );
 	}
 
 
@@ -507,10 +508,10 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 	 * @param string $ipv4           ipv4.
 	 * @param string $provider       provider.
 	 */
-	public function wpcd_send_email_notifications_to_user( $alert_id, $notify_log_id, $user_email, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider ) {
+	public function sstk_send_email_notifications_to_user( $alert_id, $notify_log_id, $user_email, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider ) {
 		// Get email notification settings.
-		$email_subject = apply_filters( 'wpcd_wpapp_email_notify_subject_raw', wpcd_get_option( 'wordpress_app_email_notify_subject' ) );
-		$email_body    = apply_filters( 'wpcd_wpapp_email_notify_body_raw', wpcd_get_option( 'wordpress_app_email_notify_body' ) );
+		$email_subject = apply_filters( 'sstk_wpapp_email_notify_subject_raw', sstk_get_option( 'wordpress_app_email_notify_subject' ) );
+		$email_body    = apply_filters( 'sstk_wpapp_email_notify_body_raw', sstk_get_option( 'wordpress_app_email_notify_body' ) );
 
 		// Now construct a standard array of replaceable parameters.
 		$tokens               = array();
@@ -530,14 +531,14 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 		$tokens['PROVIDER']   = $provider;
 
 		// Replace tokens in the email subject.
-		$email_subject = WPCD_WORDPRESS_APP()->replace_script_tokens( $email_subject, $tokens );
+		$email_subject = SSTK_WORDPRESS_APP()->replace_script_tokens( $email_subject, $tokens );
 		// Let developers have their way again with the email subject, this time with tokens replaced.
-		$email_subject = apply_filters( 'wpcd_wpapp_email_notify_subject', $email_subject );
+		$email_subject = apply_filters( 'sstk_wpapp_email_notify_subject', $email_subject );
 
 		// Replace tokens in the email body.
-		$email_body = WPCD_WORDPRESS_APP()->replace_script_tokens( $email_body, $tokens );
+		$email_body = SSTK_WORDPRESS_APP()->replace_script_tokens( $email_body, $tokens );
 		// Let developers have their way again with the email contents, this time with tokens replaced.
-		$email_body = apply_filters( 'wpcd_wpapp_email_notify_body', $email_body );
+		$email_body = apply_filters( 'sstk_wpapp_email_notify_body', $email_body );
 
 		// Send the email...
 		if ( ! empty( $email_subject ) && ! empty( $email_body ) ) {
@@ -551,13 +552,13 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 			$sent_to = $user_email;
 
 			if ( ! $sent ) {
-				$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send email notification for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
+				$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send email notification for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
 			} else {
-				$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Email notification sent successfully for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '1', $sent_to, null );
+				$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Email notification sent successfully for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '1', $sent_to, null );
 			}
 		} else {
 			$sent_to = $user_email;
-			$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send email notification due to empty email subject or body field for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
+			$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send email notification due to empty email subject or body field for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
 		}
 	}
 
@@ -582,9 +583,9 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 	 * @param string $ipv4           ipv4.
 	 * @param string $provider       provider.
 	 */
-	public function wpcd_send_slack_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_slack, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider ) {
+	public function sstk_send_slack_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_slack, $user_login, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider ) {
 		// Get Slack webhook notification settings.
-		$slack_message = apply_filters( 'wpcd_wpapp_slack_notify_message_raw', wpcd_get_option( 'wordpress_app_slack_notify_message' ) );
+		$slack_message = apply_filters( 'sstk_wpapp_slack_notify_message_raw', sstk_get_option( 'wordpress_app_slack_notify_message' ) );
 
 		// Now set a standard array of replaceable parameters.
 		$slacktokens               = array();
@@ -604,10 +605,10 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 		$slacktokens['PROVIDER']   = $provider;
 
 		// Replace tokens in slack message..
-		$slack_message = WPCD_WORDPRESS_APP()->replace_script_tokens( $slack_message, $slacktokens );
+		$slack_message = SSTK_WORDPRESS_APP()->replace_script_tokens( $slack_message, $slacktokens );
 
 		// Let developers have their way again with the Slack message, this time with tokens replaced.
-		$slack_message = apply_filters( 'wpcd_wpapp_slack_notify_message', $slack_message );
+		$slack_message = apply_filters( 'sstk_wpapp_slack_notify_message', $slack_message );
 
 		// Send the message...
 		if ( ! empty( $slack_message ) ) {
@@ -629,14 +630,14 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 					$sent_to = $value;
 
 					if ( $sent_message !== 'ok' ) {
-						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send slack notification for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
+						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send slack notification for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
 					} else {
-						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Slack notification sent successfully for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '1', $sent_to, null );
+						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Slack notification sent successfully for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '1', $sent_to, null );
 					}
 				}
 			}
 		} else {
-			$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send slack notification due to empty slack message field for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
+			$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send slack notification due to empty slack message field for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
 		}
 	}
 
@@ -664,9 +665,9 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 	 * @param string       $ipv4              ipv4.
 	 * @param string       $provider          provider.
 	 */
-	public function wpcd_send_zapier_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_zapier_hooks, $user_login, $alert_user_id, $alert_user_email, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider ) {
+	public function sstk_send_zapier_webhook_notifications_to_user( $alert_id, $notify_log_id, $user_zapier_hooks, $user_login, $alert_user_id, $alert_user_email, $notify_type, $notify_ref, $notify_message, $server_name, $domain_name, $date, $time, $server_id, $site_id, $first_name, $last_name, $ipv4, $provider ) {
 		// Get Zapier webhook notification settings.
-		$zapier_message = apply_filters( 'wpcd_wpapp_zapier_notify_message_raw', wpcd_get_option( 'wordpress_app_zapier_notify_message' ) );
+		$zapier_message = apply_filters( 'sstk_wpapp_zapier_notify_message_raw', sstk_get_option( 'wordpress_app_zapier_notify_message' ) );
 
 		// Now set a standard array of replaceable parameters.
 		$zapiertokens               = array();
@@ -688,10 +689,10 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 		$zapiertokens['PROVIDER']   = $provider;
 
 		// Replace tokens in Zapier message..
-		$zapier_message = WPCD_WORDPRESS_APP()->replace_script_tokens( $zapier_message, $zapiertokens );
+		$zapier_message = SSTK_WORDPRESS_APP()->replace_script_tokens( $zapier_message, $zapiertokens );
 
 		// Let developers have their way again with the zapier message, this time with tokens replaced.
-		$zapier_message = apply_filters( 'wpcd_wpapp_zapier_notify_message', $zapier_message );
+		$zapier_message = apply_filters( 'sstk_wpapp_zapier_notify_message', $zapier_message );
 
 		// Send the message...
 		if ( ! empty( $zapier_message ) ) {
@@ -735,14 +736,14 @@ class WPCD_NOTIFY_SENT extends WPCD_POSTS_LOG {
 					$sent_to = $value;
 
 					if ( $status_code != '200' ) {
-						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send zapier notification for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
+						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send zapier notification for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
 					} else {
-						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Zapier notification sent successfully for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '1', $sent_to, null );
+						$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Zapier notification sent successfully for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '1', $sent_to, null );
 					}
 				}
 			}
 		} else {
-			$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send zapier notification due to empty zapier message field for notification_id : %d', 'wpcd' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
+			$this->add_user_notify_sent_log_entry( $alert_id, $notify_type, sprintf( __( 'Could not send zapier notification due to empty zapier message field for notification_id : %d', 'simple-stack' ), $notify_log_id ), $notify_ref, '0', $sent_to, null );
 		}
 	}
 }

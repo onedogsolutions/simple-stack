@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD_NOTIFY_USER class for user notifications.
+ * SSTK_NOTIFY_USER class for user notifications.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,15 +11,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * WPCD_NOTIFY_USER
+ * SSTK_NOTIFY_USER
  */
-class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
+class SSTK_NOTIFY_USER extends SSTK_Posts_Base {
 
 	/* Include traits */
-	use wpcd_get_set_post_type;
+	use sstk_get_set_post_type;
 
 	/**
-	 * WPCD_NOTIFY_USER - instance.
+	 * SSTK_NOTIFY_USER - instance.
 	 */
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -28,11 +29,11 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * WPCD_NOTIFY_USER constructor.
+	 * SSTK_NOTIFY_USER constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		$this->register();  // register the custom post type - wpcd_notify_user.
+		$this->register();  // register the custom post type - sstk_notify_user.
 		$this->hooks();     // register hooks to make the custom post type do things.
 	}
 
@@ -41,55 +42,55 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 */
 	private function hooks() {
 		// Action hook to add values in new columns.
-		add_action( 'manage_wpcd_notify_user_posts_custom_column', array( $this, 'notify_user_table_content' ), 10, 2 );
+		add_action( 'manage_sstk_notify_user_posts_custom_column', array( $this, 'notify_user_table_content' ), 10, 2 );
 
 		// Filter hook to add new columns on user notifications screen.
-		add_filter( 'manage_wpcd_notify_user_posts_columns', array( $this, 'notify_user_table_head' ), 10, 1 );
+		add_filter( 'manage_sstk_notify_user_posts_columns', array( $this, 'notify_user_table_head' ), 10, 1 );
 
 		// Filter hook to add custom meta box.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'wpcd_notify_user_register_meta_boxes' ), 10, 1 );
+		add_filter( 'rwmb_meta_boxes', array( $this, 'sstk_notify_user_register_meta_boxes' ), 10, 1 );
 
 		// Enqueue scripts to add into shortcode page.
-		add_action( 'wp_enqueue_scripts', array( $this, 'wpcd_user_notifications_shortcode_scripts' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'sstk_user_notifications_shortcode_scripts' ) );
 
 		// Enqueue admin scripts to add on backend.
-		add_action( 'admin_enqueue_scripts', array( $this, 'wpcd_notify_user_admin_enqueue_scripts' ), 10, 1 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'sstk_notify_user_admin_enqueue_scripts' ), 10, 1 );
 
 		// Add a message after the title field when editing an item.
-		add_action( 'edit_form_after_title', array( $this, 'wpcd_after_title_notice' ), 10, 1 );
+		add_action( 'edit_form_after_title', array( $this, 'sstk_after_title_notice' ), 10, 1 );
 
 		// Add shortcode to add on frontend page.
-		add_shortcode( 'wpcd_user_notifications_form', array( $this, 'wpcd_user_notify_form_content' ) );
+		add_shortcode( 'sstk_user_notifications_form', array( $this, 'sstk_user_notify_form_content' ) );
 
 		// Action hook to display form of user notifications.
-		add_action( 'wp_ajax_wpcd_user_notification_display_form_popup', array( $this, 'wpcd_user_notification_display_form_popup' ) );
+		add_action( 'wp_ajax_sstk_user_notification_display_form_popup', array( $this, 'sstk_user_notification_display_form_popup' ) );
 
 		// Action hook to save data of user notifications.
-		add_action( 'wp_ajax_wpcd_user_notification_data_save', array( $this, 'wpcd_user_notification_data_save' ) );
+		add_action( 'wp_ajax_sstk_user_notification_data_save', array( $this, 'sstk_user_notification_data_save' ) );
 
 		// Action hook to test zapier webhook.
-		add_action( 'wp_ajax_wpcd_user_zapier_webhook_test', array( $this, 'wpcd_user_zapier_webhook_test' ) );
+		add_action( 'wp_ajax_sstk_user_zapier_webhook_test', array( $this, 'sstk_user_zapier_webhook_test' ) );
 
 		// Action hook to delete data of notifications.
-		add_action( 'wp_ajax_wpcd_user_notification_data_delete', array( $this, 'wpcd_user_notification_data_delete' ) );
+		add_action( 'wp_ajax_sstk_user_notification_data_delete', array( $this, 'sstk_user_notification_data_delete' ) );
 
 		// Remove edit and quick-edit from user-notify-list rows.
-		add_filter( 'post_row_actions', array( $this, 'wpcd_user_notify_post_row_actions' ), 10, 2 );
+		add_filter( 'post_row_actions', array( $this, 'sstk_user_notify_post_row_actions' ), 10, 2 );
 
 		// Action hook to fire on new site created on WP Multisite.
-		add_action( 'wp_initialize_site', array( $this, 'wpcd_scan_notifications_schedule_events_for_new_site' ), 10, 2 );
+		add_action( 'wp_initialize_site', array( $this, 'sstk_scan_notifications_schedule_events_for_new_site' ), 10, 2 );
 
 		// Admin can add/save notification profile data from backend.
-		add_action( 'save_post_wpcd_notify_user', array( $this, 'wpcd_save_notification_user_profile_data' ), 10, 2 );
+		add_action( 'save_post_sstk_notify_user', array( $this, 'sstk_save_notification_user_profile_data' ), 10, 2 );
 
 		// Force the post to become private.
-		add_filter( 'wp_insert_post_data', array( $this, 'wpcd_wpcd_notify_user_force_type_private' ), 10, 1 );
+		add_filter( 'wp_insert_post_data', array( $this, 'sstk_sstk_notify_user_force_type_private' ), 10, 1 );
 
 		// Action hook to add custom back to list button.
-		add_action( 'admin_footer-post.php', array( $this, 'wpcd_user_notifications_backtolist_btn' ) );
+		add_action( 'admin_footer-post.php', array( $this, 'sstk_user_notifications_backtolist_btn' ) );
 
 		// Display all users in author dropdown.
-		add_filter( 'wp_dropdown_users_args', array( $this, 'wpcd_user_notify_display_all_users_dropdown' ), 10, 2 );
+		add_filter( 'wp_dropdown_users_args', array( $this, 'sstk_user_notify_display_all_users_dropdown' ), 10, 2 );
 	}
 
 	/**
@@ -97,27 +98,27 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 */
 	public function register() {
 		register_post_type(
-			'wpcd_notify_user',
+			'sstk_notify_user',
 			array(
 				'labels'              => array(
-					'name'                  => _x( 'User Notifications', 'Post type general name', 'wpcd' ),
-					'singular_name'         => _x( 'User Notification', 'Post type singular name', 'wpcd' ),
-					'menu_name'             => _x( 'User Notification', 'Admin Menu text', 'wpcd' ),
-					'name_admin_bar'        => _x( 'User Notification', 'Add New on Toolbar', 'wpcd' ),
-					'add_new'               => __( 'New User Notification', 'wpcd' ),
-					'add_new_item'          => __( 'New User Notification', 'wpcd' ),
-					'edit_item'             => __( 'Edit User Notification', 'wpcd' ),
-					'view_item'             => __( 'View User Notification', 'wpcd' ),
-					'all_items'             => __( 'Profiles', 'wpcd' ), // Label to signify all items in a submenu link.
-					'search_items'          => __( 'Search User Notification', 'wpcd' ),
-					'not_found'             => __( 'No User Notifications were found.', 'wpcd' ),
-					'not_found_in_trash'    => __( 'No User Notifications were found in Trash.', 'wpcd' ),
-					'filter_items_list'     => _x( 'Filter User Notification list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'wpcd' ),
-					'items_list_navigation' => _x( 'User Notification list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'wpcd' ),
-					'items_list'            => _x( 'User Notification list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'wpcd' ),
+					'name'                  => _x( 'User Notifications', 'Post type general name', 'simple-stack' ),
+					'singular_name'         => _x( 'User Notification', 'Post type singular name', 'simple-stack' ),
+					'menu_name'             => _x( 'User Notification', 'Admin Menu text', 'simple-stack' ),
+					'name_admin_bar'        => _x( 'User Notification', 'Add New on Toolbar', 'simple-stack' ),
+					'add_new'               => __( 'New User Notification', 'simple-stack' ),
+					'add_new_item'          => __( 'New User Notification', 'simple-stack' ),
+					'edit_item'             => __( 'Edit User Notification', 'simple-stack' ),
+					'view_item'             => __( 'View User Notification', 'simple-stack' ),
+					'all_items'             => __( 'Profiles', 'simple-stack' ), // Label to signify all items in a submenu link.
+					'search_items'          => __( 'Search User Notification', 'simple-stack' ),
+					'not_found'             => __( 'No User Notifications were found.', 'simple-stack' ),
+					'not_found_in_trash'    => __( 'No User Notifications were found in Trash.', 'simple-stack' ),
+					'filter_items_list'     => _x( 'Filter User Notification list', 'Screen reader text for the filter links heading on the post type listing screen. Default "Filter posts list"/"Filter pages list". Added in 4.4', 'simple-stack' ),
+					'items_list_navigation' => _x( 'User Notification list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default "Posts list navigation"/"Pages list navigation". Added in 4.4', 'simple-stack' ),
+					'items_list'            => _x( 'User Notification list', 'Screen reader text for the items list heading on the post type listing screen. Default "Posts list"/"Pages list". Added in 4.4', 'simple-stack' ),
 				),
 				'show_ui'             => true,
-				'show_in_menu'        => 'edit.php?post_type=wpcd_notify_log',
+				'show_in_menu'        => 'edit.php?post_type=sstk_notify_log',
 				'show_in_nav_menus'   => true,
 				'show_in_admin_bar'   => false,
 				'public'              => true,
@@ -129,18 +130,18 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 				'rewrite'             => null,
 				'capabilities'        => array(
 					'create_posts'           => true,
-					'edit_post'              => 'wpcd_manage_all',
-					'edit_posts'             => 'wpcd_manage_all',
-					'edit_others_posts'      => 'wpcd_manage_all',
-					'edit_published_posts'   => 'wpcd_manage_all',
-					'delete_post'            => 'wpcd_manage_all',
-					'publish_posts'          => 'wpcd_manage_all',
-					'delete_posts'           => 'wpcd_manage_all',
-					'delete_others_posts'    => 'wpcd_manage_all',
-					'delete_published_posts' => 'wpcd_manage_all',
-					'delete_private_posts'   => 'wpcd_manage_all',
-					'edit_private_posts'     => 'wpcd_manage_all',
-					'read_private_posts'     => 'wpcd_manage_all',
+					'edit_post'              => 'sstk_manage_all',
+					'edit_posts'             => 'sstk_manage_all',
+					'edit_others_posts'      => 'sstk_manage_all',
+					'edit_published_posts'   => 'sstk_manage_all',
+					'delete_post'            => 'sstk_manage_all',
+					'publish_posts'          => 'sstk_manage_all',
+					'delete_posts'           => 'sstk_manage_all',
+					'delete_others_posts'    => 'sstk_manage_all',
+					'delete_published_posts' => 'sstk_manage_all',
+					'delete_private_posts'   => 'sstk_manage_all',
+					'edit_private_posts'     => 'sstk_manage_all',
+					'read_private_posts'     => 'sstk_manage_all',
 				),
 			)
 		);
@@ -156,26 +157,26 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_notify_user_register_meta_boxes( $metaboxes ) {
+	public function sstk_notify_user_register_meta_boxes( $metaboxes ) {
 
-		$prefix = 'wpcd_';
+		$prefix = 'sstk_';
 
 		$user_id = get_current_user_id();
 
 		// Register the metabox fields.
 		$metaboxes[] = array(
 			'id'       => $prefix . 'notify_user_basic',
-			'title'    => __( 'Setup Alert', 'wpcd' ),
-			'pages'    => array( 'wpcd_notify_user' ), // displays on wpcd_notify_user post type only.
+			'title'    => __( 'Setup Alert', 'simple-stack' ),
+			'pages'    => array( 'sstk_notify_user' ), // displays on sstk_notify_user post type only.
 			'priority' => 'high',
 			'fields'   => array(
 
 				array(
-					'name' => __( 'Name / Description', 'wpcd' ),
+					'name' => __( 'Name / Description', 'simple-stack' ),
 					'id'   => $prefix . 'notify_user_profile_name',
 					'type' => 'text',
 					'size' => 60,
-					'desc' => __( 'Please enter a notification profile name or description.', 'wpcd' ),
+					'desc' => __( 'Please enter a notification profile name or description.', 'simple-stack' ),
 				),
 
 				array(
@@ -183,11 +184,11 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 				),
 
 				array(
-					'name' => __( 'Email Addresses', 'wpcd' ),
+					'name' => __( 'Email Addresses', 'simple-stack' ),
 					'id'   => $prefix . 'notify_user_email_addresses',
 					'type' => 'text',
 					'size' => 60,
-					'desc' => __( 'Separate multiple email addresses with commas.', 'wpcd' ),
+					'desc' => __( 'Separate multiple email addresses with commas.', 'simple-stack' ),
 				),
 
 				array(
@@ -195,11 +196,11 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 				),
 
 				array(
-					'name' => __( 'Slack Webhooks', 'wpcd' ),
+					'name' => __( 'Slack Webhooks', 'simple-stack' ),
 					'id'   => $prefix . 'notify_user_slack_webhooks',
 					'type' => 'text',
 					'size' => 60,
-					'desc' => __( 'Separate multiple Slack hooks with commas.', 'wpcd' ),
+					'desc' => __( 'Separate multiple Slack hooks with commas.', 'simple-stack' ),
 				),
 
 				array(
@@ -207,28 +208,28 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 				),
 
 				array(
-					'name' => __( 'Send to zapier', 'wpcd' ),
+					'name' => __( 'Send to zapier', 'simple-stack' ),
 					'id'   => $prefix . 'notify_user_zapier_send',
 					'type' => 'checkbox',
 				),
 
 				array(
-					'name' => __( 'Zapier Webhooks', 'wpcd' ),
+					'name' => __( 'Zapier Webhooks', 'simple-stack' ),
 					'id'   => $prefix . 'notify_user_zapier_webhooks',
 					'type' => 'text',
 					'size' => 60,
-					'desc' => __( 'Separate multiple Zapier hooks with commas.', 'wpcd' ),
+					'desc' => __( 'Separate multiple Zapier hooks with commas.', 'simple-stack' ),
 				),
 
 				array(
 					'type'       => 'button',
-					'std'        => __( 'TEST', 'wpcd' ),
+					'std'        => __( 'TEST', 'simple-stack' ),
 					'attributes' => array(
-						'id'          => 'wpcd-user-zapier-webhook-test',
-						'data-action' => 'wpcd_user_zapier_webhook_test',
-						'data-nonce'  => wp_create_nonce( 'wpcd-zapier-webhook-test' ),
+						'id'          => 'sstk-user-zapier-webhook-test',
+						'data-action' => 'sstk_user_zapier_webhook_test',
+						'data-nonce'  => wp_create_nonce( 'sstk-zapier-webhook-test' ),
 					),
-					'desc'       => __( 'Test zapier webhooks by sending dummy data.', 'wpcd' ),
+					'desc'       => __( 'Test zapier webhooks by sending dummy data.', 'simple-stack' ),
 				),
 
 				array(
@@ -240,7 +241,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 					'id'              => $prefix . 'notify_user_servers',
 					'type'            => 'select',
 					'multiple'        => true,
-					'select_all_none' => __( 'Select All | None', 'wpcd' ),
+					'select_all_none' => __( 'Select All | None', 'simple-stack' ),
 					'options'         => $this->get_user_notify_servers( $user_id ),
 				),
 
@@ -253,7 +254,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 					'id'              => $prefix . 'notify_user_sites',
 					'type'            => 'select',
 					'multiple'        => true,
-					'select_all_none' => __( 'Select All | None', 'wpcd' ),
+					'select_all_none' => __( 'Select All | None', 'simple-stack' ),
 					'options'         => $this->get_user_notify_sites( $user_id ),
 				),
 
@@ -266,7 +267,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 					'id'              => $prefix . 'notify_user_type',
 					'type'            => 'select',
 					'multiple'        => true,
-					'select_all_none' => __( 'Select All | None', 'wpcd' ),
+					'select_all_none' => __( 'Select All | None', 'simple-stack' ),
 					'options'         => $this->get_user_notify_types(),
 				),
 
@@ -279,7 +280,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 					'id'              => $prefix . 'notify_user_reference',
 					'type'            => 'select',
 					'multiple'        => true,
-					'select_all_none' => __( 'Select All | None', 'wpcd' ),
+					'select_all_none' => __( 'Select All | None', 'simple-stack' ),
 					'options'         => $this->get_user_notify_references(),
 				),
 
@@ -291,7 +292,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	}
 
 	/**
-	 * This filter modifies post rows for "wpcd_notify_user"
+	 * This filter modifies post rows for "sstk_notify_user"
 	 * post rows such as "Edit", "Quick Edit".
 	 *
 	 * Action hook: post_row_actions
@@ -301,9 +302,9 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @return array
 	 */
-	public function wpcd_user_notify_post_row_actions( $actions, $post ) {
+	public function sstk_user_notify_post_row_actions( $actions, $post ) {
 		// Permissions check.
-		if ( 'wpcd_notify_user' === $post->post_type && ! wpcd_is_admin() ) {
+		if ( 'sstk_notify_user' === $post->post_type && ! sstk_is_admin() ) {
 			// Removes "Edit".
 			unset( $actions['edit'] );
 			// Removes "Quick Edit".
@@ -326,41 +327,41 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 
 		switch ( $column_name ) {
 
-			case 'wpcd_user_notification_type':
+			case 'sstk_user_notification_type':
 				// Display the notification type.
-				$value = get_metadata( 'post', $post_id, 'wpcd_notify_user_type', false );
+				$value = get_metadata( 'post', $post_id, 'sstk_notify_user_type', false );
 				if ( ! empty( $value ) ) {
-					$value = $this->wpcd_show_notification_serialize_data( $value );
+					$value = $this->sstk_show_notification_serialize_data( $value );
 				} else {
 					$value = '-';
 				}
 				break;
 
-			case 'wpcd_user_notification_reference':
+			case 'sstk_user_notification_reference':
 				// Display the notification reference.
-				$value = get_metadata( 'post', $post_id, 'wpcd_notify_user_reference', false );
+				$value = get_metadata( 'post', $post_id, 'sstk_notify_user_reference', false );
 				if ( ! empty( $value ) ) {
-					$value = $this->wpcd_show_notification_serialize_data( $value );
+					$value = $this->sstk_show_notification_serialize_data( $value );
 				} else {
 					$value = '-';
 				}
 				break;
 
-			case 'wpcd_user_notification_servers':
+			case 'sstk_user_notification_servers':
 				// Display the list of servers.
-				$value = get_metadata( 'post', $post_id, 'wpcd_notify_user_servers', false );
+				$value = get_metadata( 'post', $post_id, 'sstk_notify_user_servers', false );
 				if ( ! empty( $value ) ) {
-					$value = $this->wpcd_show_notify_serialize_post_data( $value );
+					$value = $this->sstk_show_notify_serialize_post_data( $value );
 				} else {
 					$value = '-';
 				}
 				break;
 
-			case 'wpcd_user_notification_sites':
+			case 'sstk_user_notification_sites':
 				// Display the list of sites.
-				$value = get_metadata( 'post', $post_id, 'wpcd_notify_user_sites', false );
+				$value = get_metadata( 'post', $post_id, 'sstk_notify_user_sites', false );
 				if ( ! empty( $value ) ) {
-					$value = $this->wpcd_show_notify_serialize_post_data( $value );
+					$value = $this->sstk_show_notify_serialize_post_data( $value );
 				} else {
 					$value = '-';
 				}
@@ -411,77 +412,77 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 
 		unset( $defaults['date'] );
 
-		$defaults['wpcd_user_notification_type']      = __( 'Type', 'wpcd' );
-		$defaults['wpcd_user_notification_reference'] = __( 'Reference', 'wpcd' );
-		$defaults['wpcd_user_notification_servers']   = __( 'Servers', 'wpcd' );
-		$defaults['wpcd_user_notification_sites']     = __( 'Sites', 'wpcd' );
-		$defaults['date']                             = __( 'Date', 'wpcd' );
+		$defaults['sstk_user_notification_type']      = __( 'Type', 'simple-stack' );
+		$defaults['sstk_user_notification_reference'] = __( 'Reference', 'simple-stack' );
+		$defaults['sstk_user_notification_servers']   = __( 'Servers', 'simple-stack' );
+		$defaults['sstk_user_notification_sites']     = __( 'Sites', 'simple-stack' );
+		$defaults['date']                             = __( 'Date', 'simple-stack' );
 
 		return $defaults;
 	}
 
 
 	/**
-	 * Enqueue the scripts if the wpcd_user_notifications_form shortcode is being used
+	 * Enqueue the scripts if the sstk_user_notifications_form shortcode is being used
 	 */
-	public function wpcd_user_notifications_shortcode_scripts() {
+	public function sstk_user_notifications_shortcode_scripts() {
 		global $post;
-		if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'wpcd_user_notifications_form' ) ) {
-			wp_enqueue_style( 'wpcd-bootstrap-css', wpcd_url . 'assets/css/bootstrap.min.css', array(), wpcd_scripts_version );
-			wp_enqueue_style( 'wpcd-user-notify-css', wpcd_url . 'assets/css/wpcd-user-notifications-front.css', array(), wpcd_scripts_version );
+		if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'sstk_user_notifications_form' ) ) {
+			wp_enqueue_style( 'sstk-bootstrap-css', SSTK_URL . 'assets/css/bootstrap.min.css', array(), SSTK_SCRIPTS_VERSION );
+			wp_enqueue_style( 'sstk-user-notify-css', SSTK_URL . 'assets/css/sstk-user-notifications-front.css', array(), SSTK_SCRIPTS_VERSION );
 
 			$translation_array = array(
 				'site_url'   => site_url(),
 				'admin_ajax' => admin_url( 'admin-ajax.php' ),
 				'i10n'       => array(
-					'wpcd_notify_method_empty' => __( 'Please add value in any of the notification methods.', 'wpcd' ),
-					'wpcd_notify_alert_delete' => __( 'Are you sure?', 'wpcd' ),
+					'sstk_notify_method_empty' => __( 'Please add value in any of the notification methods.', 'simple-stack' ),
+					'sstk_notify_alert_delete' => __( 'Are you sure?', 'simple-stack' ),
 				),
 			);
-			wp_register_script( 'wpcd-user-notify-js', wpcd_url . 'assets/js/wpcd-user-notifications-front.js', array( 'jquery', 'wp-util' ), wpcd_scripts_version, true );
-			wp_localize_script( 'wpcd-user-notify-js', 'wpcdusernotify', $translation_array );
-			wp_enqueue_script( 'wpcd-user-notify-js' );
+			wp_register_script( 'sstk-user-notify-js', SSTK_URL . 'assets/js/sstk-user-notifications-front.js', array( 'jquery', 'wp-util' ), SSTK_SCRIPTS_VERSION, true );
+			wp_localize_script( 'sstk-user-notify-js', 'sstkusernotify', $translation_array );
+			wp_enqueue_script( 'sstk-user-notify-js' );
 
 		}
 	}
 
 	/**
-	 * Enqueue the scripts if the wpcd_notify_user screen
+	 * Enqueue the scripts if the sstk_notify_user screen
 	 *
 	 * @param string $hook hook.
 	 */
-	public function wpcd_notify_user_admin_enqueue_scripts( $hook ) {
+	public function sstk_notify_user_admin_enqueue_scripts( $hook ) {
 		if ( in_array( $hook, array( 'post-new.php', 'post.php', 'edit.php' ), true ) ) {
 
 			$screen = get_current_screen();
-			if ( is_object( $screen ) && 'wpcd_notify_user' === $screen->post_type ) {
+			if ( is_object( $screen ) && 'sstk_notify_user' === $screen->post_type ) {
 				wp_dequeue_script( 'autosave' );
 
-				wp_enqueue_script( 'wpcd-user-notify-admin', wpcd_url . 'assets/js/wpcd-user-notifications-admin.js', array( 'jquery' ), wpcd_version, true );
+				wp_enqueue_script( 'sstk-user-notify-admin', SSTK_URL . 'assets/js/sstk-user-notifications-admin.js', array( 'jquery' ), SSTK_VERSION, true );
 				wp_localize_script(
-					'wpcd-user-notify-admin',
+					'sstk-user-notify-admin',
 					'notifyparams',
 					array(
 						'i10n' => array(
-							'invalid_emails'       => __( 'Please enter valid email addresses.', 'wpcd' ),
-							'invalid_slack'        => __( 'Please enter valid Slack webhooks.', 'wpcd' ),
-							'invalid_zapier'       => __( 'Please enter valid Zapier webhooks.', 'wpcd' ),
-							'empty_methods'        => __( 'Please add value to at least one of the notification methods - email, Slack or Zapier.', 'wpcd' ),
-							'empty_zapier_webhook' => __( 'Please enter the Zapier webhooks.', 'wpcd' ),
-							'waiting_msg'          => __( 'Please wait...', 'wpcd' ),
-							'empty_servers'        => __( 'Please select one or more servers.', 'wpcd' ),
-							'empty_sites'          => __( 'Please select one or more sites.', 'wpcd' ),
-							'empty_types'          => __( 'Please select one ore more notification types.', 'wpcd' ),
+							'invalid_emails'       => __( 'Please enter valid email addresses.', 'simple-stack' ),
+							'invalid_slack'        => __( 'Please enter valid Slack webhooks.', 'simple-stack' ),
+							'invalid_zapier'       => __( 'Please enter valid Zapier webhooks.', 'simple-stack' ),
+							'empty_methods'        => __( 'Please add value to at least one of the notification methods - email, Slack or Zapier.', 'simple-stack' ),
+							'empty_zapier_webhook' => __( 'Please enter the Zapier webhooks.', 'simple-stack' ),
+							'waiting_msg'          => __( 'Please wait...', 'simple-stack' ),
+							'empty_servers'        => __( 'Please select one or more servers.', 'simple-stack' ),
+							'empty_sites'          => __( 'Please select one or more sites.', 'simple-stack' ),
+							'empty_types'          => __( 'Please select one ore more notification types.', 'simple-stack' ),
 							'empty_references'     => __(
 								'Please select one or more references.',
-								'wpcd'
+								'simple-stack'
 							),
 						),
 					)
 				);
 
-				wp_enqueue_script( 'wpcd-select2-js', wpcd_url . 'assets/js/select2.min.js', array( 'jquery' ), wpcd_scripts_version, false );
-				wp_enqueue_style( 'wpcd-select2-css', wpcd_url . 'assets/css/select2.min.css', array(), wpcd_scripts_version );
+				wp_enqueue_script( 'sstk-select2-js', SSTK_URL . 'assets/js/select2.min.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, false );
+				wp_enqueue_style( 'sstk-select2-css', SSTK_URL . 'assets/css/select2.min.css', array(), SSTK_SCRIPTS_VERSION );
 			}
 		}
 	}
@@ -489,10 +490,10 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	/**
 	 * Renders the HTML for user notifications form
 	 */
-	public function wpcd_user_notify_form_content() {
+	public function sstk_user_notify_form_content() {
 
 		ob_start();
-		require_once wpcd_path . 'includes/templates/notify_user_alert_list.php';
+		require_once SSTK_PATH . 'includes/templates/notify_user_alert_list.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -502,13 +503,13 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	/**
 	 * Display the user notify form popup when click on add new OR edit button
 	 */
-	public function wpcd_user_notification_display_form_popup() {
+	public function sstk_user_notification_display_form_popup() {
 		// nonce check.
-		check_ajax_referer( 'wpcd-user-notify-form-display', 'nonce' );
+		check_ajax_referer( 'sstk-user-notify-form-display', 'nonce' );
 
 		// Permission check - user login.
 		if ( ! is_user_logged_in() ) {
-			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'wpcd' ) );
+			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'simple-stack' ) );
 			wp_send_json_error( $error_msg );
 			wp_die();
 		}
@@ -517,7 +518,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 		$post_id = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
 
 		ob_start();
-		require_once wpcd_path . 'includes/templates/notify_user_form_popup.php';
+		require_once SSTK_PATH . 'includes/templates/notify_user_form_popup.php';
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -529,13 +530,13 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	/**
 	 * Save data to the user notifications
 	 */
-	public function wpcd_user_notification_data_save() {
+	public function sstk_user_notification_data_save() {
 		// nonce check.
-		check_ajax_referer( 'wpcd-user-notify', 'nonce' );
+		check_ajax_referer( 'sstk-user-notify', 'nonce' );
 
 		// Permissions check.
 		if ( ! is_user_logged_in() ) {
-			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'wpcd' ) );
+			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'simple-stack' ) );
 			wp_send_json_error( $error_msg );
 			wp_die();
 		}
@@ -560,14 +561,14 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 		// Permission check - user access for server ids.
 		if ( ! empty( $servers ) ) {
 			foreach ( $servers as $ser_key => $ser_value ) {
-				$this->wpcd_user_notify_server_app_permission( get_current_user_id(), $ser_value );
+				$this->sstk_user_notify_server_app_permission( get_current_user_id(), $ser_value );
 			}
 		}
 
 		// Permission check - user access for sites ids.
 		if ( ! empty( $sites ) ) {
 			foreach ( $sites as $site_key => $site_value ) {
-				$this->wpcd_user_notify_server_app_permission( get_current_user_id(), $site_value );
+				$this->sstk_user_notify_server_app_permission( get_current_user_id(), $site_value );
 			}
 		}
 
@@ -618,16 +619,16 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 			// insert user notification form data.
 			$post_id = wp_insert_post(
 				array(
-					'post_type'   => 'wpcd_notify_user',
+					'post_type'   => 'sstk_notify_user',
 					'post_status' => 'private',
 					'post_title'  => $post_title,
 					'post_author' => $author_id,
 				)
 			);
 		} else {
-			// check post_id in wpcd_notify_user.
+			// check post_id in sstk_notify_user.
 			$notify_args = array(
-				'post_type'      => 'wpcd_notify_user',
+				'post_type'      => 'sstk_notify_user',
 				'post_status'    => 'private',
 				'posts_per_page' => -1,
 				'p'              => $post_id,
@@ -658,51 +659,51 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 			);
 			wp_update_post( $notify_post );
 
-			update_post_meta( $post_id, 'wpcd_notify_user_profile_name', $profile_name );
-			update_post_meta( $post_id, 'wpcd_notify_user_email_addresses', $email_addresses );
-			update_post_meta( $post_id, 'wpcd_notify_user_slack_webhooks', $slack_webhooks );
-			update_post_meta( $post_id, 'wpcd_notify_user_zapier_send', $send_to_zapier );
+			update_post_meta( $post_id, 'sstk_notify_user_profile_name', $profile_name );
+			update_post_meta( $post_id, 'sstk_notify_user_email_addresses', $email_addresses );
+			update_post_meta( $post_id, 'sstk_notify_user_slack_webhooks', $slack_webhooks );
+			update_post_meta( $post_id, 'sstk_notify_user_zapier_send', $send_to_zapier );
 
 			if ( $send_to_zapier == 1 ) {
-				update_post_meta( $post_id, 'wpcd_notify_user_zapier_webhooks', $zapier_webhooks );
+				update_post_meta( $post_id, 'sstk_notify_user_zapier_webhooks', $zapier_webhooks );
 			}
 
 			// For types - delete existing values and update new values.
-			delete_metadata( 'post', $post_id, 'wpcd_notify_user_type' );
+			delete_metadata( 'post', $post_id, 'sstk_notify_user_type' );
 			if ( ! empty( $types ) ) {
 				foreach ( $types as $type_key => $type_value ) {
-					add_metadata( 'post', $post_id, 'wpcd_notify_user_type', $type_value, false );
+					add_metadata( 'post', $post_id, 'sstk_notify_user_type', $type_value, false );
 				}
 			}
 
 			// For references - delete existing values and update new values.
-			delete_metadata( 'post', $post_id, 'wpcd_notify_user_reference' );
+			delete_metadata( 'post', $post_id, 'sstk_notify_user_reference' );
 			if ( ! empty( $references ) ) {
 				foreach ( $references as $ref_key => $ref_value ) {
-					add_metadata( 'post', $post_id, 'wpcd_notify_user_reference', $ref_value, false );
+					add_metadata( 'post', $post_id, 'sstk_notify_user_reference', $ref_value, false );
 				}
 			}
 
 			// For servers - delete existing values and update new values.
-			delete_metadata( 'post', $post_id, 'wpcd_notify_user_servers' );
+			delete_metadata( 'post', $post_id, 'sstk_notify_user_servers' );
 			if ( ! empty( $servers ) ) {
 				foreach ( $servers as $server_key => $server_value ) {
-					add_metadata( 'post', $post_id, 'wpcd_notify_user_servers', $server_value, false );
+					add_metadata( 'post', $post_id, 'sstk_notify_user_servers', $server_value, false );
 				}
 			}
 
 			// For sites - delete existing values and update new values.
-			delete_metadata( 'post', $post_id, 'wpcd_notify_user_sites' );
+			delete_metadata( 'post', $post_id, 'sstk_notify_user_sites' );
 			if ( ! empty( $sites ) ) {
 				foreach ( $sites as $site_key => $site_value ) {
-					add_metadata( 'post', $post_id, 'wpcd_notify_user_sites', $site_value, false );
+					add_metadata( 'post', $post_id, 'sstk_notify_user_sites', $site_value, false );
 				}
 			}
 
-			$msg = array( 'msg' => __( 'Notification profile saved.', 'wpcd' ) );
+			$msg = array( 'msg' => __( 'Notification profile saved.', 'simple-stack' ) );
 			wp_send_json_success( $msg );
 		} else {
-			$msg = array( 'msg' => __( 'An error was encountered while attempting to save this data.', 'wpcd' ) );
+			$msg = array( 'msg' => __( 'An error was encountered while attempting to save this data.', 'simple-stack' ) );
 			wp_send_json_success( $msg );
 		}
 
@@ -712,13 +713,13 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	/**
 	 * Test the zapier webhook.
 	 */
-	public function wpcd_user_zapier_webhook_test() {
+	public function sstk_user_zapier_webhook_test() {
 		// nonce check.
-		check_ajax_referer( 'wpcd-zapier-webhook-test', 'nonce' );
+		check_ajax_referer( 'sstk-zapier-webhook-test', 'nonce' );
 
 		// Permissions check.
 		if ( ! is_user_logged_in() ) {
-			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'wpcd' ) );
+			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'simple-stack' ) );
 			wp_send_json_error( $error_msg );
 			wp_die();
 		}
@@ -728,23 +729,23 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 		$date              = gmdate( 'Y-m-d' );
 		$time              = gmdate( 'H:i:s' );
 		$msg               = array(
-			'text'             => __( 'This is a test message from wpclouddeploy.', 'wpcd' ),
-			'username'         => __( 'testuser', 'wpcd' ),
-			'user_id'          => __( '12', 'wpcd' ),
-			'user_email'       => __( 'testuser@gmail.com', 'wpcd' ),
-			'notify_type'      => __( 'warning', 'wpcd' ),
-			'notify_reference' => __( 'power', 'wpcd' ),
-			'notify_message'   => __( 'The server is shutting down.', 'wpcd' ),
-			'server_name'      => __( 'test-server-instance', 'wpcd' ),
-			'domain_name'      => __( '123.45.67.890', 'wpcd' ),
+			'text'             => __( 'This is a test message from simple-stack.', 'simple-stack' ),
+			'username'         => __( 'testuser', 'simple-stack' ),
+			'user_id'          => __( '12', 'simple-stack' ),
+			'user_email'       => __( 'testuser@gmail.com', 'simple-stack' ),
+			'notify_type'      => __( 'warning', 'simple-stack' ),
+			'notify_reference' => __( 'power', 'simple-stack' ),
+			'notify_message'   => __( 'The server is shutting down.', 'simple-stack' ),
+			'server_name'      => __( 'test-server-instance', 'simple-stack' ),
+			'domain_name'      => __( '123.45.67.890', 'simple-stack' ),
 			'date'             => $date,
 			'time'             => $time,
-			'server_id'        => __( '1234567', 'wpcd' ),
-			'site_id'          => __( '9876543', 'wpcd' ),
-			'first_name'       => __( 'Test', 'wpcd' ),
-			'last_name'        => __( 'User', 'wpcd' ),
-			'ipv4'             => __( '122.133.144.55', 'wpcd' ),
-			'provider'         => __( 'digital-ocean', 'wpcd' ),
+			'server_id'        => __( '1234567', 'simple-stack' ),
+			'site_id'          => __( '9876543', 'simple-stack' ),
+			'first_name'       => __( 'Test', 'simple-stack' ),
+			'last_name'        => __( 'User', 'simple-stack' ),
+			'ipv4'             => __( '122.133.144.55', 'simple-stack' ),
+			'provider'         => __( 'vultr-v2', 'simple-stack' ),
 		);
 		$json_encoded_data = wp_json_encode( $msg );
 
@@ -766,10 +767,10 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 		}
 
 		if ( 200 !== $status_code ) {
-			$msg = array( 'msg' => __( 'Can not able to test added zapier webhooks.', 'wpcd' ) );
+			$msg = array( 'msg' => __( 'Can not able to test added zapier webhooks.', 'simple-stack' ) );
 			wp_send_json_success( $msg );
 		} else {
-			$msg = array( 'msg' => __( 'Zapier webhook tested successfully.', 'wpcd' ) );
+			$msg = array( 'msg' => __( 'Zapier webhook tested successfully.', 'simple-stack' ) );
 			wp_send_json_success( $msg );
 		}
 
@@ -779,13 +780,13 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	/**
 	 * Delete data of the user notifications
 	 */
-	public function wpcd_user_notification_data_delete() {
+	public function sstk_user_notification_data_delete() {
 		// nonce check.
-		check_ajax_referer( 'wpcd-user-notify-delete', 'nonce' );
+		check_ajax_referer( 'sstk-user-notify-delete', 'nonce' );
 
 		// Permissions check.
 		if ( ! is_user_logged_in() ) {
-			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'wpcd' ) );
+			$error_msg = array( 'msg' => __( 'Sorry, you are not allowed to access this form. Please login to the system to access it.', 'simple-stack' ) );
 			wp_send_json_error( $error_msg );
 			wp_die();
 		}
@@ -794,9 +795,9 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 		$post_id   = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
 		$author_id = get_current_user_id();
 
-		// check post_id in wpcd_notify_user.
+		// check post_id in sstk_notify_user.
 		$notify_args = array(
-			'post_type'      => 'wpcd_notify_user',
+			'post_type'      => 'sstk_notify_user',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'p'              => $post_id,
@@ -810,14 +811,14 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 			$deleted = wp_delete_post( $post_id, true );
 
 			if ( $deleted ) {
-				$msg = array( 'msg' => __( 'Data successfully deleted.', 'wpcd' ) );
+				$msg = array( 'msg' => __( 'Data successfully deleted.', 'simple-stack' ) );
 				wp_send_json_success( $msg );
 			} else {
-				$msg = array( 'msg' => __( 'Error in deletion.', 'wpcd' ) );
+				$msg = array( 'msg' => __( 'Error in deletion.', 'simple-stack' ) );
 				wp_send_json_success( $msg );
 			}
 		} else {
-			$msg = array( 'msg' => __( 'Record not found in database.', 'wpcd' ) );
+			$msg = array( 'msg' => __( 'Record not found in database.', 'simple-stack' ) );
 			wp_send_json_success( $msg );
 		}
 
@@ -829,7 +830,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @param array $notification_data notification_data.
 	 */
-	public function wpcd_show_notification_serialize_data( $notification_data ) {
+	public function sstk_show_notification_serialize_data( $notification_data ) {
 		if ( ! empty( $notification_data ) && is_array( $notification_data ) ) {
 			return wpautop( esc_html( implode( ', ', $notification_data ) ) );
 		} else {
@@ -842,7 +843,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @param array $notification_data notification_data.
 	 */
-	public function wpcd_show_notify_serialize_post_data( $notification_data ) {
+	public function sstk_show_notify_serialize_post_data( $notification_data ) {
 		$servers_list = '';
 		if ( ! empty( $notification_data ) && is_array( $notification_data ) ) {
 			foreach ( $notification_data as $key => $value ) {
@@ -871,21 +872,21 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	public function get_user_notify_servers( $user_id ) {
 
 		// Get servers that can be accessible by the user.
-		$all_servers_ids = wpcd_get_posts_by_permission( 'view_server', 'wpcd_app_server', 'private', $user_id );
+		$all_servers_ids = sstk_get_posts_by_permission( 'view_server', 'sstk_app_server', 'private', $user_id );
 
 		// Generate an array of all servers that can be accessible by the user.
 		$user_servers = array();
 		if ( count( $all_servers_ids ) > 0 ) {
 			foreach ( $all_servers_ids as $serverkey => $servervalue ) {
 				// get server name using id.
-				$server_name                  = WPCD_SERVER()->get_server_name( $servervalue );
+				$server_name                  = SSTK_SERVER()->get_server_name( $servervalue );
 				$user_servers[ $servervalue ] = $server_name;
 			}
 		}
 
 		asort( $user_servers );
 
-		return apply_filters( 'wpcd_user_notify_servers', $user_servers );
+		return apply_filters( 'sstk_user_notify_servers', $user_servers );
 	}
 
 	/**
@@ -895,7 +896,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 */
 	public function get_user_notify_sites( $user_id ) {
 		// Get sites that can be accessible by the user.
-		$all_sites_ids = wpcd_get_posts_by_permission( 'view_app', 'wpcd_app', 'private', $user_id );
+		$all_sites_ids = sstk_get_posts_by_permission( 'view_app', 'sstk_app', 'private', $user_id );
 
 		// Generate an array of all sites that can be accessible by the user.
 		$user_sites = array();
@@ -912,7 +913,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 
 		asort( $user_sites );
 
-		return apply_filters( 'wpcd_user_notify_sites', $user_sites );
+		return apply_filters( 'sstk_user_notify_sites', $user_sites );
 	}
 
 	/**
@@ -925,7 +926,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 			'warning' => 'Warning',
 			'other'   => 'Other',
 		);
-		return apply_filters( 'wpcd_user_notify_types', $user_types );
+		return apply_filters( 'sstk_user_notify_types', $user_types );
 	}
 
 	/**
@@ -933,22 +934,21 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 */
 	public function get_user_notify_references() {
 		$user_references = array(
-			'backup'               => __( 'Backup', 'wpcd', ),
-			'malware'              => __( 'Malware', 'wpcd', ),
-			'misc'                 => __( 'Misc', 'wpcd', ),
-			'power'                => __( 'Power', 'wpcd', ),
-			'updates'              => __( 'Updates', 'wpcd', ),
-			'snapshots'            => __( 'Snapshots', 'wpcd', ),
-			'site-updates'         => __( 'Site Updates', 'wpcd', ),
-			'backup-config'        => __( 'Backup Configuration Files', 'wpcd', ),
-			'server-config'        => __( 'Server Configuration', 'wpcd', ),
-			'stuck'                => __( 'Pending log records stuck', 'wpcd', ),
-			'quotas'               => __( 'Site or server quotas exceeded', 'wpcd', ),
-			'disk-space'           => __( 'Disk Space Available', 'wpcd', ),
-			'periodic-site-images' => __( 'Periodic Site Images (Powertools)', 'wpcd', ),
-			'other'                => __( 'Other', 'wpcd', ),
+			'backup'               => __( 'Backup', 'simple-stack', ),
+			'malware'              => __( 'Malware', 'simple-stack', ),
+			'misc'                 => __( 'Misc', 'simple-stack', ),
+			'power'                => __( 'Power', 'simple-stack', ),
+			'updates'              => __( 'Updates', 'simple-stack', ),
+			'snapshots'            => __( 'Snapshots', 'simple-stack', ),
+			'site-updates'         => __( 'Site Updates', 'simple-stack', ),
+			'backup-config'        => __( 'Backup Configuration Files', 'simple-stack', ),
+			'server-config'        => __( 'Server Configuration', 'simple-stack', ),
+			'stuck'                => __( 'Pending log records stuck', 'simple-stack', ),
+			'disk-space'           => __( 'Disk Space Available', 'simple-stack', ),
+			'periodic-site-images' => __( 'Periodic Site Images (Powertools)', 'simple-stack', ),
+			'other'                => __( 'Other', 'simple-stack', ),
 		);
-		return apply_filters( 'wpcd_user_notify_references', $user_references );
+		return apply_filters( 'sstk_user_notify_references', $user_references );
 	}
 
 	/**
@@ -956,7 +956,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @param array $field_data field_data.
 	 */
-	public function wpcd_get_actual_values_notify_fields( $field_data ) {
+	public function sstk_get_actual_values_notify_fields( $field_data ) {
 		$return_field_data = array();
 		if ( ! empty( $field_data ) ) {
 			foreach ( $field_data as $key => $value ) {
@@ -980,11 +980,11 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 			$blog_ids = get_sites( array( 'fields' => 'ids' ) );
 			foreach ( $blog_ids as $blog_id ) {
 				switch_to_blog( $blog_id );
-				self::wpcd_scan_notification_schedule_events();
+				self::sstk_scan_notification_schedule_events();
 				restore_current_blog();
 			}
 		} else {
-			self::wpcd_scan_notification_schedule_events();
+			self::sstk_scan_notification_schedule_events();
 		}
 
 	}
@@ -994,11 +994,11 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_scan_notification_schedule_events() {
+	public static function sstk_scan_notification_schedule_events() {
 		// setup scan notification event.
-		if ( ! defined( 'DISABLE_WPCD_CRON' ) || ( defined( 'DISABLE_WPCD_CRON' ) && ! DISABLE_WPCD_CRON ) ) {
-			wp_clear_scheduled_hook( 'wpcd_scan_notifications_actions' );
-			wp_schedule_event( time(), 'every_minute', 'wpcd_scan_notifications_actions' );
+		if ( ! defined( 'DISABLE_SSTK_CRON' ) || ( defined( 'DISABLE_SSTK_CRON' ) && ! DISABLE_SSTK_CRON ) ) {
+			wp_clear_scheduled_hook( 'sstk_scan_notifications_actions' );
+			wp_schedule_event( time(), 'sstk_every_minute', 'sstk_scan_notifications_actions' );
 		}
 
 		/**
@@ -1009,22 +1009,22 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 		$author_id = get_current_user_id();
 
 		// Check if flag not set then create the page.
-		$check_flag = get_option( 'wpcd_user_notify_alert_page_created' );
+		$check_flag = get_option( 'sstk_user_notify_alert_page_created' );
 
 		if ( $check_flag == 0 || empty( $check_flag ) ) {
 			$page_id = wp_insert_post(
 				array(
 					'post_type'    => 'page',
 					'post_status'  => 'publish',
-					'post_title'   => __( 'WPCD: Setup Notification Alerts', 'wpcd' ),
+					'post_title'   => __( 'Simple Stack: Setup Notification Alerts', 'simple-stack' ),
 					'post_author'  => $author_id,
-					'post_content' => '[wpcd_user_notifications_form]',
+					'post_content' => '[sstk_user_notifications_form]',
 				)
 			);
 
 			// Update the option once page created when plugin active first time.
 			if ( ! is_wp_error( $page_id ) && ! empty( $page_id ) ) {
-				update_option( 'wpcd_user_notify_alert_page_created', 1 );
+				update_option( 'sstk_user_notify_alert_page_created', 1 );
 			}
 		}
 
@@ -1044,11 +1044,11 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 			$blog_ids = get_sites( array( 'fields' => 'ids' ) );
 			foreach ( $blog_ids as $blog_id ) {
 				switch_to_blog( $blog_id );
-				self::wpcd_scan_notification_clear_scheduled_events();
+				self::sstk_scan_notification_clear_scheduled_events();
 				restore_current_blog();
 			}
 		} else {
-			self::wpcd_scan_notification_clear_scheduled_events();
+			self::sstk_scan_notification_clear_scheduled_events();
 		}
 
 	}
@@ -1058,8 +1058,8 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public static function wpcd_scan_notification_clear_scheduled_events() {
-		wp_clear_scheduled_hook( 'wpcd_scan_notifications_actions' );
+	public static function sstk_scan_notification_clear_scheduled_events() {
+		wp_clear_scheduled_hook( 'sstk_scan_notifications_actions' );
 	}
 
 	/**
@@ -1071,9 +1071,9 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 * @param  array  $args args.
 	 * @return void
 	 */
-	public function wpcd_scan_notifications_schedule_events_for_new_site( $new_site, $args ) {
+	public function sstk_scan_notifications_schedule_events_for_new_site( $new_site, $args ) {
 
-		$plugin_name = wpcd_plugin;
+		$plugin_name = SSTK_PLUGIN;
 
 		// To check the plugin is active network-wide.
 		if ( is_plugin_active_for_network( $plugin_name ) ) {
@@ -1081,7 +1081,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 			$blog_id = $new_site->blog_id;
 
 			switch_to_blog( $blog_id );
-			self::wpcd_scan_notification_schedule_events();
+			self::sstk_scan_notification_schedule_events();
 			restore_current_blog();
 		}
 
@@ -1093,18 +1093,18 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 * @param int $user_id user id.
 	 * @param int $post_id post id.
 	 */
-	public function wpcd_user_notify_server_app_permission( $user_id, $post_id ) {
-		if ( get_post_type( $post_id ) === 'wpcd_app_server' ) {
+	public function sstk_user_notify_server_app_permission( $user_id, $post_id ) {
+		if ( get_post_type( $post_id ) === 'sstk_app_server' ) {
 			$servers_access = $this->get_user_notify_servers( $user_id );
 			if ( ! array_key_exists( $post_id, $servers_access ) ) {
-				$error_msg = array( 'msg' => __( 'You are not allowed to perform this action. You have not accesss for the selected servers/sites.', 'wpcd' ) );
+				$error_msg = array( 'msg' => __( 'You are not allowed to perform this action. You have not accesss for the selected servers/sites.', 'simple-stack' ) );
 				wp_send_json_error( $error_msg );
 				wp_die();
 			}
 		} else {
 			$sites_access = $this->get_user_notify_sites( $user_id );
 			if ( ! array_key_exists( $post_id, $sites_access ) ) {
-				$error_msg = array( 'msg' => __( 'You are not allowed to perform this action. You have not accesss for the selected servers/sites.', 'wpcd' ) );
+				$error_msg = array( 'msg' => __( 'You are not allowed to perform this action. You have not accesss for the selected servers/sites.', 'simple-stack' ) );
 				wp_send_json_error( $error_msg );
 				wp_die();
 			}
@@ -1117,7 +1117,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 * @param int    $post_id post id.
 	 * @param object $post post object.
 	 */
-	public function wpcd_save_notification_user_profile_data( $post_id, $post ) {
+	public function sstk_save_notification_user_profile_data( $post_id, $post ) {
 		global $wpdb;
 
 		// Check the user's permissions.
@@ -1140,7 +1140,7 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 
 		// Store custom fields values.
 		$profile_name = '';
-		$profile_name = sanitize_text_field( filter_input( INPUT_POST, 'wpcd_notify_user_profile_name', FILTER_UNSAFE_RAW ) );
+		$profile_name = sanitize_text_field( filter_input( INPUT_POST, 'sstk_notify_user_profile_name', FILTER_UNSAFE_RAW ) );
 
 		if ( empty( $profile_name ) ) {
 			$update_profile_name = 'Submitted by ' . $user_login;
@@ -1172,8 +1172,8 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @param object $post post object.
 	 */
-	public function wpcd_wpcd_notify_user_force_type_private( $post ) {
-		if ( 'wpcd_notify_user' === $post['post_type'] && 'draft' !== $post['post_status'] && 'auto-draft' !== $post['post_status'] && 'trash' !== $post['post_status'] ) {
+	public function sstk_sstk_notify_user_force_type_private( $post ) {
+		if ( 'sstk_notify_user' === $post['post_type'] && 'draft' !== $post['post_status'] && 'auto-draft' !== $post['post_status'] && 'trash' !== $post['post_status'] ) {
 			$post['post_status'] = 'private';
 		}
 		return $post;
@@ -1184,13 +1184,13 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @return void
 	 */
-	public function wpcd_user_notifications_backtolist_btn() {
+	public function sstk_user_notifications_backtolist_btn() {
 		$screen    = get_current_screen();
-		$post_type = 'wpcd_notify_user';
+		$post_type = 'sstk_notify_user';
 		if ( $screen->id === $post_type ) {
 			$query          = sprintf( 'edit.php?post_type=%s', $post_type );
 			$backtolist_url = admin_url( $query );
-			$backtolist_txt = __( 'Back To List', 'wpcd' );
+			$backtolist_txt = __( 'Back To List', 'simple-stack' );
 			?>
 			<script type="text/javascript">
 				jQuery(document).ready(function($){
@@ -1207,11 +1207,11 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 * @param array $query_args query arguments.
 	 * @param array $r arguments.
 	 */
-	public function wpcd_user_notify_display_all_users_dropdown( $query_args, $r ) {
+	public function sstk_user_notify_display_all_users_dropdown( $query_args, $r ) {
 		// Get screen object.
 		$screen = get_current_screen();
 
-		if ( 'wpcd_notify_user' === $screen->post_type ) {
+		if ( 'sstk_notify_user' === $screen->post_type ) {
 			$query_args['role__in'] = array();
 			// Unset default role.
 			unset( $query_args['who'] );
@@ -1227,18 +1227,18 @@ class WPCD_NOTIFY_USER extends WPCD_Posts_Base {
 	 *
 	 * @param object $post The post object being added or edited.
 	 */
-	public function wpcd_after_title_notice( $post ) {
+	public function sstk_after_title_notice( $post ) {
 
-		if ( ! empty( $post ) && is_object( $post ) && 'wpcd_notify_user' === $post->post_type ) {
-			if ( empty( wpcd_get_option( 'wordpress_app_email_notify_body' ) ) || empty( wpcd_get_option( 'wordpress_app_email_notify_subject' ) ) ) {
+		if ( ! empty( $post ) && is_object( $post ) && 'sstk_notify_user' === $post->post_type ) {
+			if ( empty( sstk_get_option( 'wordpress_app_email_notify_body' ) ) || empty( sstk_get_option( 'wordpress_app_email_notify_subject' ) ) ) {
 				echo '<b>';
-				echo wp_kses_post( __( 'Warning - your global notifications template or template subject is blank!', 'wpcd' ) );
+				echo wp_kses_post( __( 'Warning - your global notifications template or template subject is blank!', 'simple-stack' ) );
 				echo '</b>';
 				echo '<br/>';
 				echo '<hr/>';
-				echo wp_kses_post( __( 'Please note that notifications will only be sent if and only if you have also configured the text of your notifications in the Settings → APP:WordPress Settings tab', 'wpcd' ) );
+				echo wp_kses_post( __( 'Please note that notifications will only be sent if and only if you have also configured the text of your notifications in the Settings → APP:WordPress Settings tab', 'simple-stack' ) );
 				echo '<br/>';
-				echo wp_kses_post( __( 'There, you can setup notifications under the EMAIL NOTIFICATIONS tab ( and/or the SLACK and ZAPIER notifications tab as well.)', 'wpcd' ) );
+				echo wp_kses_post( __( 'There, you can setup notifications under the EMAIL NOTIFICATIONS tab ( and/or the SLACK and ZAPIER notifications tab as well.)', 'simple-stack' ) );
 				echo '<hr/>';
 			}
 		}

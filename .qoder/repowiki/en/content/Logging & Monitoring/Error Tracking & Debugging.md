@@ -2,13 +2,13 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-posts-error-log.php](file://includes/core/class-wpcd-posts-error-log.php)
-- [class-wpcd-posts-pending-tasks-log.php](file://includes/core/class-wpcd-posts-pending-tasks-log.php)
-- [class-simplestack-rest-logs.php](file://includes/core/api/class-simplestack-rest-logs.php)
+- [class-sstk-posts-error-log.php](file://includes/core/class-sstk-posts-error-log.php)
+- [class-sstk-posts-pending-tasks-log.php](file://includes/core/class-sstk-posts-pending-tasks-log.php)
+- [class-sstk-rest-logs.php](file://includes/core/api/class-sstk-rest-logs.php)
 - [error_log.php](file://includes/templates/error_log.php)
 - [pending_tasks_log.php](file://includes/templates/pending_tasks_log.php)
-- [class-wpcd-settings.php](file://includes/core/class-wpcd-settings.php)
-- [class-wpcd-posts-log.php](file://includes/core/class-wpcd-posts-log.php)
+- [class-sstk-settings.php](file://includes/core/class-sstk-settings.php)
+- [class-sstk-posts-log.php](file://includes/core/class-sstk-posts-log.php)
 </cite>
 
 ## Table of Contents
@@ -23,8 +23,8 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s error tracking and debugging capabilities with a focus on:
-- The `WPCD_ERROR_LOG` class for capturing, filtering, and storing application errors, exceptions, and warnings.
+This document explains Simple Stack’s error tracking and debugging capabilities with a focus on:
+- The `SSTK_ERROR_LOG` class for capturing, filtering, and storing application errors, exceptions, and warnings.
 - Automatic context collection such as file, line number, message, type, and optional structured data.
 - The pending tasks logging system used to track asynchronous operations, retries, state transitions, and failed jobs.
 - How to configure error reporting levels and filters through the admin settings.
@@ -32,7 +32,7 @@ This document explains SimpleStack’s error tracking and debugging capabilities
 - Debugging workflows, correlation techniques, and guidance for integrating with external services like Sentry or Rollbar.
 
 ## Project Structure
-SimpleStack implements its logging infrastructure using WordPress custom post types and meta fields. The key pieces are:
+Simple Stack implements its logging infrastructure using WordPress custom post types and meta fields. The key pieces are:
 - Error log storage and administration UI.
 - Pending task log storage and administration UI.
 - A REST controller that exposes recent logs to the frontend log drawer.
@@ -42,9 +42,9 @@ SimpleStack implements its logging infrastructure using WordPress custom post ty
 ```mermaid
 graph TB
 subgraph "Logging Core"
-ErrorLog["WPCD_ERROR_LOG<br/>Error Log Post Type"]
-PendingTasks["WPCD_PENDING_TASKS_LOG<br/>Pending Tasks Post Type"]
-BaseLog["WPCD_POSTS_LOG<br/>Shared Log Behavior"]
+ErrorLog["SSTK_ERROR_LOG<br/>Error Log Post Type"]
+PendingTasks["SSTK_PENDING_TASKS_LOG<br/>Pending Tasks Post Type"]
+BaseLog["SSTK_POSTS_LOG<br/>Shared Log Behavior"]
 end
 subgraph "Admin Interface"
 ErrorTemplate["error_log.php Template"]
@@ -52,7 +52,7 @@ PendingTemplate["pending_tasks_log.php Template"]
 Settings["Logging Settings Fields"]
 end
 subgraph "Frontend Integration"
-RestLogs["SimpleStack_REST_Logs<br/>'/servers/{id}/logs'"]
+RestLogs["SSTK_REST_Logs<br/>'/servers/{id}/logs'"]
 end
 ErrorLog --> ErrorTemplate
 PendingTasks --> PendingTemplate
@@ -65,67 +65,67 @@ Settings --> PendingTasks
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-error-log.php:15-114](file://includes/core/class-wpcd-posts-error-log.php#L15-L114)
-- [class-wpcd-posts-pending-tasks-log.php:15-153](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L15-L153)
-- [class-simplestack-rest-logs.php:19-65](file://includes/core/api/class-simplestack-rest-logs.php#L19-L65)
+- [class-sstk-posts-error-log.php:15-114](file://includes/core/class-sstk-posts-error-log.php#L15-L114)
+- [class-sstk-posts-pending-tasks-log.php:15-153](file://includes/core/class-sstk-posts-pending-tasks-log.php#L15-L153)
+- [class-sstk-rest-logs.php:19-65](file://includes/core/api/class-sstk-rest-logs.php#L19-L65)
 - [error_log.php:27-48](file://includes/templates/error_log.php#L27-L48)
 - [pending_tasks_log.php:27-92](file://includes/templates/pending_tasks_log.php#L27-L92)
-- [class-wpcd-settings.php:210-252](file://includes/core/class-wpcd-settings.php#L210-L252)
+- [class-sstk-settings.php:210-252](file://includes/core/class-sstk-settings.php#L210-L252)
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:15-114](file://includes/core/class-wpcd-posts-error-log.php#L15-L114)
-- [class-wpcd-posts-pending-tasks-log.php:15-153](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L15-L153)
-- [class-simplestack-rest-logs.php:19-65](file://includes/core/api/class-simplestack-rest-logs.php#L19-L65)
-- [class-wpcd-settings.php:210-252](file://includes/core/class-wpcd-settings.php#L210-L252)
+- [class-sstk-posts-error-log.php:15-114](file://includes/core/class-sstk-posts-error-log.php#L15-L114)
+- [class-sstk-posts-pending-tasks-log.php:15-153](file://includes/core/class-sstk-posts-pending-tasks-log.php#L15-L153)
+- [class-sstk-rest-logs.php:19-65](file://includes/core/api/class-sstk-rest-logs.php#L19-L65)
+- [class-sstk-settings.php:210-252](file://includes/core/class-sstk-settings.php#L210-L252)
 
 ## Core Components
-- `WPCD_ERROR_LOG`: Registers the `wpcd_error_log` post type, defines columns, meta box rendering, and provides `add_error_log_entry()` for writing filtered error records.
-- `WPCD_PENDING_TASKS_LOG`: Registers the `wpcd_pending_log` post type, manages task lifecycle metadata, and provides methods to create, query, and update pending tasks.
-- `SimpleStack_REST_Logs`: Exposes `/servers/{id}/logs` and `/activity` endpoints that return command, SSH, and error logs to the React log drawer.
+- `SSTK_ERROR_LOG`: Registers the `sstk_error_log` post type, defines columns, meta box rendering, and provides `add_error_log_entry()` for writing filtered error records.
+- `SSTK_PENDING_TASKS_LOG`: Registers the `sstk_pending_log` post type, manages task lifecycle metadata, and provides methods to create, query, and update pending tasks.
+- `SSTK_REST_Logs`: Exposes `/servers/{id}/logs` and `/activity` endpoints that return command, SSH, and error logs to the React log drawer.
 - Templates: `error_log.php` and `pending_tasks_log.php` render detailed views for each log entry in the WordPress admin.
 - Settings: Logging configuration includes log types, include/exclude patterns, and auto-trim limits.
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:15-358](file://includes/core/class-wpcd-posts-error-log.php#L15-L358)
-- [class-wpcd-posts-pending-tasks-log.php:15-800](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L15-L800)
-- [class-simplestack-rest-logs.php:19-239](file://includes/core/api/class-simplestack-rest-logs.php#L19-L239)
+- [class-sstk-posts-error-log.php:15-358](file://includes/core/class-sstk-posts-error-log.php#L15-L358)
+- [class-sstk-posts-pending-tasks-log.php:15-800](file://includes/core/class-sstk-posts-pending-tasks-log.php#L15-L800)
+- [class-sstk-rest-logs.php:19-239](file://includes/core/api/class-sstk-rest-logs.php#L19-L239)
 - [error_log.php:27-48](file://includes/templates/error_log.php#L27-L48)
 - [pending_tasks_log.php:27-92](file://includes/templates/pending_tasks_log.php#L27-L92)
-- [class-wpcd-settings.php:210-252](file://includes/core/class-wpcd-settings.php#L210-L252)
+- [class-sstk-settings.php:210-252](file://includes/core/class-sstk-settings.php#L210-L252)
 
 ## Architecture Overview
 The logging architecture is centered around WordPress posts:
-- Errors are stored as private posts of type `wpcd_error_log`.
-- Pending tasks are stored as private posts of type `wpcd_pending_log`.
-- Both post types extend shared log behavior from `WPCD_POSTS_LOG`, including search fields and auto-trimming.
+- Errors are stored as private posts of type `sstk_error_log`.
+- Pending tasks are stored as private posts of type `sstk_pending_log`.
+- Both post types extend shared log behavior from `SSTK_POSTS_LOG`, including search fields and auto-trimming.
 - The REST controller reads these posts and formats them for the frontend log drawer.
 
 ```mermaid
 sequenceDiagram
 participant App as "Application Code"
-participant ErrorLog as "WPCD_ERROR_LOG"
+participant ErrorLog as "SSTK_ERROR_LOG"
 participant DB as "WordPress Database"
-participant REST as "SimpleStack_REST_Logs"
+participant REST as "SSTK_REST_Logs"
 participant Frontend as "React Log Drawer"
 App->>ErrorLog : add_error_log_entry(message, type, file, line, data)
-ErrorLog->>DB : wp_insert_post(wpcd_error_log)
+ErrorLog->>DB : wp_insert_post(sstk_error_log)
 ErrorLog->>DB : update_post_meta(error_type, error_msg, error_file, error_line, error_data)
 Note over ErrorLog,DB : Filtering by include/exclude rules before insert
 Frontend->>REST : GET /servers/{id}/logs?type=error&since=&limit=
-REST->>DB : Query wpcd_error_log posts (private)
+REST->>DB : Query sstk_error_log posts (private)
 REST-->>Frontend : {items, cursor}
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-error-log.php:257-353](file://includes/core/class-wpcd-posts-error-log.php#L257-L353)
-- [class-simplestack-rest-logs.php:76-101](file://includes/core/api/class-simplestack-rest-logs.php#L76-L101)
-- [class-simplestack-rest-logs.php:137-177](file://includes/core/api/class-simplestack-rest-logs.php#L137-L177)
-- [class-simplestack-rest-logs.php:187-222](file://includes/core/api/class-simplestack-rest-logs.php#L187-L222)
+- [class-sstk-posts-error-log.php:257-353](file://includes/core/class-sstk-posts-error-log.php#L257-L353)
+- [class-sstk-rest-logs.php:76-101](file://includes/core/api/class-sstk-rest-logs.php#L76-L101)
+- [class-sstk-rest-logs.php:137-177](file://includes/core/api/class-sstk-rest-logs.php#L137-L177)
+- [class-sstk-rest-logs.php:187-222](file://includes/core/api/class-sstk-rest-logs.php#L187-L222)
 
 ## Detailed Component Analysis
 
 ### ErrorLog Class Architecture
-`WPCD_ERROR_LOG` extends the shared log base class and registers the `wpcd_error_log` post type. It:
+`SSTK_ERROR_LOG` extends the shared log base class and registers the `sstk_error_log` post type. It:
 - Adds admin columns for type, file, line, and date.
 - Renders a meta box showing error details.
 - Provides `add_error_log_entry()` which applies filtering rules and stores structured error context.
@@ -138,12 +138,12 @@ Key responsibilities:
 
 ```mermaid
 classDiagram
-class WPCD_POSTS_LOG {
+class SSTK_POSTS_LOG {
 +register()
 +set_post_type(type)
 +set_post_search_fields(fields)
 }
-class WPCD_ERROR_LOG {
+class SSTK_ERROR_LOG {
 +instance()
 +register()
 +hooks()
@@ -154,16 +154,16 @@ class WPCD_ERROR_LOG {
 +save_meta_values(post_id, post)
 +add_error_log_entry(msg, type, file, line, data)
 }
-WPCD_ERROR_LOG --|> WPCD_POSTS_LOG : "extends"
+SSTK_ERROR_LOG --|> SSTK_POSTS_LOG : "extends"
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-error-log.php:15-358](file://includes/core/class-wpcd-posts-error-log.php#L15-L358)
+- [class-sstk-posts-error-log.php:15-358](file://includes/core/class-sstk-posts-error-log.php#L15-L358)
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:15-114](file://includes/core/class-wpcd-posts-error-log.php#L15-L114)
-- [class-wpcd-posts-error-log.php:183-236](file://includes/core/class-wpcd-posts-error-log.php#L183-L236)
-- [class-wpcd-posts-error-log.php:257-353](file://includes/core/class-wpcd-posts-error-log.php#L257-L353)
+- [class-sstk-posts-error-log.php:15-114](file://includes/core/class-sstk-posts-error-log.php#L15-L114)
+- [class-sstk-posts-error-log.php:183-236](file://includes/core/class-sstk-posts-error-log.php#L183-L236)
+- [class-sstk-posts-error-log.php:257-353](file://includes/core/class-sstk-posts-error-log.php#L257-L353)
 
 #### Error Context Collection
 When an error is recorded, the following context is captured:
@@ -179,7 +179,7 @@ The class also:
 - Stores entries as private posts with the current user as author.
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:257-353](file://includes/core/class-wpcd-posts-error-log.php#L257-L353)
+- [class-sstk-posts-error-log.php:257-353](file://includes/core/class-sstk-posts-error-log.php#L257-L353)
 
 #### Error Categorization and Severity Levels
 The codebase supports categorizing errors via the `error_type` field. Severity levels are not enforced by a dedicated enum; instead, they can be represented within the `error_type` value or by combining it with other metadata. For example, you might use values like:
@@ -191,8 +191,8 @@ The codebase supports categorizing errors via the `error_type` field. Severity l
 Administrators can filter and sort logs using the admin columns and search fields defined for the post type.
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:105-112](file://includes/core/class-wpcd-posts-error-log.php#L105-L112)
-- [class-wpcd-posts-error-log.php:183-193](file://includes/core/class-wpcd-posts-error-log.php#L183-L193)
+- [class-sstk-posts-error-log.php:105-112](file://includes/core/class-sstk-posts-error-log.php#L105-L112)
+- [class-sstk-posts-error-log.php:183-193](file://includes/core/class-sstk-posts-error-log.php#L183-L193)
 
 #### Error Filtering Rules
 Before persisting an error, the class evaluates:
@@ -219,13 +219,13 @@ Skip --> End
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-error-log.php:257-314](file://includes/core/class-wpcd-posts-error-log.php#L257-L314)
+- [class-sstk-posts-error-log.php:257-314](file://includes/core/class-sstk-posts-error-log.php#L257-L314)
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:257-314](file://includes/core/class-wpcd-posts-error-log.php#L257-L314)
+- [class-sstk-posts-error-log.php:257-314](file://includes/core/class-sstk-posts-error-log.php#L257-L314)
 
 ### Pending Tasks Logging System
-`WPCD_PENDING_TASKS_LOG` manages asynchronous operations by creating and updating pending task records. Each record captures:
+`SSTK_PENDING_TASKS_LOG` manages asynchronous operations by creating and updating pending task records. Each record captures:
 - Owner/parent reference (`parent_post_id`) and parent post type.
 - Task type and key for lookup and deduplication.
 - State machine values such as `not-ready`, `ready`, `in-process`, `complete`.
@@ -237,7 +237,7 @@ Key methods:
 - `add_pending_task_log_entry()`: Creates a new pending task record with initial metadata.
 - `update_task_by_id()`: Updates details, state, references, comments, timestamps, and increments attempts.
 - `get_tasks_by_key_state_type()`, `get_tasks_by_state_reference()`, `get_tasks_by_parent_state_type()`: Query helpers for finding tasks by various criteria.
-- `wpcd_is_server_available_for_commands()`: Prevents running commands on servers with active in-process tasks.
+- `sstk_is_server_available_for_commands()`: Prevents running commands on servers with active in-process tasks.
 
 ```mermaid
 stateDiagram-v2
@@ -250,14 +250,14 @@ Failed --> Ready : "retry/update_task_by_id(state='ready')"
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-pending-tasks-log.php:478-535](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L478-L535)
-- [class-wpcd-posts-pending-tasks-log.php:655-714](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L655-L714)
+- [class-sstk-posts-pending-tasks-log.php:478-535](file://includes/core/class-sstk-posts-pending-tasks-log.php#L478-L535)
+- [class-sstk-posts-pending-tasks-log.php:655-714](file://includes/core/class-sstk-posts-pending-tasks-log.php#L655-L714)
 
 **Section sources**
-- [class-wpcd-posts-pending-tasks-log.php:15-153](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L15-L153)
-- [class-wpcd-posts-pending-tasks-log.php:478-535](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L478-L535)
-- [class-wpcd-posts-pending-tasks-log.php:655-714](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L655-L714)
-- [class-wpcd-posts-pending-tasks-log.php:749-800](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L749-L800)
+- [class-sstk-posts-pending-tasks-log.php:15-153](file://includes/core/class-sstk-posts-pending-tasks-log.php#L15-L153)
+- [class-sstk-posts-pending-tasks-log.php:478-535](file://includes/core/class-sstk-posts-pending-tasks-log.php#L478-L535)
+- [class-sstk-posts-pending-tasks-log.php:655-714](file://includes/core/class-sstk-posts-pending-tasks-log.php#L655-L714)
+- [class-sstk-posts-pending-tasks-log.php:749-800](file://includes/core/class-sstk-posts-pending-tasks-log.php#L749-L800)
 
 ### Admin Interface and Templates
 - Error log detail template renders fields for type, message, file, line, and additional data.
@@ -270,7 +270,7 @@ These templates are included by their respective classes when rendering the meta
 - [pending_tasks_log.php:27-92](file://includes/templates/pending_tasks_log.php#L27-L92)
 
 ### REST API Exposure for Logs
-`SimpleStack_REST_Logs` exposes:
+`SSTK_REST_Logs` exposes:
 - `GET /servers/{id}/logs`: Returns command, SSH, and error logs for a server, optionally filtered by type and timestamp.
 - `GET /activity`: Returns a merged activity feed across log types.
 
@@ -285,54 +285,54 @@ This enables the React log drawer to display real-time error information alongsi
 ```mermaid
 sequenceDiagram
 participant Frontend as "React Log Drawer"
-participant REST as "SimpleStack_REST_Logs"
+participant REST as "SSTK_REST_Logs"
 participant DB as "WordPress Database"
 Frontend->>REST : GET /servers/{id}/logs?type=error&since=<ISO>&limit=50
-REST->>DB : Query wpcd_error_log posts (private)
+REST->>DB : Query sstk_error_log posts (private)
 REST-->>Frontend : {items : [{type : 'error', reference, body, file, line}], cursor}
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-logs.php:44-65](file://includes/core/api/class-simplestack-rest-logs.php#L44-L65)
-- [class-simplestack-rest-logs.php:76-101](file://includes/core/api/class-simplestack-rest-logs.php#L76-L101)
-- [class-simplestack-rest-logs.php:187-222](file://includes/core/api/class-simplestack-rest-logs.php#L187-L222)
+- [class-sstk-rest-logs.php:44-65](file://includes/core/api/class-sstk-rest-logs.php#L44-L65)
+- [class-sstk-rest-logs.php:76-101](file://includes/core/api/class-sstk-rest-logs.php#L76-L101)
+- [class-sstk-rest-logs.php:187-222](file://includes/core/api/class-sstk-rest-logs.php#L187-L222)
 
 **Section sources**
-- [class-simplestack-rest-logs.php:19-65](file://includes/core/api/class-simplestack-rest-logs.php#L19-L65)
-- [class-simplestack-rest-logs.php:76-101](file://includes/core/api/class-simplestack-rest-logs.php#L76-L101)
-- [class-simplestack-rest-logs.php:137-177](file://includes/core/api/class-simplestack-rest-logs.php#L137-L177)
-- [class-simplestack-rest-logs.php:187-222](file://includes/core/api/class-simplestack-rest-logs.php#L187-L222)
+- [class-sstk-rest-logs.php:19-65](file://includes/core/api/class-sstk-rest-logs.php#L19-L65)
+- [class-sstk-rest-logs.php:76-101](file://includes/core/api/class-sstk-rest-logs.php#L76-L101)
+- [class-sstk-rest-logs.php:137-177](file://includes/core/api/class-sstk-rest-logs.php#L137-L177)
+- [class-sstk-rest-logs.php:187-222](file://includes/core/api/class-sstk-rest-logs.php#L187-L222)
 
 ## Dependency Analysis
-- `WPCD_ERROR_LOG` depends on:
+- `SSTK_ERROR_LOG` depends on:
   - WordPress functions for post creation and meta updates.
-  - Shared base class `WPCD_POSTS_LOG` for common log behavior.
+  - Shared base class `SSTK_POSTS_LOG` for common log behavior.
   - Settings options for filtering and trimming.
-- `WPCD_PENDING_TASKS_LOG` depends on:
+- `SSTK_PENDING_TASKS_LOG` depends on:
   - WordPress functions for post creation and meta updates.
-  - Shared base class `WPCD_POSTS_LOG`.
+  - Shared base class `SSTK_POSTS_LOG`.
   - Application logic to set states and associate servers.
-- `SimpleStack_REST_Logs` depends on:
+- `SSTK_REST_Logs` depends on:
   - WordPress query APIs to read private posts.
   - Formatting logic to map post meta to frontend-friendly structures.
 
 ```mermaid
 graph LR
-ErrorLog["WPCD_ERROR_LOG"] --> BaseLog["WPCD_POSTS_LOG"]
-PendingTasks["WPCD_PENDING_TASKS_LOG"] --> BaseLog
-RestLogs["SimpleStack_REST_Logs"] --> ErrorLog
+ErrorLog["SSTK_ERROR_LOG"] --> BaseLog["SSTK_POSTS_LOG"]
+PendingTasks["SSTK_PENDING_TASKS_LOG"] --> BaseLog
+RestLogs["SSTK_REST_Logs"] --> ErrorLog
 RestLogs --> PendingTasks
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-error-log.php:15-358](file://includes/core/class-wpcd-posts-error-log.php#L15-L358)
-- [class-wpcd-posts-pending-tasks-log.php:15-800](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L15-L800)
-- [class-simplestack-rest-logs.php:19-239](file://includes/core/api/class-simplestack-rest-logs.php#L19-L239)
+- [class-sstk-posts-error-log.php:15-358](file://includes/core/class-sstk-posts-error-log.php#L15-L358)
+- [class-sstk-posts-pending-tasks-log.php:15-800](file://includes/core/class-sstk-posts-pending-tasks-log.php#L15-L800)
+- [class-sstk-rest-logs.php:19-239](file://includes/core/api/class-sstk-rest-logs.php#L19-L239)
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:15-358](file://includes/core/class-wpcd-posts-error-log.php#L15-L358)
-- [class-wpcd-posts-pending-tasks-log.php:15-800](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L15-L800)
-- [class-simplestack-rest-logs.php:19-239](file://includes/core/api/class-simplestack-rest-logs.php#L19-L239)
+- [class-sstk-posts-error-log.php:15-358](file://includes/core/class-sstk-posts-error-log.php#L15-L358)
+- [class-sstk-posts-pending-tasks-log.php:15-800](file://includes/core/class-sstk-posts-pending-tasks-log.php#L15-L800)
+- [class-sstk-rest-logs.php:19-239](file://includes/core/api/class-sstk-rest-logs.php#L19-L239)
 
 ## Performance Considerations
 - Auto-trimming: The shared log base class enforces automatic trimming of log entries based on configured limits. For error logs, this helps prevent unbounded growth of the database.
@@ -345,27 +345,27 @@ Recommendations:
 - Avoid overly broad include patterns that could capture large payloads in `error_data`.
 
 **Section sources**
-- [class-wpcd-posts-log.php:242-277](file://includes/core/class-wpcd-posts-log.php#L242-L277)
-- [class-simplestack-rest-logs.php:137-177](file://includes/core/api/class-simplestack-rest-logs.php#L137-L177)
+- [class-sstk-posts-log.php:242-277](file://includes/core/class-sstk-posts-log.php#L242-L277)
+- [class-sstk-rest-logs.php:137-177](file://includes/core/api/class-sstk-rest-logs.php#L137-L177)
 
 ## Troubleshooting Guide
 
 ### Accessing Error Logs in the Admin Interface
-- Navigate to the Error Log section under the SimpleStack menu.
+- Navigate to the Error Log section under the Simple Stack menu.
 - Columns show type, file, line, and date.
 - Click into a log entry to view the meta box with full details: type, message, file, line, and additional data.
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:183-236](file://includes/core/class-wpcd-posts-error-log.php#L183-L236)
+- [class-sstk-posts-error-log.php:183-236](file://includes/core/class-sstk-posts-error-log.php#L183-L236)
 - [error_log.php:27-48](file://includes/templates/error_log.php#L27-L48)
 
 ### Accessing Pending Tasks in the Admin Interface
-- Navigate to the Pending Tasks section under the SimpleStack menu.
+- Navigate to the Pending Tasks section under the Simple Stack menu.
 - Columns show owner/parent, type, key, state, attempts, comment, server, start date, complete date, and date.
 - Click into a pending task to view detailed metadata, history, messages, and associated server.
 
 **Section sources**
-- [class-wpcd-posts-pending-tasks-log.php:254-273](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L254-L273)
+- [class-sstk-posts-pending-tasks-log.php:254-273](file://includes/core/class-sstk-posts-pending-tasks-log.php#L254-L273)
 - [pending_tasks_log.php:27-92](file://includes/templates/pending_tasks_log.php#L27-L92)
 
 ### Configuring Error Reporting Levels and Filters
@@ -380,13 +380,13 @@ Common configurations:
 - Exclude noisy informational messages to reduce clutter.
 
 **Section sources**
-- [class-wpcd-settings.php:210-252](file://includes/core/class-wpcd-settings.php#L210-L252)
-- [class-wpcd-posts-error-log.php:257-314](file://includes/core/class-wpcd-posts-error-log.php#L257-L314)
+- [class-sstk-settings.php:210-252](file://includes/core/class-sstk-settings.php#L210-L252)
+- [class-sstk-posts-error-log.php:257-314](file://includes/core/class-sstk-posts-error-log.php#L257-L314)
 
 ### Implementing Custom Error Handlers
 To integrate your own error handling:
 - Wrap critical operations with try/catch blocks.
-- On exception, call `WPCD_ERROR_LOG()->add_error_log_entry()` with:
+- On exception, call `SSTK_ERROR_LOG()->add_error_log_entry()` with:
   - A descriptive message.
   - A meaningful type/category.
   - File and line context.
@@ -398,7 +398,7 @@ Best practices:
 - Use unique keys or references in `error_data` to correlate related events.
 
 **Section sources**
-- [class-wpcd-posts-error-log.php:257-353](file://includes/core/class-wpcd-posts-error-log.php#L257-L353)
+- [class-sstk-posts-error-log.php:257-353](file://includes/core/class-sstk-posts-error-log.php#L257-L353)
 
 ### Debugging Workflows and Correlation Techniques
 - Use the REST endpoint `/servers/{id}/logs?type=error` to stream recent errors in the React log drawer.
@@ -411,25 +411,25 @@ Tips:
 - Combine error logs with command and SSH logs to reconstruct the full execution path.
 
 **Section sources**
-- [class-simplestack-rest-logs.php:76-101](file://includes/core/api/class-simplestack-rest-logs.php#L76-L101)
-- [class-wpcd-posts-pending-tasks-log.php:545-602](file://includes/core/class-wpcd-posts-pending-tasks-log.php#L545-L602)
+- [class-sstk-rest-logs.php:76-101](file://includes/core/api/class-sstk-rest-logs.php#L76-L101)
+- [class-sstk-posts-pending-tasks-log.php:545-602](file://includes/core/class-sstk-posts-pending-tasks-log.php#L545-L602)
 
 ### Integrating with External Services (Sentry, Rollbar)
-While SimpleStack does not include built-in integrations for Sentry or Rollbar, you can implement custom handlers:
-- Create a wrapper around `WPCD_ERROR_LOG()->add_error_log_entry()` that forwards enriched error payloads to your external service.
-- Map SimpleStack error types to severity levels expected by the external service.
+While Simple Stack does not include built-in integrations for Sentry or Rollbar, you can implement custom handlers:
+- Create a wrapper around `SSTK_ERROR_LOG()->add_error_log_entry()` that forwards enriched error payloads to your external service.
+- Map Simple Stack error types to severity levels expected by the external service.
 - Attach correlation IDs and stack traces to enrich remote reports.
 - Ensure sensitive data is scrubbed before sending to external systems.
 
 Example integration approach:
 - Hook into your application’s error handling layer.
-- On error, call both SimpleStack’s logger and the external SDK.
+- On error, call both Simple Stack’s logger and the external SDK.
 - Use consistent identifiers across logs and tasks for unified troubleshooting.
 
 [No sources needed since this section provides general guidance]
 
 ## Conclusion
-SimpleStack’s error tracking and debugging system centers on structured error logs and a robust pending tasks framework:
+Simple Stack’s error tracking and debugging system centers on structured error logs and a robust pending tasks framework:
 - Errors are captured with rich context and filtered by configurable rules.
 - Pending tasks provide visibility into asynchronous operations, retries, and failures.
 - The admin interface and REST API make logs accessible for manual inspection and live monitoring.

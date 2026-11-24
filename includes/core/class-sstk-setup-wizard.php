@@ -1,14 +1,15 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * WPCD Setup Wizard Class
+ * SSTK Setup Wizard Class
  *
  * Takes new users through some basic steps to setup their support.
  *
- * @package   WPCLoudDeploy/Includes/Core/WPCD_Admin_Setup_Wizard
- * @author    WPCloudDeploy <contact@wpclouddeploy.com>
+ * @package   Simple Stack/Includes/Core/SSTK_Admin_Setup_Wizard
+ * @author    Simple Stack <contact@onedogsolutions.com>
  * @license   GPL-2.0+
- * @link      https://wpclouddeploy.com
- * @copyright 2019-2022 wpclouddeploy
+ * @link      https://github.com/onedogsolutions/simple-stack
+ * @copyright 2019-2022 simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,9 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * WPCD_Admin_Setup_Wizard class.
+ * SSTK_Admin_Setup_Wizard class.
  */
-class WPCD_Admin_Setup_Wizard {
+class SSTK_Admin_Setup_Wizard {
 
 	/**
 	 * Current step
@@ -44,19 +45,19 @@ class WPCD_Admin_Setup_Wizard {
 		add_action( 'admin_init', array( $this, 'setup_wizard' ) );
 
 		/* AJAX Function for skipping setup wizard. */
-		add_action( 'wp_ajax_wpcd_skip_wizard_setup', array( $this, 'wpcd_skip_wizard_setup' ) );
+		add_action( 'wp_ajax_sstk_skip_wizard_setup', array( $this, 'sstk_skip_wizard_setup' ) );
 	}
 
 	/**
 	 * Add admin menus/screens.
 	 */
 	public function admin_menus() {
-		if ( wpcd_is_admin() ) {
-			add_dashboard_page( '', '', 'manage_options', 'wpcd-setup', '' );
+		if ( sstk_is_admin() ) {
+			add_dashboard_page( '', '', 'manage_options', 'sstk-setup', '' );
 		}
 
-		if ( wpcd_is_manager() ) {
-			add_dashboard_page( '', '', 'wpcd_manage_all', 'wpcd-setup', '' );
+		if ( sstk_is_manager() ) {
+			add_dashboard_page( '', '', 'sstk_manage_all', 'sstk-setup', '' );
 		}
 	}
 
@@ -70,18 +71,18 @@ class WPCD_Admin_Setup_Wizard {
 		$test_mode = false;
 
 		/**
-		 * Proceed only if both options 'wpcd_plugin_setup' & 'wpcd_skip_wizard_setup' = false
+		 * Proceed only if both options 'sstk_plugin_setup' & 'sstk_skip_wizard_setup' = false
 		 * 'wpas_plugin_setup' will be added at the end of wizard steps
 		 * 'wpas_skip_wizard_setup' will be set to true if user choose to skip wizrd from admin notice
 		 */
-		if ( ( ! get_option( 'wpcd_plugin_setup', false ) && ! get_option( 'wpcd_skip_wizard_setup', false ) ) || ( true === $test_mode ) ) {
+		if ( ( ! get_option( 'sstk_plugin_setup', false ) && ! get_option( 'sstk_skip_wizard_setup', false ) ) || ( true === $test_mode ) ) {
 
 			/**
 			 * If we already have at least one server setup, do not show wizard prompt.
 			 */
-			$count_servers = wp_count_posts( 'wpcd_app_server' )->private;
+			$count_servers = wp_count_posts( 'sstk_app_server' )->private;
 			if ( $count_servers > 0 ) {
-				add_option( 'wpcd_skip_wizard_setup', true );
+				add_option( 'sstk_skip_wizard_setup', true );
 				return;
 			}
 
@@ -93,8 +94,8 @@ class WPCD_Admin_Setup_Wizard {
 			}
 
 			// Show Wizard prompt.
-			add_action( 'admin_notices', array( $this, 'wpcd_ask_setup_wizard' ), 1 );
-			add_action( 'admin_enqueue_scripts', array( $this, 'wpcd_setup_wizard_scripts' ), 10, 1 );
+			add_action( 'admin_notices', array( $this, 'sstk_ask_setup_wizard' ), 1 );
+			add_action( 'admin_enqueue_scripts', array( $this, 'sstk_setup_wizard_scripts' ), 10, 1 );
 		}
 
 	}
@@ -104,22 +105,22 @@ class WPCD_Admin_Setup_Wizard {
 	 *
 	 * Action Hook: admin_notices.
 	 */
-	public function wpcd_ask_setup_wizard() {
+	public function sstk_ask_setup_wizard() {
 
-		if ( wpcd_is_admin() || wpcd_is_manager() ) {
+		if ( sstk_is_admin() || sstk_is_manager() ) {
 
 			/* Product name that will be shown at various locations in the wizard. */
-			$product_name = wpcd_get_short_product_name()
+			$product_name = sstk_get_short_product_name()
 
 			?>
-			<div class="updated wpcd-wizard-notice">
-				<h1 class="wizard-main-heading"><?php _e( sprintf( __( '%s: First Time Install', 'wpcd' ), $product_name ) ); ?></h1>
-				<p class="wizard-first-line"><?php _e( sprintf( __( 'Thank you for installing %s. Please choose an option below to get started.', 'wpcd' ), $product_name ) ); ?></p>
-				<p class="wizard-normal wizard-second-line"><?php _e( sprintf( __( 'If this is not the first time you are using %s or you would like to manually configure your initial settings, then you should choose to skip this process. Otherwise proceed by clicking the button.', 'wpcd' ), $product_name ) ); ?></p>
-				<p><span class="wpcd-button-wizard-primary"><?php _e( '<a href="' . admin_url( 'index.php?page=wpcd-setup' ) . '">Click here To Get Started Now</a>', 'wpcd' ); ?></span>		
-					<span class="wpcd-button-wizard-skip"><?php _e( '<a href="#" id="wpcd-skip-wizard">Or skip this process</a>', 'wpcd' ); ?>
-				</p>		
-			</div>	
+			<div class="updated sstk-wizard-notice">
+				<h1 class="wizard-main-heading"><?php _e( sprintf( __( '%s: First Time Install', 'simple-stack' ), $product_name ) ); ?></h1>
+				<p class="wizard-first-line"><?php _e( sprintf( __( 'Thank you for installing %s. Please choose an option below to get started.', 'simple-stack' ), $product_name ) ); ?></p>
+				<p class="wizard-normal wizard-second-line"><?php _e( sprintf( __( 'If this is not the first time you are using %s or you would like to manually configure your initial settings, then you should choose to skip this process. Otherwise proceed by clicking the button.', 'simple-stack' ), $product_name ) ); ?></p>
+				<p><span class="sstk-button-wizard-primary"><?php _e( '<a href="' . admin_url( 'index.php?page=sstk-setup' ) . '">Click here To Get Started Now</a>', 'simple-stack' ); ?></span>
+					<span class="sstk-button-wizard-skip"><?php _e( '<a href="#" id="sstk-skip-wizard">Or skip this process</a>', 'simple-stack' ); ?>
+				</p>
+			</div>
 			<?php
 		}
 
@@ -130,15 +131,15 @@ class WPCD_Admin_Setup_Wizard {
 	 *
 	 * Action Hook: admin_enqueue_scripts.
 	 */
-	public function wpcd_setup_wizard_scripts() {
-		wp_enqueue_style( 'wpcd-admin-wizard-notice', wpcd_url . 'assets/css/wpcd-setup-wizard-notice.css', array(), wpcd_scripts_version );
-		wp_enqueue_script( 'wpcd-admin-wizard-script', wpcd_url . 'assets/js/wpcd-setup-wizard.js', array( 'jquery' ), wpcd_scripts_version, true );
+	public function sstk_setup_wizard_scripts() {
+		wp_enqueue_style( 'sstk-admin-wizard-notice', SSTK_URL . 'assets/css/sstk-setup-wizard-notice.css', array(), SSTK_SCRIPTS_VERSION );
+		wp_enqueue_script( 'sstk-admin-wizard-script', SSTK_URL . 'assets/js/sstk-setup-wizard.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, true );
 		wp_localize_script(
-			'wpcd-admin-wizard-script',
-			'WPCD_Wizard',
+			'sstk-admin-wizard-script',
+			'SSTK_Wizard',
 			array(
 				'ajax_url'   => admin_url( 'admin-ajax.php' ),
-				'about_page' => admin_url( 'edit.php?post_type=wpcd_app_server' ),
+				'about_page' => admin_url( 'edit.php?post_type=sstk_app_server' ),
 			)
 		);
 	}
@@ -150,8 +151,8 @@ class WPCD_Admin_Setup_Wizard {
 	 *
 	 * @return void.
 	 */
-	public function wpcd_skip_wizard_setup() {
-		add_option( 'wpcd_skip_wizard_setup', true );
+	public function sstk_skip_wizard_setup() {
+		add_option( 'sstk_skip_wizard_setup', true );
 		wp_die();
 	}
 
@@ -160,41 +161,41 @@ class WPCD_Admin_Setup_Wizard {
 	 * Show the setup wizard.
 	 */
 	public function setup_wizard() {
-		if ( empty( $_GET['page'] ) || 'wpcd-setup' !== $_GET['page'] ) { // WPCS: CSRF ok, input var ok.
+		if ( empty( $_GET['page'] ) || 'sstk-setup' !== $_GET['page'] ) { // WPCS: CSRF ok, input var ok.
 			return;
 		}
 		$default_steps = array(
 			'general_setup'       => array(
-				'name'    => __( 'General', 'wpcd' ),
-				'view'    => array( $this, 'wpcd_general_setup' ),
-				'handler' => array( $this, 'wpcd_general_setup_save' ),
+				'name'    => __( 'General', 'simple-stack' ),
+				'view'    => array( $this, 'sstk_general_setup' ),
+				'handler' => array( $this, 'sstk_general_setup_save' ),
 			),
 			'select_provier'      => array(
-				'name'    => __( 'Select Your Server Provider', 'wpcd' ),
-				'view'    => array( $this, 'wpcd_select_provider' ),
-				'handler' => array( $this, 'wpcd_select_provider_save' ),
+				'name'    => __( 'Select Your Server Provider', 'simple-stack' ),
+				'view'    => array( $this, 'sstk_select_provider' ),
+				'handler' => array( $this, 'sstk_select_provider_save' ),
 			),
 			'connect_to_provider' => array(
-				'name'    => __( 'Connect To Provider', 'wpcd' ),
-				'view'    => array( $this, 'wpcd_connect_to_provider' ),
-				'handler' => array( $this, 'wpcd_connect_to_provider_save' ),
+				'name'    => __( 'Connect To Provider', 'simple-stack' ),
+				'view'    => array( $this, 'sstk_connect_to_provider' ),
+				'handler' => array( $this, 'sstk_connect_to_provider_save' ),
 			),
 			'create_ssh_keys'     => array(
-				'name'    => __( 'Create SSH Keys', 'wpcd' ),
-				'view'    => array( $this, 'wpcd_create_ssh_keys' ),
-				'handler' => array( $this, 'wpcd_create_ssh_keys_save' ),
+				'name'    => __( 'Create SSH Keys', 'simple-stack' ),
+				'view'    => array( $this, 'sstk_create_ssh_keys' ),
+				'handler' => array( $this, 'sstk_create_ssh_keys_save' ),
 			),
 			'lets_go'             => array(
-				'name'    => __( 'Ready', 'wpcd' ),
-				'view'    => array( $this, 'wpcd_setup_lets_go' ),
-				'handler' => array( $this, 'wpcd_setup_lets_go_save' ),
+				'name'    => __( 'Ready', 'simple-stack' ),
+				'view'    => array( $this, 'sstk_setup_lets_go' ),
+				'handler' => array( $this, 'sstk_setup_lets_go_save' ),
 			),
 		);
 
 		// Load styles and scripts.
-		wp_enqueue_style( 'wpcd-common-admin', wpcd_url . 'assets/css/wpcd-setup-wizard.css', array(), wpcd_scripts_version );
-		wp_enqueue_script( 'wpcd-admin-script', wpcd_url . 'assets/js/wpcd-setup-wizard-support.js', array( 'jquery' ), wpcd_scripts_version, true );
-		wp_enqueue_script( 'wpcd-setup', wpcd_url . 'assets/js/wpcd-setup-wizard-support.js', array( 'jquery', 'wp-util' ), wpcd_scripts_version, true );
+		wp_enqueue_style( 'sstk-common-admin', SSTK_URL . 'assets/css/sstk-setup-wizard.css', array(), SSTK_SCRIPTS_VERSION );
+		wp_enqueue_script( 'sstk-admin-script', SSTK_URL . 'assets/js/sstk-setup-wizard-support.js', array( 'jquery' ), SSTK_SCRIPTS_VERSION, true );
+		wp_enqueue_script( 'sstk-setup', SSTK_URL . 'assets/js/sstk-setup-wizard-support.js', array( 'jquery', 'wp-util' ), SSTK_SCRIPTS_VERSION, true );
 
 		// What is the next step?
 		$this->steps = apply_filters( 'as_setup_wizard_steps', $default_steps );
@@ -217,21 +218,21 @@ class WPCD_Admin_Setup_Wizard {
 	 * Setup Wizard Header.
 	 */
 	public function setup_wizard_header() {
-		$product_name = wpcd_get_short_product_name();
+		$product_name = sstk_get_short_product_name();
 		?>
 		<!DOCTYPE html>
 		<html <?php language_attributes(); ?>>
 		<head>
 			<meta name="viewport" content="width=device-width" />
 			<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-			<title><?php esc_html_e( sprintf( __( '%s &rsaquo; Setup Wizard', 'wpcd' ), $product_name ) ); ?></title>
-			<?php wp_print_scripts( 'wpcd-setup' ); ?>
+			<title><?php esc_html_e( sprintf( __( '%s &rsaquo; Setup Wizard', 'simple-stack' ), $product_name ) ); ?></title>
+			<?php wp_print_scripts( 'sstk-setup' ); ?>
 			<?php do_action( 'admin_print_styles' ); ?>
 			<?php do_action( 'admin_head' ); ?>
 		</head>
-		<body class="wpcd-setup wp-core-ui">
-			<div class="wpcd-setup-wizard">
-			<h1 id="wpcd-logo"><a href="https://wpclouddeploy.com/"><?php esc_html_e( sprintf( __( '%s', 'wpcd' ), $product_name ) ); ?></a></h1>
+		<body class="sstk-setup wp-core-ui">
+			<div class="sstk-setup-wizard">
+			<h1 id="sstk-logo"><a href="https://github.com/onedogsolutions/simple-stack/"><?php esc_html_e( sprintf( __( '%s', 'simple-stack' ), $product_name ) ); ?></a></h1>
 		<?php
 	}
 
@@ -242,7 +243,7 @@ class WPCD_Admin_Setup_Wizard {
 	public function setup_wizard_steps() {
 		$output_steps = $this->steps;
 		?>
-		<ol class="wpcd-setup-steps">
+		<ol class="sstk-setup-steps">
 			<?php foreach ( $output_steps as $step_key => $step ) : ?>
 				<?php
 					/**
@@ -270,11 +271,11 @@ class WPCD_Admin_Setup_Wizard {
 	 * Output the content for the current step.
 	 */
 	public function setup_wizard_content() {
-		echo '<div class="wpcd-setup-content">';
+		echo '<div class="sstk-setup-content">';
 		/*
 		printf(
 			'<p class="sub-heading">%s</p>',
-			__( 'Welcome to Awesome Support! This setup wizard will help you to quickly configure your new support system so that you can start processing customer requests right away.  So lets get started with our first question!', 'wpcd' )
+			__( 'Welcome to Awesome Support! This setup wizard will help you to quickly configure your new support system so that you can start processing customer requests right away.  So lets get started with our first question!', 'simple-stack' )
 		);
 		*/
 		if ( ! empty( $this->steps[ $this->step ]['view'] ) ) {
@@ -291,14 +292,14 @@ class WPCD_Admin_Setup_Wizard {
 	public function setup_wizard_footer() {
 		$about_us_link = add_query_arg(
 			array(
-				'post_type' => 'wpcd_app_server',
-				'page'      => 'wpcd_settings#tab-cloud-provider',
+				'post_type' => 'sstk_app_server',
+				'page'      => 'sstk_settings#tab-cloud-provider',
 			),
 			admin_url( 'edit.php' )
 		)
 		?>
 		<?php if ( 'lets_go' !== $this->step ) : ?>
-			<a class="not-now" href="<?php echo esc_url( $about_us_link ); ?>"><?php esc_html_e( 'Not right now', 'wpcd' ); ?></a>
+			<a class="not-now" href="<?php echo esc_url( $about_us_link ); ?>"><?php esc_html_e( 'Not right now', 'simple-stack' ); ?></a>
 		<?php endif; ?>
 				</div><!-- .setup-wizard -->
 			</body>
@@ -309,43 +310,35 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * General Setup
 	 */
-	public function wpcd_general_setup() {
-		// Heading.
-		/*
-		printf(
-			'<p class="sub-heading">%s</p>',
-			esc_html_e( 'Welcome to WPCloudDeploy! This setup wizard will help you get the basics configured and connected to your DigitalOcean account.', 'wpcd' )
-		);
-		*/
-
-		$product_name = wpcd_get_short_product_name();
+	public function sstk_general_setup() {
+		$product_name = sstk_get_short_product_name();
 
 		?>
 		<form method="post">
-			<p><b><?php esc_html_e( sprintf( __( 'Welcome to %s!', 'wpcd' ), $product_name ) ); ?> </b></p>	
-			<p><?php esc_html_e( 'This setup wizard will help you get the basics configured and connected to your Cloud Server account', 'wpcd' ); ?> </p>	
-			<p><b><?php esc_html_e( 'Encryption Key', 'wpcd' ); ?> </b></p>			
+			<p><b><?php esc_html_e( sprintf( __( 'Welcome to %s!', 'simple-stack' ), $product_name ) ); ?> </b></p>
+			<p><?php esc_html_e( 'This setup wizard will help you configure Simple Stack and connect your cloud provider account.', 'simple-stack' ); ?> </p>
+			<p><b><?php esc_html_e( 'Encryption Key', 'simple-stack' ); ?> </b></p>
 			<?php
-			// See if wpcd encryption key is defined.
-			if ( ! DEFINED( 'WPCD_ENCRYPTION_KEY' ) ) {
+			// See if sstk encryption key is defined.
+			if ( ! DEFINED( 'SSTK_ENCRYPTION_KEY' ) ) {
 				?>
-				<p><?php esc_html_e( 'Setting up an encryption key in your wp-config.php file helps to protect your sensitive data such as your API keys and SSH keys.', 'wpcd' ); ?> </p>
-				<p><?php esc_html_e( 'We strongly recommend that you set this up now. If you set it up later, you will need to re-enter your sensitive data (api keys etc.)', 'wpcd' ); ?> </p>
-				<p><b><?php esc_html_e( 'Please use your sFTP client to add the WPCD_ENCRYPTION_KEY constant into your wp-config.php file.', 'wpcd' ); ?> </b></p>
-				<p><pre><?php esc_html_e( "define( 'WPCD_ENCRYPTION_KEY', 'your very long encryption key goes here' );", 'wpcd' ); ?> </pre></p>
-				<p><?php esc_html_e( 'Click the continue button when this task is completed. You will not be able to move on to the next step until this task is completed.', 'wpcd' ); ?> </p>
+				<p><?php esc_html_e( 'Setting up an encryption key in your wp-config.php file helps to protect your sensitive data such as your API keys and SSH keys.', 'simple-stack' ); ?> </p>
+				<p><?php esc_html_e( 'We strongly recommend that you set this up now. If you set it up later, you will need to re-enter your sensitive data (api keys etc.)', 'simple-stack' ); ?> </p>
+				<p><b><?php esc_html_e( 'Please use your sFTP client to add the SSTK_ENCRYPTION_KEY constant into your wp-config.php file.', 'simple-stack' ); ?> </b></p>
+				<p><pre><?php esc_html_e( "define( 'SSTK_ENCRYPTION_KEY', 'your very long encryption key goes here' );", 'simple-stack' ); ?> </pre></p>
+				<p><?php esc_html_e( 'Click the continue button when this task is completed. You will not be able to move on to the next step until this task is completed.', 'simple-stack' ); ?> </p>
 				<?php
 
 			} else {
 				?>
-				<p><?php esc_html_e( 'Sweet! Your WPCD_ENCRYPTION_KEY constant is defined. You can continue to the next step.', 'wpcd' ); ?> </p>
-				<p><?php esc_html_e( 'Please click the CONTINUE button below.', 'wpcd' ); ?> </p>
+				<p><?php esc_html_e( 'Sweet! Your SSTK_ENCRYPTION_KEY constant is defined. You can continue to the next step.', 'simple-stack' ); ?> </p>
+				<p><?php esc_html_e( 'Please click the CONTINUE button below.', 'simple-stack' ); ?> </p>
 				<?php
 			}
 			?>
 
 			<input type="submit" name="save_step" value="Continue">
-			<?php wp_nonce_field( 'wpcd-setup' ); ?>
+			<?php wp_nonce_field( 'sstk-setup' ); ?>
 		</form>
 		<?php
 	}
@@ -353,9 +346,9 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * General Setup Save
 	 */
-	public function wpcd_general_setup_save() {
-		check_admin_referer( 'wpcd-setup' );
-		if ( ! DEFINED( 'WPCD_ENCRYPTION_KEY' ) ) {
+	public function sstk_general_setup_save() {
+		check_admin_referer( 'sstk-setup' );
+		if ( ! DEFINED( 'SSTK_ENCRYPTION_KEY' ) ) {
 			// Do not move on from the wizard since the encryption key is not defined in wp-config.php.
 			wp_safe_redirect( esc_url_raw( $this->get_this_step_link() ) );
 			exit;
@@ -368,29 +361,21 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * Select Provider setup view.
 	 */
-	public function wpcd_select_provider() {
+	public function sstk_select_provider() {
 
-		/*
-		 * Offer exactly the providers the registry knows about, minus any the wizard has no
-		 * steps for.  The registry carries the Digital Ocean default-disabled decision, so
-		 * this list cannot drift from what get_provider_api() is able to instantiate.
-		 */
+		// Offer only registered providers whose API class is available in this build.
 		$providers = array();
-		foreach ( WPCD()->get_cloud_providers() as $slug => $label ) {
-			/* Custom servers do not have provider credentials to collect. */
-			if ( 'custom-server' === $slug ) {
-				continue;
-			}
-			if ( ! empty( WPCD()->get_provider_api( $slug ) ) ) {
+		foreach ( SSTK()->get_cloud_providers() as $slug => $label ) {
+			if ( ! empty( SSTK()->get_provider_api( $slug ) ) ) {
 				$providers[ $slug ] = $label;
 			}
 		}
 
 		?>
 		<form method="post">
-			<p><b><?php esc_html_e( 'Please Select Your Cloud Server Provider', 'wpcd' ); ?> </b></p>
-			<p><?php esc_html_e( 'If you do not see your Cloud Server provider in the list below, please make sure you have uploaded and/or activated the provider plugin.', 'wpcd' ); ?> </p>
-			<label for="selected-provider"><?php esc_html_e( 'Choose a provider:', 'wpcd' ); ?></label>
+			<p><b><?php esc_html_e( 'Please Select Your Cloud Server Provider', 'simple-stack' ); ?> </b></p>
+			<p><?php esc_html_e( 'If you do not see your Cloud Server provider in the list below, please make sure you have uploaded and/or activated the provider plugin.', 'simple-stack' ); ?> </p>
+			<label for="selected-provider"><?php esc_html_e( 'Choose a provider:', 'simple-stack' ); ?></label>
 			<select style="min-width: 200px;" type="text" name="selected-provider">
 			<?php
 			foreach ( $providers as $provider => $name ) {
@@ -409,7 +394,7 @@ class WPCD_Admin_Setup_Wizard {
 				<?php
 			}
 
-			wp_nonce_field( 'wpcd-select-provider' );
+			wp_nonce_field( 'sstk-select-provider' );
 			?>
 		</form>
 		<?php
@@ -418,20 +403,26 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * Save Selected Provider.
 	 */
-	public function wpcd_select_provider_save() {
-		check_admin_referer( 'wpcd-select-provider' );
+	public function sstk_select_provider_save() {
+		check_admin_referer( 'sstk-select-provider' );
 
 		// Extract the token from the _POST global var.
 		$selected_provider = sanitize_text_field( FILTER_INPUT( INPUT_POST, 'selected-provider', FILTER_DEFAULT ) );
 
 		// Empty key?  Stay on the current step.
 		if ( empty( $selected_provider ) ) {
-			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please select a provider.', 'wpcd' ) ), $this->get_this_step_link() ) ) );
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please select a provider.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
 			exit;
 		}
 
-		// Otherwise, save the selected provider in a transient for later use.
-		update_option( 'wpcd_setup_wizard_selected_provider', $selected_provider );
+		// Reject providers that are not registered in this build.
+		if ( ! array_key_exists( $selected_provider, SSTK()->get_cloud_providers() ) ) {
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please select a supported provider.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
+			exit;
+		}
+
+		// Otherwise, save the selected provider for later use.
+		update_option( 'sstk_setup_wizard_selected_provider', $selected_provider );
 
 		// Go to next step.
 		wp_safe_redirect( esc_url_raw( $this->get_next_step_link() ) );
@@ -442,28 +433,28 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * Connect To Provider setup view.
 	 */
-	public function wpcd_connect_to_provider() {
+	public function sstk_connect_to_provider() {
 
 		// Get provider from saved option.
-		$provider = $this->wpcd_get_selected_provider();
+		$provider = $this->sstk_get_selected_provider();
 
-		// If no provider, exit - the error message would have been displayed by the call to wpcd_get_selected_provider().
+		// If no provider, exit - the error message would have been displayed by the call to sstk_get_selected_provider().
 		if ( empty( $provider ) ) {
 			exit;
 		}
 
 		?>
 		<form method="post">
-			<?php $this->wpcd_api_token_instructions( $provider ); ?>
+			<?php $this->sstk_api_token_instructions( $provider ); ?>
 
 			<?php // Ask for the api key only if the provider is not upcloud - UPCLOUD only needs a user id and password. ?>
 			<?php if ( 'upcloud' !== $provider ) { ?>
-				<b><label for="api-token"><?php esc_html_e( 'Enter Your API Key or Token:', 'wpcd' ); ?></label></b>
-				<input type="text" name="api-token" size="100" />
+				<b><label for="api-token"><?php esc_html_e( 'Enter Your API Key or Token:', 'simple-stack' ); ?></label></b>
+				<input type="password" name="api-token" size="100" autocomplete="off" />
 				<br /><br />
 			<?php } ?>
 
-			<?php $this->wpcd_get_other_provider_fields( $provider ); ?>
+			<?php $this->sstk_get_other_provider_fields( $provider ); ?>
 
 			<?php
 			echo '<input type="submit" name="save_step" value="Continue">';
@@ -475,7 +466,7 @@ class WPCD_Admin_Setup_Wizard {
 				<?php
 			}
 
-			wp_nonce_field( 'wpcd-setup-connect-to-provider' );
+			wp_nonce_field( 'sstk-setup-connect-to-provider' );
 			?>
 		</form>
 		<?php
@@ -486,14 +477,14 @@ class WPCD_Admin_Setup_Wizard {
 	 *
 	 * Echo an error to the screen if there's a problem.
 	 */
-	public function wpcd_get_selected_provider() {
+	public function sstk_get_selected_provider() {
 
 		// Get provider from saved option.
-		$provider = get_option( 'wpcd_setup_wizard_selected_provider' );
+		$provider = get_option( 'sstk_setup_wizard_selected_provider' );
 
 		// If not provider, throw error and exit.
 		if ( empty( $provider ) ) {
-			$error_msg = __( 'We are unable to read the provider from the database. Please exit this wizard and contact our technical support team.', 'wpcd' );
+			$error_msg = __( 'We are unable to read the provider from the database. Please exit this wizard and contact our technical support team.', 'simple-stack' );
 			?>
 			<p style="color:red;"><?php esc_html_e( $error_msg ); ?></p>
 			<?php
@@ -508,54 +499,22 @@ class WPCD_Admin_Setup_Wizard {
 	 *
 	 * @param string $provider The provider slug.
 	 */
-	public function wpcd_api_token_instructions( $provider ) {
+	public function sstk_api_token_instructions( $provider ) {
 
 		switch ( $provider ) {
-			case 'digital-ocean':
-				?>
-				<p><b><?php esc_html_e( 'Connect To Your Digital Ocean Account', 'wpcd' ); ?> </b></p>
-				<p><?php esc_html_e( 'Create an API TOKEN at Digital Ocean and enter it below.', 'wpcd' ); ?> </p>
-				<p><?php esc_html_e( 'You can create a token by navigating to: https://cloud.digitalocean.com/account/api.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'There you can click the GENERATE NEW TOKEN button and follow the instructions.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'Please make sure that you assign WRITE permissions and that you select a long-running expiration date.', 'wpcd' ); ?></p>			
-				<?php
-				break;
-
-			case 'linode':
-				?>
-				<p><b><?php esc_html_e( 'Connect To Your Linode Account', 'wpcd' ); ?> </b></p>
-				<p><?php esc_html_e( 'Create an API TOKEN at LINODE and enter it below.', 'wpcd' ); ?> </p>
-				<p><?php esc_html_e( 'You can create a token by navigating to: https://cloud.linode.com/profile/tokens.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'There you can click the CREATE A PERSONAL ACCESS TOKEN button and follow the instructions.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'Please make sure that you assign all READ/WRITE permissions and select a long-running expiration date.', 'wpcd' ); ?></p>			
-				<?php
-				break;
-
-			case 'hetzner':
-				?>
-				<p><b><?php esc_html_e( 'Connect To Your Hetzner Account', 'wpcd' ); ?> </b></p>
-				<p><?php esc_html_e( 'Get your API token from your Hetzner console and enter it below.', 'wpcd' ); ?> </p>
-				<p><?php esc_html_e( 'You can get the api token by navigating to: https://console.hetzner.cloud/projects/<<YOURPROJECTID>>/security/tokens.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( '(Replace the <<YOURPROJECT>> placeholder in the URL above with your Hetzner project id.).', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'There you can click the GENERATE API TOKEN button and follow the instructions.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'Please make sure that you assign both READ & WRITE permissions!', 'wpcd' ); ?></p>			
-				<?php
-				break;
-
 			case 'upcloud':
 				?>
-				<p><b><?php esc_html_e( 'Connect To Your UpCloud Account', 'wpcd' ); ?> </b></p>
+				<p><b><?php esc_html_e( 'Connect To Your UpCloud Account', 'simple-stack' ); ?> </b></p>
 				<?php
 				break;
 
 			case 'vultr-v2':
-			case 'vultr-v2-baremetal':
 				?>
-				<p><b><?php esc_html_e( 'Connect To Your Vultr Account', 'wpcd' ); ?> </b></p>
-				<p><?php esc_html_e( 'Get your API token from your VULTR console and enter it below.', 'wpcd' ); ?> </p>
-				<p><?php esc_html_e( 'You can get the api token by navigating to: https://my.vultr.com/settings/#settingsapi.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'Be sure to modify the ACCESS CONTROL section to allow this WordPress site\'s IP address.  Otherwise, creating Vultr servers will fail.', 'wpcd' ); ?></p>
-				<p><?php esc_html_e( 'The easiest thing to do is to allow ANY IPv4 and ANY IPv6. You can tighten them down later.', 'wpcd' ); ?></p>			
+				<p><b><?php esc_html_e( 'Connect To Your Vultr Account', 'simple-stack' ); ?> </b></p>
+				<p><?php esc_html_e( 'Get your API token from your VULTR console and enter it below.', 'simple-stack' ); ?> </p>
+				<p><?php esc_html_e( 'You can get the api token by navigating to: https://my.vultr.com/settings/#settingsapi.', 'simple-stack' ); ?></p>
+				<p><?php esc_html_e( 'Be sure to modify the ACCESS CONTROL section to allow this WordPress site\'s IP address. Otherwise, creating Vultr servers will fail.', 'simple-stack' ); ?></p>
+				<p><?php esc_html_e( 'The easiest thing to do is to allow ANY IPv4 and ANY IPv6. You can tighten them down later.', 'simple-stack' ); ?></p>
 				<?php
 				break;
 
@@ -564,185 +523,120 @@ class WPCD_Admin_Setup_Wizard {
 	}
 
 	/**
-	 * Get any other provider fields that might be needed.
-	 * For example, LINODE needs a user name.
+	 * Get provider-specific credential fields.
 	 *
 	 * @param string $provider The provider slug.
 	 */
-	public function wpcd_get_other_provider_fields( $provider ) {
+	public function sstk_get_other_provider_fields( $provider ) {
 
-		switch ( $provider ) {
-			case 'digital-ocean':
-				// Nothing needed.
-				break;
-
-			case 'linode':
-				?>
-				<b><label for="user-name"><?php esc_html_e( 'Enter Your Linode User Name:', 'wpcd' ); ?></label></b>
-				<input type="text" name="user-name" size="100" />
-				<br /><br />				
-				<?php
-				break;
-
-			case 'hetzner':
-				// Nothing needed.
-				break;
-
-			case 'upcloud':
-				?>
-				<b><label for="user-name"><?php esc_html_e( 'Enter Your Upcloud User Name:', 'wpcd' ); ?></label></b>
-				<input type="text" name="user-name" size="100" />
-				<br /><br />				
-				<b><label for="user-name"><?php esc_html_e( 'Enter Your Upcloud Password:', 'wpcd' ); ?></label></b>
-				<input type="text" name="user-password" size="100" />
-				<br /><br />								
-				<?php
-				break;
-
-			case 'vultr-v2':
-			case 'vultr-v2-baremetal':
-				// Nothing needed.
-				break;
-
+		if ( 'upcloud' !== $provider ) {
+			return;
 		}
 
+		?>
+		<b><label for="user-name"><?php esc_html_e( 'Enter Your UpCloud User Name:', 'simple-stack' ); ?></label></b>
+		<input type="text" name="user-name" size="100" autocomplete="username" />
+		<br /><br />
+		<b><label for="user-password"><?php esc_html_e( 'Enter Your UpCloud Password:', 'simple-stack' ); ?></label></b>
+		<input type="password" name="user-password" size="100" autocomplete="current-password" />
+		<br /><br />
+		<?php
 	}
 
 	/**
-	 * Save other provider fields.  For example Linode needs to get and save the user name.
+	 * Save provider-specific credential fields.
 	 *
 	 * @param string $provider The provider slug.
 	 */
-	public function wpcd_save_other_provider_fields( $provider ) {
+	public function sstk_save_other_provider_fields( $provider ) {
 
-		switch ( $provider ) {
-			case 'digital-ocean':
-				// Nothing needed.
-				break;
-
-			case 'linode':
-				// Extract the user name from the _POST global var.
-				$user_name = sanitize_text_field( FILTER_INPUT( INPUT_POST, 'user-name', FILTER_DEFAULT ) );
-
-				// Empty key?  Stay on the current step.
-				if ( empty( $user_name ) ) {
-					wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please provide the Linode user name.', 'wpcd' ) ), $this->get_this_step_link() ) ) );
-					exit;
-				}
-
-				// Otherwise, save it.
-				wpcd_set_option( "vpn_{$provider}_user_name", WPCD()->encrypt( $user_name ) );
-
-				break;
-
-			case 'upcloud':
-				// Extract the user name from the _POST global var.
-				$user_name = sanitize_text_field( FILTER_INPUT( INPUT_POST, 'user-name', FILTER_DEFAULT ) );
-
-				// Empty key?  Stay on the current step.
-				if ( empty( $user_name ) ) {
-					wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please provide your UpCloud user name.', 'wpcd' ) ), $this->get_this_step_link() ) ) );
-					exit;
-				}
-
-				// Otherwise, save it.
-				wpcd_set_option( "vpn_{$provider}_user_name", WPCD()->encrypt( $user_name ) );
-
-				// Extract the password from the _POST global var.
-				$password = sanitize_text_field( FILTER_INPUT( INPUT_POST, 'user-password', FILTER_DEFAULT ) );
-
-				// Empty password?  Stay on the current step.
-				if ( empty( $password ) ) {
-					wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please provide your UpCloud Password.', 'wpcd' ) ), $this->get_this_step_link() ) ) );
-					exit;
-				}
-
-				// Otherwise, save it.
-				wpcd_set_option( "vpn_{$provider}_user_password", WPCD()->encrypt( $password ) );
-
-				break;
-
-			case 'hetzner':
-				break;
-
-			case 'vultr-v2':
-			case 'vultr-v2-baremetal':
-				// Nothing needed.
-				break;
-
+		if ( 'upcloud' !== $provider ) {
+			return;
 		}
 
+		$user_name = sanitize_text_field( (string) FILTER_INPUT( INPUT_POST, 'user-name', FILTER_DEFAULT ) );
+		if ( empty( $user_name ) ) {
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please provide your UpCloud user name.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
+			exit;
+		}
+
+		sstk_set_option( "sstk_{$provider}_user_name", SSTK()->encrypt( $user_name ) );
+
+		$password = wp_unslash( (string) FILTER_INPUT( INPUT_POST, 'user-password', FILTER_UNSAFE_RAW ) );
+		if ( '' === $password ) {
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please provide your UpCloud password.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
+			exit;
+		}
+
+		sstk_set_option( "sstk_{$provider}_user_password", SSTK()->encrypt( $password ) );
 	}
 
 	/**
 	 * Connect To Provider setup on save.
 	 *
-	 * @NOTE: Portions of this code is a duplicate of what's in the wpcd_provider_test_provider_connection() function in file includes/core/class-wpcd-settings.php.
+	 * @NOTE: Portions of this code is a duplicate of what's in the sstk_provider_test_provider_connection() function in file includes/core/class-sstk-settings.php.
 	 */
-	public function wpcd_connect_to_provider_save() {
-		check_admin_referer( 'wpcd-setup-connect-to-provider' );
+	public function sstk_connect_to_provider_save() {
+		check_admin_referer( 'sstk-setup-connect-to-provider' );
 
-		// Get previously selected provider.
-		$provider = $this->wpcd_get_selected_provider();
-
-		// Extract the token from the _POST global var.
-		$api_key = sanitize_text_field( FILTER_INPUT( INPUT_POST, 'api-token', FILTER_DEFAULT ) );
-
-		// If the provider is upcloud, this value is going to be blank so set it to something random.
-		if ( 'upcloud' === $provider ) {
-			$api_key = 'no_value_needed';
-		}
-
-		// Empty key?  Stay on the current step.
-		if ( empty( $api_key ) ) {
-			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please provide the API Key/Token.', 'wpcd' ) ), $this->get_this_step_link() ) ) );
-			exit;
-		}
-
-		// If no provider, exit - the error message would have been displayed by the call to wpcd_get_selected_provider().
+		$provider = $this->sstk_get_selected_provider();
 		if ( empty( $provider ) ) {
 			exit;
 		}
 
-		// Save api key/token.
-		wpcd_set_option( "vpn_{$provider}_apikey", WPCD()->encrypt( $api_key ) );
-
-		// Get and save any other fields that are unique to the provider.
-		$this->wpcd_save_other_provider_fields( $provider );
-
-		// Now test connection.
-		// This code is a duplicate of what's in the wpcd_provider_test_provider_connection() function in file includes/core/class-wpcd-settings.php.
-		$transient_key = 'wpcd_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $api_key );
-		delete_transient( $transient_key );
-
-		// Call the test_connection function.
-		$attributes        = array();
-		$connection_status = WPCD()->get_provider_api( $provider )->call( 'test_connection', $attributes );
-		if ( ! is_wp_error( $connection_status ) && ! empty( $connection_status['test_status'] ) && true === (bool) $connection_status['test_status'] ) {
-			// Go to next step.
-			wp_safe_redirect( esc_url_raw( $this->get_next_step_link() ) );
-			exit;
-		} else {
-			// Stay on this step.
-			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'We were unable to connect to your server provider with this API key/token. Did you accidentally enter an extra space or character? Please re-enter it or try a different one.', 'wpcd' ) ), $this->get_this_step_link() ) ) );
+		if ( ! array_key_exists( $provider, SSTK()->get_cloud_providers() ) ) {
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please select a supported provider.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
 			exit;
 		}
 
+		if ( 'upcloud' === $provider ) {
+			$this->sstk_save_other_provider_fields( $provider );
+		} else {
+			$api_key = sanitize_text_field( (string) FILTER_INPUT( INPUT_POST, 'api-token', FILTER_DEFAULT ) );
+			if ( empty( $api_key ) ) {
+				wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'Please provide the API key or token.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
+				exit;
+			}
+
+			sstk_set_option( "sstk_{$provider}_apikey", SSTK()->encrypt( $api_key ) );
+		}
+
+		// Reload the provider so it reads the credentials saved above.
+		unset( SSTK()->classes[ 'sstk_api_provider_' . $provider ] );
+		$provider_api = SSTK()->get_provider_api( $provider );
+		if ( empty( $provider_api ) ) {
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'The selected provider is unavailable.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
+			exit;
+		}
+
+		$credential_fingerprint = $provider_api->get_credential_fingerprint();
+		$transient_key          = 'sstk_provider_connection_test_success_flag_' . $provider . hash( 'sha256', $credential_fingerprint );
+		delete_transient( $transient_key );
+
+		$connection_status = $provider_api->call( 'test_connection', array() );
+		if ( ! is_wp_error( $connection_status ) && ! empty( $connection_status['test_status'] ) && true === (bool) $connection_status['test_status'] ) {
+			set_transient( $transient_key, 'connection_successful', 86400 );
+			wp_safe_redirect( esc_url_raw( $this->get_next_step_link() ) );
+			exit;
+		}
+
+		wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'We were unable to connect to the selected provider. Check the credentials and try again.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
+		exit;
 	}
 
 	/**
 	 * Create SSH keys at cloud provider view.
 	 */
-	public function wpcd_create_ssh_keys() {
+	public function sstk_create_ssh_keys() {
 		?>
 		<form method="post">
-			<p><b><?php esc_html_e( 'Create SSH Keys', 'wpcd' ); ?> </b></p>
-			<p><?php esc_html_e( 'We use SSH keys, not passwords, to connect to your server.', 'wpcd' ); ?></p>
-			<p><?php esc_html_e( 'We will create a new ssh key-pair for you and submit the public portion to your server provider\'s account.', 'wpcd' ); ?></p>
-			<p><?php esc_html_e( 'Click the CONTINUE button below to do this now.', 'wpcd' ); ?></p>
-			<p><?php esc_html_e( 'If you prefer to use your own keys, you can cancel this assistant using the NOT RIGHT NOW button and enter your own keys in the SETTINGS area.', 'wpcd' ); ?></p>
+			<p><b><?php esc_html_e( 'Create SSH Keys', 'simple-stack' ); ?> </b></p>
+			<p><?php esc_html_e( 'We use SSH keys, not passwords, to connect to your server.', 'simple-stack' ); ?></p>
+			<p><?php esc_html_e( 'We will create a new ssh key-pair for you and submit the public portion to your server provider\'s account.', 'simple-stack' ); ?></p>
+			<p><?php esc_html_e( 'Click the CONTINUE button below to do this now.', 'simple-stack' ); ?></p>
+			<p><?php esc_html_e( 'If you prefer to use your own keys, you can cancel this assistant using the NOT RIGHT NOW button and enter your own keys in the SETTINGS area.', 'simple-stack' ); ?></p>
 			<input type="submit" name="save_step" value="Continue">
-			<?php wp_nonce_field( 'wpcd-ssh-keys' ); ?>
+			<?php wp_nonce_field( 'sstk-ssh-keys' ); ?>
 		</form>
 		<?php
 	}
@@ -750,45 +644,45 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * Create SSH keys at cloud provider on save.
 	 *
-	 * @NOTE: Portions of this code is a duplicate of what's in the wpcd_provider_auto_create_ssh_key() function in file includes/core/class-wpcd-settings.php.
+	 * @NOTE: Portions of this code is a duplicate of what's in the sstk_provider_auto_create_ssh_key() function in file includes/core/class-sstk-settings.php.
 	 */
-	public function wpcd_create_ssh_keys_save() {
-		check_admin_referer( 'wpcd-ssh-keys' );
+	public function sstk_create_ssh_keys_save() {
+		check_admin_referer( 'sstk-ssh-keys' );
 
 		// Get previously selected provider.
-		$provider = $this->wpcd_get_selected_provider();
+		$provider = $this->sstk_get_selected_provider();
 
-		// If no provider, exit - the error message would have been displayed by the call to wpcd_get_selected_provider().
+		// If no provider, exit - the error message would have been displayed by the call to sstk_get_selected_provider().
 		if ( empty( $provider ) ) {
 			exit;
 		}
 
 		// Create key.
-		$key_pair                      = WPCD_WORDPRESS_APP()->ssh()->create_key_pair();
+		$key_pair                      = SSTK_WORDPRESS_APP()->ssh()->create_key_pair();
 		$attributes                    = array();
 		$attributes['public_key']      = $key_pair['public'];
-		$attributes['public_key_name'] = 'WPCD_AUTO_CREATE_' . wpcd_random_str( 10, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' );
+		$attributes['public_key_name'] = 'SSTK_AUTO_CREATE_' . sstk_random_str( 10, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' );
 
 		// Call the ssh_create function.
-		$key_id = WPCD()->get_provider_api( $provider )->call( 'ssh_create', $attributes );
+		$key_id = SSTK()->get_provider_api( $provider )->call( 'ssh_create', $attributes );
 
 		if ( is_array( $key_id ) && ( ! is_wp_error( $key_id ) ) && ( $key_id ) && ( ! empty( $key_id['ssh_key_id'] ) ) ) {
 
 			// Ok, we got this far. Save to our options array.
-			wpcd_set_option( "vpn_{$provider}_sshkey_id", $key_id['ssh_key_id'] );
-			wpcd_set_option( "vpn_{$provider}_sshkey", WPCD()->encrypt( $key_pair['private'] ) );
-			wpcd_set_option( "vpn_{$provider}_public_sshkey", $key_pair['public'] );
-			wpcd_set_option( "vpn_{$provider}_sshkeynotes", $attributes['public_key_name'] . ': ' . __( 'This key was automatically created.', 'wpcd' ) );
+			sstk_set_option( "sstk_{$provider}_sshkey_id", $key_id['ssh_key_id'] );
+			sstk_set_option( "sstk_{$provider}_sshkey", SSTK()->encrypt( $key_pair['private'] ) );
+			sstk_set_option( "sstk_{$provider}_public_sshkey", $key_pair['public'] );
+			sstk_set_option( "sstk_{$provider}_sshkeynotes", $attributes['public_key_name'] . ': ' . __( 'This key was automatically created.', 'simple-stack' ) );
 
 			// Clear caches so the settings screen will have a new list of ssh keys.
-			WPCD()->get_provider_api( $provider )->clear_cache();
+			SSTK()->get_provider_api( $provider )->clear_cache();
 
 			wp_safe_redirect( esc_url_raw( $this->get_next_step_link() ) );
 			exit;
 
 		} else {
 			// Stay on this step.
-			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'It looks like we were unable to create the key for you. You can try again or cancel this wizard and setup your own pair in the settings area.', 'wpcd' ) ), $this->get_this_step_link() ) ) );
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'error_msg' => __( 'It looks like we were unable to create the key for you. You can try again or cancel this wizard and setup your own pair in the settings area.', 'simple-stack' ) ), $this->get_this_step_link() ) ) );
 			exit;
 		}
 	}
@@ -796,19 +690,19 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * Lets Go page view for think you message and all.
 	 */
-	public function wpcd_setup_lets_go() {
-		$product_name = wpcd_get_short_product_name();
+	public function sstk_setup_lets_go() {
+		$product_name = sstk_get_short_product_name();
 		?>
 		<form method="post">
-			<p><b><?php esc_html_e( sprintf( __( '%s is all set up and ready to go!', 'wpcd' ), $product_name ) ); ?></b></p>
-			<p><?php esc_html_e( 'You should now be able to create your first server at your provider.', 'wpcd' ); ?></p>
+			<p><b><?php esc_html_e( sprintf( __( '%s is all set up and ready to go!', 'simple-stack' ), $product_name ) ); ?></b></p>
+			<p><?php esc_html_e( 'You should now be able to create your first server at your provider.', 'simple-stack' ); ?></p>
 			<p>
 			<?php
-			echo sprintf( __( 'You can go to the server list and use the DEPLOY A NEW WORDPRESS SERVER button at the top of the screen to create your first server.  Or <b><u><a %s>View The Documentation</a></b></u>.', 'wpcd' ), 'href="https://wpclouddeploy.com/doc-landing/" target="_blank" ' );
+			echo sprintf( __( 'You can go to the server list and use the DEPLOY A NEW WORDPRESS SERVER button at the top of the screen to create your first server.  Or <b><u><a %s>View The Documentation</a></b></u>.', 'simple-stack' ), 'href="https://github.com/onedogsolutions/simple-stack/blob/main/README.md" target="_blank" ' );
 			?>
 			</p>
 			<input type="submit" name="save_step" value="Create First Server">
-			<?php wp_nonce_field( 'wpcd-setup-complete' ); ?>
+			<?php wp_nonce_field( 'sstk-setup-complete' ); ?>
 		</form>
 		<?php
 	}
@@ -816,13 +710,13 @@ class WPCD_Admin_Setup_Wizard {
 	/**
 	 * Lets Go button click
 	 */
-	public function wpcd_setup_lets_go_save() {
-		check_admin_referer( 'wpcd-setup-complete' );
-		add_option( 'wpcd_plugin_setup', true );  // Prevents the wizard from showing on the screen.
+	public function sstk_setup_lets_go_save() {
+		check_admin_referer( 'sstk-setup-complete' );
+		add_option( 'sstk_plugin_setup', true );  // Prevents the wizard from showing on the screen.
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'post_type' => 'wpcd_app_server',
+					'post_type' => 'sstk_app_server',
 				),
 				admin_url( 'edit.php' )
 			)
@@ -889,4 +783,4 @@ class WPCD_Admin_Setup_Wizard {
 	}
 
 }
-new WPCD_Admin_Setup_Wizard();
+new SSTK_Admin_Setup_Wizard();

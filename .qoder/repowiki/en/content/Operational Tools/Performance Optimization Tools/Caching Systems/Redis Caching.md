@@ -28,14 +28,14 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains how SimpleStack provisions, configures, and manages Redis caching for WordPress sites. It covers:
+This document explains how Simple Stack provisions, configures, and manages Redis caching for WordPress sites. It covers:
 - Installing Redis on the server
 - Enabling/disabling Redis per site
 - Integrating with WordPress object caching via LiteSpeed Cache or the Redis Object Cache plugin
 - Monitoring and maintenance tasks
 - Operational notes for replication, persistence, and backups as implemented by the repository scripts
 
-SimpleStack installs OpenLiteSpeed, PHP, MariaDB, Redis, certbot, firewall rules, and an OLS vhost, driven by shell scripts executed over SSH. The stack is managed from within the WordPress admin dashboard.
+Simple Stack installs OpenLiteSpeed, PHP, MariaDB, Redis, certbot, firewall rules, and an OLS vhost, driven by shell scripts executed over SSH. The stack is managed from within the WordPress admin dashboard.
 
 **Section sources**
 - [README.md:11-20](file://README.md#L11-L20)
@@ -53,7 +53,7 @@ A["Site Cache Tab<br/>Toggle Redis"]
 B["Server Services Tab<br/>Redis Status"]
 end
 subgraph "PHP Orchestration"
-C["WPCD_WORDPRESS_APP<br/>Redis status helpers"]
+C["SSTK_WORDPRESS_APP<br/>Redis status helpers"]
 D["Pending Tasks / Actions"]
 end
 subgraph "Provisioning Scripts"
@@ -124,7 +124,7 @@ The following sequence shows enabling Redis for a new site when Redis is already
 sequenceDiagram
 participant Admin as "Admin User"
 participant WPUI as "WP Admin UI"
-participant PHP as "WPCD_WORDPRESS_APP"
+participant PHP as "SSTK_WORDPRESS_APP"
 participant Task as "Pending Tasks"
 participant Script as "manage_redis.txt"
 participant Raw as "raw/12-redis.txt"
@@ -379,7 +379,7 @@ Backup considerations:
 - [82-destination-site-sync.txt:38-49](file://includes/core/apps/wordpress-app/scripts/v1/raw/82-destination-site-sync.txt#L38-L49)
 
 ## Conclusion
-SimpleStack provides a complete, script-driven workflow to install Redis, integrate it with WordPress object caching, and manage it per site. The system uses OpenLiteSpeed’s LiteSpeed Cache for object caching on supported stacks, with fallback support for the Redis Object Cache plugin on nginx. State is tracked in WordPress post meta, and operations are orchestrated via pending tasks and Bash scripts. Monitoring is integrated via Monit, and backup/sync scripts include references to Redis handling.
+Simple Stack provides a complete, script-driven workflow to install Redis, integrate it with WordPress object caching, and manage it per site. The system uses OpenLiteSpeed’s LiteSpeed Cache for object caching on supported stacks, with fallback support for the Redis Object Cache plugin on nginx. State is tracked in WordPress post meta, and operations are orchestrated via pending tasks and Bash scripts. Monitoring is integrated via Monit, and backup/sync scripts include references to Redis handling.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

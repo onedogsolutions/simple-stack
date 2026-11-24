@@ -63,7 +63,7 @@ while [[ -z $domain ]]
 do
 	echo
 	echo "Please, select which site you want to work with"
-	gf_select_domain_nginx_ols
+	gf_select_domain_ols
 done
 
 gf_get_dbhost $domain

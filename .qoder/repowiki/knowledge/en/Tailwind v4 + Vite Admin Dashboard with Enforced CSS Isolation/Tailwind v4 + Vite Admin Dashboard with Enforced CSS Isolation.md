@@ -16,7 +16,7 @@ source_files:
 
 ## System Overview
 
-The SimpleStack admin dashboard is a React application styled exclusively with **Tailwind CSS v4** and built by **Vite**. It lives under `src/admin/` and is compiled into `assets/dist/`. The plugin also ships legacy jQuery-based assets under `assets/css/` and `assets/js/` for the older WPCD screens; those are separate from the new Tailwind-powered dashboard.
+The Simple Stack admin dashboard is a React application styled exclusively with **Tailwind CSS v4** and built by **Vite**. It lives under `src/admin/` and is compiled into `assets/dist/`. The plugin also ships legacy jQuery-based assets under `assets/css/` and `assets/js/` for the older SSTK screens; those are separate from the new Tailwind-powered dashboard.
 
 ## Build Pipeline
 
@@ -72,7 +72,7 @@ On failure the script prints every offending selector and exits non-zero.
 
 ## Legacy Assets
 
-Older WPCD screens still ship raw CSS under `assets/css/` (e.g. `wpcd-admin-settings.css`, `wpcd-app.css`, `wpcd-global.css`, `wpcd-setup-wizard.css`) and jQuery-based JS under `assets/js/`. These are independent of the Tailwind dashboard and are not processed by Vite/Tailwind.
+Older SSTK screens still ship raw CSS under `assets/css/` (e.g. `sstk-admin-settings.css`, `sstk-app.css`, `sstk-global.css`, `sstk-setup-wizard.css`) and jQuery-based JS under `assets/js/`. These are independent of the Tailwind dashboard and are not processed by Vite/Tailwind.
 
 ## Key Files
 

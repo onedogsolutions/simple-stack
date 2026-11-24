@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This file contains functions that spin up classes or declare globally accessible functions.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,41 +11,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Function for calling WPCD methods and variables
+ * Function for calling SSTK methods and variables
  *
- * @return WP_CLOUD_DEPLOY;
+ * @return SSTK_CORE;
  */
-function WPCD() {
-	return $GLOBALS['WP_CLOUD_DEPLOY'];  // No checking to see if it exists. If it doesn't we want to error out hard.
+function SSTK() {
+	return $GLOBALS['SSTK_CORE'];  // No checking to see if it exists. If it doesn't we want to error out hard.
 }
 
 /**
- * Create a class var for WPCD_Server and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_Server and
+ * add it to the SSTK array of classes for management
  *
- * The WPCD_Server class is used to handle all things
+ * The SSTK_Server class is used to handle all things
  * related to just server operations such as creation,
  * reboot, delete and so on.
  */
-add_action( 'init', 'wpcd_init_wpcd_server', -10, 1 );
-function wpcd_init_wpcd_server() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['WPCD_SERVER'] ) ) {
-			WPCD()->classes['WPCD_SERVER'] = new WPCD_Server();
+add_action( 'init', 'sstk_init_sstk_server', -10, 1 );
+function sstk_init_sstk_server() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( empty( SSTK()->classes['SSTK_SERVER'] ) ) {
+			SSTK()->classes['SSTK_SERVER'] = new SSTK_Server();
 		}
 	}
 }
 
 
 /**
- * Create a class var for WPCD_Settings and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_Settings and
+ * add it to the SSTK array of classes for management
  */
-add_action( 'init', 'wpcd_init_wpcd_settings', -10, 1 );
-function wpcd_init_wpcd_settings() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['WPCD_SETTINGS'] ) ) {
-			WPCD()->classes['WPCD_SETTINGS'] = new WPCD_Settings();
+add_action( 'init', 'sstk_init_sstk_settings', -10, 1 );
+function sstk_init_sstk_settings() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( empty( SSTK()->classes['SSTK_SETTINGS'] ) ) {
+			SSTK()->classes['SSTK_SETTINGS'] = new SSTK_Settings();
 		}
 	}
 }
@@ -53,49 +54,49 @@ function wpcd_init_wpcd_settings() {
 /**
  * Maybe setup classes for custom tables for DNS and PROVIDERS.
  */
-if ( true === wpcd_is_custom_dns_provider_tables_enabled() ) {
-	require_once 'custom-table/api/class-wpcd-custom-table-api.php';
-	require_once 'custom-table/api/class-wpcd-ct-provider-api.php';
-	require_once 'custom-table/api/class-wpcd-ct-dns-provider-api.php';
-	require_once 'custom-table/api/class-wpcd-ct-dns-zone-api.php';
-	require_once 'custom-table/api/class-wpcd-ct-dns-zone-record-api.php';
+if ( true === sstk_is_custom_dns_provider_tables_enabled() ) {
+	require_once 'custom-table/api/class-sstk-custom-table-api.php';
+	require_once 'custom-table/api/class-sstk-ct-provider-api.php';
+	require_once 'custom-table/api/class-sstk-ct-dns-provider-api.php';
+	require_once 'custom-table/api/class-sstk-ct-dns-zone-api.php';
+	require_once 'custom-table/api/class-sstk-ct-dns-zone-record-api.php';
 
-	require_once 'custom-table/class-wpcd-ct-list-table.php';
-	require_once 'custom-table/class-wpcd-ct-childs-list-table.php';
-	require_once 'custom-table/class-wpcd-custom-table.php';
-	require_once 'custom-table/class-wpcd-provider.php';
-	require_once 'custom-table/class-wpcd-dns-provider.php';
-	require_once 'custom-table/class-wpcd-dns-zone.php';
-	require_once 'custom-table/class-wpcd-dns-zone-record.php';
+	require_once 'custom-table/class-sstk-ct-list-table.php';
+	require_once 'custom-table/class-sstk-ct-childs-list-table.php';
+	require_once 'custom-table/class-sstk-custom-table.php';
+	require_once 'custom-table/class-sstk-provider.php';
+	require_once 'custom-table/class-sstk-dns-provider.php';
+	require_once 'custom-table/class-sstk-dns-zone.php';
+	require_once 'custom-table/class-sstk-dns-zone-record.php';
 
 
-	add_action( 'init', 'wpcd_init_wpcd_custom_table_classes', -10, 1 );
+	add_action( 'init', 'sstk_init_sstk_custom_table_classes', -10, 1 );
 
 
 	/**
 	 * Init custom table classes
 	 */
-	function wpcd_init_wpcd_custom_table_classes() {
+	function sstk_init_sstk_custom_table_classes() {
 
 		if ( ! function_exists( 'rwmb_request' ) ) {
 			return;
 		}
 
-		if ( function_exists( 'WPCD' ) ) {
-			if ( empty( WPCD()->classes['WPCD_PROVIDER_SETTINGS'] ) ) {
-				WPCD()->classes['WPCD_PROVIDER_SETTINGS'] = WPCD_MB_Custom_Table::get( 'provider' );
+		if ( function_exists( 'SSTK' ) ) {
+			if ( empty( SSTK()->classes['SSTK_PROVIDER_SETTINGS'] ) ) {
+				SSTK()->classes['SSTK_PROVIDER_SETTINGS'] = SSTK_MB_Custom_Table::get( 'provider' );
 			}
 
-			if ( empty( WPCD()->classes['WPCD_DNS_PROVIDER_SETTINGS'] ) ) {
-				WPCD()->classes['WPCD_DNS_PROVIDER_SETTINGS'] = WPCD_MB_Custom_Table::get( 'dns_provider' );
+			if ( empty( SSTK()->classes['SSTK_DNS_PROVIDER_SETTINGS'] ) ) {
+				SSTK()->classes['SSTK_DNS_PROVIDER_SETTINGS'] = SSTK_MB_Custom_Table::get( 'dns_provider' );
 			}
 
-			if ( empty( WPCD()->classes['WPCD_DNS_Zone'] ) ) {
-				WPCD()->classes['WPCD_DNS_Zone'] = WPCD_MB_Custom_Table::get( 'dns_zone' );
+			if ( empty( SSTK()->classes['SSTK_DNS_Zone'] ) ) {
+				SSTK()->classes['SSTK_DNS_Zone'] = SSTK_MB_Custom_Table::get( 'dns_zone' );
 			}
 
-			if ( empty( WPCD()->classes['WPCD_DNS_Zone_Record'] ) ) {
-				WPCD()->classes['WPCD_DNS_Zone_Record'] = WPCD_MB_Custom_Table::get( 'dns_zone_record' );
+			if ( empty( SSTK()->classes['SSTK_DNS_Zone_Record'] ) ) {
+				SSTK()->classes['SSTK_DNS_Zone_Record'] = SSTK_MB_Custom_Table::get( 'dns_zone_record' );
 			}
 		}
 	}
@@ -103,351 +104,326 @@ if ( true === wpcd_is_custom_dns_provider_tables_enabled() ) {
 
 
 /**
- * Create a class var for WPCD_Custom_Fields and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_Custom_Fields and
+ * add it to the SSTK array of classes for management
  */
-add_action( 'init', 'wpcd_init_wpcd_custom_fields', -10, 1 );
-function wpcd_init_wpcd_custom_fields() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['WPCD_CUSTOM_FIELDS'] ) ) {
-			WPCD()->classes['WPCD_CUSTOM_FIELDS'] = new WPCD_Custom_Fields();
+add_action( 'init', 'sstk_init_sstk_custom_fields', -10, 1 );
+function sstk_init_sstk_custom_fields() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( empty( SSTK()->classes['SSTK_CUSTOM_FIELDS'] ) ) {
+			SSTK()->classes['SSTK_CUSTOM_FIELDS'] = new SSTK_Custom_Fields();
 		}
 	}
 }
 
 /**
- * Function for calling WPCD_CUSTOM_FIELDS methods and variables
+ * Function for calling SSTK_CUSTOM_FIELDS methods and variables
  *
- * @return WPCD_CUSTOM_FIELDS;
+ * @return SSTK_CUSTOM_FIELDS;
  */
-function WPCD_CUSTOM_FIELDS() {
-	return WPCD()->classes['WPCD_CUSTOM_FIELDS'];
+function SSTK_CUSTOM_FIELDS() {
+	return SSTK()->classes['SSTK_CUSTOM_FIELDS'];
 }
 
 /**
- * Create a class var for WPCD_DNS and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_DNS and
+ * add it to the SSTK array of classes for management
  */
-add_action( 'init', 'wpcd_init_wpcd_dns', -10, 1 );
-function wpcd_init_wpcd_dns() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['WPCD_DNS'] ) ) {
-			WPCD()->classes['WPCD_DNS'] = new WPCD_DNS();
+add_action( 'init', 'sstk_init_sstk_dns', -10, 1 );
+function sstk_init_sstk_dns() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( empty( SSTK()->classes['SSTK_DNS'] ) ) {
+			SSTK()->classes['SSTK_DNS'] = new SSTK_DNS();
 		}
 	}
 }
 
 /**
- * Function for calling WPCD_DNS methods and variables
+ * Function for calling SSTK_DNS methods and variables
  *
- * @return WPCD_DNS;
+ * @return SSTK_DNS;
  */
-function WPCD_DNS() {
-	return WPCD()->classes['WPCD_DNS'];
+function SSTK_DNS() {
+	return SSTK()->classes['SSTK_DNS'];
 }
 
 /**
- * Create a class var for WPCD_WORDPRESS_APP and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_WORDPRESS_APP and
+ * add it to the SSTK array of classes for management
  *
  * This class handles all items related to the management
  * of the WORDPRESS_APP app.
  *
  * @TODO: This really shouldn't happen here.  Instead
  * we need a process to have apps register their main
- * classes with WPCD and go from there.
+ * classes with SSTK and go from there.
  */
-add_action( 'init', 'wpcd_init_wordpress_app', -10, 1 );
-function wpcd_init_wordpress_app() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( class_exists( 'WPCD_WORDPRESS_APP' ) ) {
-			if ( empty( WPCD()->classes['WPCD_WORDPRESS_APP'] ) ) {
-				WPCD()->classes['WPCD_WORDPRESS_APP'] = new WPCD_WORDPRESS_APP();
+add_action( 'init', 'sstk_init_wordpress_app', -10, 1 );
+function sstk_init_wordpress_app() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( class_exists( 'SSTK_WORDPRESS_APP' ) ) {
+			if ( empty( SSTK()->classes['SSTK_WORDPRESS_APP'] ) ) {
+				SSTK()->classes['SSTK_WORDPRESS_APP'] = new SSTK_WORDPRESS_APP();
 			}
 		}
 	}
 }
 
 /**
- * Function for calling WPCD_WORDPRESS_APP methods and variables
+ * Function for calling SSTK_WORDPRESS_APP methods and variables
  *
- * @return WPCD_WORDPRESS_APP;
+ * @return SSTK_WORDPRESS_APP;
  */
-function WPCD_WORDPRESS_APP() {
-	return WPCD()->classes['WPCD_WORDPRESS_APP'];
+function SSTK_WORDPRESS_APP() {
+	return SSTK()->classes['SSTK_WORDPRESS_APP'];
 }
 
 /**
- * Function for calling WPCD_Settings methods and variables
+ * Function for calling SSTK_Settings methods and variables
  *
- * @return WPCD_Settings;
+ * @return SSTK_Settings;
  */
-function WPCD_SETTINGS() {
-	return WPCD()->classes['WPCD_SETTINGS'];
+function SSTK_SETTINGS() {
+	return SSTK()->classes['SSTK_SETTINGS'];
 }
 
 /**
- * Function for calling WPCD_Server methods and variables
+ * Function for calling SSTK_Server methods and variables
  *
- * @return WPCD_Server;
+ * @return SSTK_Server;
  */
-function WPCD_SERVER() {
-	return WPCD()->classes['WPCD_SERVER'];
+function SSTK_SERVER() {
+	return SSTK()->classes['SSTK_SERVER'];
 }
 
 /**
- * Function for calling wpcd_posts_app_server methods and variables.
- * wpcd_posts_app_server is the class that manages the
- * wpcd_app_server CPT
+ * Function for calling sstk_posts_app_server methods and variables.
+ * sstk_posts_app_server is the class that manages the
+ * sstk_app_server CPT
  *
- * @return WPCD_POSTS_APP_SERVER;
+ * @return SSTK_POSTS_APP_SERVER;
  */
-function WPCD_POSTS_APP_SERVER() {
-	return WPCD()->classes['wpcd_posts_app_server'];
+function SSTK_POSTS_APP_SERVER() {
+	return SSTK()->classes['sstk_posts_app_server'];
 }
 
 /**
- * Function for calling wpcd_posts_cloud_provider methods and variables.
- * wpcd_posts_cloud_provider is the class that manages the
- * wpcd_cloud_provider CPT
+ * Function for calling sstk_posts_cloud_provider methods and variables.
+ * sstk_posts_cloud_provider is the class that manages the
+ * sstk_cloud_provider CPT
  *
- * @return WPCD_POSTS_CLOUD_PROVIDER;
+ * @return SSTK_POSTS_CLOUD_PROVIDER;
  */
-function WPCD_POSTS_CLOUD_PROVIDER() {
-	return WPCD()->classes['wpcd_posts_cloud_provider'];
+function SSTK_POSTS_CLOUD_PROVIDER() {
+	return SSTK()->classes['sstk_posts_cloud_provider'];
 }
 
 /**
- * Function for calling wpcd_posts_app methods and variables.
- * wpcd_posts_app is the class that manages the
- * wpcd_app CPT.
+ * Function for calling sstk_posts_app methods and variables.
+ * sstk_posts_app is the class that manages the
+ * sstk_app CPT.
  *
- * @return WPCD_POSTS_APP;
+ * @return SSTK_POSTS_APP;
  */
-function WPCD_POSTS_APP() {
-	return WPCD()->classes['wpcd_posts_app'];
+function SSTK_POSTS_APP() {
+	return SSTK()->classes['sstk_posts_app'];
 }
 
 /**
- * Function for calling wpcd_notify_log methods and variables.
- * wpcd_notify_log is the class that manages the
- * wpcd_notify_log CPT.
+ * Function for calling sstk_notify_log methods and variables.
+ * sstk_notify_log is the class that manages the
+ * sstk_notify_log CPT.
  *
- * @return WPCD_NOTIFY_LOG;
+ * @return SSTK_NOTIFY_LOG;
  */
-function WPCD_POSTS_NOTIFY_LOG() {
-	return WPCD()->classes['wpcd_posts_notify_log'];
+function SSTK_POSTS_NOTIFY_LOG() {
+	return SSTK()->classes['sstk_posts_notify_log'];
 }
 
 
 /**
- * Function for calling wpcd_notify_user methods and variables.
- * wpcd_notify_user is the class that manages the
- * wpcd_notify_user CPT.
+ * Function for calling sstk_notify_user methods and variables.
+ * sstk_notify_user is the class that manages the
+ * sstk_notify_user CPT.
  *
- * @return WPCD_NOTIFY_USER;
+ * @return SSTK_NOTIFY_USER;
  */
-function WPCD_POSTS_NOTIFY_USER() {
-	return WPCD()->classes['wpcd_posts_notify_user'];
+function SSTK_POSTS_NOTIFY_USER() {
+	return SSTK()->classes['sstk_posts_notify_user'];
 }
 
 /**
- * Function for calling WPCD_NOTIFY_SENT methods and variables.
- * wpcd_notify_sent is the class that manages the
- * wpcd_notify_sent CPT.
+ * Function for calling SSTK_NOTIFY_SENT methods and variables.
+ * sstk_notify_sent is the class that manages the
+ * sstk_notify_sent CPT.
  *
- * @return WPCD_NOTIFY_SENT;
+ * @return SSTK_NOTIFY_SENT;
  */
-function WPCD_POSTS_NOTIFY_SENT() {
-	return WPCD()->classes['wpcd_posts_notify_sent'];
+function SSTK_POSTS_NOTIFY_SENT() {
+	return SSTK()->classes['sstk_posts_notify_sent'];
 }
 
 /**
- * Function for calling wpcd_ssh_log methods and variables.
- * wpcd_ssh_log is the class that manages the
- * wpcd_ssh_log CPT.
+ * Function for calling sstk_ssh_log methods and variables.
+ * sstk_ssh_log is the class that manages the
+ * sstk_ssh_log CPT.
  *
- * @return WPCD_SSH_LOG;
+ * @return SSTK_SSH_LOG;
  */
-function WPCD_POSTS_SSH_LOG() {
-	return WPCD()->classes['wpcd_posts_ssh_log'];
+function SSTK_POSTS_SSH_LOG() {
+	return SSTK()->classes['sstk_posts_ssh_log'];
 }
 
 /**
- * Function for calling wpcd_command_log methods and variables.
- * wpcd_command_log is the class that manages the
- * wpcd_command_log CPT.
+ * Function for calling sstk_command_log methods and variables.
+ * sstk_command_log is the class that manages the
+ * sstk_command_log CPT.
  *
- * @return WPCD_COMMAND_LOG;
+ * @return SSTK_COMMAND_LOG;
  */
-function WPCD_POSTS_COMMAND_LOG() {
-	return WPCD()->classes['wpcd_posts_command_log'];
+function SSTK_POSTS_COMMAND_LOG() {
+	return SSTK()->classes['sstk_posts_command_log'];
 }
 
 /**
- * Function for calling wpcd_pending_tasks_log methods and variables.
- * wpcd_pending_tasks_log is the class that manages the
- * wpcd_pending_tasks_log CPT.
+ * Function for calling sstk_pending_tasks_log methods and variables.
+ * sstk_pending_tasks_log is the class that manages the
+ * sstk_pending_tasks_log CPT.
  *
- * @return WPCD_PENDING_TASKS_LOG;
+ * @return SSTK_PENDING_TASKS_LOG;
  */
-function WPCD_POSTS_PENDING_TASKS_LOG() {
-	return WPCD()->classes['wpcd_posts_pending_tasks_log'];
+function SSTK_POSTS_PENDING_TASKS_LOG() {
+	return SSTK()->classes['sstk_posts_pending_tasks_log'];
 }
 
 /**
- * Function for calling wpcd_error_log methods and variables.
- * wpcd_error_log is the class that manages the
- * wpcd_error_log CPT.
+ * Function for calling sstk_error_log methods and variables.
+ * sstk_error_log is the class that manages the
+ * sstk_error_log CPT.
  *
- * @return WPCD_ERROR_LOG;
+ * @return SSTK_ERROR_LOG;
  */
-function WPCD_POSTS_ERROR_LOG() {
-	return WPCD()->classes['wpcd_posts_error_log'];
+function SSTK_POSTS_ERROR_LOG() {
+	return SSTK()->classes['sstk_posts_error_log'];
 }
 
 /**
- * Function for calling wpcd_posts_team methods and variables.
- * wpcd_posts_team is the class that manages the
- * wpcd_team CPT.
+ * Function for calling sstk_posts_team methods and variables.
+ * sstk_posts_team is the class that manages the
+ * sstk_team CPT.
  *
- * @return WPCD_POSTS_TEAM;
+ * @return SSTK_POSTS_TEAM;
  */
-function WPCD_POSTS_TEAM() {
-	return WPCD()->classes['wpcd_posts_team'];
+function SSTK_POSTS_TEAM() {
+	return SSTK()->classes['sstk_posts_team'];
 }
 
 /**
- * Function for calling wpcd_posts_permission_type methods and variables.
- * wpcd_posts_permission_type is the class that manages the
- * wpcd_permission_type CPT.
+ * Function for calling sstk_posts_permission_type methods and variables.
+ * sstk_posts_permission_type is the class that manages the
+ * sstk_permission_type CPT.
  *
- * @return WPCD_POSTS_PERMISSION_TYPE;
+ * @return SSTK_POSTS_PERMISSION_TYPE;
  */
-function WPCD_POSTS_PERMISSION_TYPE() {
-	return WPCD()->classes['wpcd_posts_permission_type'];
+function SSTK_POSTS_PERMISSION_TYPE() {
+	return SSTK()->classes['sstk_posts_permission_type'];
 }
 
 /**
- * Create a class var for WPCD_APP_EXPIRATION and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_APP_EXPIRATION and
+ * add it to the SSTK array of classes for management
  */
-add_action( 'init', 'wpcd_init_app_expiration', -10, 1 );
-function wpcd_init_app_expiration() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['wpcd_app_expiration'] ) ) {
-			WPCD()->classes['wpcd_app_expiration'] = new WPCD_App_Expiration();
+add_action( 'init', 'sstk_init_app_expiration', -10, 1 );
+function sstk_init_app_expiration() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( empty( SSTK()->classes['sstk_app_expiration'] ) ) {
+			SSTK()->classes['sstk_app_expiration'] = new SSTK_App_Expiration();
 		}
 	}
 }
 
 /**
- * Function for calling wpcd_app_expiration methods and variables.
- * wpcd_app_expiration is the class that manages the app expriation methods.
+ * Function for calling sstk_app_expiration methods and variables.
+ * sstk_app_expiration is the class that manages the app expriation methods.
  *
- * @return WPCD_App_Expiration;
+ * @return SSTK_App_Expiration;
  */
-function WPCD_APP_EXPIRATION() {
-	return WPCD()->classes['wpcd_app_expiration'];
+function SSTK_APP_EXPIRATION() {
+	return SSTK()->classes['sstk_app_expiration'];
 }
 
 /**
- * Create a class var for WPCD_SERVER_STATISTICS and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_SERVER_STATISTICS and
+ * add it to the SSTK array of classes for management
  */
-add_action( 'init', 'wpcd_init_wpcd_server_statistics', -10, 1 );
-function wpcd_init_wpcd_server_statistics() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( empty( WPCD()->classes['wpcd_server_statistics'] ) ) {
-			WPCD()->classes['wpcd_server_statistics'] = new WPCD_SERVER_STATISTICS();
+add_action( 'init', 'sstk_init_sstk_server_statistics', -10, 1 );
+function sstk_init_sstk_server_statistics() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( empty( SSTK()->classes['sstk_server_statistics'] ) ) {
+			SSTK()->classes['sstk_server_statistics'] = new SSTK_SERVER_STATISTICS();
 		}
 	}
 }
 
 /**
- * Function for calling wpcd_server_statistics methods and variables.
- * wpcd_server_statistics is the class that manages the server statistic methods.
+ * Function for calling sstk_server_statistics methods and variables.
+ * sstk_server_statistics is the class that manages the server statistic methods.
  *
- * @return WPCD_SERVER_STATISTICS;
+ * @return SSTK_SERVER_STATISTICS;
  */
-function WPCD_SERVER_STATISTICS() {
-	return WPCD()->classes['wpcd_server_statistics'];
+function SSTK_SERVER_STATISTICS() {
+	return SSTK()->classes['sstk_server_statistics'];
 }
 
 /**
- * Create a class var for WPCD_SYNC and
- * add it to the WPCD array of classes for management
+ * Create a class var for SSTK_EMAIL_NOTIFICATIONS and
+ * add it to the SSTK array of classes for management
  */
-add_action( 'init', 'wpcd_init_wpcd_sync', -10, 1 );
-function wpcd_init_wpcd_sync() {
-	if ( wpcd_data_sync_allowed() ) {
-		if ( function_exists( 'WPCD' ) ) {
-			if ( empty( WPCD()->classes['wpcd_sync'] ) ) {
-				WPCD()->classes['wpcd_sync'] = new WPCD_SYNC();
+add_action( 'init', 'sstk_init_sstk_email_notifications', -10, 1 );
+function sstk_init_sstk_email_notifications() {
+	if ( sstk_email_notifications_allowed() ) {
+		if ( function_exists( 'SSTK' ) ) {
+			if ( empty( SSTK()->classes['sstk_email_notifications'] ) ) {
+				SSTK()->classes['sstk_email_notifications'] = new SSTK_EMAIL_NOTIFICATIONS();
 			}
 		}
 	}
 }
 
 /**
- * Function for calling wpcd_sync methods and variables.
- * wpcd_sync is the class that manages the custom REST endpoints.
+ * Function for calling SSTK_EMAIL_NOTIFICATIONS methods and variables.
+ * sstk_email_notifications is the class that manages the manual email notification.
  *
- * @return WPCD_SYNC;
+ * @return SSTK_EMAIL_NOTIFICATIONS;
  */
-function WPCD_SYNC() {
-	return WPCD()->classes['wpcd_sync'];
+function SSTK_EMAIL_NOTIFICATIONS() {
+	return SSTK()->classes['sstk_email_notifications'];
 }
 
 /**
- * Create a class var for WPCD_EMAIL_NOTIFICATIONS and
- * add it to the WPCD array of classes for management
- */
-add_action( 'init', 'wpcd_init_wpcd_email_notifications', -10, 1 );
-function wpcd_init_wpcd_email_notifications() {
-	if ( wpcd_email_notifications_allowed() ) {
-		if ( function_exists( 'WPCD' ) ) {
-			if ( empty( WPCD()->classes['wpcd_email_notifications'] ) ) {
-				WPCD()->classes['wpcd_email_notifications'] = new WPCD_EMAIL_NOTIFICATIONS();
-			}
-		}
-	}
-}
-
-/**
- * Function for calling WPCD_EMAIL_NOTIFICATIONS methods and variables.
- * wpcd_email_notifications is the class that manages the manual email notification.
+ * Create a class var for SSTK_WORDPRESS_APP_PUBLIC and
+ * add it to the SSTK array of classes for management
  *
- * @return WPCD_EMAIL_NOTIFICATIONS;
- */
-function WPCD_EMAIL_NOTIFICATIONS() {
-	return WPCD()->classes['wpcd_email_notifications'];
-}
-
-/**
- * Create a class var for WPCD_WORDPRESS_APP_PUBLIC and
- * add it to the WPCD array of classes for management
- *
- * The WPCD_WORDPRESS_APP_PUBLIC class is used to handle all things
+ * The SSTK_WORDPRESS_APP_PUBLIC class is used to handle all things
  * related to just front-end views/actions for servers and WordPress apps.
  */
-add_action( 'init', 'wpcd_init_wordpress_app_public', -10, 1 );
-function wpcd_init_wordpress_app_public() {
-	if ( function_exists( 'WPCD' ) ) {
-		if ( class_exists( 'WPCD_WORDPRESS_APP_PUBLIC' ) ) {
-			if ( empty( WPCD()->classes['WPCD_WORDPRESS_APP_PUBLIC'] ) ) {
-				WPCD()->classes['WPCD_WORDPRESS_APP_PUBLIC'] = new WPCD_WORDPRESS_APP_PUBLIC();
+add_action( 'init', 'sstk_init_wordpress_app_public', -10, 1 );
+function sstk_init_wordpress_app_public() {
+	if ( function_exists( 'SSTK' ) ) {
+		if ( class_exists( 'SSTK_WORDPRESS_APP_PUBLIC' ) ) {
+			if ( empty( SSTK()->classes['SSTK_WORDPRESS_APP_PUBLIC'] ) ) {
+				SSTK()->classes['SSTK_WORDPRESS_APP_PUBLIC'] = new SSTK_WORDPRESS_APP_PUBLIC();
 			}
 		}
 	}
 }
 
 /**
- * Function for calling WPCD_WORDPRESS_APP_PUBLIC methods and variables
+ * Function for calling SSTK_WORDPRESS_APP_PUBLIC methods and variables
  *
- * @return WPCD_WORDPRESS_APP_PUBLIC;
+ * @return SSTK_WORDPRESS_APP_PUBLIC;
  */
-function WPCD_WORDPRESS_APP_PUBLIC() {
-	return WPCD()->classes['WPCD_WORDPRESS_APP_PUBLIC'];
+function SSTK_WORDPRESS_APP_PUBLIC() {
+	return SSTK()->classes['SSTK_WORDPRESS_APP_PUBLIC'];
 }
 

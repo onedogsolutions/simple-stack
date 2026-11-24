@@ -2,13 +2,13 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-dns.php](file://includes/core/class-wpcd-dns.php)
-- [class-wpcd-dns-provider.php](file://includes/core/custom-table/class-wpcd-dns-provider.php)
-- [class-wpcd-dns-zone.php](file://includes/core/custom-table/class-wpcd-dns-zone.php)
-- [class-wpcd-dns-zone-record.php](file://includes/core/custom-table/class-wpcd-dns-zone-record.php)
-- [class-wpcd-ct-dns-provider-api.php](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php)
-- [class-wpcd-ct-dns-zone-api.php](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php)
-- [class-wpcd-ct-dns-zone-record-api.php](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php)
+- [class-sstk-dns.php](file://includes/core/class-sstk-dns.php)
+- [class-sstk-dns-provider.php](file://includes/core/custom-table/class-sstk-dns-provider.php)
+- [class-sstk-dns-zone.php](file://includes/core/custom-table/class-sstk-dns-zone.php)
+- [class-sstk-dns-zone-record.php](file://includes/core/custom-table/class-sstk-dns-zone-record.php)
+- [class-sstk-ct-dns-provider-api.php](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php)
+- [class-sstk-ct-dns-zone-api.php](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php)
+- [class-sstk-ct-dns-zone-record-api.php](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php)
 </cite>
 
 ## Table of Contents
@@ -43,7 +43,7 @@ DNS-related functionality is organized into:
 ```mermaid
 graph TB
 subgraph "Core"
-WPCD_DNS["WPCD_DNS<br/>Provider Integration"]
+SSTK_DNS["SSTK_DNS<br/>Provider Integration"]
 end
 subgraph "Custom Tables"
 Provider["dns_providers"]
@@ -51,14 +51,14 @@ Zones["dns_zones"]
 Records["dns_zone_records"]
 end
 subgraph "API Layer"
-ProviderAPI["WPCD_CT_DNS_Provider_API"]
-ZoneAPI["WPCD_CT_DNS_Zone_API"]
-RecordAPI["WPCD_CT_DNS_Zone_Record_API"]
+ProviderAPI["SSTK_CT_DNS_Provider_API"]
+ZoneAPI["SSTK_CT_DNS_Zone_API"]
+RecordAPI["SSTK_CT_DNS_Zone_Record_API"]
 end
 subgraph "UI/Controllers"
-ProviderModel["WPCD_CT_DNS_Provider"]
-ZoneModel["WPCD_CT_DNS_Zone"]
-RecordModel["WPCD_CT_DNS_Zone_Record"]
+ProviderModel["SSTK_CT_DNS_Provider"]
+ZoneModel["SSTK_CT_DNS_Zone"]
+RecordModel["SSTK_CT_DNS_Zone_Record"]
 end
 ProviderModel --> ProviderAPI
 ZoneModel --> ZoneAPI
@@ -66,61 +66,61 @@ RecordModel --> RecordAPI
 ProviderAPI --> Provider
 ZoneAPI --> Zones
 RecordAPI --> Records
-WPCD_DNS --> |"Cloudflare API"| Provider
+SSTK_DNS --> |"Cloudflare API"| Provider
 ```
 
 **Diagram sources**
-- [class-wpcd-dns.php:16-464](file://includes/core/class-wpcd-dns.php#L16-L464)
-- [class-wpcd-dns-provider.php:10-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L418)
-- [class-wpcd-dns-zone.php:9-422](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L422)
-- [class-wpcd-dns-zone-record.php:9-459](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L459)
-- [class-wpcd-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php#L6-L58)
-- [class-wpcd-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L6-L179)
-- [class-wpcd-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php#L6-L108)
+- [class-sstk-dns.php:16-464](file://includes/core/class-sstk-dns.php#L16-L464)
+- [class-sstk-dns-provider.php:10-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L418)
+- [class-sstk-dns-zone.php:9-422](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L422)
+- [class-sstk-dns-zone-record.php:9-459](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L459)
+- [class-sstk-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php#L6-L58)
+- [class-sstk-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L6-L179)
+- [class-sstk-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php#L6-L108)
 
 **Section sources**
-- [class-wpcd-dns.php:16-464](file://includes/core/class-wpcd-dns.php#L16-L464)
-- [class-wpcd-dns-provider.php:10-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L418)
-- [class-wpcd-dns-zone.php:9-422](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L422)
-- [class-wpcd-dns-zone-record.php:9-459](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L459)
+- [class-sstk-dns.php:16-464](file://includes/core/class-sstk-dns.php#L16-L464)
+- [class-sstk-dns-provider.php:10-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L418)
+- [class-sstk-dns-zone.php:9-422](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L422)
+- [class-sstk-dns-zone-record.php:9-459](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L459)
 
 ## Core Components
-- WPCD_DNS: Provider integration for Cloudflare; manages temporary domain generation and record CRUD against the provider.
-- WPCD_CT_DNS_Provider: Model and UI for DNS providers; stores credentials and permissions; manages zones and records via child tables.
-- WPCD_CT_DNS_Zone: Model and UI for DNS zones; enforces default zone semantics and parent-child relationships.
-- WPCD_CT_DNS_Zone_Record: Model and UI for DNS records; supports standard record types and TTL fields.
+- SSTK_DNS: Provider integration for Cloudflare; manages temporary domain generation and record CRUD against the provider.
+- SSTK_CT_DNS_Provider: Model and UI for DNS providers; stores credentials and permissions; manages zones and records via child tables.
+- SSTK_CT_DNS_Zone: Model and UI for DNS zones; enforces default zone semantics and parent-child relationships.
+- SSTK_CT_DNS_Zone_Record: Model and UI for DNS records; supports standard record types and TTL fields.
 - API classes: Provide permission-aware queries and display name helpers for each model.
 
 Key responsibilities:
-- Provider abstraction: WPCD_DNS encapsulates Cloudflare-specific calls; other providers can be added by extending this class or adding new integrations.
+- Provider abstraction: SSTK_DNS encapsulates Cloudflare-specific calls; other providers can be added by extending this class or adding new integrations.
 - Local storage: Custom tables store provider metadata, zones, and records with permission scoping.
 - Application components: Admin UI and AJAX endpoints use the models and APIs to manage DNS state.
 
 **Section sources**
-- [class-wpcd-dns.php:16-464](file://includes/core/class-wpcd-dns.php#L16-L464)
-- [class-wpcd-dns-provider.php:10-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L418)
-- [class-wpcd-dns-zone.php:9-422](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L422)
-- [class-wpcd-dns-zone-record.php:9-459](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L459)
-- [class-wpcd-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php#L6-L58)
-- [class-wpcd-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L6-L179)
-- [class-wpcd-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php#L6-L108)
+- [class-sstk-dns.php:16-464](file://includes/core/class-sstk-dns.php#L16-L464)
+- [class-sstk-dns-provider.php:10-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L418)
+- [class-sstk-dns-zone.php:9-422](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L422)
+- [class-sstk-dns-zone-record.php:9-459](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L459)
+- [class-sstk-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php#L6-L58)
+- [class-sstk-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L6-L179)
+- [class-sstk-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php#L6-L108)
 
 ## Architecture Overview
 The DNS subsystem follows a layered architecture:
 - Presentation/UI: Admin pages and inline edit forms render through model metaboxes and AJAX handlers.
 - Domain Models: Each model handles validation, permissions, and persistence via its API.
 - API Layer: Permission-aware queries and helper methods for display names and defaults.
-- External Providers: WPCD_DNS integrates with Cloudflare using stored credentials.
+- External Providers: SSTK_DNS integrates with Cloudflare using stored credentials.
 
 ```mermaid
 sequenceDiagram
 participant Admin as "Admin UI"
-participant ProviderModel as "WPCD_CT_DNS_Provider"
-participant ZoneModel as "WPCD_CT_DNS_Zone"
-participant RecordModel as "WPCD_CT_DNS_Zone_Record"
-participant ProviderAPI as "WPCD_CT_DNS_Provider_API"
-participant ZoneAPI as "WPCD_CT_DNS_Zone_API"
-participant RecordAPI as "WPCD_CT_DNS_Zone_Record_API"
+participant ProviderModel as "SSTK_CT_DNS_Provider"
+participant ZoneModel as "SSTK_CT_DNS_Zone"
+participant RecordModel as "SSTK_CT_DNS_Zone_Record"
+participant ProviderAPI as "SSTK_CT_DNS_Provider_API"
+participant ZoneAPI as "SSTK_CT_DNS_Zone_API"
+participant RecordAPI as "SSTK_CT_DNS_Zone_Record_API"
 participant DB as "Custom Tables"
 participant CF as "Cloudflare API"
 Admin->>ProviderModel : Create/Edit Provider
@@ -132,22 +132,22 @@ ZoneAPI->>DB : Update default flag
 Admin->>RecordModel : Add/Edit/Delete Record
 RecordModel->>RecordAPI : validate_data() / delete_item()
 RecordAPI->>DB : Persist changes
-Admin->>WPCD_DNS : set_dns_for_domain(domain, ip)
-WPCD_DNS->>CF : POST A/AAAA record
-CF-->>WPCD_DNS : Response code
-WPCD_DNS-->>Admin : Success/Failure
+Admin->>SSTK_DNS : set_dns_for_domain(domain, ip)
+SSTK_DNS->>CF : POST A/AAAA record
+CF-->>SSTK_DNS : Response code
+SSTK_DNS-->>Admin : Success/Failure
 ```
 
 **Diagram sources**
-- [class-wpcd-dns-provider.php:345-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L345-L418)
-- [class-wpcd-dns-zone.php:193-268](file://includes/core/custom-table/class-wpcd-dns-zone.php#L193-L268)
-- [class-wpcd-dns-zone-record.php:364-431](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L364-L431)
-- [class-wpcd-dns.php:88-108](file://includes/core/class-wpcd-dns.php#L88-L108)
-- [class-wpcd-dns.php:158-262](file://includes/core/class-wpcd-dns.php#L158-L262)
+- [class-sstk-dns-provider.php:345-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L345-L418)
+- [class-sstk-dns-zone.php:193-268](file://includes/core/custom-table/class-sstk-dns-zone.php#L193-L268)
+- [class-sstk-dns-zone-record.php:364-431](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L364-L431)
+- [class-sstk-dns.php:88-108](file://includes/core/class-sstk-dns.php#L88-L108)
+- [class-sstk-dns.php:158-262](file://includes/core/class-sstk-dns.php#L158-L262)
 
 ## Detailed Component Analysis
 
-### DNS Provider Abstraction (WPCD_DNS)
+### DNS Provider Abstraction (SSTK_DNS)
 Responsibilities:
 - Generate unique subdomains and full temporary domains
 - Determine active root domain from configuration
@@ -161,7 +161,7 @@ Key behaviors:
 - cloudflare_delete_subdomain: Deletes A and optional AAAA records
 
 Error handling:
-- Uses WordPress HTTP functions and logs errors via do_action('wpcd_log_error', ...)
+- Uses WordPress HTTP functions and logs errors via do_action('sstk_log_error', ...)
 - Checks response codes and returns false on failure
 
 Propagation and TTL:
@@ -187,13 +187,13 @@ RespOK_AAAA --> |Yes| Done
 ```
 
 **Diagram sources**
-- [class-wpcd-dns.php:88-108](file://includes/core/class-wpcd-dns.php#L88-L108)
-- [class-wpcd-dns.php:158-262](file://includes/core/class-wpcd-dns.php#L158-L262)
+- [class-sstk-dns.php:88-108](file://includes/core/class-sstk-dns.php#L88-L108)
+- [class-sstk-dns.php:158-262](file://includes/core/class-sstk-dns.php#L158-L262)
 
 **Section sources**
-- [class-wpcd-dns.php:16-464](file://includes/core/class-wpcd-dns.php#L16-L464)
+- [class-sstk-dns.php:16-464](file://includes/core/class-sstk-dns.php#L16-L464)
 
-### DNS Provider Model (WPCD_CT_DNS_Provider)
+### DNS Provider Model (SSTK_CT_DNS_Provider)
 Responsibilities:
 - Register and create the dns_providers custom table
 - Manage form fields, validation, and permissions
@@ -210,7 +210,7 @@ Validation and deletion:
 
 ```mermaid
 classDiagram
-class WPCD_CT_DNS_Provider {
+class SSTK_CT_DNS_Provider {
 +string model_name
 +register_model()
 +create_table()
@@ -223,12 +223,12 @@ class WPCD_CT_DNS_Provider {
 ```
 
 **Diagram sources**
-- [class-wpcd-dns-provider.php:10-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L418)
+- [class-sstk-dns-provider.php:10-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L418)
 
 **Section sources**
-- [class-wpcd-dns-provider.php:10-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L418)
+- [class-sstk-dns-provider.php:10-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L418)
 
-### DNS Zone Model (WPCD_CT_DNS_Zone)
+### DNS Zone Model (SSTK_CT_DNS_Zone)
 Responsibilities:
 - Register and create the dns_zones custom table
 - Enforce default zone semantics (only one default per provider)
@@ -246,7 +246,7 @@ Permissions:
 
 ```mermaid
 classDiagram
-class WPCD_CT_DNS_Zone {
+class SSTK_CT_DNS_Zone {
 +string model_name
 +register_model()
 +create_table()
@@ -260,12 +260,12 @@ class WPCD_CT_DNS_Zone {
 ```
 
 **Diagram sources**
-- [class-wpcd-dns-zone.php:9-422](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L422)
+- [class-sstk-dns-zone.php:9-422](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L422)
 
 **Section sources**
-- [class-wpcd-dns-zone.php:9-422](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L422)
+- [class-sstk-dns-zone.php:9-422](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L422)
 
-### DNS Zone Record Model (WPCD_CT_DNS_Zone_Record)
+### DNS Zone Record Model (SSTK_CT_DNS_Zone_Record)
 Responsibilities:
 - Register and create the dns_zone_records custom table
 - Support standard DNS record types (A, AAAA, CNAME, TXT, NS)
@@ -283,7 +283,7 @@ Deletion:
 
 ```mermaid
 classDiagram
-class WPCD_CT_DNS_Zone_Record {
+class SSTK_CT_DNS_Zone_Record {
 +string model_name
 +register_model()
 +create_table()
@@ -296,54 +296,54 @@ class WPCD_CT_DNS_Zone_Record {
 ```
 
 **Diagram sources**
-- [class-wpcd-dns-zone-record.php:9-459](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L459)
+- [class-sstk-dns-zone-record.php:9-459](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L459)
 
 **Section sources**
-- [class-wpcd-dns-zone-record.php:9-459](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L459)
+- [class-sstk-dns-zone-record.php:9-459](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L459)
 
 ### API Helpers
-- WPCD_CT_DNS_Provider_API: Provides get_item_display_name for provider names
-- WPCD_CT_DNS_Zone_API: Provides default zone retrieval, default marking, and permission-aware queries
-- WPCD_CT_DNS_Zone_Record_API: Provides permission-aware child item queries joining provider meta
+- SSTK_CT_DNS_Provider_API: Provides get_item_display_name for provider names
+- SSTK_CT_DNS_Zone_API: Provides default zone retrieval, default marking, and permission-aware queries
+- SSTK_CT_DNS_Zone_Record_API: Provides permission-aware child item queries joining provider meta
 
 These APIs centralize SQL joins and permission logic used by models.
 
 **Section sources**
-- [class-wpcd-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php#L6-L58)
-- [class-wpcd-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L6-L179)
-- [class-wpcd-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php#L6-L108)
+- [class-sstk-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php#L6-L58)
+- [class-sstk-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L6-L179)
+- [class-sstk-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php#L6-L108)
 
 ## Dependency Analysis
 - Models depend on their respective API classes for permission-aware queries and display helpers.
 - Zone and Record models depend on Provider permissions to determine access.
-- WPCD_DNS depends on WordPress options for Cloudflare credentials and settings.
+- SSTK_DNS depends on WordPress options for Cloudflare credentials and settings.
 
 ```mermaid
 graph LR
-ProviderModel["WPCD_CT_DNS_Provider"] --> ProviderAPI["WPCD_CT_DNS_Provider_API"]
-ZoneModel["WPCD_CT_DNS_Zone"] --> ZoneAPI["WPCD_CT_DNS_Zone_API"]
-RecordModel["WPCD_CT_DNS_Zone_Record"] --> RecordAPI["WPCD_CT_DNS_Zone_Record_API"]
+ProviderModel["SSTK_CT_DNS_Provider"] --> ProviderAPI["SSTK_CT_DNS_Provider_API"]
+ZoneModel["SSTK_CT_DNS_Zone"] --> ZoneAPI["SSTK_CT_DNS_Zone_API"]
+RecordModel["SSTK_CT_DNS_Zone_Record"] --> RecordAPI["SSTK_CT_DNS_Zone_Record_API"]
 ZoneAPI --> ProviderAPI
 RecordAPI --> ZoneAPI
-WPCD_DNS --> |"HTTP"| Cloudflare["Cloudflare API"]
+SSTK_DNS --> |"HTTP"| Cloudflare["Cloudflare API"]
 ```
 
 **Diagram sources**
-- [class-wpcd-dns-provider.php:10-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L418)
-- [class-wpcd-dns-zone.php:9-422](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L422)
-- [class-wpcd-dns-zone-record.php:9-459](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L459)
-- [class-wpcd-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-wpcd-ct-dns-provider-api.php#L6-L58)
-- [class-wpcd-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L6-L179)
-- [class-wpcd-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php#L6-L108)
-- [class-wpcd-dns.php:158-262](file://includes/core/class-wpcd-dns.php#L158-L262)
+- [class-sstk-dns-provider.php:10-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L418)
+- [class-sstk-dns-zone.php:9-422](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L422)
+- [class-sstk-dns-zone-record.php:9-459](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L459)
+- [class-sstk-ct-dns-provider-api.php:6-58](file://includes/core/custom-table/api/class-sstk-ct-dns-provider-api.php#L6-L58)
+- [class-sstk-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L6-L179)
+- [class-sstk-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php#L6-L108)
+- [class-sstk-dns.php:158-262](file://includes/core/class-sstk-dns.php#L158-L262)
 
 **Section sources**
-- [class-wpcd-dns-provider.php:10-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L10-L418)
-- [class-wpcd-dns-zone.php:9-422](file://includes/core/custom-table/class-wpcd-dns-zone.php#L9-L422)
-- [class-wpcd-dns-zone-record.php:9-459](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L9-L459)
-- [class-wpcd-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-api.php#L6-L179)
-- [class-wpcd-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-wpcd-ct-dns-zone-record-api.php#L6-L108)
-- [class-wpcd-dns.php:158-262](file://includes/core/class-wpcd-dns.php#L158-L262)
+- [class-sstk-dns-provider.php:10-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L10-L418)
+- [class-sstk-dns-zone.php:9-422](file://includes/core/custom-table/class-sstk-dns-zone.php#L9-L422)
+- [class-sstk-dns-zone-record.php:9-459](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L9-L459)
+- [class-sstk-ct-dns-zone-api.php:6-179](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-api.php#L6-L179)
+- [class-sstk-ct-dns-zone-record-api.php:6-108](file://includes/core/custom-table/api/class-sstk-ct-dns-zone-record-api.php#L6-L108)
+- [class-sstk-dns.php:158-262](file://includes/core/class-sstk-dns.php#L158-L262)
 
 ## Performance Considerations
 - TTL Management:
@@ -368,7 +368,7 @@ Common issues and resolutions:
   - Zone and record edits inherit permissions from the parent provider.
 - Cloudflare Integration Failures:
   - Verify Cloudflare options are enabled and credentials are correct.
-  - Check error logs emitted via wpcd_log_error action for detailed messages.
+  - Check error logs emitted via sstk_log_error action for detailed messages.
   - Confirm that the domain being managed matches the configured root domain.
 
 Operational tips:
@@ -376,10 +376,10 @@ Operational tips:
 - Default zone semantics ensure only one default zone per provider; saving a new default clears others.
 
 **Section sources**
-- [class-wpcd-dns-provider.php:345-418](file://includes/core/custom-table/class-wpcd-dns-provider.php#L345-L418)
-- [class-wpcd-dns-zone.php:240-268](file://includes/core/custom-table/class-wpcd-dns-zone.php#L240-L268)
-- [class-wpcd-dns-zone-record.php:364-431](file://includes/core/custom-table/class-wpcd-dns-zone-record.php#L364-L431)
-- [class-wpcd-dns.php:188-209](file://includes/core/class-wpcd-dns.php#L188-L209)
+- [class-sstk-dns-provider.php:345-418](file://includes/core/custom-table/class-sstk-dns-provider.php#L345-L418)
+- [class-sstk-dns-zone.php:240-268](file://includes/core/custom-table/class-sstk-dns-zone.php#L240-L268)
+- [class-sstk-dns-zone-record.php:364-431](file://includes/core/custom-table/class-sstk-dns-zone-record.php#L364-L431)
+- [class-sstk-dns.php:188-209](file://includes/core/class-sstk-dns.php#L188-L209)
 
 ## Conclusion
 The DNS subsystem provides a robust framework for managing DNS providers, zones, and records with strong permission controls and clear separation of concerns. The Cloudflare integration offers automated record management with configurable TTLs and comprehensive error logging. Extensibility points exist to support additional providers and advanced bulk operations. Proper use of validation, permissions, and TTL tuning ensures reliable and performant DNS management across environments.

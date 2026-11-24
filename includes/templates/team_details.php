@@ -1,20 +1,21 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Team details.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( empty( $server_posts ) && empty( $app_posts ) ) {
 	?>
-	<p><?php echo esc_html( __( 'This team is not assigned to any server or app.', 'wpcd' ) ); ?></p>
+	<p><?php echo esc_html( __( 'This team is not assigned to any server or app.', 'simple-stack' ) ); ?></p>
 	<?php
 }
 
 // Shows the servers that are assigned the current team.
 if ( $server_posts ) {
 	?>
-	<h3><?php echo esc_html( __( 'Servers', 'wpcd' ) ); ?></h3>
+	<h3><?php echo esc_html( __( 'Servers', 'simple-stack' ) ); ?></h3>
 	<ol>
 		<?php
 		foreach ( $server_posts as $server_post ) {
@@ -37,7 +38,7 @@ if ( $server_posts ) {
 // Shows the apps that are assigned the current team.
 if ( $app_posts ) {
 	?>
-	<h3><?php echo esc_html( __( 'Apps', 'wpcd' ) ); ?></h3>
+	<h3><?php echo esc_html( __( 'Apps', 'simple-stack' ) ); ?></h3>
 	<ol>
 		<?php
 		foreach ( $app_posts as $app_post ) {

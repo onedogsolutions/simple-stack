@@ -1,8 +1,10 @@
 <?php
 /**
- * WordPress App WPCD_REST_API_Controller_Sites.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * WordPress App SSTK_REST_API_Controller_Sites.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,11 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_REST_API_Controller_Sites
+ * Class SSTK_REST_API_Controller_Sites
  *
- * Endpoints for interacting with sites (WordPress wpcd_app)
+ * Endpoints for interacting with sites (WordPress sstk_app)
  */
-class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
+class SSTK_REST_API_Controller_Sites extends SSTK_REST_API_Controller_Base {
 
 	/**
 	 * Controller base path
@@ -24,7 +26,7 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 	protected $name = 'sites';
 
 	/**
-	 * WPCD_REST_API_Controller_Sites constructor.
+	 * SSTK_REST_API_Controller_Sites constructor.
 	 *
 	 * Registers action hooks.
 	 */
@@ -32,14 +34,13 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		parent::__construct();
 
 		/* Trigger installation of a new WP site */
-		add_action( 'wpcd_wordpress-app_rest_api_install_wp', array( $this, 'install_wp' ), 10, 3 );
+		add_action( 'sstk_wordpress-app_rest_api_install_wp', array( $this, 'install_wp' ), 10, 3 );
 
 		/* When WP install is complete, send email and possibly auto-issue ssl. */
-		add_action( 'wpcd_command_wordpress-app_completed_after_cleanup', array( $this, 'wpcd_wpapp_install_complete' ), 10, 4 );
+		add_action( 'sstk_command_wordpress-app_completed_after_cleanup', array( $this, 'sstk_wpapp_install_complete' ), 10, 4 );
 
 		/* Add to the list of fields that will be automatically stamped on the WordPress App Post for a new site */
-		add_filter( 'wpcd_wordpress-app_add_wp_app_post_fields', array( &$this, 'add_wp_app_post_fields' ), 10, 1 );
-
+		add_filter( 'sstk_wordpress-app_add_wp_app_post_fields', array( &$this, 'add_wp_app_post_fields' ), 10, 1 );
 	}
 
 	/**
@@ -69,13 +70,13 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 	public function list_sites( WP_REST_Request $request ): array {
 		// base query.
 		$args = array(
-			'post_type'      => 'wpcd_app',
+			'post_type'      => 'sstk_app',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
 				array(
 					'key'   => 'app_type',
-					'value' => WPCD_WORDPRESS_APP()->get_app_name(),
+					'value' => SSTK_WORDPRESS_APP()->get_app_name(),
 				),
 			),
 		);
@@ -128,7 +129,7 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		// Create an args array from the parameters to insert into the pending tasks table.
 		$server_id = (int) $parameters['server_id'];
 		// @codingStandardsIgnoreLine - added to ignore the misspelling in 'wordpress' below when linting with PHPcs. Otherwise linting will automatically uppercase the first letter.
-		$args['wpcd_app_type']         = 'wordpress';
+		$args['sstk_app_type']         = 'wordpress';
 		$args['wp_domain']       = sanitize_text_field( $parameters['wp_domain'] );
 		$args['wp_user']         = sanitize_text_field( $parameters['wp_user'] );
 		$args['wp_password']     = sanitize_text_field( $parameters['wp_password'] );
@@ -137,17 +138,18 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		$args['wp_locale']       = 'en_US';
 		$args['id']              = $server_id;
 		$args['wp_restapi_flag'] = 'yes';
-		$args['action_hook']     = 'wpcd_wordpress-app_rest_api_install_wp';
+		$args['action_hook']     = 'sstk_wordpress-app_rest_api_install_wp';
 		$args['author_email']    = $author_email;
 
 		// Create new install task.
-		$task_id = WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $server_id, 'rest_api_install_wp', $args['wp_domain'], $args, 'ready', $server_id, __( 'RESTAPI: Waiting To Install New WP Site', 'wpcd' ) );
+		$task_id = SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $server_id, 'rest_api_install_wp', $args['wp_domain'], $args, 'ready', $server_id, __( 'RESTAPI: Waiting To Install New WP Site', 'simple-stack' ) );
 
 		// Throw some exceptions if for some reason there's no $task_id.
 		if ( empty( $task_id ) ) {
 			throw new Exception( 'Unable to insert a new task', 400 );
 		}
 		if ( is_wp_error( $task_id ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- WordPress REST serializes this message as JSON.
 			throw new Exception( $task_id->get_error_message(), 400 );
 		}
 
@@ -200,7 +202,7 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		$this->get_site_post( $id );   // Will throw an exception if not a valid site.
 
 		// Execute action.
-		do_action( 'wpcd_wordpress-app_do_toggle_ssl_status', $id, 'ssl-status' );
+		do_action( 'sstk_wordpress-app_do_toggle_ssl_status', $id, 'ssl-status' );
 
 		// Get ssl status from database.
 		$ssl_enabled = false;
@@ -231,7 +233,7 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		$this->get_site_post( $id );   // Will throw an exception if not a valid site.
 
 		// Execute action.
-		do_action( 'wpcd_app_delete_wp_site', $id, 'remove_full' );
+		do_action( 'sstk_app_delete_wp_site', $id, 'remove_full' );
 
 		// Action hooks return nothing so just return an array of stuff.
 		return array(
@@ -258,11 +260,11 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		$parameters = $request->get_body_params();
 		$this->validate_required_parameters( $parameters, array( 'action' ) );
 
-		$app_name = WPCD_WORDPRESS_APP()->get_app_name();
+		$app_name = SSTK_WORDPRESS_APP()->get_app_name();
 		$action   = $parameters['action'];
 
 		// execute hook associated with the action.
-		$result = apply_filters( "wpcd_app_{$app_name}_tab_action", '', $action, $site_id );
+		$result = apply_filters( "sstk_app_{$app_name}_tab_action", '', $action, $site_id );
 		return compact( 'site_id', 'action', 'result' );
 	}
 
@@ -276,7 +278,7 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 	 */
 	protected function get_site_post( int $id ): WP_Post {
 		$site = get_post( $id );
-		if ( ! ( $site && 'wpcd_app' === $site->post_type ) ) {
+		if ( ! ( $site && 'sstk_app' === $site->post_type ) ) {
 			throw new Exception( 'Site not found', 400 );
 		}
 		return $site;
@@ -296,13 +298,13 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 			'name'         => $site->post_title,
 			'author'       => (int) $site->post_author,
 			'server_id'    => (int) get_post_meta( $site->ID, 'parent_post_id', true ),
-			'domain'       => WPCD_WORDPRESS_APP()->get_domain_name( $site->ID ),
+			'domain'       => SSTK_WORDPRESS_APP()->get_domain_name( $site->ID ),
 			'ssl_status'   => get_post_meta( $site->ID, 'wpapp_ssl_status', true ),
 			'http2_status' => get_post_meta( $site->ID, 'wpapp_ssl_http2_status', true ),
 			'request_date' => gmdate( 'r' ),
 		);
 
-		$push_data = wpcd_maybe_unserialize( get_post_meta( $site->ID, 'wpcd_site_status_push', true ) );
+		$push_data = sstk_maybe_unserialize( get_post_meta( $site->ID, 'sstk_site_status_push', true ) );
 
 		if ( is_array( $push_data ) ) {
 			unset( $push_data['domain'] );
@@ -310,15 +312,14 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		}
 
 		return $data;
-
 	}
 
 	/**
 	 * Install WordPress on a server.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_wordpress-app_rest_api_install_wp-wp
+	 * Action Hook: sstk_wordpress-app_rest_api_install_wp-wp
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing.
 	 * @param int   $server_id  Id of server on which to install the new website.
@@ -327,14 +328,13 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 	public function install_wp( $task_id, $server_id, $args ) {
 
 		/* Install standard wp app on the designated server */
-		$additional = WPCD_WORDPRESS_APP()->install_wp_validate( $args );
-
+		$additional = SSTK_WORDPRESS_APP()->install_wp_validate( $args );
 	}
 
 	/**
 	 * Add to the list of fields that will be automatically stamped on the WordPress App Post.
 	 *
-	 * Filter Hook: wpcd_{get_app_name()}_add_wp_app_post_fields | wpcd_wordpress-app_add_wp_app_post_fields
+	 * Filter Hook: sstk_{get_app_name()}_add_wp_app_post_fields | sstk_wordpress-app_add_wp_app_post_fields
 	 * The filter hook is located in the wordpress-app class.
 	 *
 	 * @param array $flds string array of existing field names.
@@ -342,13 +342,12 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 	public function add_wp_app_post_fields( $flds ) {
 
 		return array_merge( $flds, array( 'restapi_flag' ) );
-
 	}
 
 	/**
 	 * Send an email and possibly auto-issue SSL after a site has been installed.
 	 *
-	 * Action Hook: wpcd_command_wordpress-app_completed_after_cleanup
+	 * Action Hook: sstk_command_wordpress-app_completed_after_cleanup
 	 *
 	 * @param int    $id                 post id of server.
 	 * @param int    $app_id             post id of wp app.
@@ -356,7 +355,7 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 	 * @param string $base_command       basename of command.
 	 * @param string $pending_task_type  Task type to update when we're done. This is not part of the action hook definition - it's only passed in explicitly when this is called as a function.
 	 */
-	public function wpcd_wpapp_install_complete( $id, $app_id, $name, $base_command, $pending_task_type = 'rest_api_install_wp' ) {
+	public function sstk_wpapp_install_complete( $id, $app_id, $name, $base_command, $pending_task_type = 'rest_api_install_wp' ) {
 
 		// If not installing an app, return.
 		if ( 'install_wp' !== $base_command ) {
@@ -371,7 +370,7 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		}
 
 		// Bail if not a WordPress app.
-		if ( 'wordpress-app' !== WPCD_WORDPRESS_APP()->get_app_type( $app_id ) ) {
+		if ( 'wordpress-app' !== SSTK_WORDPRESS_APP()->get_app_type( $app_id ) ) {
 			return;
 		}
 
@@ -381,27 +380,21 @@ class WPCD_REST_API_Controller_Sites extends WPCD_REST_API_Controller_Base {
 		}
 
 		// Get app instance array.
-		$instance = WPCD_WORDPRESS_APP()->get_app_instance_details( $app_id );
+		$instance = SSTK_WORDPRESS_APP()->get_app_instance_details( $app_id );
 
 		// If the app install was done via a background pending tasks process then get that pending task post data here.
 		// We do that by checking the pending tasks table for a record where the key=domain and type='rest_api_install_wp' and state='in-process'.
-		$pending_task_posts = WPCD_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( WPCD_WORDPRESS_APP()->get_domain_name( $app_id ), 'in-process', $pending_task_type );
+		$pending_task_posts = SSTK_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( SSTK_WORDPRESS_APP()->get_domain_name( $app_id ), 'in-process', $pending_task_type );
 
 		/**
-		 * This is the spot where we would send emails and enable ssl and such if necessary.
-		 * We're not doing that now but might later.
-		 * Check the sell sites with woocommerce add-on for examples of what can go in this spot.
+		 * This is the extension point for post-install notifications and optional setup.
 		 */
 
 		// Finally update pending tasks table if applicable...
 		if ( $pending_task_posts ) {
-			$data_to_save                = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $pending_task_posts[0]->ID );
+			$data_to_save                = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $pending_task_posts[0]->ID );
 			$data_to_save['wp_password'] = '***removed***';  // remove the password data from the pending log table.
-			WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $pending_task_posts[0]->ID, $data_to_save, 'complete' );
+			SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $pending_task_posts[0]->ID, $data_to_save, 'complete' );
 		}
-
 	}
-
 }
-
-

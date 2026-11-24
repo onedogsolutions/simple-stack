@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /******************************************************************************************/
 
 /* Style Metabox.io fields for server sizes.											  */
@@ -8,6 +9,6 @@
 
 /******************************************************************************************/
 
-.rwmb-field.rwmb-select-wrapper.wpcd_server_size_setting {
+.rwmb-field.rwmb-select-wrapper.sstk_server_size_setting {
     display: none;
 }

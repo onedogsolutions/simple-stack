@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Cloud Provider API
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,16 +30,16 @@ class CLOUD_PROVIDER_API {
 	private $_PROVIDER_SLUG;
 
 	/**
-	 * The baseline provider name to be used by certain custom server actions.
-	 * This will NOT change even on custom servers.
+	 * The underlying provider type name.
+	 * This does not change for virtual provider aliases.
 	 *
 	 * @var $_BASE_PROVIDER base provider.
 	 */
 	private $_BASE_PROVIDER;
 
 	/**
-	 * The baseline provider slug to be used by certain custom server actions.
-	 * This will NOT change even on custom servers.
+	 * The underlying provider type slug.
+	 * This does not change for virtual provider aliases.
 	 *
 	 * @var $_BASE_PROVIDER_SLUG base provider slug.
 	 */
@@ -138,7 +139,7 @@ class CLOUD_PROVIDER_API {
 	 *
 	 * @var $help_link help_link.
 	 */
-	private $help_link = 'https://wpclouddeploy.com/documentation/cloud-providers/all-about-cloud-server-providers/';
+	private $help_link = 'https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#7-providers';
 
 	/**
 	 * Constructor
@@ -162,7 +163,7 @@ class CLOUD_PROVIDER_API {
 
 		/* Set filter to add link to the cloud providers api dashboard */
 		$provider = $this->get_provider_slug();
-		add_filter( "wpcd_cloud_provider_settings_api_key_label_desc_{$provider}", array( $this, 'set_link_to_provider_dashboard' ) );
+		add_filter( "sstk_cloud_provider_settings_api_key_label_desc_{$provider}", array( $this, 'set_link_to_provider_dashboard' ) );
 
 	}
 
@@ -211,9 +212,9 @@ class CLOUD_PROVIDER_API {
 	 */
 	public function set_cache_key_prefix() {
 		if ( is_multisite() ) {
-			$this->cache_key_prefix = (string) get_current_blog_id() . '_' . (string) wpcd_version;
+			$this->cache_key_prefix = 'sstk_' . (string) get_current_blog_id() . '_' . (string) SSTK_VERSION;
 		} else {
-			$this->cache_key_prefix = (string) wpcd_version;
+			$this->cache_key_prefix = 'sstk_' . (string) SSTK_VERSION;
 		}
 	}
 
@@ -291,8 +292,8 @@ class CLOUD_PROVIDER_API {
 	}
 
 	/**
-	 * Set the baseline provider slug to be used by certain custom server actions.
-	 * This will NOT change even on custom servers.
+	 * Set the underlying provider type slug.
+	 * This does not change for virtual provider aliases.
 	 *
 	 * @param string $provider provider.
 	 */
@@ -308,8 +309,8 @@ class CLOUD_PROVIDER_API {
 	}
 
 	/**
-	 * Set the baseline provider name to be used by certain custom server actions.
-	 * This will NOT change even on custom servers.
+	 * Set the underlying provider type name.
+	 * This does not change for virtual provider aliases.
 	 *
 	 * @param string $provider_name provider_name.
 	 */
@@ -370,13 +371,13 @@ class CLOUD_PROVIDER_API {
 	 * Getter function for help link.
 	 */
 	public function get_provider_help_link() {
-		return apply_filters( 'wpcd_provider_help_link', $this->help_link );
+		return apply_filters( 'sstk_provider_help_link', $this->help_link );
 	}
 
 	/**
 	 * Returns a link to the cloud providers dashboard where the user can set their api key.
 	 *
-	 * Filter Hook: wpcd_cloud_provider_settings_api_key_label_desc_{$provider} aka wpcd_cloud_provider_settings_api_key_label_desc_digital-ocean
+	 * Filter Hook: sstk_cloud_provider_settings_api_key_label_desc_{$provider}
 	 *
 	 * This hook is actually configured in the descendant classes but since the function is the same for every one, its implemented here at the ancestor.
 	 *
@@ -384,7 +385,7 @@ class CLOUD_PROVIDER_API {
 	 */
 	public function set_link_to_provider_dashboard( $link ) {
 		/* translators: %s is with a URL link to the cloud providers dashboard. */
-		$provider_link = sprintf( '<a href="%s" target="_blank">' . __( 'Go to your %s dashboard', 'wpcd' ) . '</a>', $this->get_provider_dashboard_link(), $this->get_provider_friendly_name() );
+		$provider_link = sprintf( '<a href="%s" target="_blank">' . __( 'Go to your %s dashboard', 'simple-stack' ) . '</a>', $this->get_provider_dashboard_link(), $this->get_provider_friendly_name() );
 		return $link  .= $provider_link;
 	}
 
@@ -426,22 +427,22 @@ class CLOUD_PROVIDER_API {
 
 		switch ( $state ) {
 			case $this->_STATE_NEW:
-				$return = __( 'New Server', 'wpcd' );
+				$return = __( 'New Server', 'simple-stack' );
 				break;
 			case $this->_STATE_ACTIVE:
-				$return = __( 'Active', 'wpcd' );
+				$return = __( 'Active', 'simple-stack' );
 				break;
 			case $this->_STATE_ERRORED:
-				$return = __( 'Unknown State or Errored', 'wpcd' );
+				$return = __( 'Unknown State or Errored', 'simple-stack' );
 				break;
 			case $this->_STATE_INPROGRESS:
-				$return = __( 'Operation in progress', 'wpcd' );  // not reported by any providers api but is the first state the server is in when we call an API to initiate a build.
+				$return = __( 'Operation in progress', 'simple-stack' );  // not reported by any providers api but is the first state the server is in when we call an API to initiate a build.
 				break;
 			case $this->_STATE_OFF:
-				$return = __( 'Powered-off', 'wpcd' );
+				$return = __( 'Powered-off', 'simple-stack' );
 				break;
 			default:
-				$return = __( 'unknown/', 'wpcd' ) . $state;
+				$return = __( 'unknown/', 'simple-stack' ) . $state;
 				break;
 		}
 
@@ -481,14 +482,14 @@ class CLOUD_PROVIDER_API {
 	 * Get a list of methods that will be cached.
 	 */
 	public function get_cache_methods() {
-		return apply_filters( 'wpcd_provider_api_cache_methods', array( 'sizes', 'keys', 'regions', 'other' ) );
+		return apply_filters( 'sstk_provider_api_cache_methods', array( 'sizes', 'keys', 'regions', 'other' ) );
 	}
 
 	/**
 	 * Get a list of all methods that might be cached.
 	 */
 	public function get_maybe_cache_methods() {
-		return apply_filters( 'wpcd_provider_api_maybe_cache_methods', array( 'sizes', 'keys', 'regions', 'create', 'snapshot', 'reboot', 'off', 'on', 'status', 'delete', 'details', 'other' ) );
+		return apply_filters( 'sstk_provider_api_maybe_cache_methods', array( 'sizes', 'keys', 'regions', 'create', 'snapshot', 'reboot', 'off', 'on', 'status', 'delete', 'details', 'other' ) );
 	}
 
 	/**
@@ -515,7 +516,7 @@ class CLOUD_PROVIDER_API {
 			$cache_key = $this->get_cache_key( $method );
 
 			if ( get_transient( $cache_key ) ) {
-				do_action( 'wpcd_log_error', "Cached item exists: $cache_key. It will be deleted.", 'provider-cache', __FILE__, __LINE__ );
+				do_action( 'sstk_log_error', "Cached item exists: $cache_key. It will be deleted.", 'provider-cache', __FILE__, __LINE__ );
 			}
 
 			delete_transient( $cache_key );
@@ -523,7 +524,7 @@ class CLOUD_PROVIDER_API {
 			$cache_key = $this->get_provider_slug() . $this->get_cache_key_prefix() . hash( 'sha256', $this->get_api_key() ) . $method;
 
 			if ( get_transient( $cache_key ) ) {
-				do_action( 'wpcd_log_error', "Cached item exists: $cache_key. It will be deleted.", 'provider-cache', __FILE__, __LINE__ );
+				do_action( 'sstk_log_error', "Cached item exists: $cache_key. It will be deleted.", 'provider-cache', __FILE__, __LINE__ );
 			}
 
 			delete_transient( $cache_key );
@@ -554,7 +555,7 @@ class CLOUD_PROVIDER_API {
 		}
 
 		// Get the cache time from settings...
-		$cache_time = wpcd_get_option( "vpn_{$method}_cache_limit" );
+		$cache_time = sstk_get_option( "sstk_{$method}_cache_limit" );
 		if ( empty( $cache_time ) ) {
 			$cache_time = 15;  // default is 15 minutes.
 		};
@@ -603,11 +604,11 @@ class CLOUD_PROVIDER_API {
 				if ( true === (bool) wp_using_ext_object_cache() ) {
 					// With an object cache in use, we can't get the number of minutes remaining.
 					/* translators: %1$s is replaced with the cachekey; %2$d is replaced with the amount of time remaining till the cachekey expires. */
-					$translist[] = sprintf( __( ' WordPress is using an external object cache so we cannot estimate the number of minutes remaining before transient %1s expires.', 'wpcd' ), $cache_key );
+					$translist[] = sprintf( __( ' WordPress is using an external object cache so we cannot estimate the number of minutes remaining before transient %1s expires.', 'simple-stack' ), $cache_key );
 				} else {
-					$time_to_expire = wpcd_get_transient_remaining_time_in_mins( $cache_key );
+					$time_to_expire = sstk_get_transient_remaining_time_in_mins( $cache_key );
 					/* translators: %1$s is replaced with the cachekey; %2$d is replaced with the amount of time remaining till the cachekey expires. */
-					$translist[] = sprintf( __( ' %1$s will expire in %2$d minutes.', 'wpcd' ), $cache_key, $time_to_expire );
+					$translist[] = sprintf( __( ' %1$s will expire in %2$d minutes.', 'simple-stack' ), $cache_key, $time_to_expire );
 				}
 			}
 		}
@@ -618,11 +619,11 @@ class CLOUD_PROVIDER_API {
 				if ( true === (bool) wp_using_ext_object_cache() ) {
 					// With an object cache in use, we can't get the number of minutes remaining.
 					/* translators: %1$s is replaced with the cachekey; %2$d is replaced with the amount of time remaining till the cachekey expires. */
-					$translist[] = sprintf( __( ' WordPress is using an external object cache so we cannot estimate the number of minutes remaining before transient %1s expires.', 'wpcd' ), $cache_key );
+					$translist[] = sprintf( __( ' WordPress is using an external object cache so we cannot estimate the number of minutes remaining before transient %1s expires.', 'simple-stack' ), $cache_key );
 				} else {
-					$time_to_expire = wpcd_get_transient_remaining_time_in_mins( $cache_key );
+					$time_to_expire = sstk_get_transient_remaining_time_in_mins( $cache_key );
 					/* translators: %1$s is replaced with the cachekey; %2$d is replaced with the amount of time remaining till the cachekey expires. */
-					$translist[] = sprintf( __( ' %1$s will expire in %2$d minutes.', 'wpcd' ), $cache_key, $time_to_expire );
+					$translist[] = sprintf( __( ' %1$s will expire in %2$d minutes.', 'simple-stack' ), $cache_key, $time_to_expire );
 				}
 			}
 		}
@@ -682,14 +683,14 @@ class CLOUD_PROVIDER_API {
 
 		// check to make sure that a public ssh key is available.
 		if ( $ok_to_continue ) {
-			if ( empty( wpcd_get_early_option( 'vpn_' . $this->get_provider_slug() . '_sshkey_id' ) ) ) {
+			if ( empty( sstk_get_early_option( 'sstk_' . $this->get_provider_slug() . '_sshkey_id' ) ) ) {
 				$ok_to_continue = false;
 			}
 		}
 
 		// check to make sure that we have a private key to match the public key.
 		if ( $ok_to_continue ) {
-			if ( empty( wpcd_get_early_option( 'vpn_' . $this->get_provider_slug() . '_sshkey' ) ) ) {
+			if ( empty( sstk_get_early_option( 'sstk_' . $this->get_provider_slug() . '_sshkey' ) ) ) {
 				$ok_to_continue = false;
 			}
 		}
@@ -701,52 +702,5 @@ class CLOUD_PROVIDER_API {
 
 		return $ok_to_continue;
 
-	}
-
-	/**
-	 * Gets the urls of the scripts that are needed to init a Server instance.
-	 *
-	 * @param array $variables The variables that need to replace the placeholders in the script.
-	 *
-	 * @return array
-	 *
-	 * @TODO: This function is no longer being used I don't think.
-	 */
-	final protected function get_script_url( $variables = array() ) {
-		$script = file_get_contents( wpcd_path . 'includes/scripts/params.sh' );
-		foreach ( $variables as $name => $value ) {
-			if ( is_array( $value ) ) {
-				continue;
-			}
-			$script = str_replace( 'VAR_' . strtoupper( $name ), $value, $script );
-		}
-
-		$dir = wp_get_upload_dir();
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
-		if ( ! $wp_filesystem->is_dir( trailingslashit( $dir['basedir'] ) . 'wpcd_app_vpn' ) ) {
-			$wp_filesystem->mkdir( trailingslashit( $dir['basedir'] ) . 'wpcd_app_vpn' );
-		}
-
-		$file = 'wpcd_app_vpn/script-' . sprintf( '%s-%s', $variables['wc_order_id'], $variables['region'] ) . '.sh';
-		$wp_filesystem->put_contents(
-			trailingslashit( $dir['basedir'] ) . $file,
-			$script,
-			FS_CHMOD_FILE
-		);
-
-		/*
-		// for testing on local
-		return array(
-			'main' => 'https://careful-donkey.jurassic.ninja/template.sh',
-			'params' => 'https://careful-donkey.jurassic.ninja/script-506-Digital-Ocean---nyc1.sh'
-		);
-		*/
-
-		return array(
-			'main'   => trailingslashit( wpcd_url ) . 'includes/scripts/template.txt',
-			'params' => trailingslashit( $dir['baseurl'] ) . str_replace( ' ', '-', $file ),
-		);
 	}
 }

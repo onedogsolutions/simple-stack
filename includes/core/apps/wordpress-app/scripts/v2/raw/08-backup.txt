@@ -139,28 +139,11 @@ then
 	echo "=>backing up files..."
 	date=$(date +"%Y-%m-%d"-"%Hh%Mm%Ss")
 	cd /var/www
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_fs.tar.gz $domain/*
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_fs.tar.gz $domain/* $domain/.phpini/*
-	fi
+	tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_fs.tar.gz $domain/* $domain/.phpini/*
 
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		# backup nginx config and htpasswd
-		echo "=>backing up nginx configuration..."
-		cd /etc/nginx
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_"${g_webserver_type}".tar.gz $(ls sites-enabled/*$domain htpasswd/*$domain 2>/dev/null)
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		# backup ols or lsws config directory
-		# ${VHDIR}/$domain
-		echo "=>backing up ols/ols-enterprise configuration..."
-		cd /usr/local/lsws/conf/
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_"${g_webserver_type}".tar.gz $(ls vhosts/${domain}/* 2>/dev/null)
-	fi
+	echo "=>backing up OpenLiteSpeed configuration..."
+	cd /usr/local/lsws/conf/
+	tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_"${g_webserver_type}".tar.gz $(ls vhosts/${domain}/* 2>/dev/null)
 
 	# backup database
 	echo "=>exporting database for backup..."
@@ -219,19 +202,9 @@ then
 	domain=$(echo $backup | cut -d "/" -f 1)
 	user_name=$(echo $domain | cut -c1-32)
 
-	#### We no longer need to ask for email address for ols since we've using reinstall unsafely parameter when requesting ssl certificates.
-	#if gf_is_ssl_ols $domain || gf_is_ssl_ols_enterprise $domain
-	#then
-	#	if [[ -z $email ]]
-	#	then
-	#		echo "Specify an email for administrative notifications about your certificate
-	#		Example: admin@example.com"
-	#		read -p "Email address: " email
-	#	fi
-	#fi
 
 	# if /var/www/$domain exists, let the user know before overwriting
-	if [[ -d /var/www/$domain || -e /etc/nginx/sites-enabled/$domain || -e /etc/nginx/sites-available/$domain || -e /etc/php/5.6/fpm/pool.d/$domain.conf || -e /etc/php/7.1/fpm/pool.d/$domain.conf || -e /etc/php/7.2/fpm/pool.d/$domain.conf || -e /etc/php/7.3/fpm/pool.d/$domain.conf || -e /etc/php/7.4/fpm/pool.d/$domain.conf || -e /etc/php/8.0/fpm/pool.d/$domain.conf || -e /etc/php/8.1/fpm/pool.d/$domain.conf || -e /etc/php/8.2/fpm/pool.d/$domain.conf || -e /etc/php/8.3/fpm/pool.d/$domain.conf || -d ${VHDIR}/$domain ]]
+	if [[ -d /var/www/$domain || -d ${VHDIR}/$domain ]]
 	then
 		# we do the following to allow bypassing this check if the user sets $overwrite to "yes"
 		if [[ "$overwrite" != "yes" ]]
@@ -274,13 +247,7 @@ QUERY
 			rm -rf /var/www/$domain
 		fi			
 
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			gf_remove_nginx_site "$domain"
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			gf_remove_ols_site "$domain"
-		fi
+		gf_remove_ols_site "$domain" || exit 1
 		userdel $user_name
 	fi
 
@@ -295,19 +262,12 @@ QUERY
 	echo "restoring files..."	
 	tar xzf ../"$backup"_fs.tar.gz
 	mv $domain /var/www/$domain
-	# restore nginx config
+	# Restore the OpenLiteSpeed configuration.
 	mkdir -p temp
 	cd temp
 	echo "restoring webserver configuration..."
 	tar xzf ../../"$backup"_"${g_webserver_type}".tar.gz
-
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		gf_restore_nginx_site "$domain"
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		gf_restore_ols_site "$domain"
-	fi
+	gf_restore_ols_site "$domain" || exit 1
 
 	cd ..
 	rm -rf temp
@@ -343,76 +303,18 @@ QUERY
 	echo "disabling object cache if applicable..."		
 	cd /var/www/$domain/html/
 	rm -f wp-content/object-cache.php
-	if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		su - $user_name -c "wp litespeed-option set object false > /dev/null 2>&1"
-		su - $user_name -c "wp cache flush 2>/dev/null"		
-	fi
+	su - $user_name -c "wp litespeed-option set object false > /dev/null 2>&1"
+	su - $user_name -c "wp cache flush 2>/dev/null"
 
 	# reset object cache (multiple flushes might be overkill.)
 	su - $user_name -c "wp cache flush 2>/dev/null"
 	su - $user_name -c "wp plugin uninstall --deactivate redis-cache 2>/dev/null"
 	su - $user_name -c "wp cache flush 2>/dev/null"
 
-	# Attempt to issue SSL certificates.
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		# if at least one site had ssl enabled, restore it, except if we are dealing with a wildcard multisite
-		if ! grep -q 'server_name \.' /etc/nginx/sites-enabled/$domain && grep -qs "listen 443" /etc/nginx/sites-enabled/$domain* -l
-		then
-			grep "server_name" $(grep "listen 443" /etc/nginx/sites-enabled/$domain* -l) -m 1 | cut -d "_" -f 2 | cut -d " " -f 2 | while read line 
-			do
-				# if the system doesn't have a cert or the system has a cert which includes www subdomain
-				# set up cert with www subdomain
-				if [[ ! -e /etc/letsencrypt/live/$line/cert.pem ]] || openssl x509 -in /etc/letsencrypt/live/$line/cert.pem -noout -text | grep -qs www.$line
-				then
-					# the following five lines are needed because certbot will try to test the current nginx config before modifying it
-					# since there is a chance that a certificate referenced in the config isn't present in the system, nginx -t can fail
-					# if it fails, certbot will not continue.
-					# so we remove all the SSL stuff from the configuration to make certbot happy
-					conf_location=$(grep "server_name $line" /etc/nginx/sites-enabled/$domain* -l)
-					if grep -qs "managed by Certbot" $conf_location
-					then
-						sed -i -n '/if ($host/q;p' $conf_location
-						sed -i '$ d' $conf_location
-						sed -i '/server {/a listen 80;\nlisten [::]:80;' $conf_location
-						sed -i '/managed by Certbot/d' $conf_location
-					fi
-					certbot --non-interactive -q --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $line -d www.$line
-				else
-					# if the system has a cert which doesn't contain the www subdomain
-					# set up cert without www subdomain
-					certbot --non-interactive -q --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $line
-				fi
-			done
-		fi
-
-		# If we are dealing with a multisite wildcard which had HTTPS enabled...
-		if grep -q 'server_name \.' /etc/nginx/sites-enabled/$domain && grep -q 'listen 443' /etc/nginx/sites-enabled/$domain
-		then
-			for sitedomain in $(su - $user_name -c "wp site list --field=domain")
-			do
-				su - $user_name -c "wp --skip-plugins option update home http://$sitedomain --url=https://$sitedomain/"
-				su - $user_name -c "wp --skip-plugins option update siteurl http://$sitedomain --url=https://$sitedomain/"
-			done
-			if grep -qs "managed by Certbot" /etc/nginx/sites-enabled/$domain
-			then
-				sed -i -n '/listen 80/q;p' /etc/nginx/sites-enabled/$domain
-				sed -i '$ d' /etc/nginx/sites-enabled/$domain
-				sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/$domain
-				sed -i '/managed by Certbot/d' /etc/nginx/sites-enabled/$domain
-			fi
-			certbot delete --cert-name $domain --noninteractive > /dev/null 2>&1
-			systemctl restart nginx
-			echo "This multisite had wildcard SSL enabled."
-			echo "HTTPS has been disabled, it can be configured using 13-multisite.sh"
-		fi
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		gf_disable_https_redirect_ols_htaccess "$domain" # Remove existing https any redirects.
-		if gf_enable_certbot_ols_site "$domain" "register_unsafely" ; then   # This function call echoes any success/failure messages so no need to handle here.
-			gf_enable_https_redirect_ols_htaccess "$domain"  # This function call echoes any success/failure messages so no need to handle here.
-		fi	
+	# Reissue the OpenLiteSpeed site certificate and restore the HTTPS redirect.
+	gf_disable_https_redirect_ols_htaccess "$domain"
+	if gf_enable_certbot_ols_site "$domain" "register_unsafely" ]; then
+		gf_enable_https_redirect_ols_htaccess "$domain"
 	fi
 
 	echo "cleaning up and restarting web server..."	
@@ -437,45 +339,15 @@ do
 		wget -q -O /dev/null $callback_domain/wp-json/wordpress-app/v1/command/1/start_domain_backup/completed/1/?domain=$domain
 	fi
 
-	function check_cur_webserver() {
-		if [ -e /usr/local/lsws/bin/lshttpd ] 
-		then
-			if /usr/local/lsws/bin/lshttpd -v | grep -q Open 
-			then
-				webserver_type="ols"
-			elif /usr/local/lsws/bin/lshttpd -v | grep -q Enterprise 
-			then
-				webserver_type="ols-enterprise"
-			fi
-		else
-			webserver_type="nginx"
-		fi
-	}
-	check_cur_webserver
-
 	mkdir -p /root/.wp-backup/$domain/
 	# backup /var/www
 	date=$(date +"%Y-%m-%d"-"%Hh%Mm%Ss")
 	cd /var/www
 
-	if [ "$webserver_type" = "nginx" ]
-	then	
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_fs.tar.gz $domain/*
-	elif [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
-	then
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_fs.tar.gz $domain/* $domain/.phpini/*
-	fi
-	if [ "$webserver_type" = "nginx" ]
-	then
-		# backup nginx config and htpasswd
-		cd /etc/nginx
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_"${webserver_type}".tar.gz $(ls sites-enabled/*$domain htpasswd/*$domain 2>/dev/null)
-	elif [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
-	then
-		# backing up ols/ols-enterprise configuration
-		cd /usr/local/lsws/conf/
-		tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_"${webserver_type}".tar.gz $(ls vhosts/${domain}/* 2>/dev/null)
-	fi
+	tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_fs.tar.gz $domain/* $domain/.phpini/*
+	# Back up the OpenLiteSpeed vhost configuration.
+	cd /usr/local/lsws/conf/
+	tar -czf /root/.wp-backup/$domain/"$domain"_"$date"_ols.tar.gz $(ls vhosts/${domain}/* 2>/dev/null)
 
 	# backup database
 	mysql_db=$(grep DB_NAME /var/www/$domain/html/wp-config.php | tr -d "[:space:]"|cut -d "," -f2|cut -d")" -f1|tail -c +2 | head -c -2)
@@ -611,46 +483,16 @@ do
 		wget -q -O /dev/null $5/wp-json/wordpress-app/v1/command/1/start_domain_backup/completed/1/?domain=$line
 	fi
 
-	function check_cur_webserver() {
-		if [ -e /usr/local/lsws/bin/lshttpd ] 
-		then
-			if /usr/local/lsws/bin/lshttpd -v | grep -q Open 
-			then
-				webserver_type="ols"
-			elif /usr/local/lsws/bin/lshttpd -v | grep -q Enterprise 
-			then
-				webserver_type="ols-enterprise"
-			fi
-		else
-			webserver_type="nginx"
-		fi
-	}
-	check_cur_webserver
-
 	mkdir -p /root/.wp-backup/$line/
 	# backup /var/www
 	date=$(date +"%Y-%m-%d"-"%Hh%Mm%Ss")
 	cd /var/www
 
-	if [ "$webserver_type" = "nginx" ]
-	then	
-		tar -czf /root/.wp-backup/$line/"$line"_"$date"_fs.tar.gz $line/*
-	elif [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
-	then
-		tar -czf /root/.wp-backup/$line/"$line"_"$date"_fs.tar.gz $line/* $line/.phpini/*	
-	fi
+	tar -czf /root/.wp-backup/$line/"$line"_"$date"_fs.tar.gz $line/* $line/.phpini/*
 
-	if [ "$webserver_type" = "nginx" ]
-	then
-		# backup nginx config and htpasswd
-		cd /etc/nginx
-		tar -czf /root/.wp-backup/$line/"$line"_"$date"_"${webserver_type}".tar.gz $(ls sites-enabled/*$line htpasswd/*$line 2>/dev/null)
-	elif [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
-	then
-		# backing up ols/ols-enterprise configuration
-		cd /usr/local/lsws/conf/
-		tar -czf /root/.wp-backup/$line/"$line"_"$date"_"${webserver_type}".tar.gz $(ls vhosts/$line/* 2>/dev/null)
-	fi
+	# Back up the OpenLiteSpeed vhost configuration.
+	cd /usr/local/lsws/conf/
+	tar -czf /root/.wp-backup/$line/"$line"_"$date"_ols.tar.gz $(ls vhosts/$line/* 2>/dev/null)
 
 	# backup database
 	mysql_db=$(grep DB_NAME /var/www/$line/html/wp-config.php | tr -d "[:space:]"|cut -d "," -f2|cut -d")" -f1|tail -c +2 | head -c -2)
@@ -892,21 +734,11 @@ then
 	echo
 	echo "The following sites have orphaned backups:"
 	cd /root/.wp-backup/
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sort <<< "$(ls /root/.wp-backup/; ls /etc/nginx/sites-enabled/; ls /etc/nginx/sites-available/)" | uniq -u | grep -v '^default$\|^monit$\|^monitorix$' |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sort <<< "$(ls /root/.wp-backup/; ls ${VHDIR}/)" | grep -v 'Example$' |uniq -u |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done
-	fi
+	sort <<< "$(ls /root/.wp-backup/; ls ${VHDIR}/)" | grep -v 'Example$' | uniq -u |
+	while read -r line
+	do
+		find $line -maxdepth 0 2>/dev/null
+	done
 	exit
 fi
 
@@ -915,28 +747,16 @@ if [[ $action == "remove_orphaned_backups" || $action == "14" ]]
 then
 	echo
 	cd /root/.wp-backup/
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		sort <<< "$(ls /root/.wp-backup/; ls /etc/nginx/sites-enabled/; ls /etc/nginx/sites-available/)" | uniq -u | grep -v '^default$\|^monit$\|^monitorix$' |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done | xargs rm -rf
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sort <<< "$(ls /root/.wp-backup/; ls ${VHDIR}/)" | grep -v 'Example$' |uniq -u |
-		while read -r line
-		do
-			find $line -maxdepth 0 2>/dev/null
-		done | xargs rm -rf
-	fi
+	sort <<< "$(ls /root/.wp-backup/; ls ${VHDIR}/)" | grep -v 'Example$' | uniq -u |
+	while read -r line
+	do
+		find $line -maxdepth 0 2>/dev/null
+	done | xargs rm -rf
 	echo "Orphaned backups have been removed"
 	exit
 fi
 
-# Note "restore_nginx" action is deprecated and no plugin or script code should be using it.
-# Use "restore_webserver_config" instead.
-if [[ $action == "restore_webserver_config" || $action == "restore_nginx" || $action == "15" ]]
+if [[ $action == "restore_webserver_config" || $action == "15" ]]
 then
 	cd /root/.wp-backup/
 	# ask the user which site to restore
@@ -971,13 +791,7 @@ then
 		echo "Unable to proceed because the domain name is blank."
 		exit 1
 	else 
-		if [ "$g_webserver_type" = "nginx" ]
-		then
-			gf_remove_nginx_site "$domain" "skip_certbot"
-		elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-		then
-			gf_remove_ols_site "$domain"  "skip_certbot"
-		fi
+		gf_remove_ols_site "$domain" "$domain" "skip_certbot" || exit 1
 	fi
 
 	# restore configuration file.
@@ -986,19 +800,12 @@ then
 	cd temp
 	echo "restoring $g_webserver_type configuration..."	
 	tar xzf ../../"$backup"_$g_webserver_type.tar.gz
-	if [ "$g_webserver_type" = "nginx" ]
-	then
-		# restore nginx config
-		gf_restore_nginx_site "$domain"
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		gf_restore_ols_site "$domain"
-		# Restore just the .htaccess file as well
-		tar -zvxf ../../"$backup"_fs.tar.gz $domain/html/.htaccess
-		mv $domain/html/.htaccess /var/www/$domain/html/.htaccess
-		user_name=$(echo $domain | cut -c1-32)
-		chown "${user_name}":www-data /var/www/$domain/html/.htaccess
-	fi
+	# Restore the OpenLiteSpeed configuration and .htaccess file.
+	gf_restore_ols_site "$domain" || exit 1
+	tar -zvxf ../../"$backup"_fs.tar.gz $domain/html/.htaccess
+	mv $domain/html/.htaccess /var/www/$domain/html/.htaccess
+	user_name=$(echo $domain | cut -c1-32)
+	chown "${user_name}":www-data /var/www/$domain/html/.htaccess
 
 	cd ..
 	rm -rf temp

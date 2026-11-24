@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Backup tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,41 +11,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_BACKUP
+ * Class SSTK_WORDPRESS_TABS_BACKUP
  */
-class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_BACKUP extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		/* add_filter( 'wpcd_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		/* add_filter( 'sstk_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
 
-		// Allow the manual backup to be triggered via an action hook. Hook Name: wpcd_wordpress-app_manual_backup_for_site.
-		add_action( "wpcd_{$this->get_app_name()}_manual_backup_for_site", array( $this, 'backup_actions' ), 10, 2 );
+		// Allow the manual backup to be triggered via an action hook. Hook Name: sstk_wordpress-app_manual_backup_for_site.
+		add_action( "sstk_{$this->get_app_name()}_manual_backup_for_site", array( $this, 'backup_actions' ), 10, 2 );
 
 		/* Pending Logs Background Task: Trigger manual backup */
-		add_action( 'wpcd_pending_log_manual_site_backup', array( $this, 'pending_log_manual_site_backup' ), 10, 3 );
+		add_action( 'sstk_pending_log_manual_site_backup', array( $this, 'pending_log_manual_site_backup' ), 10, 3 );
 
 		// Command completed hook.
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the site cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -74,30 +75,30 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 
 				}
 
 				// Add success notification.
-				do_action( 'wpcd_log_notification', $id, 'alert', __( 'The manual backup has been completed.', 'wpcd' ), 'backup', null );
+				do_action( 'sstk_log_notification', $id, 'alert', __( 'The manual backup has been completed.', 'simple-stack' ), 'backup', null );
 
 			} else {
 
 				if ( ! empty( $task_id ) ) {
 
 					// Grab our data array from pending tasks record...
-					$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+					$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 					// Mark the task as failed.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
 
 				}
 
 				// Add failure notification.
-				do_action( 'wpcd_log_notification', $id, 'error', __( 'The manual backup has failed.', 'wpcd' ), 'backup', null );
+				do_action( 'sstk_log_notification', $id, 'error', __( 'The manual backup has failed.', 'simple-stack' ), 'backup', null );
 
 			}
 
@@ -126,9 +127,9 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		delete_post_meta( $id, 'wpapp_pending_log_manual_backup_task_id' );
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -157,7 +158,7 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Backup & Restore', 'wpcd' ),
+				'label' => __( 'Backup & Restore', 'simple-stack' ),
 				'icon'  => 'fad fa-server',
 			);
 		}
@@ -173,11 +174,11 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -192,15 +193,15 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %1$s in file %2$s', 'wpcd' ), $action, __FILE__ ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %1$s in file %2$s', 'simple-stack' ), $action, __FILE__ ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'backup-run-manual', 'backup-run-schedule', 'restore-from-backup', 'restore-from-backup-webserver-config-only', 'restore-from-backup-wpconfig-only', 'delete-all-local-site-backups', 'prune-local-site-backups', 'refresh-backup-list' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -246,7 +247,7 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		$instance = $this->get_app_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$args = array_map( 'sanitize_text_field', wp_parse_args( wp_unslash( $_POST['params'] ) ) );
@@ -261,7 +262,7 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// Some cred is empty? If so, bail!
 		if ( empty( $key ) || empty( $secret ) || empty( $bucket ) ) {
-			return new \WP_Error( __( 'Some credentials are empty', 'wpcd' ) );
+			return new \WP_Error( __( 'Some credentials are empty', 'simple-stack' ) );
 		}
 
 		// If a bucket was passed in for this action, add it to the creds array.
@@ -301,16 +302,11 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 				break;
 
 			case 'restore-from-backup':
-				// Make sure that PHP 8.1 is installed since all restores go into that version of php.
-				if ( ! $this->is_php_81_installed( $id ) ) {
-					return new \WP_Error( __( 'PHP 8.1 must be installed for all restore actions.  It looks like this app is located on an older server that does not have PHP 8.1 installed on it.', 'wpcd' ) );
-				}
-				// Fallthrough is intentional!
 			case 'restore-from-backup-webserver-config-only':
 			case 'restore-from-backup-wpconfig-only':
 				// Make sure we have a backup to restore.
 				if ( empty( $args['backup_item'] ) ) {
-					return new \WP_Error( __( 'No backup was selected.', 'wpcd' ) );
+					return new \WP_Error( __( 'No backup was selected.', 'simple-stack' ) );
 				}
 
 				// Remove everything before the first occurence of the domain name in the backup that is being restored.
@@ -393,7 +389,7 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -429,57 +425,57 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		 * Run backup manually.
 		 */
 
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_backup_icon( __( '%s Take a Manual Backup - This Site Only', 'wpcd' ) ),
-			'desc' => __( 'Start a backup for this site right now!', 'wpcd' ),
+			'name' => sstk_apply_backup_icon( __( '%s Take a Manual Backup - This Site Only', 'simple-stack' ) ),
+			'desc' => __( 'Start a backup for this site right now!', 'simple-stack' ),
 			'tab'  => 'backup',
 			'type' => 'heading',
 		);
 
-		$hide_field = (bool) wpcd_get_early_option( 'wordpress_app_site_backup_hide_aws_bucket_name' ) && ( ! wpcd_is_admin() );
+		$hide_field = (bool) sstk_get_early_option( 'wordpress_app_site_backup_hide_aws_bucket_name' ) && ( ! sstk_is_admin() );
 		$fields[]   = array(
-			'name'       => $hide_field ? '' : __( 'AWS Bucket Name', 'wpcd' ),
-			'id'         => 'wpcd_app_aws_bucket_manual_backup',
-			'desc'       => $hide_field ? '' : __( 'Put the backup in this bucket. Leave this blank if you would like the backup to be placed in the default bucket.', 'wpcd' ),
-			'tooltip'    => $hide_field ? '' : __( 'The bucket should exist in the same region you specified for your AWS credentials.', 'wpcd' ),
+			'name'       => $hide_field ? '' : __( 'AWS Bucket Name', 'simple-stack' ),
+			'id'         => 'sstk_app_aws_bucket_manual_backup',
+			'desc'       => $hide_field ? '' : __( 'Put the backup in this bucket. Leave this blank if you would like the backup to be placed in the default bucket.', 'simple-stack' ),
+			'tooltip'    => $hide_field ? '' : __( 'The bucket should exist in the same region you specified for your AWS credentials.', 'simple-stack' ),
 			'tab'        => 'backup',
 			'type'       => $hide_field ? 'hidden' : 'text',
 			'save_field' => false,
 			'attributes' => array(
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'aws_bucket_manual_backup',
+				'data-sstk-name' => 'aws_bucket_manual_backup',
 			),
 			'std'        => '',
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_manual_backup',
+			'id'         => 'sstk_app_action_manual_backup',
 			'tab'        => 'backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_run_icon( __( '%s Run Manual Backup', 'wpcd' ) ),
+			'std'        => sstk_apply_run_icon( __( '%s Run Manual Backup', 'simple-stack' ) ),
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'backup-run-manual',
+				'data-sstk-action'              => 'backup-run-manual',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => json_encode( array( '#wpcd_app_aws_bucket_manual_backup' ) ), // the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-fields'              => json_encode( array( '#sstk_app_aws_bucket_manual_backup' ) ), // the id.
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to start a backup now?', 'wpcd' ), // show log console?
+				'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to start a backup now?', 'simple-stack' ), // show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to start backup...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to start backup...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the backup has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the backup is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
-		$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
 		// Auto backups.
 		$auto_backup_status         = get_post_meta( $id, 'wpapp_auto_backups_status', true );
@@ -489,137 +485,137 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// Set the confirmation prompt text.
 		if ( 'on' === $auto_backup_status ) {
-			$auto_backups_confirmation_prompt = __( 'Are you sure you would like to disable daily automatic backups for this site?', 'wpcd' );
+			$auto_backups_confirmation_prompt = __( 'Are you sure you would like to disable daily automatic backups for this site?', 'simple-stack' );
 		} else {
-			$auto_backups_confirmation_prompt = __( 'Are you sure you would like to enable daily automatic backups for this site?', 'wpcd' );
+			$auto_backups_confirmation_prompt = __( 'Are you sure you would like to enable daily automatic backups for this site?', 'simple-stack' );
 		}
 
 		if ( 'on' === $auto_backup_status ) {
 			// Backups have been enabled.  Show message about disabling it first before making changes.
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_clock_icon( __( '%s Automatic Backups - This Site Only', 'wpcd' ) ),
-				'desc' => __( 'Backups are enabled for this site. If you would like to make changes, please disable it first using the switch below.', 'wpcd' ),
+				'name' => sstk_apply_clock_icon( __( '%s Automatic Backups - This Site Only', 'simple-stack' ) ),
+				'desc' => __( 'Backups are enabled for this site. If you would like to make changes, please disable it first using the switch below.', 'simple-stack' ),
 				'tab'  => 'backup',
 				'type' => 'heading',
 			);
 		} else {
-			$desc     = __( 'Enable automatic backups to run once per day for this site.  You should set up your S3 credentials in SETTINGS or on the server page and create a bucket for these backups before turning this option on!', 'wpcd' );
-			$desc     = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc     = __( 'Enable automatic backups to run once per day for this site.  You should set up your S3 credentials in SETTINGS or on the server page and create a bucket for these backups before turning this option on!', 'simple-stack' );
+			$desc     = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_clock_icon( __( '%s Automatic Backups - This Site Only', 'wpcd' ) ),
+				'name' => sstk_apply_clock_icon( __( '%s Automatic Backups - This Site Only', 'simple-stack' ) ),
 				'desc' => $desc,
 				'tab'  => 'backup',
 				'type' => 'heading',
 			);
 		}
 
-		$hide_field = (bool) wpcd_get_early_option( 'wordpress_app_site_backup_hide_aws_bucket_name' ) && ( ! wpcd_is_admin() );
+		$hide_field = (bool) sstk_get_early_option( 'wordpress_app_site_backup_hide_aws_bucket_name' ) && ( ! sstk_is_admin() );
 		if ( 'on' !== $auto_backup_status ) {
 			// Backups are not currently enabled so we can show all fields.
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_auto_backup_bucket_name',
-				'tooltip'    => $hide_field ? '' : __( 'If this is left blank then the global bucket name from the SETTINGS screen will be used. The bucket should exist in the same region you specified for your AWS credentials.', 'wpcd' ),
+				'id'         => 'sstk_app_action_auto_backup_bucket_name',
+				'tooltip'    => $hide_field ? '' : __( 'If this is left blank then the global bucket name from the SETTINGS screen will be used. The bucket should exist in the same region you specified for your AWS credentials.', 'simple-stack' ),
 				'tab'        => 'backup',
 				'type'       => $hide_field ? 'hidden' : 'text',
-				'name'       => $hide_field ? '' : __( 'AWS Bucket Name', 'wpcd' ),
+				'name'       => $hide_field ? '' : __( 'AWS Bucket Name', 'simple-stack' ),
 				'std'        => $auto_backup_bucket,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'auto_backup_bucket_name',
+					'data-sstk-name' => 'auto_backup_bucket_name',
 				),
 				'save_field' => false,
 			);
 
-			$hide_field = (bool) wpcd_get_early_option( 'wordpress_app_site_backup_hide_retention_days' ) && ( ! wpcd_is_admin() );
+			$hide_field = (bool) sstk_get_early_option( 'wordpress_app_site_backup_hide_retention_days' ) && ( ! sstk_is_admin() );
 			$fields[]   = array(
-				'id'         => 'wpcd_app_action_auto_backup_retention_days',
-				'tooltip'    => $hide_field ? '' : __( 'If left blank or zero, the backups will never be deleted. If set to -1, we will NEVER keep backups on disk (NOT RECOMMENDED).', 'wpcd' ),
+				'id'         => 'sstk_app_action_auto_backup_retention_days',
+				'tooltip'    => $hide_field ? '' : __( 'If left blank or zero, the backups will never be deleted. If set to -1, we will NEVER keep backups on disk (NOT RECOMMENDED).', 'simple-stack' ),
 				'tab'        => 'backup',
 				'type'       => $hide_field ? 'hidden' : 'number',
 				'min'        => -1,
-				'name'       => $hide_field ? '' : __( 'Retention Days', 'wpcd' ),
+				'name'       => $hide_field ? '' : __( 'Retention Days', 'simple-stack' ),
 				'std'        => $auto_backup_retention_days,
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'auto_backup_retention_days',
+					'data-sstk-name' => 'auto_backup_retention_days',
 				),
 				'size'       => 10,
 				'save_field' => false,
 			);
 
-			$hide_field = (bool) wpcd_get_early_option( 'wordpress_app_site_backup_hide_del_remote_backups' ) && ( ! wpcd_is_admin() );
+			$hide_field = (bool) sstk_get_early_option( 'wordpress_app_site_backup_hide_del_remote_backups' ) && ( ! sstk_is_admin() );
 			$fields[]   = array(
-				'id'         => 'wpcd_app_action_auto_backup_delete_remotes',
-				'name'       => $hide_field ? '' : __( 'Delete Remote Backups', 'wpcd' ),
+				'id'         => 'sstk_app_action_auto_backup_delete_remotes',
+				'name'       => $hide_field ? '' : __( 'Delete Remote Backups', 'simple-stack' ),
 				'tab'        => 'backup',
 				'type'       => $hide_field ? 'hidden' : 'select',
 				'options'    => array(
-					'off' => __( 'Disabled', 'wpcd' ),
-					'on'  => __( 'Enabled', 'wpcd' ),
+					'off' => __( 'Disabled', 'simple-stack' ),
+					'on'  => __( 'Enabled', 'simple-stack' ),
 				),
 				'std'        => $auto_backup_delete_remotes,
-				'tooltip'    => $hide_field ? '' : __( 'Delete remote backups when deleting local backups that exceed the retention days. We recommend that you keep this disabled and set a low number for the retention days above.', 'wpcd' ),
+				'tooltip'    => $hide_field ? '' : __( 'Delete remote backups when deleting local backups that exceed the retention days. We recommend that you keep this disabled and set a low number for the retention days above.', 'simple-stack' ),
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'auto_backup_delete_remotes',
+					'data-sstk-name' => 'auto_backup_delete_remotes',
 				),
 				'save_field' => false,
 			);
 		}
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_auto_backup',
-			'name'       => 'on' === $auto_backup_status ? '' : __( 'Schedule It', 'wpcd' ),
+			'id'         => 'sstk_app_action_auto_backup',
+			'name'       => 'on' === $auto_backup_status ? '' : __( 'Schedule It', 'simple-stack' ),
 			'tab'        => 'backup',
 			'type'       => 'switch',
-			'on_label'   => __( 'Enabled', 'wpcd' ),
-			'off_label'  => __( 'Disabled', 'wpcd' ),
+			'on_label'   => __( 'Enabled', 'simple-stack' ),
+			'off_label'  => __( 'Disabled', 'simple-stack' ),
 			'std'        => $auto_backup_status === 'on',
-			'desc'       => 'on' === $auto_backup_status ? '' : __( 'Enable daily automatic backups', 'wpcd' ),
+			'desc'       => 'on' === $auto_backup_status ? '' : __( 'Enable daily automatic backups', 'simple-stack' ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'backup-run-schedule',
+				'data-sstk-action'              => 'backup-run-schedule',
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => 'on' === $auto_backup_status ? '' : json_encode( array( '#wpcd_app_action_auto_backup_bucket_name', '#wpcd_app_action_auto_backup_retention_days', '#wpcd_app_action_auto_backup_delete_remotes' ) ),                // the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-fields'              => 'on' === $auto_backup_status ? '' : json_encode( array( '#sstk_app_action_auto_backup_bucket_name', '#sstk_app_action_auto_backup_retention_days', '#sstk_app_action_auto_backup_delete_remotes' ) ),                // the id.
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => $auto_backups_confirmation_prompt,
+				'data-sstk-confirmation-prompt' => $auto_backups_confirmation_prompt,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
-		$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Start Restore Section
 		 */
 
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-		$desc  = __( 'Use this section to restore data from your backups. Use with care - restores are a destructive operation.  You should make a backup before performing a restore.  <br />We strongly recommend that you make a snapshot of your server as well!', 'wpcd' );
+		$desc  = __( 'Use this section to restore data from your backups. Use with care - restores are a destructive operation.  You should make a backup before performing a restore.  <br />We strongly recommend that you make a snapshot of your server as well!', 'simple-stack' );
 		$desc .= '<br/>';
 		$desc .= '<br/>';
-		$desc .= __( '1. Use the REFRESH BACKUP LIST button to get a current list of backups', 'wpcd' );
+		$desc .= __( '1. Use the REFRESH BACKUP LIST button to get a current list of backups', 'simple-stack' );
 		$desc .= '<br/>';
-		$desc .= __( '2. Select a site to restore from the dropdown.', 'wpcd' );
+		$desc .= __( '2. Select a site to restore from the dropdown.', 'simple-stack' );
 		$desc .= '<br/>';
-		$desc .= __( '3. Choose a restore option in the SELECT RESTORE OPTION section.', 'wpcd' );
+		$desc .= __( '3. Choose a restore option in the SELECT RESTORE OPTION section.', 'simple-stack' );
 
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_restore_icon( __( '%s Select a Site to Restore From Backup', 'wpcd' ) ),
+			'name' => sstk_apply_restore_icon( __( '%s Select a Site to Restore From Backup', 'simple-stack' ) ),
 			'desc' => $desc,
 			'tab'  => 'backup',
 			'type' => 'heading',
 		);
 
 		// Get list of backups from meta and transform into something that the metabox.io select fields can process; plus get other related metadata from the app records.
-		$backup_list_array     = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_backups_list', true ) );
+		$backup_list_array     = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_backups_list', true ) );
 		$backup_list_date      = get_post_meta( $id, 'wpapp_backups_list_date', true );
 		$new_backup_list_array = null;
 		if ( ! empty( $backup_list_array ) ) {
@@ -636,36 +632,36 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		}
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_backup_list',
-			'name'       => __( 'Backup List', 'wpcd' ),
+			'id'         => 'sstk_app_action_backup_list',
+			'name'       => __( 'Backup List', 'simple-stack' ),
 			'tab'        => 'backup',
 			'type'       => 'select',
-			'std'        => __( 'Backup List', 'wpcd' ),
+			'std'        => __( 'Backup List', 'simple-stack' ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the id.
-				'data-wpcd-id'   => $id,
+				'data-sstk-id'   => $id,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'backup_item',
+				'data-sstk-name' => 'backup_item',
 			),
 			'options'    => $new_backup_list_array,
 			'save_field' => false,
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_refresh_backup_list',
+			'id'         => 'sstk_app_action_refresh_backup_list',
 			'name'       => '',
 			'tab'        => 'backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_restart_icon( __( '%s Refresh Backup List', 'wpcd' ) ),
+			'std'        => sstk_apply_restart_icon( __( '%s Refresh Backup List', 'simple-stack' ) ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action' => 'refresh-backup-list',
+				'data-sstk-action' => 'refresh-backup-list',
 				// the id.
-				'data-wpcd-id'     => $id,
+				'data-sstk-id'     => $id,
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 			'columns'    => 12,
 		);
@@ -674,225 +670,225 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 			$fields[] = array(
 				'tab'  => 'backup',
 				'type' => 'custom_html',
-				'std'  => sprintf( __( 'The list of backups was last refreshed on %s.', 'wpcd' ), $backup_list_date ),
+				'std'  => sprintf( __( 'The list of backups was last refreshed on %s.', 'simple-stack' ), $backup_list_date ),
 			);
 		} else {
 			$fields[] = array(
 				'tab'  => 'backup',
 				'type' => 'custom_html',
-				'std'  => __( 'The backup list has never been retrieved. Please use the REFRESH BACKUP LIST button to get the most recent list of available backups.', 'wpcd' ),
+				'std'  => __( 'The backup list has never been retrieved. Please use the REFRESH BACKUP LIST button to get the most recent list of available backups.', 'simple-stack' ),
 			);
 		}
 
-		$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		/**
 		 * Restore Section
 		 */
 
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-		$desc = __( '1. Use the REFRESH BACKUP LIST button to get a current list of backups 2.select a site to restore from the dropdown. 3. Choose a restore option below.', 'wpcd' );
-		$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc = __( '1. Use the REFRESH BACKUP LIST button to get a current list of backups 2.select a site to restore from the dropdown. 3. Choose a restore option below.', 'simple-stack' );
+		$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_restore_icon( __( '%s Select Restore Action', 'wpcd' ) ),
+			'name' => sstk_apply_restore_icon( __( '%s Select Restore Action', 'simple-stack' ) ),
 			'desc' => $desc,
 			'tab'  => 'backup',
 			'type' => 'heading',
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_restore_backup',
+			'id'         => 'sstk_app_action_restore_backup',
 			'name'       => '',
 			'tab'        => 'backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_restore_icon( __( '%s Restore Selected Backup', 'wpcd' ) ),
+			'std'        => sstk_apply_restore_icon( __( '%s Restore Selected Backup', 'simple-stack' ) ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'restore-from-backup',
+				'data-sstk-action'              => 'restore-from-backup',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => json_encode( array( '#wpcd_app_action_backup_list' ) ),              // make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to restore this backup, overwriting all data on the existing site?', 'wpcd' ),
+				'data-sstk-fields'              => json_encode( array( '#sstk_app_action_backup_list' ) ),              // make sure we give the user a confirmation prompt.
+				'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to restore this backup, overwriting all data on the existing site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to restore your data.  We hope you took a backup before starting this restore process!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to restore your data.  We hope you took a backup before starting this restore process!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 			'columns'    => 12,
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_restore_backup_webserver_config_only',
+			'id'         => 'sstk_app_action_restore_backup_webserver_config_only',
 			'name'       => '',
 			'tab'        => 'backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_restore_icon( __( '%s Restore Web Server Configuration', 'wpcd' ) ),
+			'std'        => sstk_apply_restore_icon( __( '%s Restore Web Server Configuration', 'simple-stack' ) ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'restore-from-backup-webserver-config-only',
+				'data-sstk-action'              => 'restore-from-backup-webserver-config-only',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => json_encode( array( '#wpcd_app_action_backup_list' ) ), // make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to restore this backup, overwriting your web server configuration file on the existing site?', 'wpcd' ),
+				'data-sstk-fields'              => json_encode( array( '#sstk_app_action_backup_list' ) ), // make sure we give the user a confirmation prompt.
+				'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to restore this backup, overwriting your web server configuration file on the existing site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to restore your data.  We hope you took a backup before starting this restore process!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to restore your data.  We hope you took a backup before starting this restore process!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 			'columns'    => 12,
 		);
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_restore_backup_wpconfig_only',
+			'id'         => 'sstk_app_action_restore_backup_wpconfig_only',
 			'name'       => '',
 			'tab'        => 'backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_restore_icon( __( '%s Restore wp-config.php File', 'wpcd' ) ),
+			'std'        => sstk_apply_restore_icon( __( '%s Restore wp-config.php File', 'simple-stack' ) ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'restore-from-backup-wpconfig-only',
+				'data-sstk-action'              => 'restore-from-backup-wpconfig-only',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// fields that contribute data for this action.
-				'data-wpcd-fields'              => json_encode( array( '#wpcd_app_action_backup_list' ) ),              // make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to restore this backup, overwriting your wpconfig.php configuration file on the existing site?', 'wpcd' ),
+				'data-sstk-fields'              => json_encode( array( '#sstk_app_action_backup_list' ) ),              // make sure we give the user a confirmation prompt.
+				'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to restore this backup, overwriting your wpconfig.php configuration file on the existing site?', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to restore your data.  We hope you took a backup before starting this restore process!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to restore your data.  We hope you took a backup before starting this restore process!<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 			'columns'    => 12,
 		);
 
-		$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 		/* End restore section */
 
 		/**
 		 * Delete All Backups
 		 */
 
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-		$desc     = __( 'Manually delete local backups i.e.: backups stored on this server. Before you can use this option you must have configured backups and run the backup process at least once.', 'wpcd' );
-		$desc     = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+		$desc     = __( 'Manually delete local backups i.e.: backups stored on this server. Before you can use this option you must have configured backups and run the backup process at least once.', 'simple-stack' );
+		$desc     = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 		$fields[] = array(
 			/* Translators: %s is a fontawesome or similar icon. */
-			'name' => wpcd_apply_trash_icon( __( '%s Delete Backups', 'wpcd' ) ),
+			'name' => sstk_apply_trash_icon( __( '%s Delete Backups', 'simple-stack' ) ),
 			'desc' => $desc,
 			'tab'  => 'backup',
 			'type' => 'heading',
 		);
 
 		$fields[] = array(
-			'id'         => 'wpcd_app_action_delete_all_local_site_backups',
+			'id'         => 'sstk_app_action_delete_all_local_site_backups',
 			'name'       => '',
 			'tab'        => 'backup',
 			'type'       => 'button',
 			/* Translators: %s is a fontawesome or similar icon. */
-			'std'        => wpcd_apply_trash_icon( __( '%s Delete All Site Backups', 'wpcd' ) ),
+			'std'        => sstk_apply_trash_icon( __( '%s Delete All Site Backups', 'simple-stack' ) ),
 			// fields that contribute data for this action.
 			'attributes' => array(
 				// the _action that will be called in ajax.
-				'data-wpcd-action'              => 'delete-all-local-site-backups',
+				'data-sstk-action'              => 'delete-all-local-site-backups',
 				// the id.
-				'data-wpcd-id'                  => $id,
+				'data-sstk-id'                  => $id,
 				// make sure we give the user a confirmation prompt.
-				'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to delete all backups for this site? This action cannot be reversed!', 'wpcd' ),
+				'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to delete all backups for this site? This action cannot be reversed!', 'simple-stack' ),
 				// show log console?
 				'data-show-log-console'         => true,
 				// Initial console message.
-				'data-initial-console-message'  => __( 'Preparing to delete all backups for this site on your server.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+				'data-initial-console-message'  => __( 'Preparing to delete all backups for this site on your server.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 			),
-			'class'      => 'wpcd_app_action',
+			'class'      => 'sstk_app_action',
 			'save_field' => false,
 		);
 
-		$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 		/* End Delete All Backups */
 
 		/**
 		 * Prune Backups
 		 */
 
-		$fields[] = wpcd_start_half_card( $this->get_tab_slug() ); // Start new card.
+		$fields[] = sstk_start_half_card( $this->get_tab_slug() ); // Start new card.
 
-		$hide_prune_section = (bool) wpcd_get_early_option( 'wordpress_app_site_backup_hide_prune_backups_section' ) && ( ! wpcd_is_admin() );  // Note: If we ever decide to create action options on teams or for owners, this conditional should be removed in favor of those.
+		$hide_prune_section = (bool) sstk_get_early_option( 'wordpress_app_site_backup_hide_prune_backups_section' ) && ( ! sstk_is_admin() );  // Note: If we ever decide to create action options on teams or for owners, this conditional should be removed in favor of those.
 		if ( ! $hide_prune_section ) {
-			$desc  = __( 'Delete old local backups that are stored on this server. Before you can use this option you must have configured backups and run the backup process at least once.', 'wpcd' );
+			$desc  = __( 'Delete old local backups that are stored on this server. Before you can use this option you must have configured backups and run the backup process at least once.', 'simple-stack' );
 			$desc .= '<br/>';
 			$desc .= '<br/>';
-			$desc .= __( 'Backups that are stored at AWS S3 will not be deleted with this operation.', 'wpcd' );
+			$desc .= __( 'Backups that are stored at AWS S3 will not be deleted with this operation.', 'simple-stack' );
 			$desc .= '<br/>';
 			$desc .= '<br/>';
-			$desc .= __( 'This is a one-time operation - to schedule automatic pruning please use the options under AUTOMATIC DAILY BACKUP above.', 'wpcd' );
-			$desc  = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc .= __( 'This is a one-time operation - to schedule automatic pruning please use the options under AUTOMATIC DAILY BACKUP above.', 'simple-stack' );
+			$desc  = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_prune_icon( __( '%s Prune Backups', 'wpcd' ) ),
+				'name' => sstk_apply_prune_icon( __( '%s Prune Backups', 'simple-stack' ) ),
 				'desc' => $desc,
 				'tab'  => 'backup',
 				'type' => 'heading',
 			);
 
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_manual_prune_backup_retention_days',
-				'desc'       => __( 'If left blank or zero, the backups will never be deleted.', 'wpcd' ),
+				'id'         => 'sstk_app_action_manual_prune_backup_retention_days',
+				'desc'       => __( 'If left blank or zero, the backups will never be deleted.', 'simple-stack' ),
 				'tab'        => 'backup',
 				'type'       => 'number',
 				'std'        => 7,
-				'name'       => __( 'Retention Days', 'wpcd' ),
+				'name'       => __( 'Retention Days', 'simple-stack' ),
 				'attributes' => array(
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => 'manual_prune_backup_retention_days',
+					'data-sstk-name' => 'manual_prune_backup_retention_days',
 				),
 				'size'       => 10,
 				'save_field' => false,
 			);
 
 			$fields[] = array(
-				'id'         => 'wpcd_app_action_delete_local_site_backups',
+				'id'         => 'sstk_app_action_delete_local_site_backups',
 				'name'       => '',
 				'tab'        => 'backup',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_prune_icon( __( '%s Prune Backups For This Site', 'wpcd' ) ),
+				'std'        => sstk_apply_prune_icon( __( '%s Prune Backups For This Site', 'simple-stack' ) ),
 				// fields that contribute data for this action.
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'prune-local-site-backups',
+					'data-sstk-action'              => 'prune-local-site-backups',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// fields that contribute data for this action.
-					'data-wpcd-fields'              => json_encode( array( '#wpcd_app_action_manual_prune_backup_retention_days' ) ),               // make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you really really SURE you want to prune backups for this site? This action cannot be reversed!', 'wpcd' ),
+					'data-sstk-fields'              => json_encode( array( '#sstk_app_action_manual_prune_backup_retention_days' ) ),               // make sure we give the user a confirmation prompt.
+					'data-sstk-confirmation-prompt' => __( 'Are you really really SURE you want to prune backups for this site? This action cannot be reversed!', 'simple-stack' ),
 					// show log console?
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to prune backups for this site on your server.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to prune backups for this site on your server.<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the restore has been completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the restore is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 		}
 		/* End Manually Prune Backups */
 
-		$fields[] = wpcd_end_card( $this->get_tab_slug() ); // Close up prior card.
+		$fields[] = sstk_end_card( $this->get_tab_slug() ); // Close up prior card.
 
 		return $fields;
 
@@ -905,12 +901,12 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		$sites = array();
 		$posts = get_posts(
 			array(
-				'post_type'   => 'wpcd_app',
+				'post_type'   => 'sstk_app',
 				'post_status' => 'private',
 				'numberposts' => 300,
 				'meta_query'  => array(
 					array(
-						'key'   => 'wpcd_server_initial_app_name',
+						'key'   => 'sstk_server_initial_app_name',
 						'value' => $this->get_app_name(),
 					),
 				),
@@ -958,7 +954,7 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get an array of credentials and buckets, with escapeshellarg already applied.
@@ -1019,13 +1015,13 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		);
 
 		// log.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'backup_restore_schedule.txt' );
 		if ( ! $success ) {
-			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result ) );
+			return new \WP_Error( sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result ) );
 		}
 
 		// Now that we know we've been successful set the new status on the app record as well as any other data that needs to be stamped there.
@@ -1058,7 +1054,7 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the full command to be executed by ssh.
@@ -1076,7 +1072,7 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		);
 
 		// log.
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		// execute and evaluate results.
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
@@ -1085,8 +1081,8 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 		$backup_list     = array();
 		$delimiter_start = '==backup list start==';  // The backup list will be between these two strings...
 		$delimiter_end   = '==backup list end==';
-		$backup_string   = wpcd_get_string_between( $result, $delimiter_start, $delimiter_end );
-		$backup_list     = wpcd_split_lines_into_array( $backup_string );
+		$backup_string   = sstk_get_string_between( $result, $delimiter_start, $delimiter_end );
+		$backup_list     = sstk_split_lines_into_array( $backup_string );
 
 		// Now that we know we've been successful update the app record with the new list of backups.
 		update_post_meta( $id, 'wpapp_backups_list', $backup_list );
@@ -1099,9 +1095,9 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 	/**
 	 * Manual backup for a site - triggered via pending logs background process.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_pending_log_manual_site_backup
+	 * Action Hook: sstk_pending_log_manual_site_backup
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $site_id    Id of site on which this action apply.
@@ -1110,16 +1106,16 @@ class WPCD_WORDPRESS_TABS_BACKUP extends WPCD_WORDPRESS_TABS {
 	public function pending_log_manual_site_backup( $task_id, $site_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		// Add a postmeta to the site we can use later.
 		update_post_meta( $site_id, 'wpapp_pending_log_manual_backup_task_id', $task_id );
 
 		/* Trigger manual backup for the site */
-		do_action( 'wpcd_wordpress-app_manual_backup_for_site', 'backup-run-manual', $site_id );
+		do_action( 'sstk_wordpress-app_manual_backup_for_site', 'backup-run-manual', $site_id );
 
 	}
 
 }
 
-new WPCD_WORDPRESS_TABS_BACKUP();
+new SSTK_WORDPRESS_TABS_BACKUP();

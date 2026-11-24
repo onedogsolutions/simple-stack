@@ -28,7 +28,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains SimpleStack’s React routing and navigation system for the admin interface. The application uses a minimal hash-based router so it can coexist with WordPress’s `admin.php?page=simplestack` URL without fighting browser history or losing deep links. Route configuration is centralized, route parameters are captured through simple patterns, and navigation between admin pages is performed by updating the hash.
+This document explains Simple Stack’s React routing and navigation system for the admin interface. The application uses a minimal hash-based router so it can coexist with WordPress’s `admin.php?page=simplestack` URL without fighting browser history or losing deep links. Route configuration is centralized, route parameters are captured through simple patterns, and navigation between admin pages is performed by updating the hash.
 
 The built-in routes include:
 - Servers list
@@ -89,7 +89,7 @@ Important behavior:
 - [index.jsx:17-34](file://src/admin/index.jsx#L17-L34)
 
 ## Architecture Overview
-SimpleStack’s admin UI is a single-page React application mounted inside a WordPress admin page. The real URL remains controlled by WordPress, while the app’s internal navigation lives in the hash fragment.
+Simple Stack’s admin UI is a single-page React application mounted inside a WordPress admin page. The real URL remains controlled by WordPress, while the app’s internal navigation lives in the hash fragment.
 
 ```mermaid
 sequenceDiagram
@@ -439,7 +439,7 @@ Common issues and resolutions:
 - [App.jsx:44-54](file://src/admin/App.jsx#L44-L54)
 
 ## Conclusion
-SimpleStack’s admin routing is intentionally lightweight. It uses a hash-based router to avoid conflicts with WordPress, centralizes route definitions, and keeps navigation predictable. Built-in routes cover the core admin workflows: managing servers, deploying sites, inspecting site security, configuring providers, and reviewing activity. Extending the system involves adding a route pattern, a component, and calling `navigate()` where appropriate. For production-grade admin applications requiring rich history, authentication guards, or SEO-sensitive URLs, consider migrating to a more feature-rich client-side router while preserving compatibility with WordPress’s URL ownership.
+Simple Stack’s admin routing is intentionally lightweight. It uses a hash-based router to avoid conflicts with WordPress, centralizes route definitions, and keeps navigation predictable. Built-in routes cover the core admin workflows: managing servers, deploying sites, inspecting site security, configuring providers, and reviewing activity. Extending the system involves adding a route pattern, a component, and calling `navigate()` where appropriate. For production-grade admin applications requiring rich history, authentication guards, or SEO-sensitive URLs, consider migrating to a more feature-rich client-side router while preserving compatibility with WordPress’s URL ownership.
 
 [No sources needed since this section summarizes without analyzing specific files]
 

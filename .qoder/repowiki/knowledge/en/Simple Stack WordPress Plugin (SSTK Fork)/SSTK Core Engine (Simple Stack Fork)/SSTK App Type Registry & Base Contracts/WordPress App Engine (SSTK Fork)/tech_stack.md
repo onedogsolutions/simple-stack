@@ -1,1 +1,1 @@
-PHP classes + traits, WordPress CPT/tabs/admin-ajax, WP_List_Table, jQuery-based admin JS, and Bash shell scripts (organized as numbered `.txt` fragments under `scripts/v1/` and `scripts/v2/`).
+PHP classes and traits, WordPress CPTs, tab and REST bridges, Meta Box schemas consumed by the React admin, legacy jQuery admin helpers, and fixed-v2 Bash scripts organized as numbered `raw/*.txt` fragments with top-level command wrappers.

@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * WPCONFIG Tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,21 +11,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_WPCONFIG
+ * Class SSTK_WORDPRESS_TABS_WPCONFIG
  */
-class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_WPCONFIG extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_WPCONFIG constructor.
+	 * SSTK_WORDPRESS_TABS_WPCONFIG constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 
 		// Allow the wp_site_update_wpconfig_option action to be triggered via an action hook.
-		add_action( 'wpcd_wordpress-app_do_update_wpconfig_option', array( $this, 'update_wpconfig_action' ), 10, 4 );
+		add_action( 'sstk_wordpress-app_do_update_wpconfig_option', array( $this, 'update_wpconfig_action' ), 10, 4 );
 	}
 
 	/**
@@ -52,7 +53,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'WPConfig', 'wpcd' ),
+				'label' => __( 'WPConfig', 'simple-stack' ),
 				'icon'  => 'fad fa-screwdriver ',
 			);
 		}
@@ -68,17 +69,17 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
 	 * Gets the fields to be shown in the PHP tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -108,8 +109,8 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
@@ -119,7 +120,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 		if ( in_array( $action, $valid_actions, true ) || in_array( $action, $valid_actions2, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
 				/* Translators: %1: String representing action; %2: Filename where code is being executed; %3: Post id for site or server; %4: WordPress User id */
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -177,17 +178,17 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 
 		/* Set the text of the confirmation prompt */
 		$confirmation_prompt = '';
-		$confirmation_prompt = __( 'Are you sure you would like to change or update this WPCONFIG.PHP value?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to change or update this WPCONFIG.PHP value?', 'simple-stack' );
 
 		/* Header Descriptiont */
-		$head_desc  = __( 'Use this section to update your WPCONFIG.PHP options.', 'wpcd' );
+		$head_desc  = __( 'Use this section to update your WPCONFIG.PHP options.', 'simple-stack' );
 		$head_desc .= '<br />';
-		$head_desc  = __( 'If you enter invalid or spurious values here, you will break your site!', 'wpcd' );
+		$head_desc  = __( 'If you enter invalid or spurious values here, you will break your site!', 'simple-stack' );
 		$head_desc .= '<br />';
-		$head_desc .= __( 'Note that WP-DEBUG options are under the TOOLs tab.', 'wpcd' );
+		$head_desc .= __( 'Note that WP-DEBUG options are under the TOOLs tab.', 'simple-stack' );
 
 		$actions['wpconfig-section-header'] = array(
-			'label'          => __( 'Update WPCONFIG.PHP Options', 'wpcd' ),
+			'label'          => __( 'Update WPCONFIG.PHP Options', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $head_desc,
@@ -217,7 +218,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 				'type'           => 'custom_html',
 				'raw_attributes' => array(
 					'columns' => 4,
-					'std'     => '<b>' . __( "$label", 'wpcd' ) . '</b>',
+					'std'     => '<b>' . __( "$label", 'simple-stack' ) . '</b>',
 					'desc'    => $desc,
 				),
 			);
@@ -230,17 +231,17 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 					'columns'        => 4,
 					'options'        => $select_options,
 					// the key of the field (the key goes in the request).
-					'data-wpcd-name' => $label,
+					'data-sstk-name' => $label,
 				),
 			);
 
 			$actions[ "change-$config_option_key" ] = array(
 				'label'          => '',
 				'raw_attributes' => array(
-					'std'                 => __( 'Change', 'wpcd' ),
+					'std'                 => __( 'Change', 'simple-stack' ),
 					'columns'             => 4,
 					'confirmation_prompt' => $confirmation_prompt,              // fields that contribute data for this action.
-					'data-wpcd-fields'    => json_encode( array( "#wpcd_app_action_change-$config_option_key-value" ) ),
+					'data-sstk-fields'    => json_encode( array( "#sstk_app_action_change-$config_option_key-value" ) ),
 				),
 				'type'           => 'button',
 			);
@@ -264,7 +265,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	 */
 	private function get_wpconfig_admin_fields( $id ) {
 
-		if ( ! wpcd_is_admin() ) {
+		if ( ! sstk_is_admin() ) {
 			return array();
 		}
 
@@ -272,16 +273,16 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 
 		/* Set the text of the confirmation prompt */
 		$confirmation_prompt = '';
-		$confirmation_prompt = __( 'Are you sure you would like to change or update this WPCONFIG.PHP value?', 'wpcd' );
+		$confirmation_prompt = __( 'Are you sure you would like to change or update this WPCONFIG.PHP value?', 'simple-stack' );
 
 		/* Header Descriptiont */
-		$head_desc  = __( 'Use this section to create or update a random WPCONFIG.PHP option. While you can enter option names in lower-case, keep in mind that most plugins and themes use upper-case for option names.', 'wpcd' );
+		$head_desc  = __( 'Use this section to create or update a random WPCONFIG.PHP option. While you can enter option names in lower-case, keep in mind that most plugins and themes use upper-case for option names.', 'simple-stack' );
 		$head_desc .= '<br />';
 		$head_desc .= '<br />';
-		$head_desc .= __( 'This is an extremely dangerous section and is only available to admins.  If you enter invalid or spurious values here, you will break your site!', 'wpcd' );
+		$head_desc .= __( 'This is an extremely dangerous section and is only available to admins.  If you enter invalid or spurious values here, you will break your site!', 'simple-stack' );
 
 		$actions['wpconfig-admin-section-header'] = array(
-			'label'          => __( 'Create or Update ANY WPCONFIG.PHP Option', 'wpcd' ),
+			'label'          => __( 'Create or Update ANY WPCONFIG.PHP Option', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
 				'desc' => $head_desc,
@@ -289,29 +290,29 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 		);
 
 		$actions['change-wpconfig-key-name'] = array(
-			'label'          => __( 'Option Name', 'wpcd' ),
+			'label'          => __( 'Option Name', 'simple-stack' ),
 			'type'           => 'text',
 			'raw_attributes' => array(
 				'std'            => '',
 				'columns'        => 4,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'wps_wpconfig_option',
+				'data-sstk-name' => 'wps_wpconfig_option',
 			),
 		);
 
 		$actions['change-wpconfig-value'] = array(
-			'label'          => __( 'Option Value', 'wpcd' ),
+			'label'          => __( 'Option Value', 'simple-stack' ),
 			'type'           => 'text',
 			'raw_attributes' => array(
 				'std'            => '',
 				'columns'        => 4,
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'wps_new_wpconfig_option_value',
+				'data-sstk-name' => 'wps_new_wpconfig_option_value',
 			),
 		);
 
 		$actions['change-wpconfig-israw'] = array(
-			'label'          => __( 'Raw?', 'wpcd' ),
+			'label'          => __( 'Raw?', 'simple-stack' ),
 			'type'           => 'select',
 			'raw_attributes' => array(
 				'std'            => 'no',
@@ -320,18 +321,18 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 					'no'  => 'No',
 					'yes' => 'Yes',
 				),
-				'tooltip'        => __( 'See the wp-cli documentation for the meaning of this field.', 'wpcd' ),
+				'tooltip'        => __( 'See the wp-cli documentation for the meaning of this field.', 'simple-stack' ),
 				// the key of the field (the key goes in the request).
-				'data-wpcd-name' => 'wps_wpconfig_option_is_raw',
+				'data-sstk-name' => 'wps_wpconfig_option_is_raw',
 			),
 		);
 
 		$actions['change-any-wpconfig-option'] = array(
 			'label'          => '',
 			'raw_attributes' => array(
-				'std'                 => __( 'Change', 'wpcd' ),
+				'std'                 => __( 'Change', 'simple-stack' ),
 				'confirmation_prompt' => $confirmation_prompt,              // fields that contribute data for this action.
-				'data-wpcd-fields'    => json_encode( array( '#wpcd_app_action_change-wpconfig-value', '#wpcd_app_action_change-wpconfig-key-name', '#wpcd_app_action_change-wpconfig-israw' ) ),
+				'data-sstk-fields'    => json_encode( array( '#sstk_app_action_change-wpconfig-value', '#sstk_app_action_change-wpconfig-key-name', '#sstk_app_action_change-wpconfig-israw' ) ),
 			),
 			'type'           => 'button',
 		);
@@ -341,10 +342,10 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 		if ( ! empty( $existing_settings ) ) {
 
 			$actions['wpconfig-change-any-existing-settings-header'] = array(
-				'label'          => __( 'Existing Values', 'wpcd' ),
+				'label'          => __( 'Existing Values', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
-					'desc' => __( 'The following values have been set by this screen.  Note that values that there might be many other values in the wp-config.php file - only the ones set or updated by this screen is shown here! ', 'wpcd' ),
+					'desc' => __( 'The following values have been set by this screen.  Note that values that there might be many other values in the wp-config.php file - only the ones set or updated by this screen is shown here! ', 'simple-stack' ),
 				),
 			);
 
@@ -357,7 +358,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 			);
 		}
 
-		$footer                                     = sprintf( __( 'Need a list of all possible wp-config.php options in core WordPress?  Check out: <a href="%s">WPCONFIG.PHP Options</a>', 'wpcd' ), 'https://wpclouddeploy.com/documentation/all-the-possible-wp-config-php-constants-for-core-wordpress/' );
+		$footer                                     = sprintf( __( 'Need a list of all possible wp-config.php options in core WordPress?  Check out: <a href="%s">WPCONFIG.PHP Options</a>', 'simple-stack' ), 'https://developer.wordpress.org/reference/wp_constants/' );
 		$actions['change-any-wpconfig-footer-text'] = array(
 			'label'          => '',
 			'type'           => 'custom_html',
@@ -382,22 +383,22 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 		$config_options = array(
 			'wp-memory-limit'        => array(
 				'label' => 'WP_MEMORY_LIMIT',
-				'desc'  => __( 'The maximum amount of memory in megabytes that your site can use when a user is viewing it on the front-end.', 'wpcd' ),
+				'desc'  => __( 'The maximum amount of memory in megabytes that your site can use when a user is viewing it on the front-end.', 'simple-stack' ),
 				'type'  => 'number',
 			),
 			'wp-max-memory-limit'    => array(
 				'label' => 'WP_MAX_MEMORY_LIMIT',
-				'desc'  => __( 'The maximum amount of memory in megabytes that your site can use when an admin is working in the wp-admin area.', 'wpcd' ),
+				'desc'  => __( 'The maximum amount of memory in megabytes that your site can use when an admin is working in the wp-admin area.', 'simple-stack' ),
 				'type'  => 'number',
 			),
 			'wp-max-post-revisions'  => array(
 				'label' => 'WP_POST_REVISIONS',
-				'desc'  => __( 'The maximum number of post revisions allowed - if this is not set, WordPress keeps all revisions. WPCD default is to NOT set this value.', 'wpcd' ),
+				'desc'  => __( 'The maximum number of post revisions allowed - if this is not set, WordPress keeps all revisions. Simple Stack default is to NOT set this value.', 'simple-stack' ),
 				'type'  => 'number',
 			),
 			'wp-empty-trash-days'    => array(
 				'label' => 'EMPTY_TRASH_DAYS',
-				'desc'  => __( 'Controls the number of days before WordPress permanently deletes posts, pages, attachments, and comments, from the trash bin. The default is 30 days.', 'wpcd' ),
+				'desc'  => __( 'Controls the number of days before WordPress permanently deletes posts, pages, attachments, and comments, from the trash bin. The default is 30 days.', 'simple-stack' ),
 				'type'  => 'number',
 			),
 			'wp-environment-type'    => array(
@@ -405,38 +406,38 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 				'desc'           => '',
 				'type'           => 'select',
 				'select_options' => array(
-					'production'  => __( 'Production', 'wpcd' ),
-					'development' => __( 'Development', 'wpcd' ),
-					'staging'     => __( 'Staging', 'wpcd' ),
+					'production'  => __( 'Production', 'simple-stack' ),
+					'development' => __( 'Development', 'simple-stack' ),
+					'staging'     => __( 'Staging', 'simple-stack' ),
 				),
 			),
 			'wp-concatenate-scripts' => array(
 				'label'          => 'CONCATENATE_SCRIPTS',
-				'desc'           => __( 'Whether or not to smash all JS scripts into a single file.  As of WPCD 4.16 this value is automatically set to false and we strongly recommend that it remains that way.', 'wpcd' ),
+				'desc'           => __( 'Whether or not to smash all JS scripts into a single file.  This value is automatically set to false and we strongly recommend that it remains that way.', 'simple-stack' ),
 				'type'           => 'select',
 				'select_options' => array(
-					'false' => __( 'False', 'wpcd' ),
-					'true'  => __( 'True', 'wpcd' ),
+					'false' => __( 'False', 'simple-stack' ),
+					'true'  => __( 'True', 'simple-stack' ),
 				),
 			),
 			'wp-auto-save-interval'  => array(
 				'label' => 'AUTOSAVE_INTERVAL',
-				'desc'  => __( 'When editing a post, automatically save it every X seconds. WP Default is 160 seconds.', 'wpcd' ),
+				'desc'  => __( 'When editing a post, automatically save it every X seconds. WP Default is 160 seconds.', 'simple-stack' ),
 				'type'  => 'number',
 			),
 			'wp-lang'                => array(
 				'label' => 'WPLANG',
-				'desc'  => __( 'The default language to use for the site when no other setting is available.', 'wpcd' ),
+				'desc'  => __( 'The default language to use for the site when no other setting is available.', 'simple-stack' ),
 				'type'  => 'text',
 			),
 			'wp-site-url'            => array(
 				'label' => 'WP_SITEURL',
-				'desc'  => __( 'The value defined is the address where your WordPress core files reside. It should include the https:// part as well. Do not put a slash “/” at the end. Setting this value in wp-config.php overrides the wp_options table value for siteurl.', 'wpcd' ),
+				'desc'  => __( 'The value defined is the address where your WordPress core files reside. It should include the https:// part as well. Do not put a slash “/” at the end. Setting this value in wp-config.php overrides the wp_options table value for siteurl.', 'simple-stack' ),
 				'type'  => 'text',
 			),
 			'wp-home'                => array(
 				'label' => 'WP_HOME',
-				'desc'  => __( 'Similar to WP_SITEURL, WP_HOME overrides the wp_options table value for home but does not change it in the database. Home is the address you want people to type in their browser to reach your WordPress blog. It should include the http:// part and should not have a slash “/” at the end. Adding this in can sometimes reduce the number of database calls when loading your site.', 'wpcd' ),
+				'desc'  => __( 'Similar to WP_SITEURL, WP_HOME overrides the wp_options table value for home but does not change it in the database. Home is the address you want people to type in their browser to reach your WordPress blog. It should include the http:// part and should not have a slash “/” at the end. Adding this in can sometimes reduce the number of database calls when loading your site.', 'simple-stack' ),
 				'type'  => 'text',
 			),
 		);
@@ -495,16 +496,16 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 		// Bail if no app/server details.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
 		// Make sure the option action is in the approved list.  We should have already validated this but it doesn't hurt to do it again!
 		$valid_actions = $this->get_valid_actions( $id );
 		if ( ! in_array( $action, $valid_actions, true ) ) {
-			$message = __( 'The option name is invalid - possible security issue.', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = __( 'The option name is invalid - possible security issue.', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
@@ -516,8 +517,8 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 
 		// Check to make sure that all required fields have values.
 		if ( ! $args[ $wp_config_options[ $action_index ]['label'] ] ) {
-			$message = __( 'This is not a valid option or the option value is empty.', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
+			$message = __( 'This is not a valid option or the option value is empty.', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
@@ -558,16 +559,16 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 				$args['wps_wpconfig_option_is_raw'] = 'yes';
 				break;
 			default:
-				$message = __( 'Another check has revealed that this is not a valid option.', 'wpcd' );
-				do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
+				$message = __( 'Another check has revealed that this is not a valid option.', 'simple-stack' );
+				do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
 				return new \WP_Error( $message );
 		}
 
 		// One more check to make sure that the revised values aren't empty.  It could happen if the user somehow sent in a text field instead of a numeric when we're expecting a numeric.
 		// In that case, the intval statements above would render a zero value for the option.
 		if ( empty( $args[ $option_key ] ) ) {
-			$message = __( 'Yet another check has revealed that this is not a valid option.', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
+			$message = __( 'Yet another check has revealed that this is not a valid option.', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
@@ -601,19 +602,19 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'update_wp_config_option.txt' );
 
 		if ( ! $success ) {
 			/* Translators: %1$s is the action; %2$s is the result of the ssh call. */
-			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		} else {
 			$success = array(
-				'msg'     => __( 'The wp-config.php option value was updated.', 'wpcd' ),
+				'msg'     => __( 'The wp-config.php option value was updated.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 
@@ -621,7 +622,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 			$this->update_wpconfig_meta( $id, $option_key, $args[ $option_key ] );
 
 			// Let others know we've been successful.
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_successful", $id, $action, $args );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_successful", $id, $action, $args );
 		}
 
 		return $success;
@@ -652,15 +653,15 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 		// Bail if no app/server details.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is the action name. */
-			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_site_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
 		// Check to make sure that all required fields have values.
 		if ( empty( $args['wps_wpconfig_option'] ) || empty( $args['wps_new_wpconfig_option_value'] ) || empty( $args['wps_wpconfig_option_is_raw'] ) ) {
-			$message = __( 'This is not a valid option or the option value is empty.', 'wpcd' );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
+			$message = __( 'This is not a valid option or the option value is empty.', 'simple-stack' );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		}
 
@@ -695,19 +696,19 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 			)
 		);
 
-		do_action( 'wpcd_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
+		do_action( 'sstk_log_error', sprintf( 'attempting to run command for %s = %s ', print_r( $instance, true ), $run_cmd ), 'trace', __FILE__, __LINE__, $instance, false );
 
 		$result  = $this->execute_ssh( 'generic', $instance, array( 'commands' => $run_cmd ) );
 		$success = $this->is_ssh_successful( $result, 'update_wp_config_option.txt' );
 
 		if ( ! $success ) {
 			/* Translators: %1$s is the action; %2$s is the result of the ssh call. */
-			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'wpcd' ), $action, $result );
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
+			$message = sprintf( __( 'Unable to %1$s site: %2$s', 'simple-stack' ), $action, $result );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_failed", $id, $action, $message, $args );
 			return new \WP_Error( $message );
 		} else {
 			$success = array(
-				'msg'     => __( 'The wp-config.php option value was updated.', 'wpcd' ),
+				'msg'     => __( 'The wp-config.php option value was updated.', 'simple-stack' ),
 				'refresh' => 'yes',
 			);
 
@@ -715,7 +716,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 			$this->update_wpconfig_meta( $id, $args['wps_wpconfig_option_original'], $args['wps_new_wpconfig_option_value_original'] );
 
 			// Let others know we've been successful.
-			do_action( "wpcd_{$this->get_app_name()}_update_wp_config_option_successful", $id, $action, $args );
+			do_action( "sstk_{$this->get_app_name()}_update_wp_config_option_successful", $id, $action, $args );
 		}
 
 		return $success;
@@ -727,10 +728,10 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	 *
 	 * Can be called directly or by an action hook.
 	 *
-	 * Action hook: wpcd_wordpress-app_do_update_wpconfig_option  (Optional).
+	 * Action hook: sstk_wordpress-app_do_update_wpconfig_option  (Optional).
 	 *
 	 * @param int             $id     The postID of the app cpt.
-	 * @param string          $constant The constant in wp-config.php to add/update (eg: WPCD_ENCRYPTION_KEY).
+	 * @param string          $constant The constant in wp-config.php to add/update (eg: SSTK_ENCRYPTION_KEY).
 	 * @param string|int|bool $value The value to assign to the constant (eg: "abc", "0", 0, true, false).
 	 * @param string          $raw Whether the value should be inserted as raw (see wp-cli docs) - 'no' or 'yes' are the only valid values.
 	 *
@@ -761,7 +762,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	 */
 	public function update_wpconfig_meta( $id, $key, $value ) {
 
-		$wpconfig_entries = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_wpconfig_entries', true ) );
+		$wpconfig_entries = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_wpconfig_entries', true ) );
 
 		// Initialize if blank.
 		if ( ! $wpconfig_entries ) {
@@ -789,7 +790,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_formatted_metas_for_display( $id ) {
 
-		$wpconfig_entries = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_wpconfig_entries', true ) );
+		$wpconfig_entries = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_wpconfig_entries', true ) );
 
 		if ( empty( $wpconfig_entries ) || ( ! is_array( $wpconfig_entries ) ) ) {
 			return false;
@@ -817,7 +818,7 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_single_wpconfig_value_from_meta( $id, $key ) {
 
-		$wpconfig_entries = wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_wpconfig_entries', true ) );
+		$wpconfig_entries = sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_wpconfig_entries', true ) );
 
 		if ( empty( $wpconfig_entries ) || ( ! is_array( $wpconfig_entries ) ) ) {
 			return '';
@@ -833,4 +834,4 @@ class WPCD_WORDPRESS_TABS_WPCONFIG extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_WPCONFIG();
+new SSTK_WORDPRESS_TABS_WPCONFIG();

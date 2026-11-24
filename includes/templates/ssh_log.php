@@ -19,22 +19,22 @@
 /**
  * Add nonce for security and authentication.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
-wp_nonce_field( 'wpcd_app_nonce_meta_action', 'app_meta' );
+wp_nonce_field( 'sstk_app_nonce_meta_action', 'app_meta' );
 ?>
 <div class="ssh_log_meta_field">
-	<label for="ssh_cmd"><?php echo esc_html( __( 'SSH Command', 'wpcd' ) ); ?></label>
+	<label for="ssh_cmd"><?php echo esc_html( __( 'SSH Command', 'simple-stack' ) ); ?></label>
 	<p><?php echo wpautop( esc_html( $ssh_cmd ) ); ?></p>
 </div>
 <hr />
 <div class="ssh_log_meta_field">
-	<label for="ssh_cmd_result"><?php echo esc_html( __( 'SSH Result', 'wpcd' ) ); ?></label>
+	<label for="ssh_cmd_result"><?php echo esc_html( __( 'SSH Result', 'simple-stack' ) ); ?></label>
 	<p><?php echo wpautop( esc_html( $ssh_cmd_result ) ); ?></p>
 </div>
 <hr />
 <div class="ssh_log_meta_field">
-	<label for="parent_post_id"><?php echo esc_html( __( 'Log Parent ID', 'wpcd' ) ); ?></label>
+	<label for="parent_post_id"><?php echo esc_html( __( 'Log Parent ID', 'simple-stack' ) ); ?></label>
 	<p><?php echo esc_html( $parent_post_id ); ?></p>
 </div>

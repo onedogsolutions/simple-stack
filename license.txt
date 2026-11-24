@@ -1,6 +1,7 @@
 WPCloudDeploy - WordPress Server & Site Management Plugin
 
 Copyright 2019 - 2023 by WPCloudDeploy and other contributors.
+Copyright 2024 - present by OneDog Solutions.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

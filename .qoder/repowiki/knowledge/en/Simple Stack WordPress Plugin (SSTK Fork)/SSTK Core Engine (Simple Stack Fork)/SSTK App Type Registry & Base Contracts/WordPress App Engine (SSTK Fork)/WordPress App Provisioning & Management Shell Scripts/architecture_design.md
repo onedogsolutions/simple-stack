@@ -1,7 +1,9 @@
-Two parallel script trees (`v1/` and `v2/`) mirror the same feature surface; `v2/` is the SimpleStack branch targeting Ubuntu 24.04/26.04 with OLS-only stack (per the coding intent). Each version contains:
-- Top-level action scripts (e.g. `install_wordpress_site.txt`, `backup_restore.txt`, `manage_https.txt`) invoked by WPCD's tab/action engine.
-- `raw/9999-common-functions.txt` — shared function library loaded by every action script, providing utility functions prefixed `gf_*` (global/function) and `g_*` (global), plus global variables like `$GV_UBUNTU_VERSION_STRING`, `$WWW_PATH`, `$LSDIR`, `$WEBCF`, `$VHDIR`, `$PHPVER`.
-- `multi-tenant-pre-post-samples/*.sh` — sample pre/post hooks for multi-tenant workflows.
-- `wp-backup2-helper` and `wp-sync` — companion binaries used by backup/sync actions.
-- `environment variables.txt` — authoritative contract documenting every `$action` and required environment variables per script.
-Dependency direction is one-way: top-level scripts source `raw/9999-common-functions.txt` and call its `gf_*`/`g_*` helpers; there are no cross-dependencies between sibling action scripts. The `_description.txt` and `readme.txt` files at each version root label the bundle as a WPCD management-script package.
+Simple Stack ships one fixed provisioning tree at `scripts/v2/`:
+- Top-level `*.txt` action wrappers download assets, export `##PLACEHOLDER##` values and execute the matching raw script over SSH.
+- `raw/*.txt` contains the numbered implementation fragments.
+- `raw/9999-common-functions.txt` provides shared `gf_*` helpers, `g_*` module helpers and global runtime values such as `$GV_UBUNTU_VERSION`, `$WWW_PATH`, `$LSDIR`, `$WEBCF`, `$VHDIR` and `$PHPVER`.
+- `raw/wp-backup2-helper` and `raw/wp-sync` are companion executables used by backup and site-sync actions.
+- `multi-tenant-pre-post-samples/*.sh` contains optional operator hook examples.
+- `raw/environment variables.txt` documents each action and its required variables.
+
+Dependency direction is one-way: wrappers and raw action scripts source the common function library and call its helpers. There is no alternate script-version tree or per-server version selector.

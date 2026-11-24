@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /******************************************************************************************/
 
 /* Style email metaboxes in the server and site detail screens                            */
@@ -11,24 +12,24 @@
   vertical-align: middle;
 }
 
-table.wpcd_email_list_table, table.wpcd_sent_email_list_table {
+table.sstk_email_list_table, table.sstk_sent_email_list_table {
   width: 100%;
   text-align: left;
   font-size: 13px;
 }
 
-table.wpcd_disable_email_table {
+table.sstk_disable_email_table {
   cursor: not-allowed;
   pointer-events: none;
 }
 
 /*** Modal CSS ***/
 
-.wpcd_sent_email_details_popup_sec {
+.sstk_sent_email_details_popup_sec {
   border: 1px solid #ddd;
 }
 
-.wpcd_sent_email_details_modal {
+.sstk_sent_email_details_modal {
   background-color: #fefefe;
   position: fixed;
   z-index: 999999;
@@ -42,19 +43,19 @@ table.wpcd_disable_email_table {
   box-shadow: 0 0 5px 2px #c1a7a7;
 }
 
-.wpcd_sent_email_list_disable {
+.sstk_sent_email_list_disable {
   pointer-events: none;
-  background-color: var(--wpcd-white-color);
+  background-color: var(--sstk-white-color);
   opacity: 0.5;
 }
 
 /* Modal Content */
 
-.wpcd_sent_email_details_html {
+.sstk_sent_email_details_html {
   margin-top: 2em;
 }
 
-.wpcd_sent_email_modal_content {
+.sstk_sent_email_modal_content {
   background-color: #fefefe;
   margin: auto;
   padding: 30px 40px 30px 40px;
@@ -62,19 +63,19 @@ table.wpcd_disable_email_table {
 
 /* The Close Button */
 
-.wpcd_popup_header_sec {
+.sstk_popup_header_sec {
   position: relative;
   margin: 3px 8px 10px 10px;
 }
 
-.wpcd_sent_email_details_close {
+.sstk_sent_email_details_close {
   color: #aaaaaa;
   float: right;
   font-size: 30px;
   font-weight: bold;
 }
 
-.wpcd_sent_email_details_close:hover, .wpcd_sent_email_details_close:focus {
+.sstk_sent_email_details_close:hover, .sstk_sent_email_details_close:focus {
   color: #000;
   text-decoration: none;
   cursor: pointer;
@@ -82,12 +83,12 @@ table.wpcd_disable_email_table {
 
 /* Pagination CSS */
 
-.wpcd-universal-pagination ul {
+.sstk-universal-pagination ul {
   margin: 0;
   padding: 0;
 }
 
-.wpcd-universal-pagination ul li {
+.sstk-universal-pagination ul li {
   display: inline;
   margin: 3px;
   padding: 4px 8px;
@@ -95,23 +96,23 @@ table.wpcd_disable_email_table {
   color: black;
 }
 
-.wpcd-universal-pagination ul li.active:hover {
+.sstk-universal-pagination ul li.active:hover {
   cursor: pointer;
   background: #1E8CBE;
-  color: var(--wpcd-white-color);
+  color: var(--sstk-white-color);
 }
 
-.wpcd-universal-pagination ul li.inactive {
+.sstk-universal-pagination ul li.inactive {
   background: #dcd2d2;
   cursor: not-allowed;
 }
 
-.wpcd-universal-pagination ul li.selected {
+.sstk-universal-pagination ul li.selected {
   background: #1E8CBE;
-  color: var(--wpcd-white-color);
+  color: var(--sstk-white-color);
 }
 
-.wpcd-universal-pagination ul {
+.sstk-universal-pagination ul {
   margin-top: 20px;
   margin-bottom: 10px;
 }

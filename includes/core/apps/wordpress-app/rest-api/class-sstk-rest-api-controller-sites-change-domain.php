@@ -1,8 +1,10 @@
 <?php
 /**
- * WordPress App WPCD_REST_API_Controller_Sites_Change_Domain.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * WordPress App SSTK_REST_API_Controller_Sites_Change_Domain.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,14 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_REST_API_Controller_Sites_Change_Domain
+ * Class SSTK_REST_API_Controller_Sites_Change_Domain
  *
- * Endpoints for interacting with sites (WordPress wpcd_app)
+ * Endpoints for interacting with sites (WordPress sstk_app)
  */
-class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Controller_Sites {
+class SSTK_REST_API_Controller_Sites_Change_Domain extends SSTK_REST_API_Controller_Sites {
 
 	/**
-	 * WPCD_REST_API_Controller_Sites_Change_Domain constructor.
+	 * SSTK_REST_API_Controller_Sites_Change_Domain constructor.
 	 *
 	 * Registers action hooks.
 	 */
@@ -25,10 +27,9 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 		parent::__construct();
 
 		/* Hooks related to changing domain. */
-		add_action( 'wpcd_wordpress-app_rest_api_pending_log_change_domain_full_live', array( $this, 'pending_log_change_domain_start' ), 10, 3 );  // Trigger the action hook that starts the domain change operation.
-		add_action( 'wpcd_wordpress-app_site_change_domain_failed', array( $this, 'handle_domain_change_failed' ), 10, 4 );  // If the domain change failed, mark the pending log record as failed.
-		add_action( 'wpcd_wordpress-app_site_change_domain_completed', array( $this, 'handle_domain_change_successful' ), 10, 4 );  // If the domain change is successful, mark the pending log record as complete.
-
+		add_action( 'sstk_wordpress-app_rest_api_pending_log_change_domain_full_live', array( $this, 'pending_log_change_domain_start' ), 10, 3 );  // Trigger the action hook that starts the domain change operation.
+		add_action( 'sstk_wordpress-app_site_change_domain_failed', array( $this, 'handle_domain_change_failed' ), 10, 4 );  // If the domain change failed, mark the pending log record as failed.
+		add_action( 'sstk_wordpress-app_site_change_domain_completed', array( $this, 'handle_domain_change_successful' ), 10, 4 );  // If the domain change is successful, mark the pending log record as complete.
 	}
 
 	/**
@@ -41,7 +42,7 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 	/**
 	 * Changes the domain for a site.
 	 *
-	 * It does this by adding a record to our pending tasks table with an action hook 'wpcd_wordpress-app_rest_api_change_domain_full_live'.
+	 * It does this by adding a record to our pending tasks table with an action hook 'sstk_wordpress-app_rest_api_change_domain_full_live'.
 	 * When that action hook is triggered it will then collect the parameters from the pending log table and call the real action hook.
 	 *
 	 * POST /sites/{id}/change-domain { new_domain: xxx }
@@ -65,16 +66,17 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 
 		// Create an args array from the parameters to insert into the pending tasks table.
 		$args['new_domain']  = sanitize_text_field( $parameters['new_domain'] );
-		$args['action_hook'] = 'wpcd_wordpress-app_rest_api_pending_log_change_domain_full_live';
+		$args['action_hook'] = 'sstk_wordpress-app_rest_api_pending_log_change_domain_full_live';
 
 		// Create new install task.
-		$task_id = WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $site_id, 'rest-api-change-domain', $site_id, $args, 'ready', $site_id, __( 'RESTAPI: Change Domain', 'wpcd' ) );
+		$task_id = SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $site_id, 'rest-api-change-domain', $site_id, $args, 'ready', $site_id, __( 'RESTAPI: Change Domain', 'simple-stack' ) );
 
 		// Throw some exceptions if for some reason there's no $task_id.
 		if ( empty( $task_id ) ) {
 			throw new Exception( 'Unable to insert a new task', 400 );
 		}
 		if ( is_wp_error( $task_id ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- WordPress REST serializes this message as JSON.
 			throw new Exception( $task_id->get_error_message(), 400 );
 		}
 
@@ -84,9 +86,9 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 	/**
 	 * Change Domain - triggered via pending logs background process.
 	 *
-	 * Called from an action hook from the pending logs background process - WPCD_POSTS_PENDING_TASKS_LOG()->do_tasks()
+	 * Called from an action hook from the pending logs background process - SSTK_POSTS_PENDING_TASKS_LOG()->do_tasks()
 	 *
-	 * Action Hook: wpcd_wordpress-app_rest_api_pending_log_change_domain_full_live
+	 * Action Hook: sstk_wordpress-app_rest_api_pending_log_change_domain_full_live
 	 *
 	 * @param int   $task_id    Id of pending task that is firing this thing...
 	 * @param int   $app_id     Id of site on which this action will apply.
@@ -95,11 +97,10 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 	public function pending_log_change_domain_start( $task_id, $app_id, $args ) {
 
 		// Grab our data array from pending tasks record...
-		$data = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+		$data = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 		// Trigger the domain change action by calling the action hook set in the tabs/change-domain.php file.
-		do_action( 'wpcd_wordpress-app_do_change_domain_full_live', $app_id, $args );
-
+		do_action( 'sstk_wordpress-app_do_change_domain_full_live', $app_id, $args );
 	}
 
 	/**
@@ -107,7 +108,7 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 	 *
 	 * Primarily, we'll be updating the pending log record as failed.
 	 *
-	 * Action Hook: wpcd_{$this->get_app_name()}_site_change_domain_failed | wpcd_wordpress-app_site_change_domain_failed
+	 * Action Hook: sstk_{$this->get_app_name()}_site_change_domain_failed | sstk_wordpress-app_site_change_domain_failed
 	 *
 	 * @param int    $id     Post ID of the site.
 	 * @param int    $action String indicating the action name.
@@ -126,7 +127,7 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 		}
 
 		// Bail if not a WordPress app...
-		if ( 'wordpress-app' !== WPCD_WORDPRESS_APP()->get_app_type( $id ) ) {
+		if ( 'wordpress-app' !== SSTK_WORDPRESS_APP()->get_app_type( $id ) ) {
 			return;
 		}
 
@@ -136,22 +137,22 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 		}
 
 		// Get server instance array.
-		$instance = WPCD_WORDPRESS_APP()->get_app_instance_details( $id );
+		$instance = SSTK_WORDPRESS_APP()->get_app_instance_details( $id );
 
-		if ( 'wpcd_app' === get_post_type( $id ) ) {
+		if ( 'sstk_app' === get_post_type( $id ) ) {
 
 			// Now check the pending tasks table for a record where the key=$id and type='rest-api-change-domain' and state='in-process'
 			// We are depending on the fact that there should only be one process running on a server a time and in this case it should be in-process.
-			$posts = WPCD_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $id, 'in-process', 'rest-api-change-domain' );
+			$posts = SSTK_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $id, 'in-process', 'rest-api-change-domain' );
 
 			if ( $posts ) {
 
 				// Grab our data array from pending tasks record...
 				$task_id = $posts[0]->ID;
-				$data    = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+				$data    = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 				// Mark post as failed.
-				WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed', '', '', false, $message );
+				SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed', '', '', false, $message );
 
 			}
 		}
@@ -160,7 +161,7 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 	/**
 	 * When a domain change is complete mark the pending log record as complete.
 	 *
-	 * Filter Hook: wpcd_{$this->get_app_name()}_site_change_domain_completed | wpcd_wordpress-app_site_change_domain_completed
+	 * Filter Hook: sstk_{$this->get_app_name()}_site_change_domain_completed | sstk_wordpress-app_site_change_domain_completed
 	 *
 	 * @param int    $id The id of the post app.
 	 * @param string $old_domain The domain we're changing from.
@@ -173,40 +174,36 @@ class WPCD_REST_API_Controller_Sites_Change_Domain extends WPCD_REST_API_Control
 		// Lets tear it into pieces and put into an array.  The resulting array should look like this with exactly three elements.
 		// [0] => dry_run
 		// [1] => cf1110.wpvix.com
-		// [2] => 911
+		// [2] => 911.
 		$command_array = explode( '---', $name );
 
 		// Check to see if the command is to replace a domain otherwise exit.
 		if ( 'replace_domain' == $command_array[0] ) {
 
 			// Lets pull the logs.
-			$logs = WPCD_WORDPRESS_APP()->get_app_command_logs( $id, $name );
+			$logs = SSTK_WORDPRESS_APP()->get_app_command_logs( $id, $name );
 
 			// Was the command successful?
-			$success = WPCD_WORDPRESS_APP()->is_ssh_successful( $logs, 'change_domain_full.txt' );
+			$success = SSTK_WORDPRESS_APP()->is_ssh_successful( $logs, 'change_domain_full.txt' );
 
 			// Now check the pending tasks table for a record where the key=$id and type='rest-api-change-domain' and state='in-process'
 			// We are depending on the fact that there should only be one process running on a server a time and in this case it should be in-process.
-			$posts = WPCD_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $id, 'in-process', 'rest-api-change-domain' );
+			$posts = SSTK_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $id, 'in-process', 'rest-api-change-domain' );
 
 			if ( $posts ) {
 
 				// Grab our data array from pending tasks record...
 				$task_id = $posts[0]->ID;
-				$data    = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
+				$data    = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $task_id );
 
 				if ( true == $success ) {
 					// Mark post as complete.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'complete' );
 				} else {
 					// Mark post as failed.
-					WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
+					SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $task_id, $data, 'failed' );
 				}
 			}
 		}
-
 	}
-
 }
-
-

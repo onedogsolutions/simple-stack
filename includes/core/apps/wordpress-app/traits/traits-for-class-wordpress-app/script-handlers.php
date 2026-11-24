@@ -1,17 +1,18 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains functions that check if ssh was successful as well as replacing tokens in the scripts before they are sent to the server.
  * Used only by the class-wordpress.php file which defines the
- * WPCD_WORDPRESS_APP class.
+ * SSTK_WORDPRESS_APP class.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_wpapp_script_handlers
+ * Trait sstk_wpapp_script_handlers
  */
-trait wpcd_wpapp_script_handlers {
+trait sstk_wpapp_script_handlers {
 
 	/**
 	 * This interprets the ssh result and reduces to a boolean value to indicate if a command succeeded or failed.
@@ -26,6 +27,8 @@ trait wpcd_wpapp_script_handlers {
 		if ( ! is_string( $result ) ) {
 			return false;
 		}
+
+		$return = false;
 
 		switch ( $command ) {
 			case 'disable_remove_site.txt':
@@ -124,16 +127,6 @@ trait wpcd_wpapp_script_handlers {
 			case 'change_php_option_misc.txt':
 				$return = strpos( $result, 'Successfully changed PHP value' ) !== false;
 				break;
-			case 'toggle_php_active_misc.txt':
-				$return =
-				( strpos( $result, 'has been disabled' ) !== false )
-				||
-				( strpos( $result, 'already disabled' ) !== false )
-				||
-				( strpos( $result, 'has been enabled' ) !== false )
-				||
-				( strpos( $result, 'already enabled' ) !== false );
-				break;
 			case 'backup_restore.txt':
 				$return =
 				( strpos( $result, 'Backup has been completed!' ) !== false )
@@ -193,19 +186,13 @@ trait wpcd_wpapp_script_handlers {
 				||
 				( strpos( $result, 'FileManager has been removed for' ) !== false );
 				break;
-			case '6g_firewall.txt':
-				$return =
-				( strpos( $result, 'Enabled 6G Firewall' ) !== false )
-				||
-				( strpos( $result, 'Disabled 6G Firewall' ) !== false );
-				break;
 			case '7g_firewall.txt':
 				$return =
 				( strpos( $result, 'Enabled 7G Firewall' ) !== false )
 				||
 				( strpos( $result, 'Disabled 7G Firewall' ) !== false );
 				break;
-			case 'manage_nginx_pagecache.txt':
+			case 'manage_pagecache.txt':
 				$return =
 				( strpos( $result, 'WordPress Cache has been enabled' ) !== false )
 				||
@@ -288,7 +275,6 @@ trait wpcd_wpapp_script_handlers {
 				||
 				( strpos( $result, 'All Rewrite rules have been removed' ) !== false );
 				break;
-			case 'nginx_options.txt':
 			case 'ols_options.txt':
 				// This one is a mix of server and site level items - mostly site level items.
 				$return =
@@ -307,17 +293,13 @@ trait wpcd_wpapp_script_handlers {
 				( strpos( $result, 'Enabled OLS/LSWS admin port on firewall!' ) !== false )
 				||
 				/*
-				 * "Enable" with no SIMPLE_STACK_ADMIN_IP configured succeeds by leaving the
+				 * "Enable" with no SSTK_ADMIN_IP configured succeeds by leaving the
 				 * console bound to 127.0.0.1 and adding no firewall rule. Treat that as
 				 * success so the UI does not report a failure for the safe configuration.
 				 */
 				( strpos( $result, 'OLS WebAdmin stays bound to 127.0.0.1' ) !== false )
 				||
 				( strpos( $result, 'Disabled OLS/LSWS admin port on firewall!' ) !== false );
-				break;
-			case 'php_workers.txt':
-				$return =
-				( strpos( $result, 'PHP Workers Updated' ) !== false );
 				break;
 			case 'fail2ban_site.txt':
 				// There is also a fail2ban section in the servers section below!
@@ -406,15 +388,6 @@ trait wpcd_wpapp_script_handlers {
 			case 'renew_all_certificates.txt':
 				$return = ( strpos( $result, 'Certificate renewal attempt completed' ) !== false );
 				break;
-			case 'manage_logtivity.txt':
-				$return =
-				( strpos( $result, 'Logtivity installed and license activated' ) !== false )
-				||
-				( strpos( $result, 'Logtivity license activated' ) !== false )
-				||
-				( strpos( $result, 'Logtivity has been removed' ) !== false );
-				$return = $return && ( strpos( $result, 'Please provide a valid API key' ) == false ); // If the string 'Please provide a valid API key' is in the output, the thing has failed.
-				break;
 			case 'manage_solidwp_security.txt':
 				$return =
 				( strpos( $result, 'Solidwp installed and license activated' ) !== false )
@@ -475,60 +448,21 @@ trait wpcd_wpapp_script_handlers {
 				break;
 			case 'restart_php_service.txt':
 				$return =
-				( strpos( $result, 'PHP service has restarted for version' ) !== false );
-				break;
-			case 'toggle_edd_nginx_rules.txt':
-				$return =
-				( strpos( $result, 'Easy Digital Downloads NGINX directives enabled for' ) !== false )
-				||
-				( strpos( $result, 'Easy Digital Downloads NGINX directives disabled for' ) !== false );
+				( strpos( $result, 'OpenLiteSpeed and its LSPHP processes have been restarted for all sites.' ) !== false );
 				break;
 			case 'email_gateway.txt':
 				$return =
-				( strpos( $result, 'The email gateway has now been configured' ) !== false )
+				( 'setup_email' === $action && strpos( $result, 'The email gateway has now been configured' ) !== false )
 				||
-				( strpos( $result, 'Test email has been sent' ) !== false )
+				( 'test_email' === $action && strpos( $result, 'Test email has been sent' ) !== false )
 				||
-				( strpos( $result, 'Email gateway successfully removed' ) !== false );
-				break;
-			case 'run_upgrades_290.txt':
-			case 'run_upgrades_460.txt':
-			case 'run_upgrades_461.txt':
-			case 'run_upgrades_462.txt':
-			case 'run_upgrades_530.txt':
-				$return =
-				( strpos( $result, 'upgrade completed' ) !== false )
-				||
-				( strpos( $result, 'Upgrade Completed' ) !== false )
-				||
-				( strpos( $result, '7G Firewall is already installed' ) !== false );
-				break;
-			case 'run_upgrade_install_php_81.txt':
-				$return = ( strpos( $result, 'PHP 8.1 has been installed' ) !== false );
-				break;
-			case 'run_upgrade_install_php_82.txt':
-				$return = ( strpos( $result, 'PHP 8.2 has been installed' ) !== false );
+				( 'remove_email_gateway' === $action && strpos( $result, 'Email gateway successfully removed' ) !== false );
 				break;
 			case 'run_upgrade_install_php_83.txt':
 				$return = ( strpos( $result, 'PHP 8.3 has been installed' ) !== false );
 				break;
-			case 'run_upgrade_install_old_php_version.txt':
-				$return = ( strpos( $result, 'has been installed' ) !== false );
-				break;
-			case 'run_upgrade_7g.txt':
-				$return = ( strpos( $result, 'The 7G Firewall has been upgraded' ) !== false );
-				break;
-			case 'run_remove_6g.txt':
-				$return = ( strpos( $result, 'The 6G Firewall has been removed' ) !== false );
-				break;
 			case 'run_upgrade_wpcli.txt':
 				$return = ( strpos( $result, 'WPCLI has been upgraded' ) !== false );
-				break;
-			case 'run_upgrade_install_php_intl.txt':
-				$return = ( strpos( $result, 'PHP intl module has been installed' ) !== false );
-				break;
-			case 'run_upgrade_cache_enabler_nginx_config.txt':
-				$return = ( strpos( $result, 'Cache Enabler NGINX Config Has Been Upgraded' ) !== false );
 				break;
 			case 'server_status_callback.txt':
 				$return =
@@ -570,24 +504,6 @@ trait wpcd_wpapp_script_handlers {
 				||
 				( strpos( $result, 'Server restart callback job executed successfully' ) !== false );
 				break;
-			case 'monitorix.txt':
-				$return =
-				( strpos( $result, 'Monitorix has been installed' ) !== false )
-				||
-				( strpos( $result, 'Monitorix has been removed' ) !== false )
-				||
-				( strpos( $result, 'Monitorix has been updated' ) !== false )
-				||
-				( strpos( $result, 'has been enabled for' ) !== false )
-				||
-				( strpos( $result, 'has been disabled for' ) !== false )
-				||
-				( strpos( $result, 'SSL has been enabled for' ) !== false )
-				||
-				( strpos( $result, 'SSL is already disabled for' ) !== false )
-				||
-				( strpos( $result, 'SSL has been disabled for' ) !== false );
-				break;
 			case 'netdata_install.txt':
 				$return =
 				( strpos( $result, 'Netdata has been installed' ) !== false )
@@ -600,6 +516,8 @@ trait wpcd_wpapp_script_handlers {
 				||
 				( strpos( $result, 'Netdata has been removed' ) !== false )
 				||
+				( strpos( $result, 'netdata has been removed' ) !== false )
+				||
 				( strpos( $result, 'Netdata has been updated' ) !== false )
 				||
 				( strpos( $result, 'Basic Auth has been enabled for' ) !== false )
@@ -608,9 +526,13 @@ trait wpcd_wpapp_script_handlers {
 				||
 				( strpos( $result, 'Basic Auth has been disabled' ) !== false )
 				||
+				( strpos( $result, 'Basic Auth already disabled' ) !== false )
+				||
 				( strpos( $result, 'Basic Auth has been updated' ) !== false )
 				||
 				( strpos( $result, 'SSL has been enabled for' ) !== false )
+				||
+				( strpos( $result, 'SSL is already enabled for' ) !== false )
 				||
 				( strpos( $result, 'SSL was not enabled for netdata so nothing to disable' ) !== false )
 				||
@@ -622,39 +544,49 @@ trait wpcd_wpapp_script_handlers {
 				||
 				( strpos( $result, 'Registry already pointed to ' ) !== false )
 				||
+				( strpos( $result, 'registry already pointed to ' ) !== false )
+				||
 				( strpos( $result, 'Registry pointed to' ) !== false );
 				break;
 			case 'monit.txt':
 				$return =
-				( strpos( $result, 'Monit has been installed' ) !== false )
+				( 'install_monit' === $action && strpos( $result, 'Monit has been installed.' ) !== false )
 				||
-				( strpos( $result, 'Monit has been removed' ) !== false )
+				( 'remove_monit' === $action && strpos( $result, 'Monit has been removed.' ) !== false )
 				||
-				( strpos( $result, 'Monit has been updated' ) !== false )
+				( 'enable_webserver_monit' === $action && strpos( $result, 'OpenLiteSpeed monitoring has been enabled.' ) !== false )
 				||
-				( strpos( $result, 'has been enabled' ) !== false )
+				( 'disable_webserver_monit' === $action && strpos( $result, 'OpenLiteSpeed monitoring has been disabled.' ) !== false )
 				||
-				( strpos( $result, 'has been disabled' ) !== false )
+				( 'enable_mysql_monit' === $action && strpos( $result, 'MySQL monitoring has been enabled.' ) !== false )
 				||
-				( strpos( $result, 'SSL has been enabled for' ) !== false )
+				( 'disable_mysql_monit' === $action && strpos( $result, 'MySQL monitoring has been disabled.' ) !== false )
 				||
-				( strpos( $result, 'SSL has been disabled for' ) !== false )
+				( 'enable_memcached_monit' === $action && strpos( $result, 'Memcached monitoring has been enabled.' ) !== false )
 				||
-				( strpos( $result, 'SSL is already disabled for' ) !== false )
+				( 'disable_memcached_monit' === $action && strpos( $result, 'Memcached monitoring has been disabled.' ) !== false )
 				||
-				( strpos( $result, 'Monit email settings updated' ) !== false )
+				( 'enable_redis_monit' === $action && strpos( $result, 'Redis monitoring has been enabled.' ) !== false )
 				||
-				( strpos( $result, 'All monitors enabled' ) !== false )
+				( 'disable_redis_monit' === $action && strpos( $result, 'Redis monitoring has been disabled.' ) !== false )
 				||
-				( strpos( $result, 'All monitors disabled' ) !== false )
+				( 'enable_filesystem_monit' === $action && strpos( $result, 'Filesystem monitoring has been enabled.' ) !== false )
 				||
-				( strpos( $result, 'Callbacks have been enabled' ) !== false )
+				( 'disable_filesystem_monit' === $action && strpos( $result, 'Filesystem monitoring has been disabled.' ) !== false )
 				||
-				( strpos( $result, 'Callbacks have been disabled' ) !== false )
+				( 'enable_monit_ssl' === $action && strpos( $result, 'SSL has been enabled for' ) !== false )
 				||
-				( strpos( $result, 'Monit has been activated' ) !== false )
+				( 'disable_monit_ssl' === $action && strpos( $result, 'SSL has been disabled for' ) !== false )
 				||
-				( strpos( $result, 'Monit has been temporarily deactivated' ) !== false );
+				( 'update_email_monit' === $action && strpos( $result, 'Monit email settings updated.' ) !== false )
+				||
+				( 'enable_all_monit' === $action && strpos( $result, 'Popular monitors enabled.' ) !== false )
+				||
+				( 'disable_all_monit' === $action && strpos( $result, 'All monitors disabled.' ) !== false )
+				||
+				( 'activate_monit' === $action && strpos( $result, 'Monit has been activated.' ) !== false )
+				||
+				( 'deactivate_monit' === $action && strpos( $result, 'Monit has been temporarily deactivated.' ) !== false );
 				break;
 			case 'schedule_server_reboot.txt':
 				$return =
@@ -667,42 +599,6 @@ trait wpcd_wpapp_script_handlers {
 				( strpos( $result, 'Cron for conf backup has been removed' ) !== false )
 				||
 				( strpos( $result, 'Backup files have been removed' ) !== false );
-				break;
-			case 'goaccess.txt':
-				$return =
-				( strpos( $result, 'goaccess is already installed' ) !== false )
-				||
-				( strpos( $result, 'Goaccess has been installed' ) !== false )
-				||
-				( strpos( $result, 'goaccess has been removed' ) !== false )
-				||
-				( strpos( $result, 'Goaccess has been disabled' ) !== false )
-				||
-				( strpos( $result, 'goaccess has been enabled' ) !== false )
-				||
-				( strpos( $result, 'SSL Already Enabled' ) !== false )
-				||
-				( strpos( $result, 'SSL has been enabled for' ) !== false )
-				||
-				( strpos( $result, 'SSL has been disabled' ) !== false )
-				||
-				( strpos( $result, 'SSL Not enabled for' ) !== false )
-				||
-				( strpos( $result, 'Basic Auth already enabled' ) !== false )
-				||
-				( strpos( $result, 'Basic auth has been enabled' ) !== false )
-				||
-				( strpos( $result, 'Basic Auth already disabled' ) !== false )
-				||
-				( strpos( $result, 'Auth has been updated' ) !== false )
-				||
-				( strpos( $result, 'whitelisted' ) !== false )
-				||
-				( strpos( $result, 'removed from whitelist' ) !== false )
-				||
-				( strpos( $result, 'is not whitelisted' ) !== false )
-				||
-				( strpos( $result, 'All whiteslited ips has been removed' ) !== false );
 				break;
 			case 'fail2ban.txt':
 				$return =
@@ -789,20 +685,20 @@ trait wpcd_wpapp_script_handlers {
 				&&
 				( strpos( $result, 'Installation of required packages failed' ) === false );
 		}
-		if ( $return && ( false === boolval( wpcd_get_option( 'wordpress_app_ignore_journalctl_xe' ) ) ) ) {
+		if ( $return && ( false === boolval( sstk_get_option( 'wordpress_app_ignore_journalctl_xe' ) ) ) ) {
 			$return = $return
 				&&
 				( strpos( $result, 'journalctl -xe' ) === false );
 		}
 
-		return apply_filters( 'wpcd_is_ssh_successful', $return, $result, $command, $action, $this->get_app_name() );
+		return apply_filters( 'sstk_is_ssh_successful', $return, $result, $command, $action, $this->get_app_name() );
 
 	}
 
 	/**
 	 * Different scripts needs different placeholders/handling.
 	 *
-	 * Filter Hook: wpcd_script_placeholders_{$this->get_app_name()}
+	 * Filter Hook: sstk_script_placeholders_{$this->get_app_name()}
 	 *
 	 * @param array  $array              The array of placeholders, usually empty but since this is the first param, its the one returned as the modified value.
 	 * @param string $script_name        Script_name.
@@ -820,27 +716,27 @@ trait wpcd_wpapp_script_handlers {
 	public function script_placeholders( $array, $script_name, $script_version, $instance, $command, $additional ) {
 		$new_array    = array();
 		$common_array = array(
-			'SCRIPT_COMMON_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/9999-common-functions.txt',
+			'SCRIPT_COMMON_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/9999-common-functions.txt',
 			'SCRIPT_COMMON_NAME' => '9999-common-functions.sh',
 			/*
 			 * Optional single address allowed to reach the OLS WebAdmin console on port 7080.
-			 * get_simplestack_admin_ip() returns '' for anything that is not a clean
+			 * get_sstk_admin_ip() returns '' for anything that is not a clean
 			 * IPv4/IPv6 address or CIDR block, because the value is interpolated into a
 			 * Bash command line. Empty means "not configured", which every script treats
 			 * as "keep 7080 closed and bind the console to 127.0.0.1". The scripts also
 			 * re-validate through gf_normalise_admin_ip() as defence in depth.
 			 */
-			'SIMPLE_STACK_ADMIN_IP' => $this->get_simplestack_admin_ip(),
+			'SSTK_ADMIN_IP' => $this->get_sstk_admin_ip(),
 		);
 		switch ( $script_name ) {
 			case 'after-server-create-run-commands.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'           => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/01-prepare_server.txt',
+						'SCRIPT_URL'           => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/01-prepare_server.txt',
 						'SCRIPT_NAME'          => '01-prepare_server.sh',
 						'SCRIPT_LOGS'          => "{$this->get_app_name()}_prepare_server",
 						'CALLBACK_URL'         => $this->get_command_url( $instance['post_id'], 'prepare_server', 'completed' ),
-						'LONG_COMMAND_TIMEOUT' => wpcd_get_long_running_command_timeout(),
+						'LONG_COMMAND_TIMEOUT' => sstk_get_long_running_command_timeout(),
 					),
 					$common_array,
 					$additional
@@ -854,19 +750,17 @@ trait wpcd_wpapp_script_handlers {
 				 * hook is fetched outside the chain of files the install cannot proceed without -
 				 * the common functions define a no-op fallback when it is missing.
 				 *
-				 * SIMPLE_STACK_SECURITY_PLUGINS is a space separated list of WordPress.org plugin
+				 * SSTK_SECURITY_PLUGINS is a space separated list of WordPress.org plugin
 				 * slugs that the hook installs and activates.
 				 */
 				$new_array = array_merge(
 					array(
-						'SIX_G_COMMANDS_URL'            => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/6G-Firewall-OLS.txt',
-						'SCRIPT_SIX_G_COMMANDS_NAME'    => '6G-Firewall-OLS.txt',
-						'SEVEN_G_COMMANDS_URL'          => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/7G-Firewall-OLS.txt',
+						'SEVEN_G_COMMANDS_URL'          => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/7G-Firewall-OLS.txt',
 						'SCRIPT_SEVEN_G_COMMANDS_NAME'  => '7G-Firewall-OLS.txt',
-						'SCRIPT_POST_INSTALL_URL'       => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/66-simplestack_post_install.txt',
-						'SCRIPT_POST_INSTALL_NAME'      => '66-simplestack_post_install.sh',
-						'SIMPLE_STACK_SECURITY_PLUGINS' => $this->get_post_site_install_plugins(),
-						'SCRIPT_URL'                    => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/02-install_wordpress_site.txt',
+						'SCRIPT_POST_INSTALL_URL'       => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/66-sstk_post_install.txt',
+						'SCRIPT_POST_INSTALL_NAME'      => '66-sstk_post_install.sh',
+						'SSTK_SECURITY_PLUGINS' => $this->get_post_site_install_plugins(),
+						'SCRIPT_URL'                    => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/02-install_wordpress_site.txt',
 						'SCRIPT_NAME'                   => '02-install_wordpress_site.sh',
 						'SCRIPT_LOGS'                   => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL'                  => $this->get_command_url( $instance['post_id'], $command_name, 'completed' ),
@@ -878,7 +772,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'disable_remove_site.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/03-disable-remove-site.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/03-disable-remove-site.txt',
 						'SCRIPT_NAME' => '03-disable-remove-site.sh',
 					),
 					$common_array,
@@ -888,7 +782,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'manage_https.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/04-manage_https.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/04-manage_https.txt',
 						'SCRIPT_NAME' => '04-manage_https.sh',
 					),
 					$common_array,
@@ -898,7 +792,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'add_remove_sftp.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/06-add_remove_sftp.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/06-add_remove_sftp.txt',
 						'SCRIPT_NAME' => '06-add_remove_sftp.sh',
 					),
 					$common_array,
@@ -908,7 +802,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'manage_site_users.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/11-manage_site_users.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/11-manage_site_users.txt',
 						'SCRIPT_NAME' => '11-manage_site_users.sh',
 					),
 					$common_array,
@@ -919,7 +813,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
 						'SCRIPT_NAME'  => '08-backup.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -932,7 +826,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
 						'SCRIPT_NAME'  => '08-backup.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -946,7 +840,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'backup_restore_refresh_backup_list.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
 						'SCRIPT_NAME' => '08-backup.sh',
 					),
 					$common_array,
@@ -963,11 +857,10 @@ trait wpcd_wpapp_script_handlers {
 			case 'toggle_wp_debug.txt':
 			case 'restart_php_service.txt':
 			case 'toggle_password_auth_misc.txt':
-			case 'toggle_php_active_misc.txt':
 			case 'renew_all_certificates.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
 						'SCRIPT_NAME' => '10-misc.sh',
 					),
 					$common_array,
@@ -977,7 +870,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'change_domain_quick.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/05-change_domain.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/05-change_domain.txt',
 						'SCRIPT_NAME' => '05-change_domain.sh',
 					),
 					$common_array,
@@ -988,7 +881,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/05-change_domain.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/05-change_domain.txt',
 						'SCRIPT_NAME'  => '05-change_domain.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1001,7 +894,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/31-search_and_replace_db.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/31-search_and_replace_db.txt',
 						'SCRIPT_NAME'  => '31-search_and_replace_db.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1014,7 +907,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/09-clone_site.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/09-clone_site.txt',
 						'SCRIPT_NAME'  => '09-clone_site.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1027,7 +920,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/07-phpmyadmin.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/07-phpmyadmin.txt',
 						'SCRIPT_NAME'  => '07-phpmyadmin.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1040,7 +933,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/53-database-operation.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/53-database-operation.txt',
 						'SCRIPT_NAME'  => '53-database-operation.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1053,7 +946,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/57-tinyfilemanager.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/57-tinyfilemanager.txt',
 						'SCRIPT_NAME'  => '57-tinyfilemanager.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1062,34 +955,22 @@ trait wpcd_wpapp_script_handlers {
 					$additional
 				);
 				break;
-			case '6g_firewall.txt':
-				$new_array = array_merge(
-					array(
-						'SIX_G_COMMANDS_URL'         => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/6G-Firewall-OLS.txt',
-						'SCRIPT_SIX_G_COMMANDS_NAME' => '6G-Firewall-OLS.txt',
-						'SCRIPT_URL'                 => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/15-6g_firewall.txt',
-						'SCRIPT_NAME'                => '15-6g_firewall.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
 			case '7g_firewall.txt':
 				$new_array = array_merge(
 					array(
-						'SEVEN_G_COMMANDS_URL'         => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/7G-Firewall-OLS.txt',
+						'SEVEN_G_COMMANDS_URL'         => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/7G-Firewall-OLS.txt',
 						'SCRIPT_SEVEN_G_COMMANDS_NAME' => '7G-Firewall-OLS.txt',
-						'SCRIPT_URL'                   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/40-7g_firewall.txt',
+						'SCRIPT_URL'                   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/40-7g_firewall.txt',
 						'SCRIPT_NAME'                  => '40-7g_firewall.sh',
 					),
 					$common_array,
 					$additional
 				);
 				break;
-			case 'manage_nginx_pagecache.txt':
+			case 'manage_pagecache.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/18-wp_cache.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/18-wp_cache.txt',
 						'SCRIPT_NAME' => '18-wp_cache.sh',
 					),
 					$common_array,
@@ -1099,29 +980,40 @@ trait wpcd_wpapp_script_handlers {
 			case 'add_wp_admin.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
 						'SCRIPT_NAME' => '10-misc.sh',
 					),
 					$common_array,
 					$additional
 				);
 				break;
-			case 'toggle_edd_nginx_rules.txt':
+			case 'multisite.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/17-plugin_tweaks.txt',
-						'SCRIPT_NAME' => '17-plugin_tweaks.sh',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/13-multisite.txt',
+						'SCRIPT_NAME' => '13-multisite.sh',
 					),
 					$common_array,
 					$additional
 				);
 				break;
-			case 'multisite.txt':
 			case 'multisite_wildcard_ssl.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/13-multisite.txt',
-						'SCRIPT_NAME' => '13-multisite.sh',
+						'SCRIPT_URL'                  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/13-multisite.txt',
+						'SCRIPT_NAME'                 => '13-multisite.sh',
+						'dns_provider'                => '',
+						'email'                       => '',
+						'dns_cloudflare_api_token'    => '',
+						'aws_access_key_id'           => '',
+						'aws_secret_access_key'       => '',
+						'gcp_credentials_json'        => '',
+						'dnsmadeeasy_key'             => '',
+						'dnsmadeeasy_secret'          => '',
+						'dns_ovh_endpoint'            => '',
+						'dns_ovh_application_key'     => '',
+						'dns_ovh_application_secret'  => '',
+						'dns_ovh_consumer_key'        => '',
 					),
 					$common_array,
 					$additional
@@ -1130,7 +1022,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'site_sync_origin_setup.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/81-origin-site-sync.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/81-origin-site-sync.txt',
 						'SCRIPT_NAME' => '81-origin-site-sync.sh',
 					),
 					$common_array,
@@ -1140,7 +1032,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'site_sync_destination_setup.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/82-destination-site-sync.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/82-destination-site-sync.txt',
 						'SCRIPT_NAME' => '82-destination-site-sync.sh',
 					),
 					$common_array,
@@ -1151,7 +1043,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/81-origin-site-sync.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/81-origin-site-sync.txt',
 						'SCRIPT_NAME'  => '81-origin-site-sync.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1163,7 +1055,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'site_sync_unschedule.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/81-origin-site-sync.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/81-origin-site-sync.txt',
 						'SCRIPT_NAME' => '81-origin-site-sync.sh',
 					),
 					$common_array,
@@ -1173,7 +1065,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'enable_disable_php_functions.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/22-enable_disable_php_functions.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/22-enable_disable_php_functions.txt',
 						'SCRIPT_NAME' => '22-enable_disable_php_functions.sh',
 					),
 					$common_array,
@@ -1183,7 +1075,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'reset_site_permissions.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
 						'SCRIPT_NAME' => '10-misc.sh',
 					),
 					$common_array,
@@ -1193,19 +1085,8 @@ trait wpcd_wpapp_script_handlers {
 			case 'server_redirect.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/33-server_redirect.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/33-server_redirect.txt',
 						'SCRIPT_NAME' => '33-server_redirect.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'nginx_options.txt':
-				// This one is a mix of server and site level items - mostly site level items.
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/34-nginx_options.txt',
-						'SCRIPT_NAME' => '34-nginx_options.sh',
 					),
 					$common_array,
 					$additional
@@ -1215,7 +1096,7 @@ trait wpcd_wpapp_script_handlers {
 				// This one is a mix of server and site level items - mostly site level items.
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/55-ols_options.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/55-ols_options.txt',
 						'SCRIPT_NAME' => '55-ols_options.sh',
 					),
 					$common_array,
@@ -1226,18 +1107,8 @@ trait wpcd_wpapp_script_handlers {
 				// This one is a mix of server and site level items - mostly site level items.
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/56-ols_manage_admin_console.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/56-ols_manage_admin_console.txt',
 						'SCRIPT_NAME' => '56-ols_manage_admin_console.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'php_workers.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/39-php_workers.txt',
-						'SCRIPT_NAME' => '39-php_workers.sh',
 					),
 					$common_array,
 					$additional
@@ -1247,7 +1118,7 @@ trait wpcd_wpapp_script_handlers {
 				// There is also a fail2ban section in the servers section below!
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/23-fail2ban.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/23-fail2ban.txt',
 						'SCRIPT_NAME' => '23-fail2ban.sh',
 					),
 					$common_array,
@@ -1258,11 +1129,11 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'         => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/50-reliable_updates.txt',
+						'SCRIPT_URL'         => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/50-reliable_updates.txt',
 						'SCRIPT_NAME'        => '50-reliable_updates.sh',
 						'SCRIPT_LOGS'        => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL'       => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
-						'SCRIPT_URL_BACKUP'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
+						'SCRIPT_URL_BACKUP'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
 						'SCRIPT_NAME_BACKUP' => '08-backup.sh',
 					),
 					$common_array,
@@ -1273,11 +1144,11 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'         => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/25-copy_site_to_existing_site.txt',
+						'SCRIPT_URL'         => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/25-copy_site_to_existing_site.txt',
 						'SCRIPT_NAME'        => '25-copy_site_to_existing_site.sh',
 						'SCRIPT_LOGS'        => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL'       => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
-						'SCRIPT_URL_BACKUP'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
+						'SCRIPT_URL_BACKUP'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
 						'SCRIPT_NAME_BACKUP' => '08-backup.sh',
 					),
 					$common_array,
@@ -1287,7 +1158,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'change_file_upload_size.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/10-misc.txt',
 						'SCRIPT_NAME' => '10-misc.sh',
 					),
 					$common_array,
@@ -1301,7 +1172,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'passwordless_login.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/30-wp_site_things.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/30-wp_site_things.txt',
 						'SCRIPT_NAME' => '30-wp_site_things.sh',
 					),
 					$common_array,
@@ -1312,7 +1183,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
 						'SCRIPT_NAME'  => '58-git_control.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1324,7 +1195,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'git_control_site.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
 						'SCRIPT_NAME' => '58-git_control.sh',
 					),
 					$common_array,
@@ -1335,9 +1206,9 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/09-clone_site.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/09-clone_site.txt',
 						'SCRIPT_NAME'  => '09-clone_site.sh',
-						'SCRIPT_URL2'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
+						'SCRIPT_URL2'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
 						'SCRIPT_NAME2' => '58-git_control.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1350,7 +1221,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
 						'SCRIPT_NAME'  => '58-git_control.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['app_id'], $command_name, 'completed' ),
@@ -1359,20 +1230,10 @@ trait wpcd_wpapp_script_handlers {
 					$additional
 				);
 				break;
-			case 'manage_logtivity.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/52-logtivity.txt',
-						'SCRIPT_NAME' => '52-logtivity.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
 			case 'manage_solidwp_security.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/51-solidsecurity.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/51-solidsecurity.txt',
 						'SCRIPT_NAME' => '51-solidsecurity.sh',
 					),
 					$common_array,
@@ -1386,7 +1247,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'backup_restore_delete_and_prune_server.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/08-backup.txt',
 						'SCRIPT_NAME' => '08-backup.sh',
 					),
 					$common_array,
@@ -1398,7 +1259,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/16-memcached.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/16-memcached.txt',
 						'SCRIPT_NAME'  => '16-memcached.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['server_id'], $command_name, 'completed' ),
@@ -1411,7 +1272,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/16-memcached.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/16-memcached.txt',
 						'SCRIPT_NAME' => '16-memcached.sh',
 					),
 					$common_array,
@@ -1423,7 +1284,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/12-redis.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/12-redis.txt',
 						'SCRIPT_NAME'  => '12-redis.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['server_id'], $command_name, 'completed' ),
@@ -1436,7 +1297,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/12-redis.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/12-redis.txt',
 						'SCRIPT_NAME' => '12-redis.sh',
 					),
 					$common_array,
@@ -1447,18 +1308,8 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/14-mail.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/14-mail.txt',
 						'SCRIPT_NAME' => '14-mail.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'monitorix.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/21-monitorix.txt',
-						'SCRIPT_NAME' => '21-monitorix.sh',
 					),
 					$common_array,
 					$additional
@@ -1468,7 +1319,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/43-netdata.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/43-netdata.txt',
 						'SCRIPT_NAME'  => '43-netdata.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['server_id'], $command_name, 'completed' ),
@@ -1480,7 +1331,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'netdata.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/43-netdata.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/43-netdata.txt',
 						'SCRIPT_NAME' => '43-netdata.sh',
 					),
 					$common_array,
@@ -1490,78 +1341,8 @@ trait wpcd_wpapp_script_handlers {
 			case 'monit.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/20-monit.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/20-monit.txt',
 						'SCRIPT_NAME' => '20-monit.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrades_290.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1010-upgrade_290_secure_php.txt',
-						'SCRIPT_NAME' => '1010-upgrade_290_secure_php.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrades_460.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1020-upgrade_460_performance.txt',
-						'SCRIPT_NAME' => '1020-upgrade_460_performance.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrades_461.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1030-upgrade_461_certbot_snap.txt',
-						'SCRIPT_NAME' => '1030-upgrade_461_certbot_snap.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrades_462.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1040-upgrade_462_install_7g_firewall.txt',
-						'SCRIPT_NAME' => '1040-upgrade_462_install_7g_firewall.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrades_530.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1090-upgrade_530_ols_server_fix.txt',
-						'SCRIPT_NAME' => '1090-upgrade_530_ols_server_fix.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrade_install_php_81.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1050-upgrade_install_php_81.txt',
-						'SCRIPT_NAME' => '1050-upgrade_install_php_81.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrade_install_php_82.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1110-upgrade_install_php_82.txt',
-						'SCRIPT_NAME' => '1110-upgrade_install_php_82.sh',
 					),
 					$common_array,
 					$additional
@@ -1570,38 +1351,8 @@ trait wpcd_wpapp_script_handlers {
 			case 'run_upgrade_install_php_83.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1110-upgrade_install_php_83.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1110-upgrade_install_php_83.txt',
 						'SCRIPT_NAME' => '1110-upgrade_install_php_83.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrade_install_old_php_version.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1130-upgrade_install_php.txt',
-						'SCRIPT_NAME' => '1130-upgrade_install_php.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrade_7g.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1060-upgrade_7g_firewall.txt',
-						'SCRIPT_NAME' => '1060-upgrade_7g_firewall.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_remove_6g.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1120-remove_6g_firewall.txt',
-						'SCRIPT_NAME' => '1120-remove_6g_firewall.sh',
 					),
 					$common_array,
 					$additional
@@ -1610,28 +1361,8 @@ trait wpcd_wpapp_script_handlers {
 			case 'run_upgrade_wpcli.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1070-upgrade_wp_cli.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1070-upgrade_wp_cli.txt',
 						'SCRIPT_NAME' => '1070-upgrade_wp_cli.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrade_install_php_intl.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1080-upgrade_install_php_intl_module.txt',
-						'SCRIPT_NAME' => '1080-upgrade_install_php_intl_module.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'run_upgrade_cache_enabler_nginx_config.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/1100-upgrade_cache_enabler.txt',
-						'SCRIPT_NAME' => '1100-upgrade_cache_enabler.sh',
 					),
 					$common_array,
 					$additional
@@ -1640,7 +1371,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'server_status_callback.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/24-server_status.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/24-server_status.txt',
 						'SCRIPT_NAME' => '24-server_status.sh',
 					),
 					$common_array,
@@ -1650,7 +1381,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'maldet.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/26-lmd_clamav.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/26-lmd_clamav.txt',
 						'SCRIPT_NAME' => '26-lmd_clamav.sh',
 					),
 					$common_array,
@@ -1660,7 +1391,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'server_restart_callback.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/28-restart_callback.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/28-restart_callback.txt',
 						'SCRIPT_NAME' => '28-restart_callback.sh',
 					),
 					$common_array,
@@ -1670,7 +1401,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'schedule_server_reboot.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/36-schedule-server-reboot.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/36-schedule-server-reboot.txt',
 						'SCRIPT_NAME' => '36-schedule-server-reboot.sh',
 					),
 					$common_array,
@@ -1680,18 +1411,8 @@ trait wpcd_wpapp_script_handlers {
 			case 'backup_config_files.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/37-backup-configuration.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/37-backup-configuration.txt',
 						'SCRIPT_NAME' => '37-backup-configuration.sh',
-					),
-					$common_array,
-					$additional
-				);
-				break;
-			case 'goaccess.txt':
-				$new_array = array_merge(
-					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/27-goaccess.txt',
-						'SCRIPT_NAME' => '27-goaccess.sh',
 					),
 					$common_array,
 					$additional
@@ -1700,7 +1421,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'fail2ban.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/23-fail2ban.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/23-fail2ban.txt',
 						'SCRIPT_NAME' => '23-fail2ban.sh',
 					),
 					$common_array,
@@ -1710,7 +1431,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'server_update.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/29-server_update.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/29-server_update.txt',
 						'SCRIPT_NAME' => '29-server_update.sh',
 					),
 					$common_array,
@@ -1720,7 +1441,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'server_php_version.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/38-server_php_version.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/38-server_php_version.txt',
 						'SCRIPT_NAME' => '38-server_php_version.sh',
 					),
 					$common_array,
@@ -1731,7 +1452,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/58-git_control.txt',
 						'SCRIPT_NAME'  => '58-git_control.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['server_id'], $command_name, 'completed' ),
@@ -1745,7 +1466,7 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/54-ubuntupro.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/54-ubuntupro.txt',
 						'SCRIPT_NAME'  => '54-ubuntupro.sh',
 						'SCRIPT_LOGS'  => "{$this->get_app_name()}_{$command_name}",
 						'CALLBACK_URL' => $this->get_command_url( $instance['server_id'], $command_name, 'completed' ),
@@ -1758,7 +1479,7 @@ trait wpcd_wpapp_script_handlers {
 				// This one's a short command.
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/54-ubuntupro.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/54-ubuntupro.txt',
 						'SCRIPT_NAME' => '54-ubuntupro.sh',
 					),
 					$common_array,
@@ -1775,9 +1496,9 @@ trait wpcd_wpapp_script_handlers {
 				$command_name = $additional['command'];
 				$new_array    = array_merge(
 					array(
-						'SCRIPT_URL'   => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/71-origin.txt',
+						'SCRIPT_URL'   => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/71-origin.txt',
 						'SCRIPT_NAME'  => '71-origin.sh',
-						'SCRIPT_URL2'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/wp-sync',
+						'SCRIPT_URL2'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/wp-sync',
 						'SCRIPT_NAME2' => 'wp-sync',
 					),
 					$common_array,
@@ -1787,7 +1508,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'server_sync_destination_setup.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/72-destination.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/72-destination.txt',
 						'SCRIPT_NAME' => '72-destination.sh',
 					),
 					$common_array,
@@ -1797,7 +1518,7 @@ trait wpcd_wpapp_script_handlers {
 			case 'server_sync_manage.txt':
 				$new_array = array_merge(
 					array(
-						'SCRIPT_URL'  => trailingslashit( wpcd_url ) . $this->get_scripts_folder_relative() . $script_version . '/raw/71-origin.txt',
+						'SCRIPT_URL'  => trailingslashit( SSTK_URL ) . $this->get_scripts_folder_relative() . $script_version . '/raw/71-origin.txt',
 						'SCRIPT_NAME' => '71-origin.sh',
 					),
 					$common_array,
@@ -1806,7 +1527,7 @@ trait wpcd_wpapp_script_handlers {
 				break;
 		}
 
-		$new_array = apply_filters( 'wpcd_wpapp_replace_script_tokens', $new_array, $array, $script_name, $script_version, $instance, $command, $additional );
+		$new_array = apply_filters( 'sstk_wpapp_replace_script_tokens', $new_array, $array, $script_name, $script_version, $instance, $command, $additional );
 
 		return array_merge( $array, $new_array );
 	}

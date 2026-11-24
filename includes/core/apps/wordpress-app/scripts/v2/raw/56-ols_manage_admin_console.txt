@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 
 if [[ "$EUID" -ne 0 ]]
 then
@@ -19,8 +20,8 @@ source 9999-common-functions.sh
 # ever see a clean address or an empty string. This fails closed: junk values and
 # unreplaced placeholders collapse to "", which binds the console to 127.0.0.1 and
 # leaves port 7080 closed.
-SIMPLE_STACK_ADMIN_IP=$(gf_normalise_admin_ip "${SIMPLE_STACK_ADMIN_IP:-}")
-export SIMPLE_STACK_ADMIN_IP
+SSTK_ADMIN_IP=$(gf_normalise_admin_ip "${SSTK_ADMIN_IP:-}")
+export SSTK_ADMIN_IP
 
 
 
@@ -53,7 +54,7 @@ ols_user_pass_reset(){
 # admin/conf/admin_config.conf, and the stock value is `*:7080` - published on every
 # interface, in cleartext, with phpinfo() reachable from the login page.
 #
-# SimpleStack only publishes it when SIMPLE_STACK_ADMIN_IP names the single address
+# Simple Stack only publishes it when SSTK_ADMIN_IP names the single address
 # allowed to reach it. Without that setting the listener is bound to loopback and the
 # console is reached over an SSH tunnel, which is the only default that can never end up
 # as 0.0.0.0/0.
@@ -67,7 +68,7 @@ set_webconsole_bind_address(){
 		return 1
 	fi
 
-	if [ -n "$SIMPLE_STACK_ADMIN_IP" ]
+	if [ -n "$SSTK_ADMIN_IP" ]
 	then
 		address="*:7080"
 	else
@@ -84,12 +85,12 @@ set_webconsole_bind_address(){
 #### Enable WebConsole Port
 ###################################################################
 # Never `ufw allow 7080`. Port 7080 carries a cleartext admin console; opening it to any
-# source is a direct violation of the SimpleStack security requirements.
+# source is a direct violation of the Simple Stack security requirements.
 enable_webconsole_port(){
 	# Scrub any inherited blanket rule first (a no-op when nothing matches).
 	ufw delete allow 7080 > /dev/null 2>&1
 
-	if [ -z "$SIMPLE_STACK_ADMIN_IP" ]
+	if [ -z "$SSTK_ADMIN_IP" ]
 	then
 		# No rule to add. This is still a successful "enable": the console is up and bound
 		# to loopback, it is just reached through a tunnel instead of directly. The message
@@ -99,14 +100,14 @@ enable_webconsole_port(){
 		return 0
 	fi
 
-	echo "Allowing OLS/LSWS admin port 7080 from ${SIMPLE_STACK_ADMIN_IP} only"
-	ufw allow from "$SIMPLE_STACK_ADMIN_IP" to any port 7080 proto tcp > /dev/null 2>&1
+	echo "Allowing OLS/LSWS admin port 7080 from ${SSTK_ADMIN_IP} only"
+	ufw allow from "$SSTK_ADMIN_IP" to any port 7080 proto tcp > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "Unable to allow OLS/LSWS admin port on firewall for ${SIMPLE_STACK_ADMIN_IP}!"
+		echo "Unable to allow OLS/LSWS admin port on firewall for ${SSTK_ADMIN_IP}!"
 		exit 1
 	fi
-	echo "Enabled OLS/LSWS admin port on firewall for ${SIMPLE_STACK_ADMIN_IP}."
+	echo "Enabled OLS/LSWS admin port on firewall for ${SSTK_ADMIN_IP}."
 }
 
 ###################################################################
@@ -116,9 +117,9 @@ disable_webconsole_port(){
 	# Remove both the scoped rule and any legacy blanket rule.
 	ufw delete allow 7080 > /dev/null 2>&1
 	ufw delete allow from any to any port 7080 proto tcp > /dev/null 2>&1
-	if [ -n "$SIMPLE_STACK_ADMIN_IP" ]
+	if [ -n "$SSTK_ADMIN_IP" ]
 	then
-		ufw delete allow from "$SIMPLE_STACK_ADMIN_IP" to any port 7080 proto tcp > /dev/null 2>&1
+		ufw delete allow from "$SSTK_ADMIN_IP" to any port 7080 proto tcp > /dev/null 2>&1
 	fi
 	echo "Disabled OLS/LSWS admin port on firewall!"
 }
@@ -165,47 +166,6 @@ disable_signed_ssl_ols_admin(){
 }
 
 ###################################################################
-#### Enable SSL for LiteSpeed Enterprise console for domain
-###################################################################
-# Litespeed's path is slightly different but otherwise the same
-enable_signed_ssl_ols_enterprise_admin(){
-    local domain
-    domain="$1"
-    domain_cert="/etc/letsencrypt/live/${domain}/fullchain.pem"
-    domain_key="/etc/letsencrypt/live/${domain}/privkey.pem"
-    
-    if [[ -f ${domain_cert} ]] && [[ -f ${domain_key} ]]; then
-        echo "The domain has both a cert and key file that exists!"
-		# Back up current ones so we have something to restore when we disable SSL
-		cp /usr/local/lsws/admin/conf/cert/admin.crt /usr/local/lsws/admin/conf/cert/admin.crt-bak
-		cp /usr/local/lsws/admin/conf/cert/admin.key /usr/local/lsws/admin/conf/cert/admin.key-bak
-        echo "Symlinking LE Signed SSL for Litespeed WebUI"
-        # Symlink domain ssl path to the same path for LiteSpeed SSL forcefully
-        ln -fs "${domain_cert}" /usr/local/lsws/admin/conf/cert/admin.crt;
-        ln -fs "${domain_key}" /usr/local/lsws/admin/conf/cert/admin.key;
-        echo "Restarting Litespeed WebUI services"
-        service lsws restart
-	else
-		echo "Domain certificates missing to enable SSL"
-		exit 1
-    fi
-}
-
-###################################################################
-#### Disable SSL for LiteSpeed Enterprise console for domain
-###################################################################
-disable_signed_ssl_ols_enterprise_admin(){
-	unlink /usr/local/lsws/admin/conf/cert/admin.crt
-	unlink /usr/local/lsws/admin/conf/cert/admin.key
-	# Restore default self signed ones
-	echo "Disabling SSL and restoring default self signed files"
-	mv /usr/local/lsws/admin/conf/cert/admin.crt-bak /usr/local/lsws/admin/conf/cert/admin.crt 
-	mv /usr/local/lsws/admin/conf/cert/admin.key-bak /usr/local/lsws/admin/conf/cert/admin.key
-	echo "Restarting Litespeed WebUI services"
-    service lsws restart
-}
-
-###################################################################
 #### Enable console and set user/pass
 ###################################################################
 enable_ols_console(){
@@ -247,11 +207,7 @@ enable_console_ssl_for_domain(){
 	gf_enable_certbot_ols_site "$domain"  # This function call echoes any success/failure messages so no need to handle here.
 	if [ -f /etc/letsencrypt/live/$domain/fullchain.pem  ]
 	then
-		if [ "$g_webserver_type" = "ols" ] ; then
-			enable_signed_ssl_ols_admin "$domain"
-		elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-			enable_signed_ssl_ols_enterprise_admin "$domain"
-		fi
+		enable_signed_ssl_ols_admin "$domain"
 	fi
 
 	gf_check_ssl_valid "$domain" "7080"  # This function call echoes any success/failure messages so no need to handle here.
@@ -277,11 +233,7 @@ function ols_console_ssl_enable
 function ols_console_ssl_disable
 {
 
-	if [ "$g_webserver_type" = "ols" ] ; then
-		disable_signed_ssl_ols_admin
-	elif [ "$g_webserver_type" = "ols-enterprise" ] ; then
-		disable_signed_ssl_ols_enterprise_admin
-	fi
+	disable_signed_ssl_ols_admin
 	gf_restart_webserver
 	echo "SSL has been disabled for OLS console $domain"
 }

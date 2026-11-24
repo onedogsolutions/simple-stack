@@ -1,3 +1,4 @@
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 This file describes the environment variables which are used during script execution, if they are set.
 If they aren't set, interactive input is requested.
 
@@ -5,7 +6,7 @@ If they aren't set, interactive input is requested.
 01-prepare_server.sh
 -----------------------------------
 $interactive = if value is set to "no", the script will automatically start setup without confirmation
-$webserver_type = 'nginx', 'ols', 'ols-enterprise'.
+$webserver_type = 'ols'.
 $name = Name of the server (optional)
 $post_id = Post ID of the server (optional)
 $post_processing_script_server = A url to a script to execute at the end of 01-prepare_server.sh (optional)
@@ -161,18 +162,16 @@ $confirmation = set it to "yes" to avoid interactive danger message
 For $action = "delete_all_backups", the following variables are needed:
 $confirmation = set it to "yes" to avoid interactive danger message
 
-$action = "show_orphaned_backups" will list local backups stored for sites which are no longer configured in NGINX
+$action = "show_orphaned_backups" will list local backups stored for sites which are no longer configured in OpenLiteSpeed
 
-$action = "remove_orphaned_backups" will remove local backups stored for sites which are no longer configured in NGINX
+$action = "remove_orphaned_backups" will remove local backups stored for sites which are no longer configured in OpenLiteSpeed
 
 For $action = "restore_webserver_config", the following variables are needed:
 $site = domain of the website to restore (example: myblog.com)
 $backup = backup name in the following format: myblog.com/myblog.com_2020-01-15-19h26m44s
 To obtain a list of available backups in the right format, run the following command:
-find /root/.wp-backup/ -type f -name "*nginx.tar.gz" | cut -d "/" -f 2-3 | cut -d "_" -f 1-2
+find /root/.wp-backup/ -type f -name "*ols.tar.gz" | cut -d "/" -f 2-3 | cut -d "_" -f 1-2
 It will list available backups in the correct format to set them in the $backup variable.
-
-For $action = "restore_nginx" - this action is deprecated.  Use the "restore_webserver_config" action described just above instead.
 
 For $action = "restore_wpconfig", the following variables are needed:
 $site = domain of the website to restore (example: myblog.com)
@@ -239,7 +238,6 @@ For $action = "add_admin", the following variables are needed:
 
 For $action = "restart_php" no additional variables need to be set.
 
-For $action = "restart_nginx" no additional variables need to be set.
 For $action = "restart_web_server" no additional variables need to be set.
 
 For $action = "restart_mariadb" no additional variables need to be set.
@@ -296,30 +294,30 @@ $domain = domain name for which you wish to enable or disable Redis caching
 13-multisite.sh
 -----------------------------------
 $domain = domain name to be managed
-$action = "multisite" to enable domain-based WordPress Multisite.
+$action = one of "multisite", "ms_register_site", "ms_deregister_site", "ms_enable_https", "ms_disable_https", "ms_enable_subdir", "multisite_wildcard", "ms_enable_https_wildcard" or "ms_disable_https_wildcard".
 
-For $action = "ms_register_site" or "ms_deregister_site", the following variable are needed:
+For $action = "ms_register_site" or "ms_deregister_site", the following variables are needed:
 $domain = domain name to be managed
 $subdomain = subdomain to be added or removed from the configuration
 
 For $action = "ms_enable_https" or "ms_disable_https", the following variables are needed:
-$subdomain = subdomain to enable HTTPS for
-$email = email address for Let's Encrypt registration
+$subdomain = subdomain to enable or disable HTTPS for
+$email = email address for Let's Encrypt registration when enabling HTTPS
 
 $action = "ms_enable_subdir" to enable subdirectory-based WordPress Multisite.
 
-$action = "multisite_wildcard" to enable domain-based WordPress Multisite with a wildcard NGINX configuration
+$action = "multisite_wildcard" to enable domain-based WordPress Multisite with a wildcard OpenLiteSpeed configuration.
 
-For $action == "ms_enable_https_wildcard", the following variables are needed:
+For $action = "ms_enable_https_wildcard", the following variables are needed:
 $email = email address for Let's Encrypt registration
-$dns_provider = "cloudflare", "amazon", "google", "godaddy" or "ovh"
-For Cloudflare, the following variables are needed: $dns_cloudflare_email $dns_cloudflare_api_key (on Ubuntu 18.04) or $dns_cloudflare_api_token (on Ubuntu 20.04+)
+$dns_provider = "cloudflare", "amazon", "google", "dnsmadeeasy" or "ovh"
+For Cloudflare, the following variable is needed: $dns_cloudflare_api_token
 For Amazon Route 53, the following variables are needed: $aws_access_key_id $aws_secret_access_key
-For Google, the $gcp_credentials_json variable needs to be set with the path to a GCPcredentials file. More info here: https://certbot-dns-google.readthedocs.io/en/stable/
+For Google, the $gcp_credentials_json variable needs to be set with the path to a GCP credentials file. More info here: https://certbot-dns-google.readthedocs.io/en/stable/
 For DNS Made Easy, the following variables are needed: $dnsmadeeasy_key $dnsmadeeasy_secret
 For OVH, the following variables are needed: $dns_ovh_endpoint $dns_ovh_application_key $dns_ovh_application_secret $dns_ovh_consumer_key
 
-Sites need to be configured with the "multisite_wildcard" option in order to use Let's Encrypt wildcard certificates.
+Sites need to be configured with the "multisite_wildcard" action in order to use Let's Encrypt wildcard certificates.
 
 For managing HTTPS in master sites or subdir-based multisite, 04-manage_https.sh should be used.
 
@@ -343,28 +341,12 @@ $to = email address to send the test email to
 
 
 -----------------------------------
-15-6g_firewall.sh
------------------------------------
-$domain = domain name to be managed (example: myblog.com)
-$action = one of the following values to enable or disable rulesets (they are self explanatory): "enable_all_6g", "disable_all_6g", "enable_user_agent_6g", "disable_user_agent_6g", "enable_referrer_6g", "disable_referrer_6g", "enable_query_string_6g", "disable_query_string_6g", "enable_request_string_6g", "disable_request_string_6g", "enable_request_method_6g", "disable_request_method_6g"
-
-
------------------------------------
 16-memcached.sh
 -----------------------------------
 $action = "install_memcached", "remove_memcached", "enable" or "disable" for installing Memcached, removing Memcached, enabling or disabling it for a site respectively. Or "memcached_clear" to clear the Memcached cache and "memcached_restart" to restart the Memcached server.
 
 For $action = "enable" or "disable", the following variable is needed:
 $domain = domain name for which you wish to enable or disable Memcached caching
-
-
------------------------------------
-17-plugin_tweaks.sh
------------------------------------
-$domain = domain name to be managed (example: myblog.com). For subsites in a multisite installation, the following format should be used instead: myblog.com_subsite.myblog.com.
-
-Set $action = "enable_edd" to enable the Easy Digital Downloads NGINX directives.
-Set $action = "disable_edd" to disable the Easy Digital Downloads NGINX directives.
 
 
 -----------------------------------
@@ -399,16 +381,14 @@ $monit_smtp_pass = SMTP password
 $monit_alert_email = email address where alerts should be sent
 
 Once Monit is installed, the following $action can be performed to enable or disable specifc monitoring units:
-enable_nginx_monit
-disable_nginx_monit
+enable_webserver_monit
+disable_webserver_monit
 enable_mysql_monit
 disable_mysql_monit
 enable_redis_monit
 disable_redis_monit
 enable_memcached_monit
 disable_memcached_monit
-enable_php_monit
-disable_php_monit
 enable_filesystem_monit
 disable_filesystem_monit
 enable_all_monit
@@ -433,29 +413,6 @@ $monit_alert_email = email address where alerts should be sent
 Once Monit is installed, the following $action can be performed to enable or disable HTTPS:
 enable_monit_ssl - requires the $email variable to be set for the Let's Encrypt certificate
 disable_monit_ssl 
-
------------------------------------
-21-monitorix.sh
------------------------------------
-For $action "install_monitorix", the following variables are required:
-$domain = domain name for Monitorix (example: monitorixmyblog.com)
-$user = user name for basic http authentication
-$pass = password for basic http authentication
-
-Once Monitorix is installed, the following $action can be performed:
-
-remove_monitorix
-upgrade_monitorix
-enable_memcached_monitorix
-disable_memcached_monitorix
-enable_nginx_monitorix
-disable_nginx_monitorix
-enable_mysql_monitorix
-disable_mysql_monitorix
-enable_monitorix_ssl
-disable_monitorix_ssl
-
-For $action = enable_monit_ssl, the $email variable also needs to be set for the Let's Encrypt certificate
 
 -----------------------------------
 22-enable_disable_php_functions.sh
@@ -522,15 +479,6 @@ for 'copy_to_existing_site_copy_partial_db'
 $action: 'antivirus_install', 'antivirus_remove', 'antivirus_update', 'antivirus_scan', 'antivirus_enable_cron', 'antivirus_disable_cron', 'antivirus_purge', 'antivirus_restart', 'antivirus_scan_background', 'antivirus_update_email'
 $emailid: the email address that scan reports will be sent to.
 $callback_server_scan - the url that data can be sent to after a scan is complete.
-
------------------------------------
-27-goaccess.sh
------------------------------------
-$action: goaccess_install, goaccess_remove, goaccess_disable, goaccess_enable, goaccess_update, goaccess_ssl_enable, goaccess_ssl_disable, goaccess_auth_add, goaccess_auth_remove, goaccess_auth_change, goaccess_whitelist, goaccess_whitelist_remove
-$domain: domain name to use when installing goaccess
-$user: user name for authentication
-$pass: password for authentication
-$email: email address to use when activating ssl.
 
 -----------------------------------
 28-restart-callback.sh
@@ -605,179 +553,9 @@ $search_term - the term we are searching for - must be a single word - no phrase
 $replace_term - the term we are replacing found items with - must be a single word - no phrases or special chars since wp-cli cannot handle this!
 
 -----------------------------------
-32-filegator.sh
------------------------------------
-$action
- - list_installed: prints list of installed FileGator (for domain)
-  - domain
- - remove_installed: removes installed FileGator (for domain)
-  - domain
-  - fg_folder: folder name to remove
- - install: installs FileGator (for domain)
-  - domain
-  - fg_folder: name of folder where FileGator will be installed
-	- fg_version: the version string of FileGator (e.g. latest, 7.4.2)
- - disable_guest: disable guest (not-athenticated access) (for domain)
-  - domain
-	- fg_folder
- - enable_guest_read: enable non-athenticated access for reading and downloading (for domain)
-  - domain
-	- fg_folder
- - enable_guest_all: enable non-athenticated access for all operations (for domain)
-  - domain
-	- fg_folder
- - list_users: prints list of users of installed FileGator (for domain)
-  - domain
-	- fg_folder
- - add_user: adds new user to installed FileGator (for domain)
-  - domain
-	- fg_folder
-	- fg_user
-	- fg_password
- - remove_user: remove user from installed FileGator (for domain)
-  - domain
-	- fg_folder
-  - fg_user
- - rename_user: change usename of user (for domain)
-  - domain
-	- fg_folder
-	- fg_user
-	- fg_user_new
- - password_user: change user's password (for domain)
-  - domain
-	- fg_folder
-	- fg_user
-	- fg_password
- - promote_user: promote user to admin (for domain)
-  - domain
-	- fg_folder
-	- fg_user
- - demote_user: revoke admin privileges for user (for domain)
-  - domain
-	- fg_folder
-	- fg_user
- - enable_ip: Enable IP restriction (for domain)
-  - domain
-	- fg_folder
-	- fg_ips: the IP addresses string splitted by comma (e.g. 10.0.0.1,192.168.1.2)
- - disable_ip: Disable IP restriction (for domain)
-  - domain
-	- fg_folder
- - set_storage_local, set the storage adapter to \League\Flysystem\Adapter\Local
-  - domain
-	- fg_folder
-  - fg_storage_path
- - set_storage_ftp, set the storage adapter to \League\Flysystem\Adapter\Ftp
-  - domain
-	- fg_folder
-  - fg_storage_host
-	- fg_storage_username
-	- fg_storage_password
-	- fg_storage_port
-	- fg_storage_timeout
- - set_storage_sftp, set the storage adapter to \League\Flysystem\Sftp\SftpAdapter
-  - domain
-	- fg_folder
-  - fg_storage_host
-	- fg_storage_username
-	- fg_storage_password
-	- fg_storage_port
-	- fg_storage_timeout
-	- fg_storage_path
- - set_storage_dropbox, set the storage adapter to Spatie\FlysystemDropbox\DropboxAdapter
-  - domain
-	- fg_folder
-  - fg_storage_token
- - set_storage_amazon, set the storage adapter to \League\Flysystem\AwsS3v3\AwsS3Adapter
-  - domain
-	- fg_folder
-  - fg_storage_key
-	- fg_storage_secret
-	- fg_storage_region
-	- fg_sotrage_version
-	- fg_bucket
- - set_storage_digitalocean, set the storage adapter to \League\Flysystem\AwsS3v3\AwsS3Adapter
-  - domain
-	- fg_folder
-  - fg_storage_key
-	- fg_storage_secret
-	- fg_storage_region
-	- fg_sotrage_version
-	- fg_bucket
-	- fg_endpoint
- - set_storage_azure, set the storage adapter to \League\Flysystem\AwsS3v3\AwsS3Adapter
-  - domain
-	- fg_folder
-  - fg_storage_account_name
-	- fg_storage_account_key
-	- fg_storage_container_name
- - set_storage_replicate_dropbox, set the storage adapter to League\Flysystem\Replicate\ReplicateAdapter
-  - domain
-	- fg_folder
-  - fg_storage_token
-	- fg_storage_path
- - set_frontend_app_name
-  - domain
-	- fg_folder
-  - fg_frontend_app_name
- - set_frontend_language
-  - domain
-	- fg_folder
-  - fg_frontend_language
- - set_frontend_logo
-  - domain
-	- fg_folder
-  - fg_frontend_logo
- - set_frontend_upload_max_size
-  - domain
-	- fg_folder
-  - fg_frontend_upload_max_size
- - set_frontend_upload_chunk_size
-  - domain
-	- fg_folder
-  - fg_frontend_upload_chunk_size
- - set_frontend_upload_simultaneous
-  - domain
-	- fg_folder
-  - fg_frontend_upload_simultaneous
- - set_frontend_default_archive_name
-  - domain
-	- fg_folder
-  - fg_frontend_default_archive_name
- - set_frontend_editable
-  - domain
-	- fg_folder
-  - fg_frontend_editable
- - set_frontend_date_format
-  - domain
-	- fg_folder
-  - fg_frontend_date_format
- - set_frontend_guest_redirection
-  - domain
-	- fg_folder
-  - fg_frontend_guest_redirection
- - set_frontend_filter_entries
-  - domain
-	- fg_folder
-  - fg_frontend_filter_entries
- - upgrade_dependencies
-  - domain
-	- fg_folder
- - upgrade
-  - domain
-	- fg_folder
-  - fg_version
- - list_root_domains
- - add_root_domain
-  - domain
- - remove_root_domain
-  - domain
-
-
------------------------------------
 33-server-redirect.sh
 -----------------------------------
-$action: redirect_add_rule_to_site, redirect_remove_rule_from_site, redirect_remove_all_rules_from_site, redirect_list_site_rules
+$action: redirect_add_rule_to_site, redirect_remove_rule_from_site_by_rule_number, redirect_remove_rule_from_site_by_key_code, redirect_remove_all_rules_from_site, redirect_list_site_rules
 
 For all actions:
 	$domain: The domain where the action will apply
@@ -793,84 +571,6 @@ For $action = redirect_remove_rule_from_site_by_rule_number:
 	
 For $action = redirect_remove_rule_from_site_by_key_code:
 	$key_code: The existing random keycode on the line of the redirect to be removed.
-
------------------------------------
-34-nginx-options.sh
------------------------------------
-enable_gzip: Enable 'gzip' for all sites
-disable_gzip: Disable 'gzip' for all sites
-enable_http2: Enable 'http2'
-disable_http2: Disable 'http2'
-enable_cache: Enable browser 'cache'
-disable_cache: Disable browser 'cache'
-default_cache: Remove browser 'cache' settings
-add_cache_types: Add browser cache type(s)
- - cache_types: wanted types split by comma (e. g. jpeg,bmp,svg)
-del_cache_types: Remove browser cache type(s)
- - cache_types: wanted types split by comma (e. g. jpeg,bmp,svg)
-enable_xmlrpc: Enable XMLRPC
-disable_xmlrpc: Disable XMLRPC
-enable_restapi: Enable REST API
-disable_restapi: Disable REST API
-enable_xfo_sameorigin: Enable X-Frame-Options "SAMEORIGIN" header
-enable_xfo_deny: Enable X-Frame-Options "DENY" header
-disable_xfo: Disable X-Frame-Options "SAMEORIGIN" header
-enable_default_csp: Enable default CSP (Content-Security-Policy)
-enable_custom_csp: Enable custom CSP (Content-Security-Policy)
- - custom_csp: A custom CSP string (e.g. connect-src 'self'; img-src 'self')
-disable_csp: Disable CSP (Content-Security-Policy)
-enable_brotli: Enable Brotli
-disable_brotli: Enable Brotli
-enable_hsts: Enable HSTS
-disable_hsts: Disable HSTS
-enable_xss: Enable XSS
-disable_xss: Disable XSS
-enable_cto: Enable X-Content-Type-Options nosniff
-disable_cto: Disable X-Content-Type-Options nosniff
-enable_rp: Enable Referrer-Policy
-disable_rp: Disable Referrer-Policy
-enable_default_pp: Enable Permissions-Policy
-enable_custom_pp: Enable Permissions-Policy
- - custom_pp
-disable_pp: Disable Permissions-Policy
-enable_gzip_domain: enable gzip for the selected domain
-disable_gzip_domain: disable gzip for the selected domain
-enable_cache_include: enable browser cache using 'include'
-disable_cache_include: disable browser cache using 'include'
-add_graphics_cache_types: Add browser cache type(s) for graphics files (all sites)
- - cache_types: wanted types split by comma (e. g. jpeg,bmp,svg)
-del_graphics_cache_types: Remove browser cache type(s) for graphics files (all sites)
- - cache_types: wanted types split by comma (e. g. jpeg,bmp,svg)
-add_script_cache_types: Add browser cache type(s) for styles and scripts files (all sites)
- - cache_types: wanted types split by comma (e. g. css, js, scsss)
-del_script_cache_types: Remove browser cache type(s) for styles and scripts files (all sites)
- - cache_types: wanted types split by comma (e. g. css, js, scsss)
-
-TWEAKS VARIABLES:
-action:
- - set_worker_processes: sets the 'worker_processes' directive (all sites)
-  - worker_processes: an integer (from 1 to $(nproc)) or 'auto' 
- - disable_worker_processes: removes the 'worker_processes' directive (all sites)
- - set_worker_connections: sets the 'worker_connections' directive (all sites)
-  - woker_connections: an integer
- - disable_worker_connections: removes the 'worker_connections' directive (all sites)
- - set_client_max_body_size: sets the 'client_max_body_size' directive (all sites)
-  - client_max_body_size: a string (size)
- - disable_client_max_body_size: removes the 'client_max_body_size' directive (all sites)
- - set_send_timeout: sets the 'send_timeout' directive (all sites)
-  - send_timeout: an integer (seconds)
- - disable_send_timeout: removes the 'send_timeout' directive (all sites)
- - set_timezone: sets the timezone (TZ env variable) (all sites)
-  - timezone: a string (timezone like Asia/Krasnoyarsk)
- - disable_timezone: removes TZ env variable (all sites) (OS timezone will be used)
- - set_php_timezone: sets the date.timezone param in php pool
-  - timezone: a string (timezone like Asia/Krasnoyarsk)
- - disable_php_timezone: removes date.timezone param from php pool
-
------------------------------------
-35-crowdsec.sh
------------------------------------
-(to be updated)
 
 -----------------------------------
 36-schedule-server-reboot.sh
@@ -890,18 +590,6 @@ $conf_backup_enable:
 38-server_php_version.sh
 -----------------------------------
 $server_php_version - the version of php that should be activated for the server.
-
------------------------------------
-39-php_workers.sh
------------------------------------
-$domain - the domain
-$action:
- - change_php_workers: change the PHP workers for a site
-  - pm: value for the 'pm' directive in a pool.d conf file
-	- pm_max_children: value for the 'pm.max_children' directive in a pool.d conf file
-	- pm_start_servers: value for the 'pm.start_servers' directive in a pool.d conf file
-	- pm_min_spare_servers: value for the 'pm.min_spare_servers' directive in a pool.d conf file
-	- pm_max_spare_servers: value for the 'pm.max_spare_servers' directive in a pool.d conf file
 
 -----------------------------------
 40-7g_firewall.sh
@@ -935,21 +623,6 @@ $action:
  - netdata_set_registry
 
 -----------------------------------
-44  -- 44-wpscan.sh --
------------------------------------
-(Coming soon).
-
------------------------------------
-45  -- 45-awstats.sh --
------------------------------------
-(Coming soon).
-
------------------------------------
-46  -- 46-tech-support-keys.sh --
------------------------------------
-(Coming soon).
-
------------------------------------
 47  -- 47-repair_db.sh --
 -----------------------------------
 (Coming soon).
@@ -966,7 +639,7 @@ $update_type: "1" or "2"
 $api_userid: User id for the https://htmlcsstoimage.com account.
 $api_key: Apikey for https://htmlcsstoimage.com
 $threshold: The maximum variance allowed for images before the update is considered failed.
-$status_callback_url: URL for updating the WPCD plugin about status of this script.
+$status_callback_url: URL for updating the SSTK plugin about status of this script.
 
 For "some_themes"
 	- $list_of_themes - a comma separated value of theme slugs to update
@@ -996,20 +669,6 @@ for "solidwp_license"
 
 for "solidwp_remove"
 	- $domain	
-
------------------------------------
-52-logtivity.sh
------------------------------------
-For "logtivity_install"
-	- $domain
-	- $logtivity_teams_api_key
-	
-For "logtivity_license"
-	- $domain
-	- $logtivity_teams_api_key
-
-For "logtivity_remove"
-	- $domain
 
 -----------------------------------
 53-database-operation.sh

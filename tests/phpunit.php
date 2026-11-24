@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * PHPUnit bootstrap.
  *
@@ -6,7 +7,7 @@
  * installed by `johnpbloch/wordpress` into `vendor/wordpress/wordpress` — the ABSPATH declared
  * in `wp-tests-config.php`. Both arrive via `composer install`.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
@@ -35,31 +36,31 @@ if ( ! defined( 'WP_TESTS_CONFIG_FILE_PATH' ) ) {
 require_once $_tests_dir . '/includes/functions.php';
 
 /*
- * Load SimpleStack the way the WordPress test suite documents for a single plugin: as if it
+ * Load Simple Stack the way the WordPress test suite documents for a single plugin: as if it
  * were an mu-plugin. That keeps the plugin out of the test site's `active_plugins` option,
  * which is rebuilt from scratch on every run.
  */
 tests_add_filter(
 	'muplugins_loaded',
 	function () {
-		require dirname( __DIR__ ) . '/wpcd.php';
+		require dirname( __DIR__ ) . '/simple-stack.php';
 	}
 );
 
 /*
- * The legacy `wpcd/v1` controllers register only when this setting is on, and the tests under
+ * The legacy `simple-stack/v1` controllers register only when this setting is on, and the tests under
  * `tests/phpunit/rest-api/` exercise them. `plugins_loaded` fires while the test library's
  * bootstrap runs below — after the plugin has been loaded and long before `rest_api_init`.
  */
 tests_add_filter(
 	'plugins_loaded',
 	function () {
-		$wpcd_settings = get_option( 'wpcd_settings' );
-		$wpcd_settings = is_array( $wpcd_settings ) ? $wpcd_settings : array();
+		$sstk_settings = get_option( 'sstk_settings' );
+		$sstk_settings = is_array( $sstk_settings ) ? $sstk_settings : array();
 
-		$wpcd_settings['wordpress_app_rest_api_enable'] = true;
+		$sstk_settings['wordpress_app_rest_api_enable'] = true;
 
-		update_option( 'wpcd_settings', $wpcd_settings );
+		update_option( 'sstk_settings', $sstk_settings );
 	}
 );
 

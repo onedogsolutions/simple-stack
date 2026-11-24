@@ -1,8 +1,10 @@
 <?php
 /**
- * WordPress App WPCD_REST_API_Controller_Servers.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * WordPress App SSTK_REST_API_Controller_Servers.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,11 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_REST_API_Controller_Servers
+ * Class SSTK_REST_API_Controller_Servers
  *
- * Endpoints for interacting with sites (WordPress wpcd_app)
+ * Endpoints for interacting with sites (WordPress sstk_app)
  */
-class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
+class SSTK_REST_API_Controller_Servers extends SSTK_REST_API_Controller_Base {
 
 	/**
 	 * Controller base path
@@ -24,7 +26,7 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 	protected $name = 'servers';
 
 	/**
-	 * WPCD_REST_API_Controller_Servers constructor.
+	 * SSTK_REST_API_Controller_Servers constructor.
 	 *
 	 * Registers action hooks.
 	 */
@@ -32,8 +34,7 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		parent::__construct();
 
 		/* Update pending task entry after server is completed. */
-		add_action( 'wpcd_command_wordpress-app_prepare_server_completed', array( $this, 'wpcd_wpapp_prepare_server_completed' ), 10, 2 );
-
+		add_action( 'sstk_command_wordpress-app_prepare_server_completed', array( $this, 'sstk_wpapp_prepare_server_completed' ), 10, 2 );
 	}
 
 	/**
@@ -44,7 +45,6 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		$this->register_post_route( $this->name, 'create_server' );
 		$this->register_get_route( $this->name . static::RESOURCE_ID_PATH, 'get_server' );
 		$this->register_delete_route( $this->name . static::RESOURCE_ID_PATH, 'delete_server' );
-
 	}
 
 	/**
@@ -61,13 +61,13 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 	public function list_servers( WP_REST_Request $request ): array {
 		// base query.
 		$args = array(
-			'post_type'      => 'wpcd_app_server',
+			'post_type'      => 'sstk_app_server',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
 				array(
-					'key'   => 'wpcd_server_initial_app_name',
-					'value' => WPCD_WORDPRESS_APP()->get_app_name(),
+					'key'   => 'sstk_server_initial_app_name',
+					'value' => SSTK_WORDPRESS_APP()->get_app_name(),
 				),
 			),
 		);
@@ -108,20 +108,20 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		// handle optional owner email.
 		$author_email = filter_var( $request->get_param( 'author_email' ), FILTER_SANITIZE_EMAIL );
 		$this->validate_author_email( $author_email, true );
-		
-		// handle optional server type.
+		// Simple Stack provisions OpenLiteSpeed only.
 		$webserver_type = sanitize_text_field( $request->get_param( 'webserver_type' ) );
-		$valid_webserver_types = WPCD()->get_webserver_list();
-		if ( ! in_array( $webserver_type, $valid_webserver_types, true ) ) {
-			$webserver_type = WPCD_WORDPRESS_APP()->get_default_webserver();
+		if ( empty( $webserver_type ) ) {
+			$webserver_type = 'ols';
+		} elseif ( 'ols' !== $webserver_type ) {
+			throw new Exception( 'Simple Stack supports OpenLiteSpeed servers only.', 400 );
 		}
 
 		// setup server attributes array needed to create the server.
 		$attributes = array(
-			'initial_os'       => WPCD_WORDPRESS_APP()->get_default_os(),
-			'initial_app_name' => WPCD_WORDPRESS_APP()->get_app_name(),
+			'initial_os'       => SSTK_WORDPRESS_APP()->get_default_os(),
+			'initial_app_name' => SSTK_WORDPRESS_APP()->get_app_name(),
 			'server-type'      => 'wordpress-app',
-			'scripts_version'  => wpcd_get_option( 'wordpress_app_script_version' ),
+			'scripts_version'  => SSTK_WORDPRESS_APP()->get_configured_scripts_version(),
 			'region'           => sanitize_text_field( $parameters['region'] ),
 			'size_raw'         => sanitize_text_field( $parameters['size'] ),
 			'name'             => sanitize_text_field( $parameters['name'] ),
@@ -133,7 +133,7 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		);
 
 		/* Create server */
-		$instance = WPCD_SERVER()->create_server( 'create', $attributes );
+		$instance = SSTK_SERVER()->create_server( 'create', $attributes );
 
 		/* Check for errors */
 		if ( empty( $instance ) || is_wp_error( $instance ) ) {
@@ -141,7 +141,7 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		}
 
 		/* Make sure the other fields in the server post type entry gets created/updated. */
-		$instance = WPCD_WORDPRESS_APP()->add_app( $instance );
+		$instance = SSTK_WORDPRESS_APP()->add_app( $instance );
 
 		/* Check for errors */
 		if ( empty( $instance ) || is_wp_error( $instance ) ) {
@@ -155,7 +155,7 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		 * We're providing a pending logs entry for consistency with creating sites.
 		*/
 		$server_id = $instance['post_id'];
-		$task_id   = WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $server_id, 'rest_api_install_server', $server_id, $instance, 'in-process', $server_id, __( 'RESTAPI: Server is being created', 'wpcd' ) );
+		$task_id   = SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $server_id, 'rest_api_install_server', $server_id, $instance, 'in-process', $server_id, __( 'RESTAPI: Server is being created', 'simple-stack' ) );
 
 		/* Check for errors */
 		if ( empty( $task_id ) || empty( $server_id ) ) {
@@ -197,7 +197,7 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		$this->get_server_post( $id );   // Will throw an exception if not a valid site.
 
 		// Execute action.
-		do_action( 'wpcd_server_wordpress-app_action', $id, 'delete' );
+		do_action( 'sstk_server_wordpress-app_action', $id, 'delete' );
 
 		// Attempt to retrieve the server post and check to see if its null or if its status is 'trash'.
 		$server = get_post( $id );
@@ -226,7 +226,7 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 	 */
 	protected function get_server_post( int $id ): WP_Post {
 		$server = get_post( $id );
-		if ( ! ( $server && 'wpcd_app_server' === $server->post_type ) ) {
+		if ( ! ( $server && 'sstk_app_server' === $server->post_type ) ) {
 			throw new Exception( 'Server not found', 400 );
 		}
 		return $server;
@@ -246,30 +246,29 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 			'id'                     => $server->ID,
 			'name'                   => $server->post_title,
 			'author'                 => (int) $server->post_author,
-			'os'                     => WPCD_SERVER()->get_server_os( $server_id ),
-			'ipv4'                   => WPCD_SERVER()->get_ipv4_address( $server_id ),
-			'provider'               => WPCD_SERVER()->get_server_provider( $server_id ),
-			'instance_id'            => WPCD_SERVER()->get_server_provider_instance_id( $server_id ),
-			'app_count'              => WPCD_SERVER()->get_app_count( $server_id ),
-			'region'                 => WPCD_SERVER()->get_server_region( $server_id ),
-			'available_for_commands' => WPCD_SERVER()->is_server_available_for_commands( $server_id ),
+			'os'                     => SSTK_SERVER()->get_server_os( $server_id ),
+			'ipv4'                   => SSTK_SERVER()->get_ipv4_address( $server_id ),
+			'provider'               => SSTK_SERVER()->get_server_provider( $server_id ),
+			'instance_id'            => SSTK_SERVER()->get_server_provider_instance_id( $server_id ),
+			'app_count'              => SSTK_SERVER()->get_app_count( $server_id ),
+			'region'                 => SSTK_SERVER()->get_server_region( $server_id ),
+			'available_for_commands' => SSTK_SERVER()->is_server_available_for_commands( $server_id ),
 			'request_date'           => gmdate( 'r' ),
 		);
 
 		return $data;
-
 	}
 
 	/**
 	 * Mark the pending log entry as completed.
 	 * Perhaps do other things such as marking the server as 'delete protected'.
 	 *
-	 * Action hook: wpcd_command_{$this->get_app_name()}_{$base_command}_{$status} || wpcd_wordpress-app_prepare_server_completed
+	 * Action hook: sstk_command_{$this->get_app_name()}_{$base_command}_{$status} || sstk_wordpress-app_prepare_server_completed
 	 *
 	 * @param int    $server_id      The post id of the server record.
 	 * @param string $command_name   The full name of the command that triggered this action.
 	 */
-	public function wpcd_wpapp_prepare_server_completed( int $server_id, $command_name ) {
+	public function sstk_wpapp_prepare_server_completed( int $server_id, $command_name ) {
 
 		$server_post = get_post( $server_id );
 
@@ -279,32 +278,28 @@ class WPCD_REST_API_Controller_Servers extends WPCD_REST_API_Controller_Base {
 		}
 
 		// Bail if not a WordPress app.
-		if ( 'wordpress-app' <> WPCD_WORDPRESS_APP()->get_server_type( $server_id ) ) {
+		if ( 'wordpress-app' <> SSTK_WORDPRESS_APP()->get_server_type( $server_id ) ) {
 			return;
 		}
 
 		// If the server wasn't the result of a REST API command, then bail.
-		if ( empty( get_post_meta( $server_id, 'wpcd_server_wp_restapi_flag' ) ) ) {
+		if ( empty( get_post_meta( $server_id, 'sstk_server_wp_restapi_flag' ) ) ) {
 			return;
 		}
 
 		// Get server instance array.
-		$instance = WPCD_WORDPRESS_APP()->get_instance_details( $server_id );
+		$instance = SSTK_WORDPRESS_APP()->get_instance_details( $server_id );
 
-		if ( 'wpcd_app_server' === get_post_type( $server_id ) ) {
+		if ( 'sstk_app_server' === get_post_type( $server_id ) ) {
 
 			// If the app install was done via a background pending tasks process then get that pending task post data here.
 			// We do that by checking the pending tasks table for a record where the key=domain and type='rest_api_install_wp' and state='in-process'.
-			$pending_task_posts = WPCD_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $server_id, 'in-process', 'rest_api_install_server' );
+			$pending_task_posts = SSTK_POSTS_PENDING_TASKS_LOG()->get_tasks_by_key_state_type( $server_id, 'in-process', 'rest_api_install_server' );
 			if ( $pending_task_posts ) {
 				/* Now update the log entry to market is as complete. */
-				$data_to_save = WPCD_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $pending_task_posts[0]->ID );
-				WPCD_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $pending_task_posts[0]->ID, $data_to_save, 'complete' );
+				$data_to_save = SSTK_POSTS_PENDING_TASKS_LOG()->get_data_by_id( $pending_task_posts[0]->ID );
+				SSTK_POSTS_PENDING_TASKS_LOG()->update_task_by_id( $pending_task_posts[0]->ID, $data_to_save, 'complete' );
 			}
 		}
-
 	}
-
 }
-
-

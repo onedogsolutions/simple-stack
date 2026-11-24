@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This class handles functions related to expiring sites.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,11 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Setup functions related to expiring sites.
  *
- * @package wpcd
- * @version 1.0.0 / wpcd
+ * @package simple-stack
+ * @version 1.0.0 / sstk
  * @since 5.7.0
  */
-class WPCD_App_Expiration {
+class SSTK_App_Expiration {
 
 	/**
 	 * Constructor function.
@@ -24,19 +25,19 @@ class WPCD_App_Expiration {
 	public function __construct() {
 
 		// Filter hook to add custom meta boxes.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'wpcd_app_register_meta_boxes' ), 10, 1 );
+		add_filter( 'rwmb_meta_boxes', array( $this, 'sstk_app_register_meta_boxes' ), 10, 1 );
 
 		// Add state to show if an app is expired.
 		add_filter( 'display_post_states', array( $this, 'display_post_states' ), 20, 2 );
 
 		// Add bulk action options to the site list.
-		if ( true === boolval( wpcd_get_early_option( 'wordpress_app_sites_enable_expiration_bulk_actions' ) ) ) {
-			add_filter( 'bulk_actions-edit-wpcd_app', array( $this, 'wpcd_add_new_bulk_actions_site' ), 50 );
+		if ( true === boolval( sstk_get_early_option( 'wordpress_app_sites_enable_expiration_bulk_actions' ) ) ) {
+			add_filter( 'bulk_actions-edit-sstk_app', array( $this, 'sstk_add_new_bulk_actions_site' ), 50 );
 		}
 
 		// Action hook to handle bulk actions for site.
-		if ( true === boolval( wpcd_get_early_option( 'wordpress_app_sites_enable_expiration_bulk_actions' ) ) ) {
-			add_filter( 'handle_bulk_actions-edit-wpcd_app', array( $this, 'wpcd_bulk_action_handler_sites' ), 10, 3 );
+		if ( true === boolval( sstk_get_early_option( 'wordpress_app_sites_enable_expiration_bulk_actions' ) ) ) {
+			add_filter( 'handle_bulk_actions-edit-sstk_app', array( $this, 'sstk_bulk_action_handler_sites' ), 10, 3 );
 		}
 	}
 
@@ -49,13 +50,13 @@ class WPCD_App_Expiration {
 	 *
 	 * @return array
 	 */
-	public function wpcd_app_register_meta_boxes( $metaboxes ) {
+	public function sstk_app_register_meta_boxes( $metaboxes ) {
 
 		// Register the metabox for site expiration.
 		$metaboxes[] = array(
-			'id'       => 'wpcd_app_site_expiration_metabox',
-			'title'    => __( 'Site Expiration (UTC +0)', 'wpcd' ),
-			'pages'    => array( 'wpcd_app' ), // displays on wpcd_app post type only.
+			'id'       => 'sstk_app_site_expiration_metabox',
+			'title'    => __( 'Site Expiration (UTC +0)', 'simple-stack' ),
+			'pages'    => array( 'sstk_app' ), // displays on sstk_app post type only.
 			'context'  => 'side',
 			'priority' => 'low',
 			'fields'   => array(
@@ -63,12 +64,12 @@ class WPCD_App_Expiration {
 				// Explantion field.
 				array(
 					'type' => 'custom_html',
-					'std'  => __( 'You can control what happens when a site expires in SETTINGS.', 'wpcd' ),
+					'std'  => __( 'You can control what happens when a site expires in SETTINGS.', 'simple-stack' ),
 				),
 				// add a date-time field for site expiration.
 				array(
-					'desc'       => __( 'When does this site expire?', 'wpcd' ),
-					'id'         => 'wpcd_app_expires',
+					'desc'       => __( 'When does this site expire?', 'simple-stack' ),
+					'id'         => 'sstk_app_expires',
 					'type'       => 'datetime',
 					'js_options' => array(
 						'stepMinute'      => 1,
@@ -89,10 +90,10 @@ class WPCD_App_Expiration {
 
 				// Checkbox for if site has expired.
 				array(
-					'name'    => __( 'Expired?', 'wpcd' ),
-					'desc'    => __( 'Has site already expired?', 'wpcd' ),
-					'tooltip' => __( 'If you change this option you will also need to change the date above to a future date. Otherwise the site will again expire within a few minutes. Also, if you change this option to mark an unexpired site as expired, none of the expiration options in settings will run.', 'wpcd' ),
-					'id'      => 'wpcd_app_expired_status',
+					'name'    => __( 'Expired?', 'simple-stack' ),
+					'desc'    => __( 'Has site already expired?', 'simple-stack' ),
+					'tooltip' => __( 'If you change this option you will also need to change the date above to a future date. Otherwise the site will again expire within a few minutes. Also, if you change this option to mark an unexpired site as expired, none of the expiration options in settings will run.', 'simple-stack' ),
+					'id'      => 'sstk_app_expired_status',
 					'type'    => 'checkbox',
 				),
 
@@ -115,14 +116,14 @@ class WPCD_App_Expiration {
 		 */
 		$current_linux_epoc = time();
 		$args               = array(
-			'post_type'      => 'wpcd_app',
+			'post_type'      => 'sstk_app',
 			'post_status'    => 'private',
 			'posts_per_page' => -1,
 			'orderby'        => 'ID',
 			'order'          => 'ASC',
 			'meta_query'     => array(
 				array(
-					'key'     => 'wpcd_app_expires',
+					'key'     => 'sstk_app_expires',
 					'value'   => $current_linux_epoc,
 					'type'    => 'NUMERIC',
 					'compare' => '<',
@@ -140,8 +141,8 @@ class WPCD_App_Expiration {
 				// Is the app already marked as expired?  If so, skip it!
 				$is_expired = $this->get_expired_status( $app->ID );
 
-				// Is there an actual value in the expiration date?  (The query above will return records if there is a real 'zero' in the wpcd_app_expires meta)
-				if ( (int) get_post_meta( $app->ID, 'wpcd_app_expires', true ) <= 0 ) {
+				// Is there an actual value in the expiration date?  (The query above will return records if there is a real 'zero' in the sstk_app_expires meta)
+				if ( (int) get_post_meta( $app->ID, 'sstk_app_expires', true ) <= 0 ) {
 					// No actual value in the expiration date field so just skip it.
 					continue;
 				}
@@ -172,49 +173,49 @@ class WPCD_App_Expiration {
 	public function apply_expiration_rules( $app_id ) {
 
 		// Verify app to make sure it's valid. It should be but do it again anyway.
-		$post = WPCD_WORDPRESS_APP()->get_app_by_app_id( $app_id );
+		$post = SSTK_WORDPRESS_APP()->get_app_by_app_id( $app_id );
 		if ( empty( $post ) ) {
 			return;
 		}
 
-		// Make sure post type is wpcd_app.
-		if ( 'wpcd_app' !== $post->post_type ) {
+		// Make sure post type is sstk_app.
+		if ( 'sstk_app' !== $post->post_type ) {
 			return;
 		}
 
 		// Is the site enabled?  Can't do certain things if it's now.
-		$site_status = WPCD_WORDPRESS_APP()->site_status( $app_id );
+		$site_status = SSTK_WORDPRESS_APP()->site_status( $app_id );
 
-		if ( boolval( wpcd_get_option( 'wordpress_app_sites_expired_delete_site' ) ) ) {
+		if ( boolval( sstk_get_option( 'wordpress_app_sites_expired_delete_site' ) ) ) {
 			// Schedule site to be deleted.  Since the site is going to be deleted, it does not make since to apply any of the other options beforehand.
-			do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site is being scheduled for deletion in pending tasks because the it has expired.', 'wpcd' ), 'misc', null );
-			$args['action_hook'] = 'wpcd_pending_log_delete_wp_site_and_backups';
+			do_action( 'sstk_log_notification', $app_id, 'alert', __( 'This site is being scheduled for deletion in pending tasks because the it has expired.', 'simple-stack' ), 'misc', null );
+			$args['action_hook'] = 'sstk_pending_log_delete_wp_site_and_backups';
 			$args['action']      = 'remove_full';
 			$task_name           = 'delete-site-and-backups';
-			$task_desc           = __( 'Site Expiration: Waiting to delete site and associated backups.', 'wpcd' );
-			WPCD_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, $task_name, $app_id, $args, 'ready', $app_id, $task_desc );
+			$task_desc           = __( 'Site Expiration: Waiting to delete site and associated backups.', 'simple-stack' );
+			SSTK_POSTS_PENDING_TASKS_LOG()->add_pending_task_log_entry( $app_id, $task_name, $app_id, $args, 'ready', $app_id, $task_desc );
 		} else {
 			// Maybe disable the site. But only do it if the site has not already in that state.
-			if ( boolval( wpcd_get_option( 'wordpress_app_sites_expired_disable_site' ) ) ) {
+			if ( boolval( sstk_get_option( 'wordpress_app_sites_expired_disable_site' ) ) ) {
 				if ( 'on' === $site_status ) {
-					do_action( 'wpcd_wordpress-app_do_toggle_site_status', $app_id, 'site-status', 'off' );
-					do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site is being disabled because the it has expired.', 'wpcd' ), 'misc', null );
+					do_action( 'sstk_wordpress-app_do_toggle_site_status', $app_id, 'site-status', 'off' );
+					do_action( 'sstk_log_notification', $app_id, 'alert', __( 'This site is being disabled because the it has expired.', 'simple-stack' ), 'misc', null );
 				}
 			}
 
 			// Maybe apply http authentication to the site. But only do it if the site is enabled - this way we don't try to apply config settings to a file that might not exist.
-			if ( boolval( wpcd_get_option( 'wordpress_app_sites_expired_enable_http_auth' ) ) ) {
+			if ( boolval( sstk_get_option( 'wordpress_app_sites_expired_enable_http_auth' ) ) ) {
 				if ( 'on' === $site_status ) {
-					do_action( 'wpcd_wordpress-app_do_site_enable_http_auth', $app_id );
-					do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site is being password protected because it has expired.', 'wpcd' ), 'misc', null );
+					do_action( 'sstk_wordpress-app_do_site_enable_http_auth', $app_id );
+					do_action( 'sstk_log_notification', $app_id, 'alert', __( 'This site is being password protected because it has expired.', 'simple-stack' ), 'misc', null );
 				}
 			}
 
 			// Maybe apply an admin lock to the site. But only do it if the site has not already in that state.
-			if ( boolval( wpcd_get_option( 'wordpress_app_sites_expired_admin_lock_site' ) ) ) {
-				if ( ! WPCD_WORDPRESS_APP()->get_admin_lock_status( $app_id ) ) {
-					WPCD_WORDPRESS_APP()->set_admin_lock_status( $app_id, 'on' );
-					do_action( 'wpcd_log_notification', $app_id, 'alert', __( 'This site has had its admin lock applied because it has expired.', 'wpcd' ), 'misc', null );
+			if ( boolval( sstk_get_option( 'wordpress_app_sites_expired_admin_lock_site' ) ) ) {
+				if ( ! SSTK_WORDPRESS_APP()->get_admin_lock_status( $app_id ) ) {
+					SSTK_WORDPRESS_APP()->set_admin_lock_status( $app_id, 'on' );
+					do_action( 'sstk_log_notification', $app_id, 'alert', __( 'This site has had its admin lock applied because it has expired.', 'simple-stack' ), 'misc', null );
 				}
 			}
 		}
@@ -226,7 +227,7 @@ class WPCD_App_Expiration {
 	 * @param int $app_id The app id we're querying.
 	 */
 	public function set_as_expired( $app_id ) {
-		update_post_meta( $app_id, 'wpcd_app_expired_status', 1 );
+		update_post_meta( $app_id, 'sstk_app_expired_status', 1 );
 	}
 
 	/**
@@ -235,8 +236,8 @@ class WPCD_App_Expiration {
 	 * @param int $app_id The app id we're querying.
 	 */
 	public function set_as_unexpired( $app_id ) {
-		update_post_meta( $app_id, 'wpcd_app_expired_status', '' );
-		update_post_meta( $app_id, 'wpcd_app_expires', '' );
+		update_post_meta( $app_id, 'sstk_app_expired_status', '' );
+		update_post_meta( $app_id, 'sstk_app_expires', '' );
 	}
 
 
@@ -247,7 +248,7 @@ class WPCD_App_Expiration {
 	 */
 	public function get_expired_status( $app_id ) {
 
-		$status = get_post_meta( $app_id, 'wpcd_app_expired_status', true );
+		$status = get_post_meta( $app_id, 'sstk_app_expired_status', true );
 		if ( 1 === (int) $status ) {
 			return true;
 		} else {
@@ -275,8 +276,8 @@ class WPCD_App_Expiration {
 		}
 
 		$expires = ( $expiration_in_minutes * 60 ) + time();
-		update_post_meta( $app_id, 'wpcd_app_expires', $expires );
-		update_post_meta( $app_id, 'wpcd_app_expires_human_gmt', gmdate( 'Y-m-d H:i:s', $expires ) );
+		update_post_meta( $app_id, 'sstk_app_expires', $expires );
+		update_post_meta( $app_id, 'sstk_app_expires_human_gmt', gmdate( 'Y-m-d H:i:s', $expires ) );
 
 	}
 
@@ -287,7 +288,7 @@ class WPCD_App_Expiration {
 	 */
 	public function clear_expiration( $app_id ) {
 
-		update_post_meta( $app_id, 'wpcd_app_expires', '' );
+		update_post_meta( $app_id, 'sstk_app_expires', '' );
 
 	}
 
@@ -300,7 +301,7 @@ class WPCD_App_Expiration {
 
 		$return = '';
 
-		$expires = get_post_meta( $app_id, 'wpcd_app_expires', true );
+		$expires = get_post_meta( $app_id, 'sstk_app_expires', true );
 		if ( ! empty( $expires ) ) {
 			$return = gmdate( 'Y-m-d H:i:s', $expires );
 		}
@@ -322,17 +323,17 @@ class WPCD_App_Expiration {
 	 */
 	public function display_post_states( $states, $post ) {
 
-		if ( 'wpcd_app' === get_post_type( $post ) ) {
+		if ( 'sstk_app' === get_post_type( $post ) ) {
 			// Maybe show expired label.
 			if ( true === $this->get_expired_status( $post->ID ) ) {
-				$states['wpcd-app-expired-flag'] = __( 'Expired', 'wpcd' );
+				$states['sstk-app-expired-flag'] = __( 'Expired', 'simple-stack' );
 			}
 
 			// Maybe Show expiration date.
 			$expires = $this->get_expiration_gmt( $post->ID );
 			if ( ! empty( $expires ) ) {
 				/* Translators: %s is a human readable date in GMT format */
-				$states['wpcd-app-expiration-date'] = __( sprintf( __( 'Exp: %s (gmt+0)', 'wpcd' ), $expires ) );
+				$states['sstk-app-expiration-date'] = __( sprintf( __( 'Exp: %s (gmt+0)', 'simple-stack' ), $expires ) );
 			}
 		}
 
@@ -343,15 +344,15 @@ class WPCD_App_Expiration {
 	/**
 	 * Add new bulk options in site list screen.
 	 *
-	 * Filter Hook: bulk_actions-edit-wpcd_app
+	 * Filter Hook: bulk_actions-edit-sstk_app
 	 *
 	 * @param array $bulk_array bulk array.
 	 */
-	public function wpcd_add_new_bulk_actions_site( $bulk_array ) {
+	public function sstk_add_new_bulk_actions_site( $bulk_array ) {
 
-		if ( wpcd_is_admin() ) {
-			$bulk_array['wpcd_sites_expiration_expire_sites']   = __( 'Expire Sites', 'wpcd' );
-			$bulk_array['wpcd_sites_expiration_unexpire_sites'] = __( 'Unexpire Sites', 'wpcd' );
+		if ( sstk_is_admin() ) {
+			$bulk_array['sstk_sites_expiration_expire_sites']   = __( 'Expire Sites', 'simple-stack' );
+			$bulk_array['sstk_sites_expiration_unexpire_sites'] = __( 'Unexpire Sites', 'simple-stack' );
 			return $bulk_array;
 		}
 
@@ -363,27 +364,27 @@ class WPCD_App_Expiration {
 	 * Returns an array of actions that is valid for the bulk actions menu.
 	 */
 	public function get_valid_bulk_actions() {
-		return array( 'wpcd_sites_expiration_unexpire_sites', 'wpcd_sites_expiration_expire_sites' );
+		return array( 'sstk_sites_expiration_unexpire_sites', 'sstk_sites_expiration_expire_sites' );
 	}
 
 
 	/**
 	 * Handle bulk actions for sites.
 	 *
-	 * Action Hook: handle_bulk_actions-edit-wpcd_app
+	 * Action Hook: handle_bulk_actions-edit-sstk_app
 	 *
 	 * @param string $redirect_url  redirect url.
-	 * @param string $action        bulk action slug/id - this is not the WPCD action key.
+	 * @param string $action        bulk action slug/id - this is not the SSTK action key.
 	 * @param array  $post_ids      all post ids.
 	 */
-	public function wpcd_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
+	public function sstk_bulk_action_handler_sites( $redirect_url, $action, $post_ids ) {
 
 		// Lets make sure we're an admin otherwise return an error.
-		if ( ! wpcd_is_admin() ) {
-			do_action( 'wpcd_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
+		if ( ! sstk_is_admin() ) {
+			do_action( 'sstk_log_error', 'Someone attempted to run a function that required admin privileges.', 'security', __FILE__, __LINE__ );
 
 			// Show error message to user at the top of the admin list as a dismissible notice.
-			wpcd_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'wpcd' ), 'error' );
+			sstk_global_add_admin_notice( __( 'You attempted to run a function that requires admin privileges.', 'simple-stack' ), 'error' );
 
 			return $redirect_url;
 		}
@@ -395,11 +396,11 @@ class WPCD_App_Expiration {
 				foreach ( $post_ids as $app_id ) {
 
 					switch ( $action ) {
-						case 'wpcd_sites_expiration_unexpire_sites':
+						case 'sstk_sites_expiration_unexpire_sites':
 							$this->set_as_unexpired( $app_id );
 							break;
 
-						case 'wpcd_sites_expiration_expire_sites':
+						case 'sstk_sites_expiration_expire_sites':
 							$this->set_as_expired( $app_id );
 							break;
 					}
@@ -409,14 +410,14 @@ class WPCD_App_Expiration {
 			// Show Admin Notices.
 			if ( ! empty( $post_ids ) ) {
 				switch ( $action ) {
-					case 'wpcd_sites_expiration_unexpire_sites':
+					case 'sstk_sites_expiration_unexpire_sites':
 						// Add message to be displayed in admin header.
-						wpcd_global_add_admin_notice( __( 'The selected sites expiration flags have been set to NOT EXPIRED.', 'wpcd' ), 'success' );
+						sstk_global_add_admin_notice( __( 'The selected sites expiration flags have been set to NOT EXPIRED.', 'simple-stack' ), 'success' );
 						break;
 
-					case 'wpcd_sites_expiration_expire_sites':
+					case 'sstk_sites_expiration_expire_sites':
 						// Add message to be displayed in admin header.
-						wpcd_global_add_admin_notice( __( 'The selected sites expiration flags have been set to EXPIRED!', 'wpcd' ), 'success' );
+						sstk_global_add_admin_notice( __( 'The selected sites expiration flags have been set to EXPIRED!', 'simple-stack' ), 'success' );
 						break;
 				}
 			}

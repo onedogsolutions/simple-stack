@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * General Tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,18 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_GENERAL
+ * Class SSTK_WORDPRESS_TABS_GENERAL
  */
-class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_GENERAL extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_PHP constructor.
+	 * SSTK_WORDPRESS_TABS_PHP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_tab_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
 	}
 
 	/**
@@ -50,7 +51,7 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'General', 'wpcd' ),
+				'label' => __( 'General', 'simple-stack' ),
 				'icon'  => 'fad fa-raindrops',
 			);
 		}
@@ -65,14 +66,14 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 	 * @return boolean
 	 */
 	public function get_tab_security( $id ) {
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 
 	/**
 	 * Gets the fields to be shown in the GENERAL tab.
 	 *
-	 * Filter hook: wpcd_app_{$this->get_app_name()}_get_tabs
+	 * Filter hook: sstk_app_{$this->get_app_name()}_get_tabs
 	 *
 	 * @param array $fields fields.
 	 * @param int   $id id.
@@ -102,15 +103,15 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'sample-action' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -133,7 +134,7 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 	public function get_actions( $id ) {
 
 		// If admin has an admin lock in place and the user is not admin they should see a locked notice instead of the general fields.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return $this->get_general_fields_admin_locked( $id );
 		}
 
@@ -154,10 +155,10 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		$actions['general-welcome-header'] = array(
-			'label'          => __( 'Welcome', 'wpcd' ),
+			'label'          => __( 'Welcome', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => __( 'Sweet - Another WordPress Site!', 'wpcd' ),
+				'desc' => __( 'Sweet - Another WordPress Site!', 'simple-stack' ),
 			),
 		);
 
@@ -173,43 +174,43 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 		if ( true === $this->is_site_enabled( $id ) ) {
 
 			// Basic status - we're here so site is enabled.
-			$config_desc .= $ok_span . __( 'Your site seems to be ready!', 'wpcd' );
+			$config_desc .= $ok_span . __( 'Your site seems to be ready!', 'simple-stack' );
 
 			// SSL Status.
 			$config_desc .= '<br />';
 			if ( true === $this->get_site_local_ssl_status( $id ) ) {
 				$ssl          = true;
-				$config_desc .= $ok_span . __( 'Your site seems to be secured with SSL.', 'wpcd' );
+				$config_desc .= $ok_span . __( 'Your site seems to be secured with SSL.', 'simple-stack' );
 			} else {
 				$ssl          = false;
-				$config_desc .= $not_ok_span . __( 'Your site is not secured with SSL. You can turn this on under the SSL tab.', 'wpcd' );
+				$config_desc .= $not_ok_span . __( 'Your site is not secured with SSL. You can turn this on under the SSL tab.', 'simple-stack' );
 			}
 
 			// Backups.
 			$config_desc .= '<br />';
 			if ( ! empty( get_post_meta( $id, 'wpapp_backups_list', true ) ) ) {
-				$config_desc .= $ok_span . __( 'At least one backup has been completed - good job.', 'wpcd' );
+				$config_desc .= $ok_span . __( 'At least one backup has been completed - good job.', 'simple-stack' );
 			} else {
-				$config_desc .= $not_ok_span . __( 'Your site has not been backed up yet. Setup backups under the BACKUP AND RESTORE tab.', 'wpcd' );
+				$config_desc .= $not_ok_span . __( 'Your site has not been backed up yet. Setup backups under the BACKUP AND RESTORE tab.', 'simple-stack' );
 			}
 
 			// sftp users.
 			$config_desc .= '<br />';
-			if ( ! empty( wpcd_maybe_unserialize( get_post_meta( $id, 'wpapp_sftp_users', true ) ) ) ) {
-				$config_desc .= $user_span . __( 'There is at least one sFTP user configured for this site.', 'wpcd' );
+			if ( ! empty( sstk_maybe_unserialize( get_post_meta( $id, 'wpapp_sftp_users', true ) ) ) ) {
+				$config_desc .= $user_span . __( 'There is at least one sFTP user configured for this site.', 'simple-stack' );
 			} else {
-				$config_desc .= $user_span . __( 'No sFTP users have been set up yet. If you need one you can do so under the sFTP tab.', 'wpcd' );
+				$config_desc .= $user_span . __( 'No sFTP users have been set up yet. If you need one you can do so under the sFTP tab.', 'simple-stack' );
 			}
 
 			// Credentials.
 			$config_desc .= '<br />';
-			$config_desc .= $credentials_span . __( 'Looking for your credentials to log into wp-admin for the first time?  Click on the MISC tab.', 'wpcd' );
+			$config_desc .= $credentials_span . __( 'Looking for your credentials to log into wp-admin for the first time?  Click on the MISC tab.', 'simple-stack' );
 
 			// Passwordless Login.
 			/** Removing for now.
-			if ( wpcd_is_admin() && ( ! wpcd_get_early_option( 'wordpress_app_disable_passwordless_login' ) ) ) {
-				$passwordless_login_link = $this->get_passwordless_login_link_for_display( $id, __( 'Login', 'wpcd' ) );
-				$passwordless_login_link = WPCD_POSTS_APP()->wpcd_column_wrap_string_with_div_and_class( $passwordless_login_link, 'wp_passwordless_login_link' );
+			if ( sstk_is_admin() && ( ! sstk_get_early_option( 'wordpress_app_disable_passwordless_login' ) ) ) {
+				$passwordless_login_link = $this->get_passwordless_login_link_for_display( $id, __( 'Login', 'simple-stack' ) );
+				$passwordless_login_link = SSTK_POSTS_APP()->sstk_column_wrap_string_with_div_and_class( $passwordless_login_link, 'wp_passwordless_login_link' );
 				$config_desc            .= '<br />' . '<br />' . $passwordless_login_link;
 			}
 			*/
@@ -226,9 +227,9 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 
 		} else {
 
-			$config_desc .= $not_ok_span . __( 'Your site seems to be disabled!', 'wpcd' );
+			$config_desc .= $not_ok_span . __( 'Your site seems to be disabled!', 'simple-stack' );
 			$config_desc .= '<br />';
-			$config_desc .= __( 'You can re-enable it in the MISC tab!', 'wpcd' );
+			$config_desc .= __( 'You can re-enable it in the MISC tab!', 'simple-stack' );
 
 		}
 
@@ -256,13 +257,13 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 		$actions = array();
 
 		// What message should we display to the user?
-		$user_msg = wpcd_get_early_option( 'wordpress_app_sites_default_admin_lock_msg' );
+		$user_msg = sstk_get_early_option( 'wordpress_app_sites_default_admin_lock_msg' );
 
 		$actions['general-welcome-header'] = array(
-			'label'          => __( 'This site is locked.', 'wpcd' ),
+			'label'          => __( 'This site is locked.', 'simple-stack' ),
 			'type'           => 'heading',
 			'raw_attributes' => array(
-				'desc' => empty( $user_msg ) ? __( 'This is has been locked by the administrator. Please contact support.', 'wpcd' ) : '',
+				'desc' => empty( $user_msg ) ? __( 'This is has been locked by the administrator. Please contact support.', 'simple-stack' ) : '',
 			),
 		);
 
@@ -282,4 +283,4 @@ class WPCD_WORDPRESS_TABS_GENERAL extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_GENERAL();
+new SSTK_WORDPRESS_TABS_GENERAL();

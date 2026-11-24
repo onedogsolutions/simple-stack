@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Renders any tab schema returned by `GET /{servers|sites}/{id}/tabs`.
  *
@@ -6,8 +7,8 @@
  * covers them. Tab-specific work is limited to the field types below.
  *
  * Action buttons reproduce the legacy jQuery behaviour exactly
- * (`wpcd-wpapp-admin-common.js`): honour the confirmation prompt, gather the fields
- * named by `data-wpcd-fields`, and post them as the tab handler's `params`.
+ * (`sstk-wpapp-admin-common.js`): honour the confirmation prompt, gather the fields
+ * named by `data-sstk-fields`, and post them as the tab handler's `params`.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -105,7 +106,7 @@ export default function TabRenderer( {
 		setFiles( ( current ) => ( { ...current, [ id ]: file } ) );
 	};
 
-	const run = async ( field ) => {
+	const run = async ( field, overrides = {} ) => {
 		if ( disabledReason || pending ) {
 			return;
 		}
@@ -114,7 +115,7 @@ export default function TabRenderer( {
 			return;
 		}
 
-		const params = collectActionParams( field, index, values );
+		const params = collectActionParams( field, index, values, overrides );
 
 		/*
 		 * The sFTP and system-user tabs post an uploaded public key as `file`, exactly as
@@ -188,7 +189,13 @@ export default function TabRenderer( {
 											value={ values[ field.id ] }
 											onChange={ ( next ) => setValue( field.id, next ) }
 											onFile={ ( file ) => setFile( field.id, file ) }
-											onAction={ () => run( field ) }
+											onAction={
+												field.kind === 'toggle'
+													? field.action
+														? ( next ) => run( field, { [ field.id ]: next } )
+														: undefined
+													: () => run( field )
+											}
 											pending={ pending === `${ field.action }:${ field.id }` }
 											disabled={ Boolean( disabledReason ) }
 											expanded={ Boolean( openCards[ `${ rowIndex }:${ itemIndex }` ] ) }
@@ -303,8 +310,15 @@ function FieldControl( { field, value, onChange, onFile, onAction, pending, disa
 					type="checkbox"
 					className="mt-1 h-4 w-4 rounded border-surface-border text-brand-600 focus:ring-brand-500"
 					checked={ Boolean( value ) && value !== 'off' && value !== '' ? true : Boolean( value ) }
-					onChange={ ( event ) => onChange( event.target.checked ) }
-					disabled={ disabled }
+					onChange={ ( event ) => {
+						const next = event.target.checked;
+						onChange( next );
+
+						if ( field.action && onAction ) {
+							onAction( next );
+						}
+					} }
+					disabled={ disabled || pending }
 				/>
 				<div>
 					<label htmlFor={ field.id } className="text-sm font-medium text-ink-800">

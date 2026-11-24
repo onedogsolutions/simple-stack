@@ -1,5 +1,6 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
- * This JS file is loaded for cpt wpcd_permission_type details screen only!
+ * This JS file is loaded for cpt sstk_permission_type details screen only!
 */
 (function ($) {
 	init();

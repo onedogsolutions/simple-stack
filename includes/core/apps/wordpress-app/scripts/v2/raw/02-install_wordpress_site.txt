@@ -1,8 +1,9 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
-	exit
+	exit 1
 fi
 
 clear
@@ -81,11 +82,11 @@ user_name="$(echo $domain | cut -c1-32)"
 if id -u "$user_name" &>/dev/null
 then
 	echo "User name collision. Aborting..."
-	exit
+	exit 1
 fi
 
 # Clean up some stuff just in case this domain was installed on this server and not removed cleanly.
-rm -rf /etc/wpcd/$domain  # Remove metas.
+rm -rf /etc/simple-stack/$domain  # Remove metas.
 
 # Make site folder
 mkdir -p "${wphome}/logs"
@@ -95,17 +96,8 @@ useradd -d "${wphome}" -g www-data -M -s "/bin/bash" "${user_name}"
 chown -R "${user_name}":www-data "${wphome}"
 chmod -R g+ws "$wphome"
 
-# Add virtual host files for webserver.
-if [ "$g_webserver_type" = "nginx" ]
-then
-	echo "The webserver is Nginx....";
-	gf_add_php_conf "$domain" "$user_name" 8.1
-	gf_add_nginx_conf "$domain" "$domain" "$domain"
-elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-then
-	echo "The webserver is Litespeed....";
-	gf_add_ols_conf "$domain"
-fi
+# Create the OpenLiteSpeed virtual host using the server default PHP version.
+gf_add_ols_conf "$domain" || exit 1
 
 # Install WordPress using wp-cli
 cd "${wphome}"
@@ -121,32 +113,20 @@ else
 	su - "$user_name" -c "wp --skip-plugins --no-color core install --url=$domain --title=$domain --admin_user=$wp_user --admin_password=$wp_password --admin_email=$wp_email --skip-email"
 fi
 
-# needed to work around wp-cli issues with passwords containing some special characters
-# we hash and salt the $wp_password manually and inject it directly into the database
-wp_password_hashed=$(echo "<?php
+# Hash the password through the site's WordPress bootstrap.
+pwtmpfile=$(mktemp) || exit 1
+echo "<?php
 require_once( '$wphome/wp-load.php' );
 \$password = '$wp_password';
 \$hash_password = wp_hash_password(\$password);
 echo \$hash_password;
-?>" | php)
-
-# Redo the password hash to fix a 'segmentation fault' error that occurs with OLS and PHP 8.1
-# We can probably remove this entire block once either OLS or PHP fixes the issue.
-# Or maybe we can just make this the default method for getting the hash and remove the 
-# codeblock above.
-if [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
+?>" > "$pwtmpfile"
+if ! wp_password_hashed=$(php "$pwtmpfile")
 then
-	pwtmpfile=$(mktemp)
-	echo "<?php
-	require_once( '$wphome/wp-load.php' );
-	\$password = '$wp_password';
-	\$hash_password = wp_hash_password(\$password);
-	echo \$hash_password;
-	?>"	> $pwtmpfile
-	wp_password_hashed=$(php $pwtmpfile)
-	rm $pwtmpfile
+	rm -f "$pwtmpfile"
+	exit 1
 fi
-# End redo password hash for OLS.
+rm -f "$pwtmpfile"
 
 # Stick the password hash into the database.
 mysql <<QUERY
@@ -174,44 +154,30 @@ su - "$user_name" -c "touch $wphome/wp-content/debug.log"
 chown -R "$user_name":www-data "$wphome"
 chmod -R g+ws "$wphome"
 
-# Install page cache
-if [ "$g_webserver_type" = "nginx" ]
-then
-	su - "$user_name" -c "wp  --no-color plugin install --activate cache-enabler"
-elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-then
-	su - "$user_name" -c "wp --skip-plugins --no-color plugin install litespeed-cache && wp --skip-plugins --no-color plugin activate litespeed-cache && wp --no-color litespeed-online init"
-fi
+# Install the LiteSpeed Cache integration.
+su - "$user_name" -c "wp --skip-plugins --no-color plugin install litespeed-cache && wp --skip-plugins --no-color plugin activate litespeed-cache && wp --no-color litespeed-online init" || exit 1
 
 # Install REDIS object cache.
 if hash redis-cli 2>/dev/null
 then
 	echo "Installing and activating object cache plugins..."
-	if [ "$g_webserver_type" = "nginx" ]
+	su - $user_name -c "wp plugin list|grep -q litespeed-cache"
+	if [ $? -eq 0 ]
 	then
-		su - $user_name -c "wp --no-color plugin install --activate redis-cache"
-		su - $user_name -c "cd /var/www/$domain/html/wp-content/; ln -s ./plugins/redis-cache/includes/object-cache.php ./object-cache.php"
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
+		su - $user_name -c "wp plugin is-active litespeed-cache"
+		if [ $? -ne 0 ]
 		then
-		su - $user_name -c "wp plugin list|grep -q litespeed-cache"
-		if [ $? -eq 0 ]
-		then
-			su - $user_name -c "wp plugin is-active litespeed-cache"
-			if [ $? -ne 0 ]
-			then
-				su - $user_name -c "wp plugin activate litespeed-cache"
-			fi
-		else
-			su - "$user_name" -c "wp --skip-plugins plugin install litespeed-cache && wp --skip-plugins plugin activate litespeed-cache && wp litespeed-online init" > /dev/null 2>&1
+			su - $user_name -c "wp plugin activate litespeed-cache" || exit 1
 		fi
-		# su - $user_name -c "wp --skip-plugins config set WP_CACHE true --raw"	### This not needed since we turned it on earlier in this script.
-		su - "$user_name" -c "wp litespeed-option set object true && wp litespeed-option set object-port 6379 && wp litespeed-option set object-host 127.0.0.1 && wp litespeed-option set object-kind 1 && wp cache flush" > /dev/null 2>&1
+	else
+		su - "$user_name" -c "wp --skip-plugins plugin install litespeed-cache && wp --skip-plugins plugin activate litespeed-cache && wp litespeed-online init" > /dev/null 2>&1 || exit 1
 	fi
+	su - "$user_name" -c "wp litespeed-option set object true && wp litespeed-option set object-port 6379 && wp litespeed-option set object-host 127.0.0.1 && wp litespeed-option set object-kind 1 && wp cache flush" > /dev/null 2>&1 || exit 1
 else
 	echo "Redis not detected - object cache was not enabled for this domain."
 fi
 
-# Restart Webserver
+# Restart OpenLiteSpeed
 gf_restart_webserver
 
 # prepare for ssh public key authentication
@@ -233,11 +199,11 @@ then
 	source ./post_processing_script_site.sh	
 fi
 
-# SimpleStack post-install hook. Defined by 66-simplestack_post_install.sh (sourced from
+# Simple Stack post-install hook. Defined by 66-sstk_post_install.sh (sourced from
 # 9999-common-functions.sh) and called here, after WordPress and any post-processing
 # script have finished, so the hardening and the One Dog security plugins are applied to
 # a site that is already fully configured.
-simplestack_post_site_install "$domain" "$user_name" "$g_webserver_type"
+sstk_post_site_install "$domain" "$user_name" "$g_webserver_type"
 
 echo
 echo "WordPress has been set up for $domain"

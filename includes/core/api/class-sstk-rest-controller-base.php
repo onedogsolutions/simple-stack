@@ -1,8 +1,10 @@
 <?php
 /**
- * Base controller for the SimpleStack REST layer.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * Base controller for the Simple Stack REST layer.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,19 +12,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class SimpleStack_REST_Controller_Base
+ * Class SSTK_REST_Controller_Base
  *
- * Provides the shared namespace, the admin-only permission callback, the response
- * envelope and the argument helpers that keep every registered parameter paired
- * with a sanitize_callback and a validate_callback.
+ * Provides the admin SPA permission callback, response envelope and argument
+ * helpers that keep every registered parameter paired with a sanitize_callback
+ * and a validate_callback.
  *
- * Nothing in this namespace may use a public permission callback. SimpleStack is
- * an internal control plane and every route is gated on manage_options.
+ * Controllers extending this base require manage_options. Other controller families
+ * and independently authenticated callbacks share the namespace without extending
+ * this class.
  */
-abstract class SimpleStack_REST_Controller_Base {
+abstract class SSTK_REST_Controller_Base {
 
 	/**
-	 * REST namespace for every SimpleStack route.
+	 * REST namespace shared by the admin SPA controller family.
 	 */
 	const NAMESPACE = 'simple-stack/v1';
 
@@ -51,7 +54,7 @@ abstract class SimpleStack_REST_Controller_Base {
 	abstract public function register_routes();
 
 	/**
-	 * Permission callback shared by every SimpleStack route.
+	 * Permission callback shared by every controller extending this base.
 	 *
 	 * @return bool
 	 */
@@ -138,7 +141,7 @@ abstract class SimpleStack_REST_Controller_Base {
 		return new WP_REST_Response(
 			array(
 				'ok'   => true,
-				'data' => SimpleStack_Secret_Redactor::redact( $data ),
+				'data' => SSTK_Secret_Redactor::redact( $data ),
 				'meta' => array(
 					'request_date' => gmdate( 'c' ),
 					'namespace'    => static::NAMESPACE,
@@ -168,7 +171,7 @@ abstract class SimpleStack_REST_Controller_Base {
 	 */
 	protected function arg_id(): array {
 		return array(
-			'description'       => __( 'Numeric record id.', 'wpcd' ),
+			'description'       => __( 'Numeric record id.', 'simple-stack' ),
 			'type'              => 'integer',
 			'required'          => true,
 			'sanitize_callback' => 'absint',
@@ -413,7 +416,7 @@ abstract class SimpleStack_REST_Controller_Base {
 		}
 
 		try {
-			$result = apply_filters( 'wpcd_app_' . WPCD_WORDPRESS_APP()->get_app_name() . '_tab_action', null, $action, $id );
+			$result = apply_filters( 'sstk_app_' . SSTK_WORDPRESS_APP()->get_app_name() . '_tab_action', null, $action, $id );
 		} finally {
 			$_POST    = $post_backup; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$_REQUEST = $request_backup; // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -457,8 +460,8 @@ abstract class SimpleStack_REST_Controller_Base {
 	 */
 	protected function paging_args(): array {
 		return array(
-			'page'     => $this->arg_int( __( 'Page number, one based.', 'wpcd' ), false, 1, null, 1 ),
-			'per_page' => $this->arg_int( __( 'Records per page.', 'wpcd' ), false, 1, static::MAX_PER_PAGE, 25 ),
+			'page'     => $this->arg_int( __( 'Page number, one based.', 'simple-stack' ), false, 1, null, 1 ),
+			'per_page' => $this->arg_int( __( 'Records per page.', 'simple-stack' ), false, 1, static::MAX_PER_PAGE, 25 ),
 		);
 	}
 }

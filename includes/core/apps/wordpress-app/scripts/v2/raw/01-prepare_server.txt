@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
@@ -23,10 +24,10 @@ source 9999-common-functions.sh
 # Normalise it once here so every use below (firewall rule, WebAdmin bind address) sees
 # either a clean address or an empty string. This fails closed: junk values and
 # unreplaced placeholders collapse to "", which keeps port 7080 shut.
-SIMPLE_STACK_ADMIN_IP=$(gf_normalise_admin_ip "${SIMPLE_STACK_ADMIN_IP:-}")
-export SIMPLE_STACK_ADMIN_IP
+SSTK_ADMIN_IP=$(gf_normalise_admin_ip "${SSTK_ADMIN_IP:-}")
+export SSTK_ADMIN_IP
 
-# SimpleStack is OpenLiteSpeed only. The webserver_type variable is supplied by the
+# Simple Stack is OpenLiteSpeed only. The webserver_type variable is supplied by the
 # environment before this script runs, but it is validated here so a bad value fails
 # immediately instead of silently provisioning the wrong stack.
 if [ -z "$webserver_type" ]
@@ -35,13 +36,13 @@ then
 fi
 
 webserver_type="$(echo "$webserver_type" | awk '{ print tolower($1) }')"
-if [[ "$webserver_type" == "ols" ]] || [[ "$webserver_type" == "ols-enterprise" ]]
+if [[ "$webserver_type" == "ols" ]]
 then
 	# Do nothing - it is valid, that's all we care about.
 	echo
 else
 	echo "Sorry, you provided an unsupported webserver: $webserver_type"
-	echo "SimpleStack only supports: ols, ols-enterprise"
+	echo "Simple Stack only supports: ols"
 	exit 1
 fi
 
@@ -58,7 +59,7 @@ case "$GV_UBUNTU_VERSION" in
 		GV_UBUNTU_CODENAME="$GV_SUPPORTED_UBUNTU_CODENAME_2"
 		;;
 	*)
-		echo "SimpleStack supports Ubuntu $GV_SUPPORTED_UBUNTU_VERSION_1 ($GV_SUPPORTED_UBUNTU_CODENAME_1) and $GV_SUPPORTED_UBUNTU_VERSION_2 ($GV_SUPPORTED_UBUNTU_CODENAME_2) only."
+		echo "Simple Stack supports Ubuntu $GV_SUPPORTED_UBUNTU_VERSION_1 ($GV_SUPPORTED_UBUNTU_CODENAME_1) and $GV_SUPPORTED_UBUNTU_VERSION_2 ($GV_SUPPORTED_UBUNTU_CODENAME_2) only."
 		echo "This server is running $GV_UBUNTU_VERSION_STRING ($GV_UBUNTU_VERSION)."
 		echo "Installation of this server has failed. Exiting process!"
 		exit 1
@@ -72,7 +73,7 @@ gf_set_server_metadata 'servername' $name
 gf_set_server_metadata 'post_id' $post_id
 
 # set a variable to hold the location of the checkpoint folder.
-CHKPOINT_FOLDER='.wpcd-server-provision-checkpoints'
+CHKPOINT_FOLDER='.sstk-server-provision-checkpoints'
 
 # create the checkpoint folder
 if [ ! -d $CHKPOINT_FOLDER ]
@@ -148,8 +149,6 @@ else
 		echo "Failed!  Quitting process"
 		exit 1
 	fi
-	# The ondrej/nginx PPA is deliberately not added: SimpleStack never installs nginx,
-	# and an nginx PPA on an OpenLiteSpeed box is a source of conflicting package upgrades.
 
 	
 	# Make sure CURL is installed.
@@ -174,13 +173,10 @@ else
 	touch "$CHKPOINT_FOLDER/checkpoint20-end.txt"
 fi #checkpoint20.txt
 
-	# The nginx/LEMP install path has been removed: SimpleStack provisions
-	# OpenLiteSpeed only. See the OLS branch below.
-
-if [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
+if [ "$webserver_type" = "ols" ]
 then
 	# Adding and installing MARIADB.
-	echo "$(date): Installing OpenLiteSpeed/OLS Enterprise stack - this will take a while!"
+	echo "$(date): Installing OpenLiteSpeed stack - this will take a while!"
 
 	# Add the LiteSpeed package repository.
 	# repo.litespeed.sh covers Ubuntu 20.04 through 26.04, which is what makes
@@ -207,13 +203,12 @@ then
 	#
 	# The installer is pinned to a tagged release instead of `master`, fetched over TLS
 	# with certificate verification on, syntax-checked, and checksum-verified whenever
-	# SIMPLE_STACK_OLS1CLK_SHA256 is supplied. `curl -k ... | bash` off `master` was an
+	# SSTK_OLS1CLK_SHA256 is supplied. `curl -k ... | bash` off `master` was an
 	# unpinned, unverified code-execution path.
 	#
-	# Note: ols1clk.sh validates --lsphp against its own LSPHPVERLIST, which does not
-	# include 84 yet, so this call only lays down the OLS baseline on lsphp81. The
-	# SimpleStack versions (83, 84, 85) are installed explicitly further down and 84 is
-	# then made both the shell default and the version OpenLiteSpeed serves.
+	# Note: ols1clk.sh validates --lsphp against its own LSPHPVERLIST. Use the
+	# supported 8.3 package for the baseline; 8.4 and 8.5 are installed explicitly
+	# below, with 8.4 then made the server default.
 	ols1clk_tag="v3.1"
 	ols1clk_url="https://raw.githubusercontent.com/litespeedtech/ols1clk/${ols1clk_tag}/ols1clk.sh"
 	echo "$(date): Fetching ols1clk ${ols1clk_tag}"
@@ -234,21 +229,21 @@ then
 	fi
 
 	olesha_actual="$(sha256sum /tmp/ols1clk.sh | awk '{ print $1 }')"
-	if [ -n "$SIMPLE_STACK_OLS1CLK_SHA256" ]
+	if [ -n "$SSTK_OLS1CLK_SHA256" ]
 	then
-		if [ "$olesha_actual" != "$SIMPLE_STACK_OLS1CLK_SHA256" ]
+		if [ "$olesha_actual" != "$SSTK_OLS1CLK_SHA256" ]
 		then
-			echo "Checksum mismatch for ols1clk.sh (expected $SIMPLE_STACK_OLS1CLK_SHA256, got $olesha_actual)."
+			echo "Checksum mismatch for ols1clk.sh (expected $SSTK_OLS1CLK_SHA256, got $olesha_actual)."
 			echo "Failed!  Quitting process"
 			exit 1
 		fi
 		echo "$(date): ols1clk.sh checksum verified"
 	else
-		echo "$(date): SIMPLE_STACK_OLS1CLK_SHA256 is unset - pinning is limited to tag ${ols1clk_tag} plus a syntax check"
+		echo "$(date): SSTK_OLS1CLK_SHA256 is unset - pinning is limited to tag ${ols1clk_tag} plus a syntax check"
 		echo "$(date): ols1clk.sh sha256 is ${olesha_actual}"
 	fi
 
-	bash /tmp/ols1clk.sh --quiet --lsphp 81 > /dev/null 2>&1
+	bash /tmp/ols1clk.sh --quiet --lsphp 83 > /dev/null 2>&1
 	if [ $? -ne 0 ] 
 	then
 		echo "Failed!  Quitting process"
@@ -297,7 +292,7 @@ then
 		exit 1
 	fi	
 
-	# Install the SimpleStack PHP versions explicitly.
+	# Install the Simple Stack PHP versions explicitly.
 	# The inherited `apt-get install lsphp?? ... lsphp*` globs silently change the
 	# installed set whenever the repository gains a version, and abort the whole run when
 	# a glob matches nothing. An explicit loop is deterministic.
@@ -376,7 +371,7 @@ else
 	snap install --classic certbot > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
-		echo "Failed to install the certbot snap. Certbot is how SimpleStack issues and renews"
+		echo "Failed to install the certbot snap. Certbot is how Simple Stack issues and renews"
 		echo "site certificates, so provisioning cannot continue without it."
 		echo "Check that snapd is healthy (systemctl status snapd) and retry."
 		echo "Failed!  Quitting process"
@@ -444,10 +439,7 @@ else
 	echo $(date): "Adding additional repositories to unattended upgrade process..."
 	sed -i '/Unattended-Upgrade::Allowed-Origins /a "LP-PPA-ondrej-php:${distro_codename}";' /etc/apt/apt.conf.d/50unattended-upgrades	
 
-	# The inherited nginx configuration branch has been removed: SimpleStack never
-	# installs or configures nginx, so there is nothing to tune here.
-
-	if [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
+	if [ "$webserver_type" = "ols" ]
 	then
 		echo "$(date): Setup php sessions for lsphp versions"
 		# Create the session path directories and chmod it for security to 1733 like the existing one is.
@@ -488,9 +480,8 @@ if [ $lsphpver = "8.1" ] || [ $lsphpver = "8.2" ] || [ $lsphpver = "8.3" ] || [ 
 				sed -i "s/^disable_functions.*/disable_functions = pcntl_alarm,pcntl_fork,pcntl_waitpid,pcntl_wait,pcntl_wifexited,pcntl_wifstopped,pcntl_wifsignaled,pcntl_wifcontinued,pcntl_wexitstatus,pcntl_wtermsig,pcntl_wstopsig,pcntl_signal,pcntl_signal_get_handler,pcntl_signal_dispatch,pcntl_get_last_error,pcntl_strerror,pcntl_sigprocmask,pcntl_sigwaitinfo,pcntl_sigtimedwait,pcntl_exec,pcntl_getpriority,pcntl_setpriority,pcntl_async_signals,pcntl_unshare,/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
 			fi
 
-			# Added 11-13-2022 due to vhost phpIniOverride stopped working in latest OLS version.
-			# Unlike NGINX, we have to allow proc_open and proc_close for OLS to run properly when installing a new site later.
-			# So those are not included in the global restricted functions list.
+			# OpenLiteSpeed site operations require proc_open and proc_close, so they are not
+			# included in the global restricted functions list.
 			# sed -i "s/^disable_functions.*/disable_functions = dl, exec, fpassthru, getmypid, getmyuid, highlight_file, link, opcache_get_configuration, passthru, pcntl_exec, pcntl_get_last_error, pcntl_setpriority, pcntl_strerror, pcntl_wifcontinued, phpinfo, popen, posix_ctermid, posix_getcwd, posix_getegid, posix_geteuid, posix_getgid, posix_getgrgid, posix_getgrnam, posix_getgroups, posix_getlogin, posix_getpgid, posix_getpgrp, posix_getpid, posix_getppid, posix_getpwnam, posix_getpwuid, posix_getrlimit, posix_getsid, posix_getuid, posix_isatty, posix_kill, posix_mkfifo, posix_setegid, posix_seteuid, posix_setgid, posix_setpgid, posix_setsid, posix_setuid, posix_times, posix_ttyname, posix_uname, proc_get_status, proc_nice, proc_terminate, shell_exec, show_source, source, system, virtual/g" /usr/local/lsws/lsphp${phpver}/etc/php/${lsphpver}/litespeed/php.ini
 			
 		done
@@ -563,14 +554,11 @@ else
 	sed -i "s/supervised no/supervised systemd/g" /etc/redis/redis.conf
 	systemctl restart redis
 
-	# Do Redis things related to OLS
-	if [ "$webserver_type" = "ols" ] || [ "$webserver_type" = "ols-enterprise" ]
-	then
-		for v in "${g_php_versions[@]}"
-		do
-			apt-get install -y "lsphp${v}-redis" > /dev/null 2>&1
-		done
-	fi
+	# Install the Redis extension for each supported LSPHP version.
+	for v in "${g_php_versions[@]}"
+	do
+		apt-get install -y "lsphp${v}-redis" > /dev/null 2>&1
+	done
 
 	#checkpoint to indicate we have done this block...
 	touch "$CHKPOINT_FOLDER/checkpoint160-end.txt"	
@@ -642,7 +630,7 @@ if [ $? -ne 0 ]
 then
 	echo "Unable to setup https port on firewall! This is not a fatal error but you should double-check your rules after this process is completed."
 fi
-if [ "$webserver_type" = "ols" ]  || [ "$webserver_type" = "ols-enterprise" ]
+if [ "$webserver_type" = "ols" ]
 then
 	# Port 7080 is the OLS WebAdmin console. It must never be reachable from the public
 	# internet: the stock console pages expose phpinfo() and other sensitive details,
@@ -654,16 +642,16 @@ then
 		echo "Unable to deny OLS/LSWS admin port 7080 on the firewall! This is not a fatal error but you should double-check your rules after this process is completed."
 	fi
 
-	if [ -n "$SIMPLE_STACK_ADMIN_IP" ]
+	if [ -n "$SSTK_ADMIN_IP" ]
 	then
-		echo "$(date): Allowing OLS WebAdmin (7080) from $SIMPLE_STACK_ADMIN_IP only"
-		ufw allow from "$SIMPLE_STACK_ADMIN_IP" to any port 7080 proto tcp > /dev/null 2>&1
+		echo "$(date): Allowing OLS WebAdmin (7080) from $SSTK_ADMIN_IP only"
+		ufw allow from "$SSTK_ADMIN_IP" to any port 7080 proto tcp > /dev/null 2>&1
 		if [ $? -ne 0 ]
 		then
-			echo "Unable to open port 7080 for $SIMPLE_STACK_ADMIN_IP! This is not a fatal error but the WebAdmin console will stay unreachable."
+			echo "Unable to open port 7080 for $SSTK_ADMIN_IP! This is not a fatal error but the WebAdmin console will stay unreachable."
 		fi
 	else
-		echo "$(date): SIMPLE_STACK_ADMIN_IP is not set - the OLS WebAdmin console on port 7080 stays closed."
+		echo "$(date): SSTK_ADMIN_IP is not set - the OLS WebAdmin console on port 7080 stays closed."
 	fi
 fi
 
@@ -676,16 +664,8 @@ fi
 # pointer needed for the wp-sync script
 echo "### do not edit from here ###" >> /etc/ssh/sshd_config
 
-# OpenLiteSpeed is the only supported stack, so there is no php-fpm or nginx to
-# restart here. The semaphore folder is still created because later scripts read it.
-mkdir -p /etc/wpcd
-mkdir -p /etc/wpcd/php-versions-disabled
-
-# Refresh the semaphores so the UI reports exactly the versions this build installed.
-for ver in "${g_php_versions[@]}"
-do
-	rm -f "/etc/wpcd/php-versions-disabled/$ver" > /dev/null 2>&1
-done
+# Keep the server state directory required by the OpenLiteSpeed management scripts.
+mkdir -p /etc/simple-stack
 
 gf_check_webserver
 gf_restart_webserver

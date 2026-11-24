@@ -118,7 +118,7 @@ PHP-->>UI : Success message + refresh
 
 ```mermaid
 classDiagram
-class WPCD_WORDPRESS_TABS_6G_FIREWALL {
+class SSTK_WORDPRESS_TABS_6G_FIREWALL {
 +get_tab_slug() string
 +get_fields(fields,id) array
 +tab_action(result,action,id) mixed
@@ -149,7 +149,7 @@ Operational notes:
 
 ```mermaid
 classDiagram
-class WPCD_WORDPRESS_TABS_7G_FIREWALL {
+class SSTK_WORDPRESS_TABS_7G_FIREWALL {
 +get_tab_slug() string
 +get_fields(fields,id) array
 +tab_action(result,action,id) mixed

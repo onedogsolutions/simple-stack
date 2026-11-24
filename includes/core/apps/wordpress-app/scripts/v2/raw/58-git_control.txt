@@ -1,4 +1,5 @@
 #!/bin/bash
+# Modified for Simple Stack by One Dog Solutions on 2026-11-23.
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
@@ -202,16 +203,16 @@ lf_mt_get_template_domain() {
 	while [[ -z $mt_template_domain ]]
 	do
 		echo
-		ls /var/wpcd-mt-versions | grep -v html | nl
+		ls /var/simple-stack-mt-versions | grep -v html | nl
 		read -p "Select versioned template domain on this server: " site_number
-		number_of_sites=$(ls /var/wpcd-mt-versions | grep -v html | wc -l)
+		number_of_sites=$(ls /var/simple-stack-mt-versions | grep -v html | wc -l)
 		until [[ "$site_number" =~ ^[0-9]+$ && "$site_number" -le "$number_of_sites" ]]
 		do
 				echo "$site_number: invalid selection."
 				read -p "Select site: " site_number
 		done
 
-		mt_template_domain=$(ls /var/wpcd-mt-versions | grep -v html | sed -n "$site_number"p)
+		mt_template_domain=$(ls /var/simple-stack-mt-versions | grep -v html | sed -n "$site_number"p)
 	done
 	echo "Versioned template you have chosen is: $mt_template_domain"
 }
@@ -305,7 +306,7 @@ lf_create_git_ignore() {
 
 	# Add in the things we definitely want in there.
 	echo "#################################"  >> .gitignore
-	echo "# WPCD Defaults"  >> .gitignore
+	echo "# SSTK Defaults"  >> .gitignore
 	echo "#################################"  >> .gitignore
 	echo "wp-config.php" >> .gitignore
 	echo "logs/" >> .gitignore	
@@ -323,7 +324,7 @@ lf_create_git_ignore() {
 
 	# User defined files and folders
 	echo "#################################"  >> .gitignore
-	echo "# WPCD User Provided"  >> .gitignore
+	echo "# SSTK User Provided"  >> .gitignore
 	echo "#################################"  >> .gitignore
 	# Break folders using comma as separator
 	array=()
@@ -366,7 +367,7 @@ lf_remove_git_from_domain() {
 		lf_send_callback_failed $git_callback_url $msg
 		return 1  #return error.
 	else
-		rm -rf /var/www/$domain/.wpcd_git
+		rm -rf /var/www/$domain/.sstk_git
 		rm -rf /var/www/$domain/html/.git
 		rm -rf /var/www/$domain/html/.gitignore
 		# @todo - perhaps remove domain from credential helper and global safe-domain file?
@@ -379,7 +380,7 @@ lf_remove_git_from_domain() {
 #
 # @param $1 The domain.
 # @param $2 The tag
-# @param $3 'standard' or 'mt'.  'Standard' places files under the /var/www/$domain folder. 'mt' places them under /var/wpcd-mt-versions/$domain/$ver-tag-branch
+# @param $3 'standard' or 'mt'.  'Standard' places files under the /var/www/$domain folder. 'mt' places them under /var/simple-stack-mt-versions/$domain/$ver-tag-branch
 # @param $4 (optional) value should be 'pull' - this will let us PULL & Checkout files and sync instead of fetching only.
 ########################################################
 lf_git_fetch_or_pull_tag() {
@@ -404,7 +405,7 @@ lf_git_fetch_or_pull_tag() {
 	fi
 	if [ 'mt' == $op_type	]
 	then
-		target_folder="/var/wpcd-mt-versions/$domain/versions/$git_tag"
+		target_folder="/var/simple-stack-mt-versions/$domain/versions/$git_tag"
 	fi
 
 	# if we don't have a target folder exit.
@@ -439,7 +440,7 @@ lf_git_fetch_or_pull_tag() {
 	# We're not using this info in here but good to have for the logs.
 	local tag_branch
 	tag_branch=$(git branch -a --contains $git_tag)
-	echo "Tag is located on branch $tag_branch"	
+	echo "Tag is located on branch $tag_branch"
 
 	if [ "pull" == "do_pull" ]
 	then
@@ -464,7 +465,7 @@ lf_git_fetch_or_pull_tag() {
 			echo $msg
 			exit
 		fi
-	fi		
+	fi
 
 	# Add tagged files to that folder as .zip.
 	echo "Creating temporary zip of tagged files..."
@@ -491,7 +492,7 @@ lf_git_fetch_or_pull_tag() {
 	# If op_type is 'mt', create a 'wp' core folder.
 	if [ 'mt' == $op_type	]
 	then
-		#target_folder="/var/wpcd-mt-versions/$domain/versions/$git_tag"
+		#target_folder="/var/simple-stack-mt-versions/$domain/versions/$git_tag"
 		# make wp folder and copy wp-includes and wp-admin
 		mkdir -p $target_folder/wp
 		cp  -r "$target_folder/wp-includes" "$target_folder/wp/"
@@ -523,13 +524,13 @@ lf_git_fetch_or_pull_tag() {
 				msg="Core WP file not found in version folder ($core_file) - moving on."
 			fi
 		done		
-	fi	
+	fi
 
 	# @TODO: If op_type is 'mt' OR do_pull is empty (which means we're only fetching files)
 	# then make everything in the versions folder read-only.
 
 	# Remove zip file.
-	rm -f $target_folder/$git_tag.zip	
+	rm -f $target_folder/$git_tag.zip
 
 }
 
@@ -622,10 +623,10 @@ then
 
 	# Make a git working folder outside of the folder where files are usually located.
 	# We will NOT be backing up this folder.
-	mkdir -p /var/www/$domain/.wpcd_git
+	mkdir -p /var/www/$domain/.sstk_git
 	if [ $? -ne 0 ]
 	then
-		msg="Could not create folder $domain/.wpcd_git"
+		msg="Could not create folder $domain/.sstk_git"
 		echo
 		echo $msg
 		lf_send_callback_failed $git_callback_url "$msg"
@@ -633,15 +634,15 @@ then
 	fi
 
 	# Move into git working folder.
-	cd /var/www/$domain/.wpcd_git
+	cd /var/www/$domain/.sstk_git
 	if [ $? -ne 0 ]
 	then
-		msg="Could not move into folder /var/www/$domain/.wpcd_git."
+		msg="Could not move into folder /var/www/$domain/.sstk_git."
 		echo
 		echo $msg
 		lf_send_callback_failed $git_callback_url "$msg"
 		exit
-	fi		
+	fi
 
 	# Initialize git and check for error.
 	git init -b $git_branch --separate-git-dir . ../html/
@@ -665,7 +666,7 @@ then
 		bash $tmpfile
 	fi
 
-	# Since $domain and .wpcd_git are owned by different users (root vs limited user), need to mark $domain as safe.
+	# Since $domain and .sstk_git are owned by different users (root vs limited user), need to mark $domain as safe.
 	echo "Adding global safe.directory variable for domain $domain..."
 	git config --global --add safe.directory /var/www/$domain/html
 	if [ $? -ne 0 ]	
@@ -678,7 +679,7 @@ then
 	fi
 
 	# Even if this script is called with 'sudo', git will write the global data
-	# to the sudo (eg: ubuntu) folder. So nest sudo calls which will 
+	# to the sudo (eg: ubuntu) folder. So nest sudo calls which will
 	# force it to write to the root home folder instead.
 	# It works - don't ask why.
 	sudo git config --global --add safe.directory /var/www/$domain/html
@@ -688,7 +689,7 @@ then
 		echo
 		echo $msg
 		exit
-	fi	
+	fi
 
 	# To make things simple for our configuration, we want to automatically setup remotes to track local branches when we commit.
 	echo "Adding global config option to automatically setup remote branch from new local branches..."
@@ -709,7 +710,7 @@ then
 		echo $msg
 		lf_send_callback_failed $git_callback_url "$msg"
 		exit
-	fi	
+	fi
 
 	# start setup git user
 	echo "Setting up local user names for git - $git_user_email & $git_display_name..."
@@ -803,7 +804,7 @@ then
 		exit
 	fi
 
-	git config --global credential.github.com.useHttpPath true 
+	git config --global credential.github.com.useHttpPath true
 	if [ $? -ne 0 ]	
 	then
 		msg="Unable to setup git credential helper - param useHttpPath"
@@ -812,7 +813,7 @@ then
 		lf_send_callback_failed $git_callback_url "$msg"
 		exit
 	fi
-	sudo git config --global credential.github.com.useHttpPath true 
+	sudo git config --global credential.github.com.useHttpPath true
 	if [ $? -ne 0 ]	
 	then
 		msg="(Running under sudo) Unable to setup git credential helper - param useHttpPath"
@@ -820,7 +821,7 @@ then
 		echo $msg
 		lf_send_callback_failed $git_callback_url "$msg"
 		exit
-	fi	
+	fi
 
 	git config --global credential.bitbucket.com.useHttpPath true
 	if [ $? -ne 0 ]	
@@ -962,10 +963,10 @@ then
 		echo
 		echo $msg
 		exit
-	fi	
+	fi
 
 	# commit any changes.
-	# Note we're not checking errors here since if there are no commits 
+	# Note we're not checking errors here since if there are no commits
 	# we'll get a non-zero error code which is not an error in this instance.
 	git commit -m "$git_commit_msg"
 
@@ -977,7 +978,7 @@ then
 		echo
 		echo $msg
 		exit
-	fi	
+	fi
 
 	# Pull from repo
 	echo "Pulling files from remote..."
@@ -1049,7 +1050,7 @@ then
 		echo
 		echo $msg
 		exit
-	fi	
+	fi
 
 	echo
 	echo "Git branch switch and checkout succeeded."
@@ -1116,7 +1117,7 @@ then
 	lf_select_domain
 
 	# Get commit message - output will be in the $git_commit_msg global var.
-	lf_get_commit_message	
+	lf_get_commit_message
 
 	# move into the domain folder
 	lf_navigate_to_domain_folder $domain
@@ -1131,7 +1132,7 @@ then
 	fi
 
 	# commit any changes.
-	# Note we're not checking errors here since if there are no commits 
+	# Note we're not checking errors here since if there are no commits
 	# we'll get a non-zero error code which is not an error in this instance.
 	git commit -m "$git_commit_msg"
 
@@ -1165,7 +1166,7 @@ then
 
 	# Create tag
 	echo "Creating tag $git_tag..."
-	git tag -a $git_tag -m "Tag $git_tag created from WPCD."
+	git tag -a $git_tag -m "Tag $git_tag created from SSTK."
 	if [ $? -ne 0 ]	
 	then
 		msg="Unable to create tag $git_tag."
@@ -1331,14 +1332,14 @@ then
 fi
 
 # Apply version to domain by overwriting domain files directly.
-# Important note: We're not switching the branch. So if the 
-# tag is older or for a different branch, things can get really 
+# Important note: We're not switching the branch. So if the
+# tag is older or for a different branch, things can get really
 # weird.
-# 
+#
 # To apply a version and sync the git branch with it
 # use the get_pull_apply_version_with_overwrite action.
 #
-# Also Note that this is not a bi-directional sync so files that are in 
+# Also Note that this is not a bi-directional sync so files that are in
 # the target domain but not in the tag will remain in the target domain folder
 # (Except for plugins and themes)
 if [[ $action == "git_fetch_apply_version_with_overwrite" || $action == "15" ]]
@@ -1398,7 +1399,7 @@ fi
 #
 # ***This is not currently used or fully tested.***
 #
-# Also Note that this is not a bi-directional sync so files that are in 
+# Also Note that this is not a bi-directional sync so files that are in
 # the target domain but not in the tag will remain in the target domain folder
 # (Except for plugins and themes)
 if [[ $action == "git_pull_checkout_and_apply_version_with_overwrite" || $action == "16" ]]
@@ -1461,30 +1462,30 @@ then
 
 	# Make a git working folder outside of the folder where files are usually located.
 	# We will NOT be backing up this folder.
-	mkdir -p /var/www/$domain/.wpcd_git
+	mkdir -p /var/www/$domain/.sstk_git
 	if [ $? -ne 0 ]
 	then
-		msg="Could not create folder $domain/.wpcd_git"
+		msg="Could not create folder $domain/.sstk_git"
 		echo
 		echo $msg
 		exit
 	fi
 
 	# Move into git working folder.
-	cd /var/www/$domain/.wpcd_git
+	cd /var/www/$domain/.sstk_git
 	if [ $? -ne 0 ]
 	then
-		msg="Could not move into folder /var/www/$domain/.wpcd_git."
+		msg="Could not move into folder /var/www/$domain/.sstk_git."
 		echo
 		echo $msg
 		exit
-	fi		
+	fi
 
 	# Initialize git and check for error.
 	# Note that we're not specifying a branch here like we do with the init option.
 	# We don't really care about branches - we just want to initialize git enough
 	# to get to the point where we can save the credentials to the credential
-	# store. 
+	# store.
 	# It can't do that without a git folder being active though.  So we do
 	# a git init that will be overwritten if we ever run our full
 	# git init action (menu option #1).
@@ -1496,9 +1497,9 @@ then
 		echo $msg
 		lf_send_callback_failed $git_callback_url "$msg"
 		exit
-	fi	
+	fi
 
-	# Since $domain and .wpcd_git are owned by different users (root vs limited user), need to mark $domain as safe.
+	# Since $domain and .sstk_git are owned by different users (root vs limited user), need to mark $domain as safe.
 	echo "Adding global safe.directory variable for domain $domain..."
 	git config --global --add safe.directory /var/www/$domain/html
 	if [ $? -ne 0 ]	
@@ -1510,7 +1511,7 @@ then
 	fi
 
 	# Even if this script is called with 'sudo', git will write the global data
-	# to the sudo (eg: ubuntu) folder. So nest sudo calls which will 
+	# to the sudo (eg: ubuntu) folder. So nest sudo calls which will
 	# force it to write to the root home folder instead.
 	# It works - don't ask why.
 	sudo git config --global --add safe.directory /var/www/$domain/html
@@ -1567,9 +1568,9 @@ then
 		echo
 		echo $msg
 		exit
-	fi	
+	fi
 
-	git config --global credential.github.com.useHttpPath true 
+	git config --global credential.github.com.useHttpPath true
 	if [ $? -ne 0 ]	
 	then
 		msg="Unable to setup git credential helper - param useHttpPath"
@@ -1577,14 +1578,14 @@ then
 		echo $msg
 		exit
 	fi
-	sudo git config --global credential.github.com.useHttpPath true 
+	sudo git config --global credential.github.com.useHttpPath true
 	if [ $? -ne 0 ]	
 	then
 		msg="(Running under sudo) Unable to setup git credential helper - param useHttpPath"
 		echo
 		echo $msg
 		exit
-	fi	
+	fi
 
 	git config --global credential.bitbucket.com.useHttpPath true
 	if [ $? -ne 0 ]	
@@ -1617,14 +1618,14 @@ then
 		echo
 		echo $msg
 		exit
-	fi	
+	fi
 
 	echo
 	echo "Git credentials successfully set up for domain $domain."
 	exit
 fi
 
-# Clone a repo to a site but don't setup git for it or 
+# Clone a repo to a site but don't setup git for it or
 # sync to it.
 # Assumes git credentials have been setup already.
 if [[ $action == "git_clone_to_site" || $action == "18" ]]
@@ -1736,7 +1737,7 @@ lf_mt_backup_existing_folders_before_site_conversion() {
  	# end setup local variables from parameters passed in.
 
 	# Create var for the MT version folder.
-	mt_version_folder="/var/wpcd-mt-versions/$mt_template_domain/versions/$git_tag"
+	mt_version_folder="/var/simple-stack-mt-versions/$mt_template_domain/versions/$git_tag"
 
 	# Create var for the domain files folder.
 	mt_domain_files_folder="/var/www/$domain/html"
@@ -1747,12 +1748,12 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 
 	# Start moving files.
 	echo "****************************************************************************************"
-	echo "Backing up existing folders into $mt_domain_files_folder/wpcd-originals/$target_subdir"
+	echo "Backing up existing folders into $mt_domain_files_folder/sstk-originals/$target_subdir"
 	echo "****************************************************************************************"
-	mkdir -p "$mt_domain_files_folder/wpcd-originals/$target_subdir"
+	mkdir -p "$mt_domain_files_folder/sstk-originals/$target_subdir"
 	if [ $? -ne 0 ]
 	then
-		msg="Unable to make folder: $mt_domain_files_folder/wpcd-originals/$target_subdir"
+		msg="Unable to make folder: $mt_domain_files_folder/sstk-originals/$target_subdir"
 		echo
 		echo $msg
 		exit
@@ -1760,10 +1761,10 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 	echo " 1. Plugins"
 	if [ -d "$mt_domain_files_folder/wp-content/plugins" ]; then
 		echo "  ...found - moving..."
-		mv "$mt_domain_files_folder/wp-content/plugins" "$mt_domain_files_folder/wpcd-originals/$target_subdir"
+		mv "$mt_domain_files_folder/wp-content/plugins" "$mt_domain_files_folder/sstk-originals/$target_subdir"
 		if [ $? -ne 0 ]
 		then
-			msg="Unable to move folders from: $mt_domain_files_folder/wp-content/plugins to $mt_domain_files_folder/wpcd-originals/$target_subdir"
+			msg="Unable to move folders from: $mt_domain_files_folder/wp-content/plugins to $mt_domain_files_folder/sstk-originals/$target_subdir"
 			echo
 			echo $msg
 			exit
@@ -1772,10 +1773,10 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 	echo " 2. Themes"
 	if [ -d "$mt_domain_files_folder/wp-content/themes" ]; then
 		echo "  ...found - moving..."	
-		mv "$mt_domain_files_folder/wp-content/themes" "$mt_domain_files_folder/wpcd-originals/$target_subdir"
+		mv "$mt_domain_files_folder/wp-content/themes" "$mt_domain_files_folder/sstk-originals/$target_subdir"
 		if [ $? -ne 0 ]
 		then
-			msg="Unable to move folders from: $mt_domain_files_folder/wp-content/themes to $mt_domain_files_folder/wpcd-originals/$target_subdir"
+			msg="Unable to move folders from: $mt_domain_files_folder/wp-content/themes to $mt_domain_files_folder/sstk-originals/$target_subdir"
 			echo
 			echo $msg
 			exit
@@ -1785,10 +1786,10 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 	echo " 3. mu-plugins"
 	if [ -d "$mt_domain_files_folder/wp-content/mu-plugins" ]; then
 		echo "  ...found - moving..."	
-		mv "$mt_domain_files_folder/wp-content/mu-plugins" "$mt_domain_files_folder/wpcd-originals/$target_subdir"
+		mv "$mt_domain_files_folder/wp-content/mu-plugins" "$mt_domain_files_folder/sstk-originals/$target_subdir"
 		if [ $? -ne 0 ]
 		then
-			msg="Unable to move folders from: $mt_domain_files_folder/wp-content/mu-plugins to $mt_domain_files_folder/wpcd-originals/$target_subdir"
+			msg="Unable to move folders from: $mt_domain_files_folder/wp-content/mu-plugins to $mt_domain_files_folder/sstk-originals/$target_subdir"
 			echo
 			echo $msg
 			exit
@@ -1798,10 +1799,10 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 	echo " 5. WPCore - wp-admin"
 	if [ -d "$mt_domain_files_folder/wp-admin" ]; then
 		echo "  ...found - moving..."	
-		mv "$mt_domain_files_folder/wp-admin" "$mt_domain_files_folder/wpcd-originals/$target_subdir"
+		mv "$mt_domain_files_folder/wp-admin" "$mt_domain_files_folder/sstk-originals/$target_subdir"
 		if [ $? -ne 0 ]
 		then
-			msg="Unable to move folders from: $mt_domain_files_folder/wp-admin to $mt_domain_files_folder/wpcd-originals/$target_subdir"
+			msg="Unable to move folders from: $mt_domain_files_folder/wp-admin to $mt_domain_files_folder/sstk-originals/$target_subdir"
 			echo
 			echo $msg
 			exit
@@ -1816,10 +1817,10 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 	echo " 6. WPCore - wp-includes"
 	if [ -d "$mt_domain_files_folder/wp-includes" ]; then
 		echo "  ...found - moving..."	
-		mv "$mt_domain_files_folder/wp-includes" "$mt_domain_files_folder/wpcd-originals/$target_subdir"
+		mv "$mt_domain_files_folder/wp-includes" "$mt_domain_files_folder/sstk-originals/$target_subdir"
 		if [ $? -ne 0 ]
 		then
-			msg="Unable to move folders from: $mt_domain_files_folder/wp-includes to $mt_domain_files_folder/wpcd-originals/$target_subdir"
+			msg="Unable to move folders from: $mt_domain_files_folder/wp-includes to $mt_domain_files_folder/sstk-originals/$target_subdir"
 			echo
 			echo $msg
 			exit
@@ -1845,10 +1846,10 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 	for core_file in "${core_files[@]}"
 	do
 		if [ -f "$core_file" ]; then	
-			mv "$mt_domain_files_folder/$core_file" "$mt_domain_files_folder/wpcd-originals/$target_subdir/$core_file"
+			mv "$mt_domain_files_folder/$core_file" "$mt_domain_files_folder/sstk-originals/$target_subdir/$core_file"
 			if [ $? -ne 0 ]
 			then
-				msg="Unable to move file from: $mt_domain_files_folder/$core_file to $mt_domain_files_folder/wpcd-originals/$target_subdir/$core_file"
+				msg="Unable to move file from: $mt_domain_files_folder/$core_file to $mt_domain_files_folder/sstk-originals/$target_subdir/$core_file"
 				echo
 				echo $msg
 				exit
@@ -1877,17 +1878,17 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 			local skip_files
 			skip_files=('none')
 			if [[ $(printf "_[%s]_" "${skip_files[@]}") =~ .*_\[$no_slash_file_name\]_.* ]]
-			then 			
+			then
 					echo "   ...SKIPPING file found in both source version and target domain: $no_slash_file_name because it is in the skip_files list..."
 					continue
 			fi
 
 			# does a corresponding file exist in the domain root folder?
-			if [ -f "$mt_domain_files_folder/$no_slash_file_name" ]; then		
+			if [ -f "$mt_domain_files_folder/$no_slash_file_name" ]; then
 
 				# move it out of the domain folder
 				echo "   ...found file in both source version and target domain: $no_slash_file_name - moving it out of target domain..."
-				mv "$mt_domain_files_folder/$no_slash_file_name" "$mt_domain_files_folder/wpcd-originals/$target_subdir/$no_slash_file_name"
+				mv "$mt_domain_files_folder/$no_slash_file_name" "$mt_domain_files_folder/sstk-originals/$target_subdir/$no_slash_file_name"
 			fi
 		done
 	fi
@@ -1905,15 +1906,15 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 	fi
 
 	# Make wp-content folder in the $target_subdir since it likely does not exist at this point.
-	mkdir -p $mt_domain_files_folder/wpcd-originals/$target_subdir/wp-content	
+	mkdir -p $mt_domain_files_folder/sstk-originals/$target_subdir/wp-content
 
 	for core_file in "${core_files[@]}"
 	do
 		if [ -f "$core_file" ]; then	
-			mv "$mt_domain_files_folder/wp-content/$core_file" "$mt_domain_files_folder/wpcd-originals/$target_subdir/wp-content/$core_file"
+			mv "$mt_domain_files_folder/wp-content/$core_file" "$mt_domain_files_folder/sstk-originals/$target_subdir/wp-content/$core_file"
 			if [ $? -ne 0 ]
 			then
-				msg="Unable to move file from: $mt_domain_files_folder/$core_file to $mt_domain_files_folder/wpcd-originals/$target_subdir/wp-content/$core_file"
+				msg="Unable to move file from: $mt_domain_files_folder/$core_file to $mt_domain_files_folder/sstk-originals/$target_subdir/wp-content/$core_file"
 				echo
 				echo $msg
 				exit
@@ -1936,7 +1937,7 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 
 		if [ $? -ne 0 ]
 		then
-			msg="Unable to make folder: $mt_domain_files_folder/wpcd-originals/$target_subdir/wp-content"
+			msg="Unable to make folder: $mt_domain_files_folder/sstk-originals/$target_subdir/wp-content"
 			echo
 			echo $msg
 			exit
@@ -1950,16 +1951,16 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 			local skip_files
 			skip_files=('index.php')
 			if [[ $(printf "_[%s]_" "${skip_files[@]}") =~ .*_\[$no_slash_file_name\]_.* ]]
-			then 			
+			then
 					echo "   ...SKIPPING file found in both source version and target domain: $no_slash_file_name because it is in the skip_files list..."
 					continue
-			fi			
+			fi
 
 			# does a corresponding file exist in the domain root folder?
 			if [ -f "$mt_domain_files_folder/wp-content/$no_slash_file_name" ]; then		
 				# move it out of the domain folder
 				echo "   ...found file in both source version and target domain: $no_slash_file_name - moving it out of target domain..."
-				mv "$mt_domain_files_folder/wp-content/$no_slash_file_name" "$mt_domain_files_folder/wpcd-originals/$target_subdir/wp-content/$no_slash_file_name"
+				mv "$mt_domain_files_folder/wp-content/$no_slash_file_name" "$mt_domain_files_folder/sstk-originals/$target_subdir/wp-content/$no_slash_file_name"
 			fi
 		done
 	fi
@@ -1973,7 +1974,7 @@ lf_mt_backup_existing_folders_before_site_conversion() {
 ########################################################
 # Given a domain, template domain and version, link
 # the files in the plugins, themes and core folders
-# to the domain. 
+# to the domain.
 #
 # Note that for plugins, themes and mu-plugins folders
 # we are linking the individual subfolders.
@@ -1996,7 +1997,7 @@ lf_mt_site_conversion_link_existing_files() {
  	# end setup local variables from parameters passed in.
 
 	# Figure out the MT version folder.
-	mt_version_folder="/var/wpcd-mt-versions/$mt_template_domain/versions/$git_tag"
+	mt_version_folder="/var/simple-stack-mt-versions/$mt_template_domain/versions/$git_tag"
 
 	# Figure out the domain files folder.
 	mt_domain_files_folder="/var/www/$domain/html"
@@ -2175,7 +2176,7 @@ lf_mt_site_conversion_link_existing_files() {
 
 				# Skip core files (list defined in step 6 above.)
 				if [[ $(printf "_[%s]_" "${core_files[@]}") =~ .*_\[$no_slash_file_name\]_.* ]]
-				then 			
+				then
 						echo "      ...Not linking file: $no_slash_file_name because it is a core WP file..."
 						continue
 				fi
@@ -2208,7 +2209,7 @@ lf_mt_site_conversion_link_existing_files() {
 				# Skip files (list defined in step 6 above.)
 				skip_files=('index.php')
 				if [[ $(printf "_[%s]_" "${skip_files[@]}") =~ .*_\[$no_slash_file_name\]_.* ]]
-				then 			
+				then
 						echo "      ...Not linking file: $no_slash_file_name because it is a core WP file..."
 						continue
 				fi
@@ -2226,7 +2227,7 @@ lf_mt_site_conversion_link_existing_files() {
 
 
 # Pull tag and create muti-tenant version.
-# This is different from option 10 (get_fetch_tag) in that 
+# This is different from option 10 (get_fetch_tag) in that
 # the files go into a different folder.
 if [[ $action == "mt_git_fetch_tag" || $action == "21" ]]
 then
@@ -2261,7 +2262,7 @@ then
 	user_name=$g_domain_user_name
 
 	# Figure out the MT version folder.
-	mt_version_folder="/var/wpcd-mt-versions/$mt_template_domain/versions/$git_tag"
+	mt_version_folder="/var/simple-stack-mt-versions/$mt_template_domain/versions/$git_tag"
 
 	# Figure out the domain files folder.
 	mt_domain_files_folder="/var/www/$domain/html"
@@ -2280,11 +2281,11 @@ then
 
 
 	# Start backing up existing files and moving files from versioned folder into the site.
-	if [ -f "$mt_version_folder/wpcd_mt_alternative_backup_move_link_files.sh" ]; then
+	if [ -f "$mt_version_folder/sstk_mt_alternative_backup_move_link_files.sh" ]; then
 		# admin has provided an alternative script that will handle moving files around.
 		echo "Alternative backup, move and link files scripts found for multi-tenant site..."
-		dos2unix $mt_version_folder/wpcd_mt_alternative_backup_move_link_files.sh
-		source $mt_version_folder/wpcd_mt_alternative_backup_move_link_files.sh
+		dos2unix $mt_version_folder/sstk_mt_alternative_backup_move_link_files.sh
+		source $mt_version_folder/sstk_mt_alternative_backup_move_link_files.sh
 	else
 		# Start move-backup of existing folders
 		lf_mt_backup_existing_folders_before_site_conversion $domain $mt_template_domain $git_tag
@@ -2298,32 +2299,13 @@ then
 
 	# Now lets make sure www-data has access to the multi-tenant source files.
 	# It's important that this is readonly.
-	# The php openbase directive will allow access to these folders. 
+	# The php openbase directive will allow access to these folders.
 	# We don't want an escapee to be able to write to it.
 	chgrp -R www-data "$mt_version_folder"
 	chmod -R g+r "$mt_version_folder"
 
-	# Modify the php openbase directive to allow multi-tenant folder to be accessed.
-	# @todo: replace this block with a call to gf_mt_set_openbasedir()
-	if [ "$g_webserver_type" = "nginx" ]
-	then	
-		phpversion=(7.4 8.0 8.1 8.2 8.3)
-		for ver in "${phpversion[@]}"
-		do	
-			if [ -f /etc/php/$ver/fpm/pool.d/$domain.conf ]; then
-				echo "Updating open_basedir in /etc/php/$ver/fpm/pool.d/$domain.conf to allow reading from the multi-tenant version folder."
-				# delete openbase directive.
-				sed -i '/open_basedir/d' /etc/php/$ver/fpm/pool.d/$domain.conf
-				# add the new one back in.
-				echo "php_admin_value[open_basedir] = \"/var/www/$domain/html/:/tmp/:$mt_version_folder/\"" >> /etc/php/$ver/fpm/pool.d/$domain.conf
-				# restart fpm
-				sudo systemctl restart php$ver-fpm
-			fi
-		done
-	elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-	then
-		sed -i "s%php_admin_value open_basedir.*%php_admin_value open_basedir \"/var/www/$domain/html:/tmp/:$mt_version_folder\"%g" ${VHDIR}/${domain}/$g_vhost_conf
-	fi
+	# Allow the tenant to read its versioned multi-tenant template files.
+	gf_mt_set_openbasedir "$mt_template_domain" "$git_tag" "$domain"
 
 	# Prevent WP from attempting to upgrade things.
 	echo "Setting wp-config.php constants to prevent auto-upgrading things..."
@@ -2333,19 +2315,19 @@ then
 	# @TODO: Did the version folder have a custom site wp-config.php file?
 	# If so, include it in the site wp-config.php file
 
-	# Check meta to see if this site was an MT site before - returns value in global $wpcd_metavalue
-	gf_get_metadata -t 'domain' -d $domain -k 'IS_MT' -f '0', 
-	is_meta=$wpcd_metavalue
+	# Check meta to see if this site was an MT site before - returns value in global $sstk_metavalue
+	gf_get_metadata -t 'domain' -d $domain -k 'IS_MT' -f '0',
+	is_meta=$sstk_metavalue
 
 	# Run any post-processing scripts in the template version folder
 	if [ "$is_meta" = "1" ]
 	then
 		# This site was already an MT site. Run upgrade post-processing script if it exists.
 		echo "This is is an existing Multi-Tenant site - checking for upgrade script..."
-		if [ -f "$mt_version_folder/wpcd_mt_upgrade_site_post_upgrade_script.sh" ]; then 
+		if [ -f "$mt_version_folder/sstk_mt_upgrade_site_post_upgrade_script.sh" ]; then
 			echo "Post-upgrade script found for existing multi-tenant site..."
-			dos2unix $mt_version_folder/wpcd_mt_upgrade_site_post_upgrade_script.sh
-			source $mt_version_folder/wpcd_mt_upgrade_site_post_upgrade_script.sh
+			dos2unix $mt_version_folder/sstk_mt_upgrade_site_post_upgrade_script.sh
+			source $mt_version_folder/sstk_mt_upgrade_site_post_upgrade_script.sh
 		fi
 
 		# Set meta values to note the latest version.
@@ -2353,10 +2335,10 @@ then
 	else
 		# New MT site, run conversion post-processing script.
 		echo "This is is a new Multi-Tenant site - checking for new install post-processing script..."
-		if [ -f "$mt_version_folder/wpcd_mt_new_site_post_install_script.sh" ]; then 
+		if [ -f "$mt_version_folder/sstk_mt_new_site_post_install_script.sh" ]; then
 			echo "Post-install script found for new multi-tenant site..."
-			dos2unix $mt_version_folder/wpcd_mt_new_site_post_install_script.sh
-			source $mt_version_folder/wpcd_mt_new_site_post_install_script.sh
+			dos2unix $mt_version_folder/sstk_mt_new_site_post_install_script.sh
+			source $mt_version_folder/sstk_mt_new_site_post_install_script.sh
 		fi
 
 		# Set meta to note that this site is an MT site.

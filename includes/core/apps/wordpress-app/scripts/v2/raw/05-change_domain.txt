@@ -3,7 +3,7 @@
 if [[ "$EUID" -ne 0 ]]
 then
 	echo "Sorry, you need to run this as root"
-	exit
+	exit 1
 fi
 
 ## Get our common functions
@@ -34,19 +34,6 @@ function database_backup() {
 }
 
 
-function rename_nginx_site_confs() {
-	mv /etc/php/$php_version/fpm/pool.d/$old_domain.conf /etc/php/$php_version/fpm/pool.d/$new_domain.conf
-	# this sed is required only if $new_user_name and $new_domain are not the same
-	if [[ "$new_user_name" != "$new_domain" ]]
-	then
-		sed -i "s/$old_user_name/$new_user_name/g" /etc/php/$php_version/fpm/pool.d/$new_domain.conf
-	fi
-	sed -i "s/$old_domain/$new_domain/g" /etc/php/$php_version/fpm/pool.d/$new_domain.conf
-	rename "s/$old_domain/$new_domain/" /etc/nginx/sites-enabled/"$old_domain"
-	rename "s/$old_domain/$new_domain/g" /etc/nginx/sites-enabled/"$old_domain"_* 2>/dev/null
-	sed -i "s/$old_domain/$new_domain/g" /etc/nginx/sites-enabled/$new_domain*
-}
-
 function rename_ols_site_confs() {
 	mv ${VHDIR}/"$old_domain" ${VHDIR}/"$new_domain"
 	chown lsadm:lsadm ${VHDIR}/$new_domain/$g_vhost_conf > /dev/null 2>&1
@@ -55,13 +42,6 @@ function rename_ols_site_confs() {
 	# Main config 
 	sed -i "s/$old_domain/$new_domain/g" /usr/local/lsws/conf/httpd_config.{conf,xml} 2>/dev/null
 }
-
-
-# Install rename util if not already installed
-if ! hash rename 2>/dev/null
-then
-	apt-get install -y rename
-fi
 
 
 while [[ -z $old_domain ]]
@@ -85,39 +65,24 @@ fi
 old_user_name=$(echo $old_domain | cut -c1-32)
 new_user_name=$(echo $new_domain | cut -c1-32)
 
-if [ "$g_webserver_type" = "nginx" ]
+if [ -d "${VHDIR}/$new_domain" ]
 then
-	if ls /etc/nginx/sites-enabled/*_$new_domain 1> /dev/null 2>&1 || [[ -e /etc/nginx/sites-enabled/$new_domain ]]
-	then
-		echo "Destination domain already exists. Aborting!"
-		exit
-	fi
-	if [[ ! -e /etc/nginx/sites-enabled/$old_domain ]]
-	then
-		echo "$old_domain NGINX configuration is not present. Aborting!"
-		exit
-	fi
-elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
+	echo "Destination domain already exists. Aborting!"
+	exit 1
+fi
+if [ ! -d "${VHDIR}/$old_domain" ]
 then
-	if [ -d "${VHDIR}/$new_domain" ]
+	echo "$old_domain OpenLiteSpeed configuration is not present. Aborting!"
+	exit 1
+fi
+if gf_is_ssl_ols "$old_domain"
+then
+	email=$(su - $old_user_name -c "wp user list --role=administrator --field=user_email|head -n 1")
+	if [[ -z $email ]]
 	then
-		echo "Destination domain already exists. Aborting!"
-		exit
-	fi
-	if [ ! -d "${VHDIR}/$old_domain" ]
-	then
-		echo "$old_domain ols/lsws config directory: ${VHDIR}/$old_domain is not present. Aborting!"
-		exit
-	fi
-	if gf_is_ssl_ols $old_domain || gf_is_ssl_ols_enterprise $old_domain
-	then
-		email=`su - $old_user_name -c "wp user list --role=administrator --field=user_email|head -n 1"`
-		if [[ -z $email ]]
-		then
-			echo "Specify an email for administrative notifications about your certificate
-			Example: admin@example.com"
-			read -p "Email address: " email
-		fi
+		echo "Specify an email for administrative notifications about your certificate
+		Example: admin@example.com"
+		read -p "Email address: " email
 	fi
 fi
 
@@ -196,16 +161,7 @@ su - $old_user_name -c "wp --skip-plugins config set DOMAIN_CURRENT_SITE $new_do
 echo "Setting up new domain files and users..."
 sed -i "s/$old_domain/$new_domain/g" /etc/wp-backup.conf 2> /dev/null
 
-if [ "$g_webserver_type" = "nginx" ]
-then
-	php_version=$(ls /etc/php/*/fpm/pool.d/$old_domain.conf | cut -d '/' -f 4)
-	systemctl stop php$php_version-fpm
-	rename_nginx_site_confs
-elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-then
-	php_version=$(grep -sEo 'lsphp[0-9]{2}' ${VHDIR}/$old_domain/$g_vhost_conf | awk -F':' '{print $2}'|sort -u)
-	rename_ols_site_confs
-fi
+rename_ols_site_confs || exit 1
 
 # Delete old user
 userdel $old_user_name -f
@@ -266,98 +222,14 @@ su - $new_user_name -c "wp --skip-plugins config shuffle-salts"
 su - $new_user_name -c 'wp --skip-plugins config set WP_CACHE_KEY_SALT "$(wp --skip-plugins config get AUTH_KEY)"'
 su - $new_user_name -c "wp --skip-plugins config shuffle-salts"
 
-# echo "restarting web server..."
-# We should NOT restart the webserver here.  It will fail because we have changed some critical paths in the 
-# rename_nginx_site_confs function at the top of this file (around line 46 or so).
-# If you really really want to do this, then see the following commit in the bitbucket repo:
-# 049504a0ef8dda00fbebd07e89f453289b230d88.
-# That commmit resets some paths before ssl and updates them after ssl to ensure the web server restarts properly.
-# Right now it's not necessary to go through those gyrations because it seems that everything works properly.
-# without restarting here.
-# gf_restart_webserver
-
-if [ "$g_webserver_type" = "nginx" ]
+if [[ -z $email ]]
 then
-	systemctl restart php$php_version-fpm
-	# reissue certificate if previous domain had https enabled and was not a multisite wildcard
-	if ! grep -q 'server_name \.' /etc/nginx/sites-enabled/$new_domain && [[ -e /etc/letsencrypt/live/$old_domain/fullchain.pem ]]
+	echo "No email set, likely because prior domain did not have SSL enabled. Skipping SSL attempt!"
+else
+	gf_disable_https_redirect_ols_htaccess "$new_domain" || exit 1
+	if gf_enable_certbot_ols_site "$new_domain"
 	then
-		echo "Attempting to obtain new ssl certificates..."
-		if grep -qs "managed by Certbot" /etc/nginx/sites-enabled/$new_domain
-		then
-			sed -i -n '/if ($host/q;p' /etc/nginx/sites-enabled/$new_domain
-			sed -i '$ d' /etc/nginx/sites-enabled/$new_domain
-			sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/$new_domain
-			sed -i '/managed by Certbot/d' /etc/nginx/sites-enabled/$new_domain
-		fi
-		certbot delete --cert-name $old_domain --noninteractive
-		certbot --non-interactive --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $new_domain -d www.$new_domain
-		# Change configuration to HTTP if HTTPS certificate couldn't be obtained
-		if [ $? -ne 0 ]
-		then
-			su - $new_user_name -c "wp --skip-plugins option update home http://$new_domain"
-			su - $new_user_name -c "wp --skip-plugins option update siteurl http://$new_domain"
-		fi
-	fi
-
-	# If we are dealing with a multisite wildcard which had HTTPS enabled...
-	if grep -q 'server_name \.' /etc/nginx/sites-enabled/$new_domain && grep -q 'listen 443' /etc/nginx/sites-enabled/$new_domain
-	then
-		for sitedomain in $(su - $new_user_name -c "wp site list --field=domain")
-		do
-			su - $new_user_name -c "wp --skip-plugins option update home http://$sitedomain --url=https://$sitedomain/"
-			su - $new_user_name -c "wp --skip-plugins option update siteurl http://$sitedomain --url=https://$sitedomain/"
-		done
-		if grep -qs "managed by Certbot" /etc/nginx/sites-enabled/$new_domain
-		then
-			sed -i -n '/listen 80/q;p' /etc/nginx/sites-enabled/$new_domain
-			sed -i '$ d' /etc/nginx/sites-enabled/$new_domain
-			sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/$new_domain
-			sed -i '/managed by Certbot/d' /etc/nginx/sites-enabled/$new_domain
-		fi
-		certbot delete --cert-name $old_domain --noninteractive
-		echo "This multisite had wildcard SSL enabled."
-		echo "HTTPS has been disabled, it can be configured using 13-multisite.sh"
-	fi
-
-	# this part is used for non-wildcard, domain-based multisite setups
-	# if a specific site previously had HTTPS enabled, we will get certificates for the new domain
-	ls /etc/nginx/sites-enabled/"$new_domain"_* 2>/dev/null | cut -d _ -f 2 |
-	while read -r line
-	do
-		new_domain_2=$line
-		old_domain_2=$(echo $line | sed s/$new_domain/$old_domain/g)
-		# reissue certificate if previous domain had https enabled
-		if [[ -e /etc/letsencrypt/live/$old_domain_2/fullchain.pem ]]
-		then
-			echo "Attempting to get new certificate for $new_domain\_$line..."
-			if grep -qs "managed by Certbot" /etc/nginx/sites-enabled/"$new_domain"_"$line"
-			then
-				sed -i -n '/if ($host/q;p' /etc/nginx/sites-enabled/"$new_domain"_"$line"
-				sed -i '$ d' /etc/nginx/sites-enabled/"$new_domain"_"$line"
-				sed -i '/server {/a listen 80;\nlisten [::]:80;' /etc/nginx/sites-enabled/"$new_domain"_"$line"
-				sed -i '/managed by Certbot/d' /etc/nginx/sites-enabled/"$new_domain"_"$line"
-			fi
-			#certbot delete --cert-name $old_domain_2 --noninteractive
-			certbot --non-interactive --reinstall --expand --nginx --agree-tos --register-unsafely-without-email --allow-subset-of-names --redirect -d $line -d www.$line
-			# Change configuration to HTTP if HTTPS certificate couldn't be obtained
-			if [ $? -ne 0 ]
-			then
-				su - $new_user_name -c "wp --skip-plugins option update home http://$line --url=https://$line/"
-				su - $new_user_name -c "wp --skip-plugins option update siteurl http://$line --url=https://$line/"
-			fi
-		fi
-	done
-elif [ "$g_webserver_type" = "ols" ]  || [ "$g_webserver_type" = "ols-enterprise" ]
-then
-	if [[ -z $email ]]
-	then
-		echo "No email set, likely because prior domain did not have ssl enabled. Skipping SSL attempt!"
-	else
-		gf_disable_https_redirect_ols_htaccess "$new_domain" # Remove existing https any redirects.
-		if gf_enable_certbot_ols_site "$new_domain"; then   # This function call echoes any success/failure messages so no need to handle here.
-			gf_enable_https_redirect_ols_htaccess "$new_domain"  # This function call echoes any success/failure messages so no need to handle here.
-		fi
+		gf_enable_https_redirect_ols_htaccess "$new_domain" || exit 1
 	fi
 fi
 

@@ -4,7 +4,7 @@
 **Referenced Files in This Document**
 - [class-upcloud.php](file://includes/core/providers/class-upcloud.php)
 - [class-cloud-provider-api.php](file://includes/core/providers/class-cloud-provider-api.php)
-- [class-wpcd-setup-wizard.php](file://includes/core/class-wpcd-setup-wizard.php)
+- [class-sstk-setup-wizard.php](file://includes/core/class-sstk-setup-wizard.php)
 </cite>
 
 ## Table of Contents
@@ -29,7 +29,7 @@ The UpCloud provider lives under the providers directory and implements the shar
 
 - `includes/core/providers/class-upcloud.php`: UpCloud-specific provider implementation.
 - `includes/core/providers/class-cloud-provider-api.php`: Shared base class defining common behavior, constants, and helper contracts.
-- `includes/core/class-wpcd-setup-wizard.php`: Setup wizard integration that recognizes UpCloud as a special provider during connection steps.
+- `includes/core/class-sstk-setup-wizard.php`: Setup wizard integration that recognizes UpCloud as a special provider during connection steps.
 
 ```mermaid
 graph TB
@@ -40,12 +40,12 @@ Wizard["Setup Wizard"] --> Upcloud
 **Diagram sources**
 - [class-cloud-provider-api.php:125-146](file://includes/core/providers/class-cloud-provider-api.php#L125-L146)
 - [class-upcloud.php:12-33](file://includes/core/providers/class-upcloud.php#L12-L33)
-- [class-wpcd-setup-wizard.php:545-549](file://includes/core/class-wpcd-setup-wizard.php#L545-L549)
+- [class-sstk-setup-wizard.php:545-549](file://includes/core/class-sstk-setup-wizard.php#L545-L549)
 
 **Section sources**
 - [class-upcloud.php:1-33](file://includes/core/providers/class-upcloud.php#L1-L33)
 - [class-cloud-provider-api.php:125-146](file://includes/core/providers/class-cloud-provider-api.php#L125-L146)
-- [class-wpcd-setup-wizard.php:545-549](file://includes/core/class-wpcd-setup-wizard.php#L545-L549)
+- [class-sstk-setup-wizard.php:545-549](file://includes/core/class-sstk-setup-wizard.php#L545-L549)
 
 ## Core Components
 The UpCloud provider defines a single main class with these responsibilities:
@@ -73,7 +73,7 @@ Key behaviors:
 | Plans | Uses plan names such as `2xCPU-4GB`; no numeric plan ID. |
 | Storage | Clones an Ubuntu template disk; does not expose snapshots through this control panel. |
 | Networking | Creates a public IPv4 interface on server creation. |
-| SSH Keys | Public key installed inline; private key remains local for WPCD access. |
+| SSH Keys | Public key installed inline; private key remains local for SSTK access. |
 | Backups/Snapshots | Disabled in UI because UpCloud backups are tied to storage devices and dates rather than snapshot IDs. |
 | Custom Images | Not offered because the code path does not read custom image options back. |
 | Dynamic Tags | Not supported by this provider. |
@@ -128,7 +128,7 @@ Important credential-related points:
 - `uses_api_key()` returns false.
 - `has_credentials()` checks both username and password.
 - `credentials_available()` additionally requires a locally stored public SSH key and private SSH key so servers can be created and accessed.
-- Settings fields added for UpCloud are `vpn_upcloud_user_name` and `vpn_upcloud_user_password`.
+- Settings fields added for UpCloud are `sstk_upcloud_user_name` and `sstk_upcloud_user_password`.
 - The dashboard link points to the UpCloud API account page.
 
 ```mermaid
@@ -283,7 +283,7 @@ Resize changes the server plan. UpCloud requires the server to be stopped before
 - [class-upcloud.php:742-776](file://includes/core/providers/class-upcloud.php#L742-L776)
 
 ### SSH Key Registration
-SSH key registration is best-effort. WPCD generates the key pair locally first, stores the public key for server creation, and keeps the private key for SSH access. Registering the key with UpCloud is optional visibility help; failure does not discard the local key pair.
+SSH key registration is best-effort. SSTK generates the key pair locally first, stores the public key for server creation, and keeps the private key for SSH access. Registering the key with UpCloud is optional visibility help; failure does not discard the local key pair.
 
 **Section sources**
 - [class-upcloud.php:778-824](file://includes/core/providers/class-upcloud.php#L778-L824)
@@ -297,7 +297,7 @@ Connection testing calls the account endpoint and returns a boolean test status 
 ### Storage Templates and Operating System Selection
 Storage templates are fetched once and cached. The provider selects an Ubuntu template whose title matches the requested release and prefers templates marked online. If no suitable template exists, it returns a specific error.
 
-OS selection maps WPCD OS keys such as `ubuntu2404lts` to UpCloud template labels. A default Ubuntu release is used when no explicit version is provided.
+OS selection maps SSTK OS keys such as `ubuntu2404lts` to UpCloud template labels. A default Ubuntu release is used when no explicit version is provided.
 
 **Section sources**
 - [class-upcloud.php:891-964](file://includes/core/providers/class-upcloud.php#L891-L964)
@@ -439,7 +439,7 @@ The UpCloud provider implementation provides a focused, secure, and predictable 
 **Section sources**
 - [class-upcloud.php:93-127](file://includes/core/providers/class-upcloud.php#L93-L127)
 - [class-upcloud.php:247-289](file://includes/core/providers/class-upcloud.php#L247-L289)
-- [class-wpcd-setup-wizard.php:545-549](file://includes/core/class-wpcd-setup-wizard.php#L545-L549)
+- [class-sstk-setup-wizard.php:545-549](file://includes/core/class-sstk-setup-wizard.php#L545-L549)
 
 ### Supported Operations Matrix
 | Operation | Supported | Notes |

@@ -1,6 +1,6 @@
-- Public pages are gated by `self::is_public_page()` checks before enqueuing scripts or rendering content, so the same code path safely skips itself on non-WPCD pages.
-- Shortcode handlers return HTML wrapped in `<div id="wpcd_public_wrapper">` (often with a nested container div) to give the theme a stable hook for styling.
-- List-table rendering follows a fixed pattern: instantiate a subclass of `WPCD_Public_List_Table` with `post_type` and `base_url`, call `$table->views()`, then `$table->display()` inside a `<form id="posts-filter" method="get">`, and finally `$table->update_table_pagination_js()`.
+- Public pages are gated by `self::is_public_page()` checks before enqueuing scripts or rendering content, so the same code path safely skips itself on non-SSTK pages.
+- Shortcode handlers return HTML wrapped in `<div id="sstk_public_wrapper">` (often with a nested container div) to give the theme a stable hook for styling.
+- List-table rendering follows a fixed pattern: instantiate a subclass of `SSTK_Public_List_Table` with `post_type` and `base_url`, call `$table->views()`, then `$table->display()` inside a `<form id="posts-filter" method="get">`, and finally `$table->update_table_pagination_js()`.
 - AJAX mutations go through the single `ajax_public()` switch dispatched by `_action`, validating against whitelisted action arrays and requiring both a nonce and `delete_post` capability per item.
 - Admin-only dependencies (screen functions, `WP_List_Table`, `WP_Screen`) are conditionally required at the top of each file rather than assumed present on the front end.
-- Page IDs are never hard-coded; they are read via `get_*_list_page_id()` static helpers backed by `wpcd_public_*_page_id` options.
+- Page IDs are never hard-coded; they are read via `get_*_list_page_id()` static helpers backed by `sstk_public_*_page_id` options.

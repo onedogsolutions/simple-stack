@@ -2,18 +2,18 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [wpcd.php](file://wpcd.php)
-- [class-wpcd-base.php](file://includes/core/class-wpcd-base.php)
-- [class-wpcd-settings.php](file://includes/core/class-wpcd-settings.php)
-- [class-wpcd-posts-base.php](file://includes/core/class-wpcd-posts-base.php)
-- [class-wpcd-posts-app-server.php](file://includes/core/class-wpcd-posts-app-server.php)
-- [class-wpcd-posts-app.php](file://includes/core/class-wpcd-posts-app.php)
+- [simple-stack.php](file://simple-stack.php)
+- [class-sstk-base.php](file://includes/core/class-sstk-base.php)
+- [class-sstk-settings.php](file://includes/core/class-sstk-settings.php)
+- [class-sstk-posts-base.php](file://includes/core/class-sstk-posts-base.php)
+- [class-sstk-posts-app-server.php](file://includes/core/class-sstk-posts-app-server.php)
+- [class-sstk-posts-app.php](file://includes/core/class-sstk-posts-app.php)
 - [get_set_post_type.php](file://includes/core/traits/get_set_post_type.php)
-- [class-wpcd-custom-table.php](file://includes/core/custom-table/class-wpcd-custom-table.php)
+- [class-sstk-custom-table.php](file://includes/core/custom-table/class-sstk-custom-table.php)
 - [loader.php](file://includes/core/apps/wordpress-app/public/custom-table/loader.php)
 - [custom_table.js](file://assets/js/custom_table.js)
-- [class-wpcd-posts-notify-log.php](file://includes/core/class-wpcd-posts-notify-log.php)
-- [class-wpcd-posts-notify-sent-log.php](file://includes/core/class-wpcd-posts-notify-sent-log.php)
+- [class-sstk-posts-notify-log.php](file://includes/core/class-sstk-posts-notify-log.php)
+- [class-sstk-posts-notify-sent-log.php](file://includes/core/class-sstk-posts-notify-sent-log.php)
 </cite>
 
 ## Table of Contents
@@ -28,7 +28,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the core foundation of SimpleStack, focusing on:
+This document explains the core foundation of Simple Stack, focusing on:
 - Base class architecture and shared utilities
 - Settings management powered by a settings page framework
 - Post type infrastructure for servers and sites
@@ -40,11 +40,11 @@ This document explains the core foundation of SimpleStack, focusing on:
 - Configuration patterns, environment handling, and separation of concerns
 
 ## Project Structure
-SimpleStack is organized around a central bootstrap file that defines constants, registers hooks, loads dependencies, and initializes core modules. Core logic lives under `includes/core`, with application-specific logic under `includes/core/apps`. Supporting UI assets live under `assets`, and bundled third-party plugins are under `required_plugins`.
+Simple Stack is organized around a central bootstrap file that defines constants, registers hooks, loads dependencies, and initializes core modules. Core logic lives under `includes/core`, with application-specific logic under `includes/core/apps`. Supporting UI assets live under `assets`, and bundled third-party plugins are under `required_plugins`.
 
 ```mermaid
 graph TB
-A["wpcd.php<br/>Plugin Bootstrap"] --> B["includes/core/*<br/>Core Classes"]
+A["simple-stack.php<br/>Plugin Bootstrap"] --> B["includes/core/*<br/>Core Classes"]
 A --> C["required_plugins/*<br/>Bundled Dependencies"]
 B --> D["apps/*<br/>Application Modules"]
 B --> E["traits/*<br/>Reusable Traits"]
@@ -53,11 +53,11 @@ G["assets/*<br/>CSS/JS"] --> D
 ```
 
 **Diagram sources**
-- [wpcd.php:106-414](file://wpcd.php#L106-L414)
+- [simple-stack.php:106-414](file://simple-stack.php#L106-L414)
 
 **Section sources**
-- [wpcd.php:1-130](file://wpcd.php#L1-L130)
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:1-130](file://simple-stack.php#L1-L130)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 ## Core Components
 - Base class for shared behavior across components
@@ -68,13 +68,13 @@ G["assets/*<br/>CSS/JS"] --> D
 - Logging and notification subsystems
 
 **Section sources**
-- [class-wpcd-base.php:15-106](file://includes/core/class-wpcd-base.php#L15-L106)
-- [class-wpcd-settings.php:25-66](file://includes/core/class-wpcd-settings.php#L25-L66)
-- [class-wpcd-posts-base.php:13-85](file://includes/core/class-wpcd-posts-base.php#L13-L85)
-- [class-wpcd-posts-app-server.php:12-57](file://includes/core/class-wpcd-posts-app-server.php#L12-L57)
-- [class-wpcd-posts-app.php:12-56](file://includes/core/class-wpcd-posts-app.php#L12-L56)
+- [class-sstk-base.php:15-106](file://includes/core/class-sstk-base.php#L15-L106)
+- [class-sstk-settings.php:25-66](file://includes/core/class-sstk-settings.php#L25-L66)
+- [class-sstk-posts-base.php:13-85](file://includes/core/class-sstk-posts-base.php#L13-L85)
+- [class-sstk-posts-app-server.php:12-57](file://includes/core/class-sstk-posts-app-server.php#L12-L57)
+- [class-sstk-posts-app.php:12-56](file://includes/core/class-sstk-posts-app.php#L12-L56)
 - [get_set_post_type.php:10-47](file://includes/core/traits/get_set_post_type.php#L10-L47)
-- [class-wpcd-custom-table.php:12-86](file://includes/core/custom-table/class-wpcd-custom-table.php#L12-L86)
+- [class-sstk-custom-table.php:12-86](file://includes/core/custom-table/class-sstk-custom-table.php#L12-L86)
 
 ## Architecture Overview
 The plugin bootstraps early, defines constants, schedules cron intervals, and then loads required files in a strict order to ensure dependencies exist before use. After loading, it instantiates the main application class and optionally starts the setup wizard.
@@ -82,10 +82,10 @@ The plugin bootstraps early, defines constants, schedules cron intervals, and th
 ```mermaid
 sequenceDiagram
 participant WP as "WordPress"
-participant Boot as "WPCD_Init"
+participant Boot as "SSTK_Init"
 participant Deps as "Dependencies"
 participant Core as "Core Classes"
-participant App as "WP_CLOUD_DEPLOY"
+participant App as "SSTK_CORE"
 participant Wizard as "Setup Wizard"
 WP->>Boot : Load plugin
 Boot->>Boot : Define constants & colors
@@ -103,17 +103,17 @@ end
 ```
 
 **Diagram sources**
-- [wpcd.php:24-130](file://wpcd.php#L24-L130)
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:24-130](file://simple-stack.php#L24-L130)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 **Section sources**
-- [wpcd.php:24-130](file://wpcd.php#L24-L130)
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:24-130](file://simple-stack.php#L24-L130)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 ## Detailed Component Analysis
 
 ### Base Class Architecture
-`WPCD_Base` provides shared utilities used by multiple components. It includes helpers for tracking deferred actions and formatting custom links stored in post metadata.
+`SSTK_Base` provides shared utilities used by multiple components. It includes helpers for tracking deferred actions and formatting custom links stored in post metadata.
 
 Key responsibilities:
 - Deferred action history tracking per server/app record
@@ -121,7 +121,7 @@ Key responsibilities:
 
 ```mermaid
 classDiagram
-class WPCD_Base {
+class SSTK_Base {
 +__construct()
 +add_deferred_action_history(id, source, meta_key) void
 +get_formatted_custom_links(post_id) string
@@ -129,13 +129,13 @@ class WPCD_Base {
 ```
 
 **Diagram sources**
-- [class-wpcd-base.php:22-106](file://includes/core/class-wpcd-base.php#L22-L106)
+- [class-sstk-base.php:22-106](file://includes/core/class-sstk-base.php#L22-L106)
 
 **Section sources**
-- [class-wpcd-base.php:22-106](file://includes/core/class-wpcd-base.php#L22-L106)
+- [class-sstk-base.php:22-106](file://includes/core/class-sstk-base.php#L22-L106)
 
 ### Settings Management System
-`WPCD_Settings` manages the plugin’s settings page using a settings page framework. It registers AJAX handlers, enqueues scripts, and builds metaboxes for general, logging, provider cache, misc, tools, and cloud provider sections.
+`SSTK_Settings` manages the plugin’s settings page using a settings page framework. It registers AJAX handlers, enqueues scripts, and builds metaboxes for general, logging, provider cache, misc, tools, and cloud provider sections.
 
 Highlights:
 - Singleton pattern for instance access
@@ -145,22 +145,22 @@ Highlights:
 
 ```mermaid
 classDiagram
-class WPCD_Settings {
-+instance() WPCD_Settings
+class SSTK_Settings {
++instance() SSTK_Settings
 +__construct()
 +display_settings() void
 }
 ```
 
 **Diagram sources**
-- [class-wpcd-settings.php:32-66](file://includes/core/class-wpcd-settings.php#L32-L66)
+- [class-sstk-settings.php:32-66](file://includes/core/class-sstk-settings.php#L32-L66)
 
 **Section sources**
-- [class-wpcd-settings.php:32-66](file://includes/core/class-wpcd-settings.php#L32-L66)
-- [class-wpcd-settings.php:72-530](file://includes/core/class-wpcd-settings.php#L72-L530)
+- [class-sstk-settings.php:32-66](file://includes/core/class-sstk-settings.php#L32-L66)
+- [class-sstk-settings.php:72-530](file://includes/core/class-sstk-settings.php#L72-L530)
 
 ### Post Type Infrastructure (Servers and Sites)
-SimpleStack uses WordPress custom post types to represent servers (`wpcd_app_server`) and applications/sites (`wpcd_app`). Both extend `WPCD_Posts_Base`, which handles common state label logic and delete protection indicators.
+Simple Stack uses WordPress custom post types to represent servers (`sstk_app_server`) and applications/sites (`sstk_app`). Both extend `SSTK_Posts_Base`, which handles common state label logic and delete protection indicators.
 
 Responsibilities:
 - Registering post types and taxonomies
@@ -170,35 +170,35 @@ Responsibilities:
 
 ```mermaid
 classDiagram
-class WPCD_Posts_Base {
+class SSTK_Posts_Base {
 +__construct()
 +display_post_states(states, post) array
 }
-class WPCD_POSTS_APP_SERVER {
-+instance() WPCD_POSTS_APP_SERVER
+class SSTK_POSTS_APP_SERVER {
++instance() SSTK_POSTS_APP_SERVER
 +__construct()
 +register() void
 +hooks() void
 }
-class WPCD_POSTS_APP {
-+instance() WPCD_POSTS_APP
+class SSTK_POSTS_APP {
++instance() SSTK_POSTS_APP
 +__construct()
 +register() void
 +hooks() void
 }
-WPCD_POSTS_APP_SERVER --|> WPCD_Posts_Base
-WPCD_POSTS_APP --|> WPCD_Posts_Base
+SSTK_POSTS_APP_SERVER --|> SSTK_Posts_Base
+SSTK_POSTS_APP --|> SSTK_Posts_Base
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-base.php:16-85](file://includes/core/class-wpcd-posts-base.php#L16-L85)
-- [class-wpcd-posts-app-server.php:15-57](file://includes/core/class-wpcd-posts-app-server.php#L15-L57)
-- [class-wpcd-posts-app.php:15-56](file://includes/core/class-wpcd-posts-app.php#L15-L56)
+- [class-sstk-posts-base.php:16-85](file://includes/core/class-sstk-posts-base.php#L16-L85)
+- [class-sstk-posts-app-server.php:15-57](file://includes/core/class-sstk-posts-app-server.php#L15-L57)
+- [class-sstk-posts-app.php:15-56](file://includes/core/class-sstk-posts-app.php#L15-L56)
 
 **Section sources**
-- [class-wpcd-posts-base.php:16-85](file://includes/core/class-wpcd-posts-base.php#L16-L85)
-- [class-wpcd-posts-app-server.php:15-162](file://includes/core/class-wpcd-posts-app-server.php#L15-L162)
-- [class-wpcd-posts-app.php:15-170](file://includes/core/class-wpcd-posts-app.php#L15-L170)
+- [class-sstk-posts-base.php:16-85](file://includes/core/class-sstk-posts-base.php#L16-L85)
+- [class-sstk-posts-app-server.php:15-162](file://includes/core/class-sstk-posts-app-server.php#L15-L162)
+- [class-sstk-posts-app.php:15-170](file://includes/core/class-sstk-posts-app.php#L15-L170)
 
 ### Trait-Based Composition Pattern
 Traits provide reusable features without deep inheritance. The core trait registry is loaded during bootstrap, and both server and app post type classes compose traits for:
@@ -209,30 +209,30 @@ Traits provide reusable features without deep inheritance. The core trait regist
 
 ```mermaid
 classDiagram
-class wpcd_get_set_post_type {
+class sstk_get_set_post_type {
 -post_type : string
 +set_post_type(type) void
 +get_post_type() string
 }
-class WPCD_POSTS_APP_SERVER {
-<<uses>> wpcd_get_set_post_type
+class SSTK_POSTS_APP_SERVER {
+<<uses>> sstk_get_set_post_type
 }
-class WPCD_POSTS_APP {
-<<uses>> wpcd_get_set_post_type
+class SSTK_POSTS_APP {
+<<uses>> sstk_get_set_post_type
 }
 ```
 
 **Diagram sources**
 - [get_set_post_type.php:13-47](file://includes/core/traits/get_set_post_type.php#L13-L47)
-- [class-wpcd-posts-app-server.php:17-21](file://includes/core/class-wpcd-posts-app-server.php#L17-L21)
-- [class-wpcd-posts-app.php:17-21](file://includes/core/class-wpcd-posts-app.php#L17-L21)
+- [class-sstk-posts-app-server.php:17-21](file://includes/core/class-sstk-posts-app-server.php#L17-L21)
+- [class-sstk-posts-app.php:17-21](file://includes/core/class-sstk-posts-app.php#L17-L21)
 
 **Section sources**
 - [get_set_post_type.php:13-47](file://includes/core/traits/get_set_post_type.php#L13-L47)
-- [wpcd.php:419-443](file://wpcd.php#L419-L443)
+- [simple-stack.php:419-443](file://simple-stack.php#L419-L443)
 
 ### Custom Table System for Performance-Critical Data
-For high-throughput data such as DNS zones, records, and providers, SimpleStack integrates a custom table layer built on top of a custom tables framework. Models are registered and exposed through an API, with admin and public interfaces.
+For high-throughput data such as DNS zones, records, and providers, Simple Stack integrates a custom table layer built on top of a custom tables framework. Models are registered and exposed through an API, with admin and public interfaces.
 
 Key elements:
 - Abstract base model for custom tables
@@ -242,9 +242,9 @@ Key elements:
 
 ```mermaid
 flowchart TD
-Start(["Admin/Public Request"]) --> Loader["WPCD_CT_Public_Loader<br/>Registers shortcodes & enqueues assets"]
-Loader --> Model["WPCD_MB_Custom_Table<br/>Base model"]
-Model --> API["WPCD_Custom_Table_API<br/>Data access"]
+Start(["Admin/Public Request"]) --> Loader["SSTK_CT_Public_Loader<br/>Registers shortcodes & enqueues assets"]
+Loader --> Model["SSTK_MB_Custom_Table<br/>Base model"]
+Model --> API["SSTK_Custom_Table_API<br/>Data access"]
 API --> Storage["MetaBox Custom Table Storage"]
 Storage --> View["List/Edit Screens"]
 View --> JS["custom_table.js<br/>AJAX submit & spinner"]
@@ -252,11 +252,11 @@ View --> JS["custom_table.js<br/>AJAX submit & spinner"]
 
 **Diagram sources**
 - [loader.php:6-21](file://includes/core/apps/wordpress-app/public/custom-table/loader.php#L6-L21)
-- [class-wpcd-custom-table.php:15-86](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L86)
+- [class-sstk-custom-table.php:15-86](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L86)
 - [custom_table.js:9-41](file://assets/js/custom_table.js#L9-L41)
 
 **Section sources**
-- [class-wpcd-custom-table.php:15-86](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L86)
+- [class-sstk-custom-table.php:15-86](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L86)
 - [loader.php:6-21](file://includes/core/apps/wordpress-app/public/custom-table/loader.php#L6-L21)
 - [custom_table.js:9-41](file://assets/js/custom_table.js#L9-L41)
 
@@ -270,7 +270,7 @@ Configuration aspects:
 - Debug.log integration for selected categories
 
 **Section sources**
-- [class-wpcd-settings.php:194-322](file://includes/core/class-wpcd-settings.php#L194-L322)
+- [class-sstk-settings.php:194-322](file://includes/core/class-sstk-settings.php#L194-L322)
 
 ### Notification System
 Notifications are tracked through dedicated log post types:
@@ -295,14 +295,14 @@ Cron->>SentLog : Update success/failure
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-notify-log.php:400-412](file://includes/core/class-wpcd-posts-notify-log.php#L400-L412)
-- [class-wpcd-posts-notify-sent-log.php:262-272](file://includes/core/class-wpcd-posts-notify-sent-log.php#L262-L272)
-- [class-wpcd-posts-notify-sent-log.php:362-467](file://includes/core/class-wpcd-posts-notify-sent-log.php#L362-L467)
+- [class-sstk-posts-notify-log.php:400-412](file://includes/core/class-sstk-posts-notify-log.php#L400-L412)
+- [class-sstk-posts-notify-sent-log.php:262-272](file://includes/core/class-sstk-posts-notify-sent-log.php#L262-L272)
+- [class-sstk-posts-notify-sent-log.php:362-467](file://includes/core/class-sstk-posts-notify-sent-log.php#L362-L467)
 
 **Section sources**
-- [class-wpcd-posts-notify-log.php:400-412](file://includes/core/class-wpcd-posts-notify-log.php#L400-L412)
-- [class-wpcd-posts-notify-sent-log.php:262-272](file://includes/core/class-wpcd-posts-notify-sent-log.php#L262-L272)
-- [class-wpcd-posts-notify-sent-log.php:362-467](file://includes/core/class-wpcd-posts-notify-sent-log.php#L362-L467)
+- [class-sstk-posts-notify-log.php:400-412](file://includes/core/class-sstk-posts-notify-log.php#L400-L412)
+- [class-sstk-posts-notify-sent-log.php:262-272](file://includes/core/class-sstk-posts-notify-sent-log.php#L262-L272)
+- [class-sstk-posts-notify-sent-log.php:362-467](file://includes/core/class-sstk-posts-notify-sent-log.php#L362-L467)
 
 ### Plugin Bootstrap Process and Initialization Sequence
 Bootstrap responsibilities:
@@ -330,12 +330,12 @@ H --> |No| J["Done"]
 ```
 
 **Diagram sources**
-- [wpcd.php:24-130](file://wpcd.php#L24-L130)
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:24-130](file://simple-stack.php#L24-L130)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 **Section sources**
-- [wpcd.php:24-130](file://wpcd.php#L24-L130)
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:24-130](file://simple-stack.php#L24-L130)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 ### Dependency Loading Order
 The bootstrap ensures dependencies load in a safe order:
@@ -350,7 +350,7 @@ The bootstrap ensures dependencies load in a safe order:
 9. Main application class
 
 **Section sources**
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 ### WordPress Hooks Integration and Extension Points
 Common extension points:
@@ -367,10 +367,10 @@ Examples:
 - Localize JavaScript with nonce and action names
 
 **Section sources**
-- [class-wpcd-settings.php:151-152](file://includes/core/class-wpcd-settings.php#L151-L152)
-- [class-wpcd-settings.php:513-516](file://includes/core/class-wpcd-settings.php#L513-L516)
-- [class-wpcd-posts-app-server.php:173-177](file://includes/core/class-wpcd-posts-app-server.php#L173-L177)
-- [class-wpcd-posts-app.php:212-233](file://includes/core/class-wpcd-posts-app.php#L212-L233)
+- [class-sstk-settings.php:151-152](file://includes/core/class-sstk-settings.php#L151-L152)
+- [class-sstk-settings.php:513-516](file://includes/core/class-sstk-settings.php#L513-L516)
+- [class-sstk-posts-app-server.php:173-177](file://includes/core/class-sstk-posts-app-server.php#L173-L177)
+- [class-sstk-posts-app.php:212-233](file://includes/core/class-sstk-posts-app.php#L212-L233)
 
 ### Configuration Patterns and Environment Handling
 - Early options and constants control behavior (e.g., skipping welcome messages, hiding warnings, disabling email notifications).
@@ -379,9 +379,9 @@ Examples:
 - Cron health checks and email alerts for missing critical tasks.
 
 **Section sources**
-- [wpcd.php:86-103](file://wpcd.php#L86-L103)
-- [wpcd.php:452-543](file://wpcd.php#L452-L543)
-- [wpcd.php:550-621](file://wpcd.php#L550-L621)
+- [simple-stack.php:86-103](file://simple-stack.php#L86-L103)
+- [simple-stack.php:452-543](file://simple-stack.php#L452-L543)
+- [simple-stack.php:550-621](file://simple-stack.php#L550-L621)
 
 ### Separation of Concerns Between Core Modules
 - Bootstrap orchestrates loading but delegates responsibilities to specialized classes.
@@ -392,29 +392,29 @@ Examples:
 - Providers and apps are loaded conditionally and independently.
 
 **Section sources**
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
-- [class-wpcd-settings.php:32-66](file://includes/core/class-wpcd-settings.php#L32-L66)
-- [class-wpcd-posts-app-server.php:15-162](file://includes/core/class-wpcd-posts-app-server.php#L15-L162)
-- [class-wpcd-posts-app.php:15-170](file://includes/core/class-wpcd-posts-app.php#L15-L170)
-- [class-wpcd-custom-table.php:15-86](file://includes/core/custom-table/class-wpcd-custom-table.php#L15-L86)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
+- [class-sstk-settings.php:32-66](file://includes/core/class-sstk-settings.php#L32-L66)
+- [class-sstk-posts-app-server.php:15-162](file://includes/core/class-sstk-posts-app-server.php#L15-L162)
+- [class-sstk-posts-app.php:15-170](file://includes/core/class-sstk-posts-app.php#L15-L170)
+- [class-sstk-custom-table.php:15-86](file://includes/core/custom-table/class-sstk-custom-table.php#L15-L86)
 
 ## Dependency Analysis
 ```mermaid
 graph LR
-Boot["wpcd.php"] --> TGMPA["TGMPA"]
+Boot["simple-stack.php"] --> TGMPA["TGMPA"]
 Boot --> MBSettings["MB Settings Page"]
 Boot --> MBCustomTable["MB Custom Table"]
 Boot --> CorePostTypes["Post Types (Apps/Servers)"]
 Boot --> Providers["Cloud Providers"]
 Boot --> REST["REST API"]
-Boot --> AppMain["WP_CLOUD_DEPLOY"]
+Boot --> AppMain["SSTK_CORE"]
 ```
 
 **Diagram sources**
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 **Section sources**
-- [wpcd.php:267-414](file://wpcd.php#L267-L414)
+- [simple-stack.php:267-414](file://simple-stack.php#L267-L414)
 
 ## Performance Considerations
 - Use custom tables for high-volume data to avoid overhead of post metadata queries.
@@ -434,10 +434,10 @@ Common issues and resolutions:
 - Stuck deployments: use cleanup endpoints to reset in-process states.
 
 **Section sources**
-- [wpcd.php:452-543](file://wpcd.php#L452-L543)
-- [wpcd.php:550-621](file://wpcd.php#L550-L621)
+- [simple-stack.php:452-543](file://simple-stack.php#L452-L543)
+- [simple-stack.php:550-621](file://simple-stack.php#L550-L621)
 
 ## Conclusion
-SimpleStack’s core is structured around a clear bootstrap process, a robust base class, a centralized settings system, and a flexible post type infrastructure. Trait-based composition enables modular extensions, while the custom table layer supports performance-critical workloads. Logging and notifications are well-isolated, and numerous extension points allow integrators to tailor behavior through WordPress hooks. Proper configuration and environment handling ensure reliability across diverse hosting environments.
+Simple Stack’s core is structured around a clear bootstrap process, a robust base class, a centralized settings system, and a flexible post type infrastructure. Trait-based composition enables modular extensions, while the custom table layer supports performance-critical workloads. Logging and notifications are well-isolated, and numerous extension points allow integrators to tailor behavior through WordPress hooks. Proper configuration and environment handling ensure reliability across diverse hosting environments.
 
 [No sources needed since this section summarizes without analyzing specific files]

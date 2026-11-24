@@ -1,4 +1,5 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * This file contains functions that relate to creating
  * and display admin notices.
@@ -6,7 +7,7 @@
  * Eventually all other admin notice related items should
  * end up in this file.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,14 +22,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Grab a transient that might exist and show an admin notice for
  * each entry in its array structure.
  */
-function wpcd_global_handle_admin_notices() {
+function sstk_global_handle_admin_notices() {
 
-	if ( ! wpcd_is_admin() ) {
+	if ( ! sstk_is_admin() ) {
 		return false;
 	}
 
 	// Transient Name.
-	$transient_name = 'wpcd_tabs_' . get_current_user_id();
+	$transient_name = 'sstk_tabs_' . get_current_user_id();
 
 	// Check if there are any notices stored.
 	$notifications = get_transient( $transient_name );
@@ -45,7 +46,7 @@ function wpcd_global_handle_admin_notices() {
 	delete_transient( $transient_name );
 
 }
-add_action( 'admin_notices', 'wpcd_global_handle_admin_notices' );
+add_action( 'admin_notices', 'sstk_global_handle_admin_notices' );
 
 /**
  * Add an entry to a transient for eventual display
@@ -55,10 +56,10 @@ add_action( 'admin_notices', 'wpcd_global_handle_admin_notices' );
  * @param string $message The notice to display.
  * @param string $type    The type of notice.
  */
-function wpcd_global_add_admin_notice( $message, $type ) {
+function sstk_global_add_admin_notice( $message, $type ) {
 
 	// Transient Name.
-	$transient_name = 'wpcd_tabs_' . get_current_user_id();
+	$transient_name = 'sstk_tabs_' . get_current_user_id();
 
 	// Get a transient that could be holding messages to show at the top of the admin area.
 	$transient_value = get_transient( $transient_name );

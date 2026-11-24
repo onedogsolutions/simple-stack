@@ -12,7 +12,7 @@
 - [vite.config.js](file://vite.config.js)
 - [tailwind.config.js](file://tailwind.config.js)
 - [package.json](file://package.json)
-- [includes/core/api/class-simplestack-rest-api.php](file://includes/core/api/class-simplestack-rest-api.php)
+- [includes/core/api/class-sstk-rest-api.php](file://includes/core/api/class-sstk-rest-api.php)
 </cite>
 
 ## Table of Contents
@@ -27,7 +27,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the SimpleStack React frontend architecture that runs inside the WordPress admin area. The application is a single-page interface mounted at `#simplestack-admin`, built with Vite, styled with Tailwind CSS v4, and communicating with the plugin through the `simple-stack/v1` REST namespace. It replaces legacy PHP-rendered screens for servers, sites, providers, and activity while preserving existing tab schemas and action flows.
+This document explains the Simple Stack React frontend architecture that runs inside the WordPress admin area. The application is a single-page interface mounted at `#simplestack-admin`, built with Vite, styled with Tailwind CSS v4, and communicating with the plugin through the `simple-stack/v1` REST namespace. It replaces legacy PHP-rendered screens for servers, sites, providers, and activity while preserving existing tab schemas and action flows.
 
 Key characteristics:
 - Root entry mounts React into a container only when present on the page.
@@ -61,7 +61,7 @@ Api --> WPAPI["WordPress REST<br/>simple-stack/v1"]
 - [src/admin/App.jsx:25-69](file://src/admin/App.jsx#L25-L69)
 - [src/admin/lib/router.js:16-83](file://src/admin/lib/router.js#L16-L83)
 - [src/admin/lib/api.js:153-290](file://src/admin/lib/api.js#L153-L290)
-- [includes/core/api/class-simplestack-rest-api.php:21-37](file://includes/core/api/class-simplestack-rest-api.php#L21-L37)
+- [includes/core/api/class-sstk-rest-api.php:21-37](file://includes/core/api/class-sstk-rest-api.php#L21-L37)
 
 **Section sources**
 - [src/admin/index.jsx:1-47](file://src/admin/index.jsx#L1-L47)
@@ -113,7 +113,7 @@ Integration with WordPress:
 - [tailwind.config.js:1-85](file://tailwind.config.js#L1-L85)
 - [vite.config.js:1-45](file://vite.config.js#L1-L45)
 - [src/admin/lib/api.js:1-292](file://src/admin/lib/api.js#L1-L292)
-- [includes/core/api/class-simplestack-rest-api.php:1-136](file://includes/core/api/class-simplestack-rest-api.php#L1-L136)
+- [includes/core/api/class-sstk-rest-api.php:1-136](file://includes/core/api/class-sstk-rest-api.php#L1-L136)
 
 ## Architecture Overview
 The frontend follows a layered structure:
@@ -149,7 +149,7 @@ Page-->>WP : Updated UI
 - [src/admin/App.jsx:25-69](file://src/admin/App.jsx#L25-L69)
 - [src/admin/lib/router.js:16-83](file://src/admin/lib/router.js#L16-L83)
 - [src/admin/lib/api.js:67-120](file://src/admin/lib/api.js#L67-L120)
-- [includes/core/api/class-simplestack-rest-api.php:51-99](file://includes/core/api/class-simplestack-rest-api.php#L51-L99)
+- [includes/core/api/class-sstk-rest-api.php:51-99](file://includes/core/api/class-sstk-rest-api.php#L51-L99)
 
 ## Detailed Component Analysis
 
@@ -394,7 +394,7 @@ Backend integration:
 
 ```mermaid
 graph LR
-React["React + ReactDOM"] --> App["SimpleStack Admin App"]
+React["React + ReactDOM"] --> App["Simple Stack Admin App"]
 Tailwind["Tailwind v4"] --> Styles["Scoped Utilities"]
 App --> API["lib/api.js"]
 API --> REST["simple-stack/v1"]
@@ -403,11 +403,11 @@ REST --> Controllers["Server, Site, Log, Tab, Provider, Security"]
 
 **Diagram sources**
 - [package.json:13-22](file://package.json#L13-L22)
-- [includes/core/api/class-simplestack-rest-api.php:30-37](file://includes/core/api/class-simplestack-rest-api.php#L30-L37)
+- [includes/core/api/class-sstk-rest-api.php:30-37](file://includes/core/api/class-sstk-rest-api.php#L30-L37)
 
 **Section sources**
 - [package.json:1-25](file://package.json#L1-L25)
-- [includes/core/api/class-simplestack-rest-api.php:1-136](file://includes/core/api/class-simplestack-rest-api.php#L1-L136)
+- [includes/core/api/class-sstk-rest-api.php:1-136](file://includes/core/api/class-sstk-rest-api.php#L1-L136)
 
 ## Performance Considerations
 - Single bundle strategy: CSS is not split per chunk, reducing stylesheet overhead and simplifying asset references.
@@ -441,6 +441,6 @@ Operational checks:
 - [package.json:7-12](file://package.json#L7-L12)
 
 ## Conclusion
-SimpleStack’s frontend is a focused React application designed to integrate cleanly with WordPress admin. It uses hash routing to coexist with WordPress navigation, a typed REST client for reliable API communication, and Tailwind v4 for scoped styling. The build system prioritizes reproducibility and simplicity by bundling React and emitting a single stylesheet. Future enhancements can introduce lazy-loaded routes, centralized caching, and richer error boundaries while preserving the current composition patterns and integration points.
+Simple Stack’s frontend is a focused React application designed to integrate cleanly with WordPress admin. It uses hash routing to coexist with WordPress navigation, a typed REST client for reliable API communication, and Tailwind v4 for scoped styling. The build system prioritizes reproducibility and simplicity by bundling React and emitting a single stylesheet. Future enhancements can introduce lazy-loaded routes, centralized caching, and richer error boundaries while preserving the current composition patterns and integration points.
 
 [No sources needed since this section summarizes without analyzing specific files]

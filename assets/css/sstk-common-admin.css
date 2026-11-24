@@ -1,9 +1,10 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /* Format the group taxonomy labels shown on the server and app cpt list screens */
-span.wpcd-app-server-app-group {
+span.sstk-app-server-app-group {
     display: inline-block;
     padding: 2px 8px;
     font-weight: 700;
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
     vertical-align: baseline;
     background-color: #999;
     border-radius: 3px;
@@ -11,10 +12,10 @@ span.wpcd-app-server-app-group {
 }
 
 /* Format custom link labels shown on the server and app cpt list screens */
-.wpcd_custom_link a {
+.sstk_custom_link a {
     display: inline-block;
     padding: 2px 8px;
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
     vertical-align: baseline;
     background-color: #039BE5;
     border-radius: 3px;
@@ -23,7 +24,7 @@ span.wpcd-app-server-app-group {
 
 
 /* Format the note count on the app list screen */
-.wpcd-note-count {
+.sstk-note-count {
     display: inline-block;
     padding: 2px 8px;
     font-weight: 700;
@@ -39,7 +40,7 @@ span.wpcd-app-server-app-group {
 /******************************************************************************************/
 /* Style the UPGRADE NEEDED alert on the server & app listing screen                      */
 /******************************************************************************************/
-.wpcd_upgrade_needed_warning {
+.sstk_upgrade_needed_warning {
     display: inline-block;
     padding: 2px 8px;
     vertical-align: baseline;
@@ -47,7 +48,7 @@ span.wpcd-app-server-app-group {
     border-color: darkred !important;
     /* Not sure why important is needed for this one but oh well. */
     background-color: darkred;
-    color: var(--wpcd-white-color);
+    color: var(--sstk-white-color);
     border: solid;
     border-width: 2px;
     margin: 2px;
@@ -57,9 +58,9 @@ span.wpcd-app-server-app-group {
 /******************************************************************************************/
 /* Style the post states                                                                  */
 /******************************************************************************************/
-.post-type-wpcd_app_server .post-state,
-.post-type-wpcd_app .post-state {
-	background-color: var(--wpcd-accent-background-color);
+.post-type-sstk_app_server .post-state,
+.post-type-sstk_app .post-state {
+	background-color: var(--sstk-accent-background-color);
 	font-size: 12px;
 	display: inline-block;
 	font-weight: 400;
@@ -67,5 +68,5 @@ span.wpcd-app-server-app-group {
 	padding: 1px 5px;
 	vertical-align: top;
 	border-radius: 2px;
-	color: var(--wpcd-white-color);
+	color: var(--sstk-white-color);
 }

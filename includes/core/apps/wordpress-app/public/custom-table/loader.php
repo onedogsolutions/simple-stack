@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 use MetaBox\CustomTable\Loader;
 use MetaBox\CustomTable\Cache;
 
-class WPCD_CT_Public_Loader extends Loader {
+class SSTK_CT_Public_Loader extends Loader {
 	
 	/**
 	 * Constructor
@@ -13,11 +14,11 @@ class WPCD_CT_Public_Loader extends Loader {
 		
 		add_action( 'init', 'mb_admin_columns_load', 200 );
 		
-		add_shortcode( 'wpcd_ct_providers', array( $this, 'wpcd_providers' ) );
-		add_shortcode( 'wpcd_ct_dns_providers', array( $this, 'wpcd_dns_providers' ) );
+		add_shortcode( 'sstk_ct_providers', array( $this, 'sstk_providers' ) );
+		add_shortcode( 'sstk_ct_dns_providers', array( $this, 'sstk_dns_providers' ) );
 		
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue' ), 10, 1 );
-		add_filter( 'wpcd_is_public_page', array( $this, 'is_public_page' ) );
+		add_filter( 'sstk_is_public_page', array( $this, 'is_public_page' ) );
 	}
 	
 	/**
@@ -32,7 +33,7 @@ class WPCD_CT_Public_Loader extends Loader {
 		
 		if ( isset( $args['models'] ) && !empty( $args['models'] ) ) {
 			$class_name = 'RW_Meta_Box_Custom_Table_Public';
-			require_once wpcd_path . 'includes/core/apps/wordpress-app/public/custom-table/rw-meta-box-custom-table-public.php';
+			require_once SSTK_PATH . 'includes/core/apps/wordpress-app/public/custom-table/rw-meta-box-custom-table-public.php';
 		}
 		return $class_name;
 	}
@@ -43,7 +44,7 @@ class WPCD_CT_Public_Loader extends Loader {
 	function enqueue() {
 		
 		if( $this->check_is_custom_table_public_page() ) {
-			wp_enqueue_script( 'wpcd-custom_table', wpcd_url . 'assets/js/custom_table.js', array( 'jquery', 'wpcd-magnific' ), wpcd_scripts_version, true );
+			wp_enqueue_script( 'sstk-custom_table', SSTK_URL . 'assets/js/custom_table.js', array( 'jquery', 'sstk-magnific' ), SSTK_SCRIPTS_VERSION, true );
 		}
 	}
 	
@@ -67,8 +68,8 @@ class WPCD_CT_Public_Loader extends Loader {
 		
 		if( !$is_public_page ) {
 		
-			$provider = WPCD_MB_Custom_Table::get('provider');
-			$dns_provider = WPCD_MB_Custom_Table::get('dns_provider');
+			$provider = SSTK_MB_Custom_Table::get('provider');
+			$dns_provider = SSTK_MB_Custom_Table::get('dns_provider');
 			
 			$is_public_page = ( !is_admin() && $provider->is_custom_table_page() || $dns_provider->is_custom_table_page() );
 		}
@@ -85,7 +86,7 @@ class WPCD_CT_Public_Loader extends Loader {
 	 * @return string
 	 */
 	public function get_shortcode_page_content( $model ) {
-		$custom_table = WPCD_MB_Custom_Table::get( $model );
+		$custom_table = SSTK_MB_Custom_Table::get( $model );
 		
 		if( !$custom_table ) {
 			return;
@@ -108,7 +109,7 @@ class WPCD_CT_Public_Loader extends Loader {
 		}
 		
 		$content = ob_get_clean();
-		return '<div id="wpcd_public_wrapper">' . $content . '</div>';
+		return '<div id="sstk_public_wrapper">' . $content . '</div>';
 	}
 	
 	/**
@@ -118,7 +119,7 @@ class WPCD_CT_Public_Loader extends Loader {
 	 * 
 	 * @return string
 	 */
-	public function wpcd_providers( $args ) {
+	public function sstk_providers( $args ) {
 		return $this->get_shortcode_page_content('provider');
 	}
 	
@@ -129,7 +130,7 @@ class WPCD_CT_Public_Loader extends Loader {
 	 * 
 	 * @return string
 	 */
-	public function wpcd_dns_providers( $args ) {
+	public function sstk_dns_providers( $args ) {
 		return $this->get_shortcode_page_content('dns_provider');
 	}
 	
@@ -248,7 +249,7 @@ class WPCD_CT_Public_Loader extends Loader {
 	/**
 	 * Check metabox type
 	 * 
-	 * @global string $wpcd_ct_current_main_page_model
+	 * @global string $sstk_ct_current_main_page_model
 	 * @param array $meta_box
 	 * @param string $key
 	 * @param array $object_data
@@ -256,7 +257,7 @@ class WPCD_CT_Public_Loader extends Loader {
 	 * @return boolean
 	 */
 	private function _check_type( &$meta_box, $key, $object_data ) {
-		global $wpcd_ct_current_main_page_model;
+		global $sstk_ct_current_main_page_model;
 		
 		list( $object_type, $object_id ) = $object_data;
 
@@ -277,7 +278,7 @@ class WPCD_CT_Public_Loader extends Loader {
 				$prop = 'taxonomies';
 				break;
 			case 'model':
-				$type = $wpcd_ct_current_main_page_model;
+				$type = $sstk_ct_current_main_page_model;
 				$prop = 'models';
 				break;
 		}

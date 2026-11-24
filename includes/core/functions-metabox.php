@@ -1,16 +1,17 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
- * This file contains general or helper functions for WPCD
+ * This file contains general or helper functions for SSTK
  * when handling metabox related things.
  *
  * It primarily helps with creating CARD wrappers in tabs.
  *
  * The Meta Box field-array builders remain because the tab plugins still describe their
- * fields through the get_tabs filters, which SimpleStack_REST_Tabs serialises to JSON for
+ * fields through the get_tabs filters, which SSTK_REST_Tabs serialises to JSON for
  * the React client. The trait layer that turned those arrays into meta boxes
  * (metaboxes-app.php / metaboxes-server.php) was retired in Phase 4.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -25,12 +26,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @param string $tab The tab on which the field will go.
  */
-function wpcd_start_full_card( $tab ) {
+function sstk_start_full_card( $tab ) {
 
 	$field = array(
 		'tab'               => $tab,
-		'type'              => 'wpcd_card_container',
-		'column_row_before' => '<div class="wpcd-card-group wpcd-card-full">',
+		'type'              => 'sstk_card_container',
+		'column_row_before' => '<div class="sstk-card-group sstk-card-full">',
 	);
 
 	return $field;
@@ -45,12 +46,12 @@ function wpcd_start_full_card( $tab ) {
  *
  * @param string $tab The tab on which the field will go.
  */
-function wpcd_start_full_card_no_border( $tab ) {
+function sstk_start_full_card_no_border( $tab ) {
 
 	$field = array(
 		'tab'               => $tab,
-		'type'              => 'wpcd_card_container',
-		'column_row_before' => '<div class="wpcd-card-group wpcd-card-full-no-border">',
+		'type'              => 'sstk_card_container',
+		'column_row_before' => '<div class="sstk-card-group sstk-card-full-no-border">',
 	);
 
 	return $field;
@@ -65,12 +66,12 @@ function wpcd_start_full_card_no_border( $tab ) {
  *
  * @param string $tab The tab on which the field will go.
  */
-function wpcd_start_full_card_page_heading( $tab ) {
+function sstk_start_full_card_page_heading( $tab ) {
 
 	$field = array(
 		'tab'               => $tab,
-		'type'              => 'wpcd_card_container',
-		'column_row_before' => '<div class="wpcd-card-group wpcd-card-full-no-border wpcd-card-full-page-heading">',
+		'type'              => 'sstk_card_container',
+		'column_row_before' => '<div class="sstk-card-group sstk-card-full-no-border sstk-card-full-page-heading">',
 	);
 
 	return $field;
@@ -86,12 +87,12 @@ function wpcd_start_full_card_page_heading( $tab ) {
  *
  * @param string $tab The tab on which the field will go.
  */
-function wpcd_start_half_card( $tab ) {
+function sstk_start_half_card( $tab ) {
 
 	$field = array(
 		'tab'               => $tab,
-		'type'              => 'wpcd_card_container',
-		'column_row_before' => '<div class="wpcd-card-group wpcd-card-half">',
+		'type'              => 'sstk_card_container',
+		'column_row_before' => '<div class="sstk-card-group sstk-card-half">',
 	);
 
 	return $field;
@@ -106,12 +107,12 @@ function wpcd_start_half_card( $tab ) {
  *
  * @param string $tab The tab on which the field will go.
  */
-function wpcd_start_one_third_card( $tab ) {
+function sstk_start_one_third_card( $tab ) {
 
 	$field = array(
 		'tab'               => $tab,
-		'type'              => 'wpcd_card_container',
-		'column_row_before' => '<div class="wpcd-card-group wpcd-card-third">',
+		'type'              => 'sstk_card_container',
+		'column_row_before' => '<div class="sstk-card-group sstk-card-third">',
 	);
 
 	return $field;
@@ -126,12 +127,12 @@ function wpcd_start_one_third_card( $tab ) {
  *
  * @param string $tab The tab on which the field will go.
  */
-function wpcd_start_two_thirds_card( $tab ) {
+function sstk_start_two_thirds_card( $tab ) {
 
 	$field = array(
 		'tab'               => $tab,
-		'type'              => 'wpcd_card_container',
-		'column_row_before' => '<div class="wpcd-card-group wpcd-card-two-thirds">',
+		'type'              => 'sstk_card_container',
+		'column_row_before' => '<div class="sstk-card-group sstk-card-two-thirds">',
 	);
 
 	return $field;
@@ -145,12 +146,12 @@ function wpcd_start_two_thirds_card( $tab ) {
  *
  * @param string $tab The tab on which the field will go.
  */
-function wpcd_end_card( $tab ) {
+function sstk_end_card( $tab ) {
 
 	$field = array(
 		'tab'               => $tab,
-		'type'              => 'wpcd_card_container',
-		'column_row_before' => '</div><!-- .wpcd-card-group -->',
+		'type'              => 'sstk_card_container',
+		'column_row_before' => '</div><!-- .sstk-card-group -->',
 	);
 
 	return $field;

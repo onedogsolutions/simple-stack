@@ -1,4 +1,4 @@
-- Each feature screen gets a dedicated `wpcd-<screen>.js` and `wpcd-<screen>.css` pair named after the admin/front-end area it targets.
+- Each feature screen gets a dedicated `sstk-<screen>.js` and `sstk-<screen>.css` pair named after the admin/front-end area it targets.
 - Scripts wrap their logic in an IIFE `(function($){ ... })(jQuery)` or `jQuery(document).ready(...)` and initialize behavior inside an `init()` function called from document ready.
-- AJAX calls to PHP use `$.ajax` posting `{ action, nonce }` (plus feature-specific data) to the global `ajaxurl` or the localized `WPCD_Wizard.ajax_url`, then surface results via `alert(data.data.msg)` followed by `location.reload()`.
+- AJAX calls to PHP use `$.ajax` posting `{ action, nonce }` (plus feature-specific data) to the global `ajaxurl` or the localized `SSTK_Wizard.ajax_url`, then surface results via `alert(data.data.msg)` followed by `location.reload()`.
 - DOM event handlers are attached via delegated listeners using `$('body').on('click', <selector>, handler)` rather than direct bindings.

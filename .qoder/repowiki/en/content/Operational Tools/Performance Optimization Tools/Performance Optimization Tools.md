@@ -26,14 +26,14 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how SimpleStack optimizes performance across caching layers, database access patterns, PHP runtime tuning, and web server configuration. It focuses on:
+This document explains how Simple Stack optimizes performance across caching layers, database access patterns, PHP runtime tuning, and web server configuration. It focuses on:
 - Object caching with Redis and Memcached for application data, sessions, and query results
 - WordPress-specific caching integration and cache lifecycle strategies
 - PHP worker concurrency, memory limits, and execution timeouts
 - Web server (OpenLiteSpeed) optimizations and static asset handling
 - Monitoring, profiling, benchmarking, and capacity planning practices
 
-SimpleStack provisions OpenLiteSpeed, PHP, MariaDB, Redis, and related services over SSH using Bash scripts executed from the WordPress admin UI. The stack is designed to be managed entirely within wp-admin without external SaaS control paths.
+Simple Stack provisions OpenLiteSpeed, PHP, MariaDB, Redis, and related services over SSH using Bash scripts executed from the WordPress admin UI. The stack is designed to be managed entirely within wp-admin without external SaaS control paths.
 
 **Section sources**
 - [README.md:1-25](file://README.md#L1-L25)
@@ -48,7 +48,7 @@ Performance-related capabilities are primarily implemented as provisioning and m
 
 ```mermaid
 graph TB
-WP["WordPress Admin"] --> SS["SimpleStack Scripts<br/>v2 wrappers"]
+WP["WordPress Admin"] --> SS["Simple Stack Scripts<br/>v2 wrappers"]
 SS --> RDS["Redis Installer/Manager"]
 SS --> MEM["Memcached Installer/Manager"]
 SS --> OLS["OpenLiteSpeed Page Cache Manager"]
@@ -291,7 +291,7 @@ The performance toolchain depends on:
 
 ```mermaid
 graph LR
-SS["SimpleStack Scripts"] --> RDS["Redis"]
+SS["Simple Stack Scripts"] --> RDS["Redis"]
 SS --> MEM["Memcached"]
 SS --> OLS["OpenLiteSpeed"]
 SS --> PHP["PHP-FPM"]
@@ -355,6 +355,6 @@ Common issues and resolutions:
 - [manage_nginx_pagecache.txt:1-9](file://includes/core/apps/wordpress-app/scripts/v2/manage_nginx_pagecache.txt#L1-L9)
 
 ## Conclusion
-SimpleStack provides a comprehensive performance optimization toolkit centered around Redis/Memcached object caching, PHP runtime tuning, and OpenLiteSpeed page caching. By leveraging these components strategically—along with CDN offloading, asset optimization, and database query improvements—you can achieve significant performance gains. Continuous monitoring, profiling, and capacity planning ensure sustained performance under varying loads.
+Simple Stack provides a comprehensive performance optimization toolkit centered around Redis/Memcached object caching, PHP runtime tuning, and OpenLiteSpeed page caching. By leveraging these components strategically—along with CDN offloading, asset optimization, and database query improvements—you can achieve significant performance gains. Continuous monitoring, profiling, and capacity planning ensure sustained performance under varying loads.
 
 [No sources needed since this section summarizes without analyzing specific files]

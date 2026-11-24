@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
-<ruleset name="SimpleStack">
-    <description>SimpleStack WordPress Coding Standards</description>
+<!-- Modified for Simple Stack by One Dog Solutions on 2026-11-23. -->
+<ruleset name="Simple Stack">
+    <description>Simple Stack WordPress Coding Standards</description>
 
     <!-- Scan all files in directory -->
     <file>./includes/core/apps/wordpress-app/rest-api</file>
@@ -24,7 +25,7 @@
     <!-- Include the WordPress-Extra standard. WPCS 3 no longer ships
          WordPress.PHP.DisallowShortTernary, so there is nothing to exclude for it.
          SeparateFunctionsFromOO is excluded because WordPress plugins conventionally pair a
-         class with a function-style accessor (WPCD(), WPCD_SERVER(), simplestack_rest_api()). -->
+         class with a function-style accessor (SSTK(), SSTK_SERVER(), sstk_rest_api()). -->
     <rule ref="WordPress-Extra">
         <exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
     </rule>

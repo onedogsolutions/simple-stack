@@ -19,7 +19,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s restore procedures for WordPress sites. It covers the complete restoration workflow, including site selection, backup validation, and step-by-step recovery. The restore sequence includes:
+This document explains Simple Stack’s restore procedures for WordPress sites. It covers the complete restoration workflow, including site selection, backup validation, and step-by-step recovery. The restore sequence includes:
 - User account recreation
 - File system restoration
 - Web server configuration recovery (Nginx or OpenLiteSpeed)
@@ -359,6 +359,6 @@ Common issues and resolutions:
 - [41-wp-backup2.txt:498-554](file://includes/core/apps/wordpress-app/scripts/v1/raw/41-wp-backup2.txt#L498-L554)
 
 ## Conclusion
-SimpleStack’s restore procedures provide robust, automated workflows for recovering WordPress sites. They handle user account recreation, filesystem restoration, web server configuration recovery, database recreation and import, permission management, object cache disabling, and automatic SSL certificate handling. With selective restoration options and timestamped backups, administrators can perform precise point-in-time recoveries while minimizing conflicts and downtime.
+Simple Stack’s restore procedures provide robust, automated workflows for recovering WordPress sites. They handle user account recreation, filesystem restoration, web server configuration recovery, database recreation and import, permission management, object cache disabling, and automatic SSL certificate handling. With selective restoration options and timestamped backups, administrators can perform precise point-in-time recoveries while minimizing conflicts and downtime.
 
 [No sources needed since this section summarizes without analyzing specific files]

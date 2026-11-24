@@ -1,16 +1,17 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Trait:
  * Contains some of the metabox related code for the server and apps cpt screens.
- * Used only by the class-wpcd-posts-app-server.php and class-wpcd-posts-app.php files which define the WPCD_POSTS_APP_SERVER and WPCD_POSTS_APP classes respectively.
+ * Used only by the class-sstk-posts-app-server.php and class-sstk-posts-app.php files which define the SSTK_POSTS_APP_SERVER and SSTK_POSTS_APP classes respectively.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 /**
- * Trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps
+ * Trait sstk_metaboxes_for_taxonomies_for_servers_and_apps
  */
-trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
+trait sstk_metaboxes_for_taxonomies_for_servers_and_apps {
 
 	/**
 	 * Group taxonomy name in use by the class.
@@ -35,17 +36,17 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	public function init_hooks_for_taxonomies_for_servers_and_apps() {
 
 		// Filter hook to add metabox for custom taxonomy.
-		add_filter( 'rwmb_meta_boxes', array( $this, 'wpcd_register_taxonomy_metaboxes' ) );
+		add_filter( 'rwmb_meta_boxes', array( $this, 'sstk_register_taxonomy_metaboxes' ) );
 
 		// Load up css and js scripts used for managing this cpt data screen.
-		add_action( 'admin_enqueue_scripts', array( $this, 'wpcd_enqueue_scripts_for_taxonomies_for_servers_and_apps' ), 10, 1 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'sstk_enqueue_scripts_for_taxonomies_for_servers_and_apps' ), 10, 1 );
 
 		// Filter hook to sort by server group or app group.
-		add_filter( 'posts_clauses', array( $this, 'wpcd_sort_group_column' ), 10, 2 );
+		add_filter( 'posts_clauses', array( $this, 'sstk_sort_group_column' ), 10, 2 );
 
 		// Action hook to add custom back to list button.
-		add_action( 'admin_footer-post.php', array( $this, 'wpcd_backtolist_btn' ) );
-		add_action( 'admin_footer-term.php', array( $this, 'wpcd_backtolist_btn' ) );
+		add_action( 'admin_footer-post.php', array( $this, 'sstk_backtolist_btn' ) );
+		add_action( 'admin_footer-term.php', array( $this, 'sstk_backtolist_btn' ) );
 	}
 
 	/**
@@ -57,7 +58,7 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	 *
 	 * @return array new array of metaboxes
 	 */
-	public function wpcd_register_taxonomy_metaboxes( $metaboxes ) {
+	public function sstk_register_taxonomy_metaboxes( $metaboxes ) {
 
 		$roles = wp_roles()->get_names();
 
@@ -66,21 +67,21 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 			'title'      => '',
 			'fields'     => array(
 				array(
-					'name' => __( 'Color', 'wpcd' ),
-					'id'   => 'wpcd_group_color',
+					'name' => __( 'Color', 'simple-stack' ),
+					'id'   => 'sstk_group_color',
 					'type' => 'color',
 				),
 				array(
-					'name' => __( 'Visible to Admins Only', 'wpcd' ),
-					'id'   => 'wpcd_only_admins',
+					'name' => __( 'Visible to Admins Only', 'simple-stack' ),
+					'id'   => 'sstk_only_admins',
 					'type' => 'checkbox',
 				),
 				array(
-					'name'            => __( 'Visible to Allowed Roles Only', 'wpcd' ),
-					'id'              => 'wpcd_roles_allowed',
+					'name'            => __( 'Visible to Allowed Roles Only', 'simple-stack' ),
+					'id'              => 'sstk_roles_allowed',
 					'type'            => 'select',
 					'multiple'        => true,
-					'placeholder'     => __( 'Select User Roles', 'wpcd' ),
+					'placeholder'     => __( 'Select User Roles', 'simple-stack' ),
 					'select_all_none' => true,
 					'options'         => $roles,
 				),
@@ -141,10 +142,10 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	 *
 	 * @return void
 	 */
-	public function wpcd_enqueue_scripts_for_taxonomies_for_servers_and_apps( $hook ) {
+	public function sstk_enqueue_scripts_for_taxonomies_for_servers_and_apps( $hook ) {
 		/**
-		 * Code that used to be in this screen was removed and placed in the wp-cloud-deploy.php file
-		 * because the css file was transformed to be used on more screens throughout WPCD.
+		 * Code that used to be in this screen was removed and placed in the simple-stack.php file
+		 * because the css file was transformed to be used on more screens throughout SSTK.
 		 */
 	}
 
@@ -163,13 +164,13 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 
 		$post_status = 'private';
 
-		if ( 'wpcd_app_server' === $post_type ) {
+		if ( 'sstk_app_server' === $post_type ) {
 			$permission = 'view_server';
-		} elseif ( 'wpcd_app' === $post_type ) {
+		} elseif ( 'sstk_app' === $post_type ) {
 			$permission = 'view_app';
 		}
 
-		$posts = wpcd_get_posts_by_permission( $permission, $post_type, $post_status );
+		$posts = sstk_get_posts_by_permission( $permission, $post_type, $post_status );
 
 		if ( ! $posts || empty( $posts ) ) {
 			return;
@@ -198,24 +199,24 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 
 			$label = $meta_value;
 
-			// Special handling for the wpcd_server_provider field / dropdown.
+			// Special handling for the sstk_server_provider field / dropdown.
 			// Need to show alternate provider text from settings if that's set.
-			if ( 'wpcd_server_provider' === $field_key ) {
-				$label = wpcd_get_early_option( "vpn_{$meta_value}_alt_desc" );
+			if ( 'sstk_server_provider' === $field_key ) {
+				$label = sstk_get_early_option( "sstk_{$meta_value}_alt_desc" );
 				if ( empty( $label ) ) {
 					$label = $meta_value;
 				}
 			}
 
 			/*
-			 * Special handling for mt parent id field (wpcd_app_mt_parent).
+			 * Special handling for mt parent id field (sstk_app_mt_parent).
 			 * @TODO: This logic is unique to the WordPress APP so should not be
 			 * here.  But duplicating this entire function just for this field
 			 * also seems just as icky.
 			 */
-			if ( 'wpcd_app' === $post_type && 'wpcd_app_mt_parent' === $field_key ) {
-				$label        = WPCD_WORDPRESS_APP()->get_domain_name( $meta_value );
-				$product_name = get_post_meta( $meta_value, 'wpcd_app_mt_template_product_name', true );
+			if ( 'sstk_app' === $post_type && 'sstk_app_mt_parent' === $field_key ) {
+				$label        = SSTK_WORDPRESS_APP()->get_domain_name( $meta_value );
+				$product_name = get_post_meta( $meta_value, 'sstk_app_mt_template_product_name', true );
 				if ( ! empty( $product_name ) ) {
 					$label = $product_name . ' / ' . $label;
 				}
@@ -277,10 +278,10 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 
 		global $wpdb;
 
-		$post_type   = 'wpcd_app_server';
+		$post_type   = 'sstk_app_server';
 		$post_status = 'private';
 
-		$servers = wpcd_get_posts_by_permission( 'view_server', $post_type, $post_status );
+		$servers = sstk_get_posts_by_permission( 'view_server', $post_type, $post_status );
 
 		if ( count( $servers ) == 0 ) {
 			return '';
@@ -295,7 +296,7 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 			return '';
 		}
 
-		$name          = is_admin() ? 'wpcd_app_server_dd' : '_wpcd_app_server_dd';
+		$name          = is_admin() ? 'sstk_app_server_dd' : '_sstk_app_server_dd';
 		$html          = '';
 		$html         .= sprintf( '<select name="%s" id="filter-by-%s">', $name, $post_type );
 		$html         .= sprintf( '<option value="">%s</option>', $first_option );
@@ -327,13 +328,13 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 
 		$post_status = 'private';
 
-		if ( 'wpcd_app_server' === $post_type ) {
+		if ( 'sstk_app_server' === $post_type ) {
 			$permission = 'view_server';
-		} elseif ( 'wpcd_app' === $post_type ) {
+		} elseif ( 'sstk_app' === $post_type ) {
 			$permission = 'view_app';
 		}
 
-		$posts = wpcd_get_posts_by_permission( $permission, $post_type, $post_status );
+		$posts = sstk_get_posts_by_permission( $permission, $post_type, $post_status );
 
 		if ( ! $posts || empty( $posts ) ) {
 			return;
@@ -353,7 +354,7 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 		if ( count( $posts ) == 0 ) {
 			return '';
 		} elseif ( count( $posts ) > 25 ) {
-			$select_class = 'wpcd_search_owner_filter custom-select custom-select-sm';
+			$select_class = 'sstk_search_owner_filter custom-select custom-select-sm';
 		}
 
 		$html          = '';
@@ -368,7 +369,7 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 			}
 			$owners[]         = $p->post_author;
 			$post_author_id   = $p->post_author;
-			$post_author_name = empty( $post_author_id ) ? __( 'No Author or Owner provided.', 'wpcd' ) : esc_html( get_user_by( 'ID', $post_author_id )->user_login );
+			$post_author_name = empty( $post_author_id ) ? __( 'No Author or Owner provided.', 'simple-stack' ) : esc_html( get_user_by( 'ID', $post_author_id )->user_login );
 			$selected         = selected( $get_field_key, $post_author_id, false );
 			$html            .= sprintf( '<option value="%d" %s>%s</option>', $post_author_id, $selected, $post_author_name );
 		}
@@ -390,7 +391,7 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 		$parents = get_posts(
 			array(
 				'posts_per_page' => -1,
-				'post_type'      => 'wpcd_app_server',
+				'post_type'      => 'sstk_app_server',
 				'post_status'    => 'private',
 				'fields'         => 'ids', // Just get IDs, not objects.
 				'meta_query'     => array(
@@ -421,7 +422,7 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	 *
 	 * @return string
 	 */
-	public function wpcd_sort_group_column( $clauses, $wp_query ) {
+	public function sstk_sort_group_column( $clauses, $wp_query ) {
 		global $wpdb;
 
 		if ( isset( $wp_query->query['orderby'] ) && $wp_query->query['orderby'] == $this->get_group_key() ) {
@@ -450,16 +451,16 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	 *
 	 * @return array
 	 */
-	public function wpcd_app_manipulate_views( $post_type, $views, $permission, $is_public_view = false ) {
+	public function sstk_app_manipulate_views( $post_type, $views, $permission, $is_public_view = false ) {
 
-		if ( ! ( is_admin() || $is_public_view ) && ! in_array( $post_type, array( 'wpcd_app_server', 'wpcd_app' ) ) ) {
+		if ( ! ( is_admin() || $is_public_view ) && ! in_array( $post_type, array( 'sstk_app_server', 'sstk_app' ) ) ) {
 			return $views;
 		}
 
-		$private_posts = wpcd_get_posts_by_permission( $permission, $post_type, 'private' );
+		$private_posts = sstk_get_posts_by_permission( $permission, $post_type, 'private' );
 		$private       = count( $private_posts );
 
-		$trash_posts = wpcd_get_posts_by_permission( $permission, $post_type, 'trash' );
+		$trash_posts = sstk_get_posts_by_permission( $permission, $post_type, 'trash' );
 		$trash       = count( $trash_posts );
 
 		$total = $private;
@@ -489,11 +490,11 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	 *
 	 * @return void
 	 */
-	public function wpcd_backtolist_btn() {
+	public function sstk_backtolist_btn() {
 		$screen         = get_current_screen();
 		$post_taxonomy  = $this->get_post_taxonomy();
 		$post_type      = str_replace( '_group', '', $post_taxonomy );
-		$backtolist_txt = __( 'Back To List', 'wpcd' );
+		$backtolist_txt = __( 'Back To List', 'simple-stack' );
 
 		if ( $screen->id == $post_type ) {
 			$query          = sprintf( 'edit.php?post_type=%s', $post_type );
@@ -523,16 +524,16 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	/**
 	 * Common code for exclude the server/app group terms.
 	 *
-	 * @param  string $wpcd_group_taxonomy wpcd_group_taxonomy.
+	 * @param  string $sstk_group_taxonomy sstk_group_taxonomy.
 	 *
 	 * @return array
 	 */
-	public function wpcd_common_code_server_app_group_metabox( $wpcd_group_taxonomy ) {
+	public function sstk_common_code_server_app_group_metabox( $sstk_group_taxonomy ) {
 
-		$wpcd_exclude_group_arr = array();
+		$sstk_exclude_group_arr = array();
 
 		$terms_arr = get_terms(
-			$wpcd_group_taxonomy,
+			$sstk_group_taxonomy,
 			array(
 				'hide_empty' => false,
 			)
@@ -541,16 +542,16 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 		if ( ! empty( $terms_arr ) ) {
 			foreach ( $terms_arr as $key => $value ) {
 				$term_id            = $value->term_id;
-				$wpcd_only_admins   = get_term_meta( $term_id, 'wpcd_only_admins' );
-				$wpcd_roles_allowed = get_term_meta( $term_id, 'wpcd_roles_allowed' );
+				$sstk_only_admins   = get_term_meta( $term_id, 'sstk_only_admins' );
+				$sstk_roles_allowed = get_term_meta( $term_id, 'sstk_roles_allowed' );
 
-				if ( ! empty( $wpcd_only_admins ) && empty( $wpcd_roles_allowed ) ) {
-					if ( $wpcd_only_admins[0] == 1 ) {
-						if ( ! wpcd_is_admin() ) {
-							$wpcd_exclude_group_arr[] = $term_id;
+				if ( ! empty( $sstk_only_admins ) && empty( $sstk_roles_allowed ) ) {
+					if ( $sstk_only_admins[0] == 1 ) {
+						if ( ! sstk_is_admin() ) {
+							$sstk_exclude_group_arr[] = $term_id;
 						}
 					}
-				} elseif ( ! empty( $wpcd_roles_allowed ) ) {
+				} elseif ( ! empty( $sstk_roles_allowed ) ) {
 					$current_user_id = get_current_user_id();
 					$user_obj        = get_user_by( 'id', $current_user_id );
 					$user_roles      = $user_obj->roles;
@@ -558,21 +559,21 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 					$role_found = 0;
 					if ( ! empty( $user_roles ) ) {
 						foreach ( $user_roles as $key_role => $value_role ) {
-							if ( in_array( $value_role, $wpcd_roles_allowed, true ) ) {
+							if ( in_array( $value_role, $sstk_roles_allowed, true ) ) {
 								$role_found = 1;
 								break;
 							}
 						}
 					}
 
-					if ( ! wpcd_is_admin() && $role_found == 0 ) {
-						$wpcd_exclude_group_arr[] = $term_id;
+					if ( ! sstk_is_admin() && $role_found == 0 ) {
+						$sstk_exclude_group_arr[] = $term_id;
 					}
 				}
 			}
 		}
 
-		return $wpcd_exclude_group_arr;
+		return $sstk_exclude_group_arr;
 
 	}
 
@@ -581,14 +582,14 @@ trait wpcd_metaboxes_for_taxonomies_for_servers_and_apps {
 	 * Exclude terms ids based on the global variables.
 	 *
 	 * @param  array $args args.
-	 * @param  array $wpcd_exclude_group wpcd_exclude_group.
+	 * @param  array $sstk_exclude_group sstk_exclude_group.
 	 *
 	 * @return array
 	 */
-	public function wpcd_exclude_term_ids_for_server_app_group( $args, $wpcd_exclude_group ) {
+	public function sstk_exclude_term_ids_for_server_app_group( $args, $sstk_exclude_group ) {
 
-		if ( ! empty( $wpcd_exclude_group ) ) {
-			$args['exclude'] = $wpcd_exclude_group;
+		if ( ! empty( $sstk_exclude_group ) ) {
+			$args['exclude'] = $sstk_exclude_group;
 			$args['orderby'] = 'id';
 			$args['order']   = 'ASC';
 		}

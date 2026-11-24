@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 class ControllerSitesTest extends WP_UnitTestCase
 {
     protected WP_REST_Server $rest;
-    protected WPCD_REST_API_Controller_Base $controller;
+    protected SSTK_REST_API_Controller_Base $controller;
     protected string $resource_route;
     protected string $resource_id_route;
     protected string $resource_name_route;
@@ -15,11 +16,11 @@ class ControllerSitesTest extends WP_UnitTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->controller = WPCD_WORDPRESS_APP()->get_rest_controller('sites');
+        $this->controller = SSTK_WORDPRESS_APP()->get_rest_controller('sites');
         $this->rest = rest_get_server();
         $this->resource_route = '/' . $this->controller->get_namespace();
         $this->resource_id_route = $this->resource_route . $this->controller::RESOURCE_ID_PATH;
-        $this->server_post_id = WPCD_SERVER()->create_server_post(['name' => 'Test Server']);
+        $this->server_post_id = SSTK_SERVER()->create_server_post(['name' => 'Test Server']);
         wp_set_current_user(1);
     }
 
@@ -29,7 +30,7 @@ class ControllerSitesTest extends WP_UnitTestCase
     function test_it_registers_rest_routes()
     {
         $routes = $this->rest->get_routes();
-        $this->assertInstanceOf(WPCD_REST_API_Controller_Sites::class, $this->controller);
+        $this->assertInstanceOf(SSTK_REST_API_Controller_Sites::class, $this->controller);
         $this->assertArrayHasKey($this->resource_route, $routes);
         $this->assertCount(2, $routes[$this->resource_route]);
         $this->assertArrayHasKey($this->resource_id_route, $routes);
@@ -45,8 +46,8 @@ class ControllerSitesTest extends WP_UnitTestCase
         $request = new WP_REST_Request('GET', $this->resource_route);
         $data = $this->rest->dispatch($request)->get_data();
         $this->assertEquals([], $data);
-        $app_post_id_1 = WPCD_POSTS_APP()->add_app( WPCD_WORDPRESS_APP()->get_app_name(), 1, 1, 'site1.com' );
-        $app_post_id_2 = WPCD_POSTS_APP()->add_app( WPCD_WORDPRESS_APP()->get_app_name(), 2, 1, 'site2.com' );
+        $app_post_id_1 = SSTK_POSTS_APP()->add_app( SSTK_WORDPRESS_APP()->get_app_name(), 1, 1, 'site1.com' );
+        $app_post_id_2 = SSTK_POSTS_APP()->add_app( SSTK_WORDPRESS_APP()->get_app_name(), 2, 1, 'site2.com' );
         $data = $this->rest->dispatch($request)->get_data();
         $this->assertEquals([
             [
@@ -68,8 +69,8 @@ class ControllerSitesTest extends WP_UnitTestCase
         $request = new WP_REST_Request('GET', $this->resource_route);
         $user_id = $this->factory()->user->create();
         $request->set_param('user_id', $user_id);
-        WPCD_POSTS_APP()->add_app( WPCD_WORDPRESS_APP()->get_app_name(), 1, 1, 'site1.com' );
-        $app_post_id_2 = WPCD_POSTS_APP()->add_app( WPCD_WORDPRESS_APP()->get_app_name(), 1, $user_id, 'site2.com' );
+        SSTK_POSTS_APP()->add_app( SSTK_WORDPRESS_APP()->get_app_name(), 1, 1, 'site1.com' );
+        $app_post_id_2 = SSTK_POSTS_APP()->add_app( SSTK_WORDPRESS_APP()->get_app_name(), 1, $user_id, 'site2.com' );
         $data = $this->rest->dispatch($request)->get_data();
         $this->assertEquals([
             [
@@ -86,8 +87,8 @@ class ControllerSitesTest extends WP_UnitTestCase
     {
         $request = new WP_REST_Request('GET', $this->resource_route);
         $request->set_param('server_id', 2);
-        WPCD_POSTS_APP()->add_app( WPCD_WORDPRESS_APP()->get_app_name(), 1, 1, 'site1.com' );
-        $app_post_id_2 = WPCD_POSTS_APP()->add_app( WPCD_WORDPRESS_APP()->get_app_name(), 2, 1, 'site2.com' );
+        SSTK_POSTS_APP()->add_app( SSTK_WORDPRESS_APP()->get_app_name(), 1, 1, 'site1.com' );
+        $app_post_id_2 = SSTK_POSTS_APP()->add_app( SSTK_WORDPRESS_APP()->get_app_name(), 2, 1, 'site2.com' );
         $data = $this->rest->dispatch($request)->get_data();
         $this->assertEquals([
             [
@@ -104,7 +105,7 @@ class ControllerSitesTest extends WP_UnitTestCase
     {
         $list_request = new WP_REST_Request('GET', $this->resource_route);
         $sites = $this->rest->dispatch($list_request)->get_data();
-        $tasks = get_posts(['post_type' => 'wpcd_pending_log', 'post_status' => 'private']);
+        $tasks = get_posts(['post_type' => 'sstk_pending_log', 'post_status' => 'private']);
         $this->assertEmpty($sites);
         $this->assertEmpty($tasks);
         $request = new WP_REST_Request('POST', $this->resource_route);
@@ -119,7 +120,7 @@ class ControllerSitesTest extends WP_UnitTestCase
         $this->assertWPError($this->rest->dispatch($request)->as_error());
         $request->set_param('wp_password', 'password');
         $data = $this->rest->dispatch($request)->get_data();
-        $tasks = get_posts(['post_type' => 'wpcd_pending_log', 'post_status' => 'private', 'post_author' => 1]);
+        $tasks = get_posts(['post_type' => 'sstk_pending_log', 'post_status' => 'private', 'post_author' => 1]);
         $this->assertCount(1, $tasks);
         $this->assertEquals(['task_id' => $tasks[0]->ID], $data);
     }
@@ -201,7 +202,7 @@ class ControllerSitesTest extends WP_UnitTestCase
      */
     protected function create_site()
     {
-        $site_id = WPCD_WORDPRESS_APP()->add_wp_app_post(
+        $site_id = SSTK_WORDPRESS_APP()->add_wp_app_post(
             $this->server_post_id,
             ['server_id' => $this->server_post_id, 'wp_domain' => 'site1.com', 'wp_password' => 'password'],
             []
@@ -214,10 +215,10 @@ class ControllerSitesTest extends WP_UnitTestCase
      */
     protected function create_test_provider($key = 'test')
     {
-        require_once dirname(dirname(__DIR__)) . '/data/class-wpcd-cloud-provider-test.php';
-        WPCD()->classes['wpcd_vpn_api_provider_' . $key] = new WPCD_Cloud_Provider_Test();
-        update_post_meta($this->server_post_id, 'wpcd_server_provider', $key);
-        update_post_meta($this->server_post_id, 'wpcd_server_provider_instance_id', '12345');
+        require_once dirname(dirname(__DIR__)) . '/data/class-sstk-cloud-provider-test.php';
+        SSTK()->classes['sstk_api_provider_' . $key] = new SSTK_Cloud_Provider_Test();
+        update_post_meta($this->server_post_id, 'sstk_server_provider', $key);
+        update_post_meta($this->server_post_id, 'sstk_server_provider_instance_id', '12345');
         return $this->server_post_id;
     }
 
@@ -236,6 +237,6 @@ class ControllerSitesTest extends WP_UnitTestCase
             'ip' => '127.0.0.1'
         ]);
         $mock->method('exec')->willReturn($return_message);
-        WPCD()->classes['wpcd_wordpress_ssh'] = $mock;
+        SSTK()->classes['sstk_wordpress_ssh'] = $mock;
     }
 }

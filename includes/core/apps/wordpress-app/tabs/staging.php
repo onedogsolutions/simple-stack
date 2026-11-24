@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Clone site tab.
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,35 +11,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class WPCD_WORDPRESS_TABS_CLONE_SITE
+ * Class SSTK_WORDPRESS_TABS_CLONE_SITE
  */
-class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
+class SSTK_WORDPRESS_TABS_STAGING extends SSTK_WORDPRESS_TABS {
 
 	/**
-	 * WPCD_WORDPRESS_TABS_BACKUP constructor.
+	 * SSTK_WORDPRESS_TABS_BACKUP constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
-		add_filter( "wpcd_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
-		/* add_filter( 'wpcd_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabnames", array( $this, 'get_tab' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_get_tabs", array( $this, 'get_fields' ), 10, 2 );
+		add_filter( "sstk_app_{$this->get_app_name()}_tab_action", array( $this, 'tab_action' ), 10, 3 );
+		/* add_filter( 'sstk_is_ssh_successful', array( $this, 'was_ssh_successful' ), 10, 5 ); */
 
-		add_action( "wpcd_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
+		add_action( "sstk_command_{$this->get_app_name()}_completed", array( $this, 'command_completed' ), 10, 2 );
 
 	}
 
 	/**
 	 * Called when a command completes.
 	 *
-	 * Action Hook: wpcd_command_{$this->get_app_name()}_completed
+	 * Action Hook: sstk_command_{$this->get_app_name()}_completed
 	 *
 	 * @param int    $id     The postID of the server cpt.
 	 * @param string $name   The name of the command.
 	 */
 	public function command_completed( $id, $name ) {
 
-		if ( get_post_type( $id ) !== 'wpcd_app' ) {
+		if ( get_post_type( $id ) !== 'sstk_app' ) {
 			return;
 		}
 
@@ -59,9 +60,6 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 			$success = $this->is_ssh_successful( $logs, 'clone_site.txt' );
 
 			if ( true == $success ) {
-
-				// Get Webserver Type.
-				$webserver_type = $this->get_web_server_type( $id );
 
 				// get new domain from temporary meta.
 				$new_domain = get_post_meta( $id, 'wpapp_domain_clone_site_target_domain', true );
@@ -101,7 +99,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 
 							// Update the new record to make sure it belongs to the same team(s).
 							// @TODO: Only the first team is copied.  If the site has more than one team, only the first one is copied over.
-							update_post_meta( $new_app_post_id, 'wpcd_assigned_teams', get_post_meta( $id, 'wpcd_assigned_teams', true ) );
+							update_post_meta( $new_app_post_id, 'sstk_assigned_teams', get_post_meta( $id, 'sstk_assigned_teams', true ) );
 
 							// Was SSL enabled for the cloned site?  If so, flip the SSL metavalues.
 							$this->set_ssl_status( $new_app_post_id, 'off' ); // Assume off for now.
@@ -131,26 +129,13 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 							}
 
 							/*
-							 *** Note: 6G/7G Flags and http auth status flags are not copied here.
+							 *** Note: 7G flags and http auth status flags are not copied here.
 							 * This is because the clone bash script creates new vhost configuration files instead
 							 * of copying from the original site.
 							 */
 
-							// Update the PHP version to match the original version.
-							// This only changes the metas. In the future we might want to run the script to change the PHP version.
-							// In that case, look to the site-sync tab for how that should be done. It's a bit tricky.
-							switch ( $webserver_type ) {
-								case 'ols':
-								case 'ols-enterprise':
-									$this->set_php_version_for_app( $new_app_post_id, $this->get_wpapp_default_php_version() );
-									break;
-
-								case 'nginx':
-								default:
-									$this->set_php_version_for_app( $new_app_post_id, $this->get_php_version_for_app( $id ) );
-									break;
-							}
-
+							// New OpenLiteSpeed vhosts use the default PHP version.
+							$this->set_php_version_for_app( $new_app_post_id, $this->get_wpapp_default_php_version() );
 							// Make sure we tag the new site as a staging site.
 							update_post_meta( $new_app_post_id, 'wpapp_is_staging', 1 );
 
@@ -166,7 +151,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 							update_post_meta( $new_app_post_id, 'wpapp_cloned_from_id', $id );
 
 							// Wrapup - let things hook in here - primarily the multisite add-on.
-							do_action( "wpcd_{$this->get_app_name()}_site_staging_new_post_completed", $new_app_post_id, $id, $name );
+							do_action( "sstk_{$this->get_app_name()}_site_staging_new_post_completed", $new_app_post_id, $id, $name );
 
 						}
 					}
@@ -179,9 +164,9 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		}
 
 		// remove the 'temporary' meta so that another attempt will run if necessary.
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_status" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action" );
-		delete_post_meta( $id, "wpcd_app_{$this->get_app_name()}_action_args" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_status" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action" );
+		delete_post_meta( $id, "sstk_app_{$this->get_app_name()}_action_args" );
 
 	}
 
@@ -210,7 +195,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 	public function get_tab( $tabs, $id ) {
 		if ( $this->get_tab_security( $id ) ) {
 			$tabs[ $this->get_tab_slug() ] = array(
-				'label' => __( 'Staging', 'wpcd' ),
+				'label' => __( 'Staging', 'simple-stack' ),
 				'icon'  => 'fad fa-folders',
 			);
 		}
@@ -226,11 +211,11 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 	 */
 	public function get_tab_security( $id ) {
 		// If admin has an admin lock in place and the user is not admin they cannot view the tab or perform actions on them.
-		if ( $this->get_admin_lock_status( $id ) && ! wpcd_is_admin() ) {
+		if ( $this->get_admin_lock_status( $id ) && ! sstk_is_admin() ) {
 			return false;
 		}
 		// If we got here then check team and other permissions.
-		return ( true === $this->wpcd_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->wpcd_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
+		return ( true === $this->sstk_wpapp_site_user_can( $this->get_view_tab_team_permission_slug(), $id ) && true === $this->sstk_can_author_view_site_tab( $id, $this->get_tab_slug() ) );
 	}
 
 	/**
@@ -245,15 +230,15 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 	public function tab_action( $result, $action, $id ) {
 
 		/* Verify that the user is even allowed to view the app before proceeding to do anything else */
-		if ( ! $this->wpcd_user_can_view_wp_app( $id ) ) {
-			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+		if ( ! $this->sstk_user_can_view_wp_app( $id ) ) {
+			return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 		}
 
 		/* Now verify that the user can perform actions on this screen, assuming that they can view the server */
 		$valid_actions = array( 'create-staging-site', 'copy-to-live' );
 		if ( in_array( $action, $valid_actions, true ) ) {
 			if ( ! $this->get_tab_security( $id ) ) {
-				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'wpcd' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
+				return new \WP_Error( sprintf( __( 'You are not allowed to perform this action - permissions check has failed for action %1$s in file %2$s for post %3$s by user %4$s', 'simple-stack' ), $action, basename( __FILE__ ), $id, get_current_user_id() ) );
 			}
 		}
 
@@ -290,7 +275,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		// Trigger an action hook to delete any existing staging site (if any).
 		$staging_site_id = $this->get_companion_staging_site_id( $id );
 		if ( ! empty( $staging_site_id ) ) {
-			do_action( 'wpcd_app_delete_wp_site', $staging_site_id, 'remove_full' );
+			do_action( 'sstk_app_delete_wp_site', $staging_site_id, 'remove_full' );
 
 			// Update the metas on this site to remove the staging site info.
 			update_post_meta( $id, 'wpapp_staging_domain', '' );
@@ -300,7 +285,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		// Bail if certain things are empty...
 		$new_domain = $this->get_staging_domain( $id, $args );
 		if ( empty( $new_domain ) ) {
-			return new \WP_Error( __( 'We were unable to obtain a staging domain name.', 'wpcd' ) );
+			return new \WP_Error( __( 'We were unable to obtain a staging domain name.', 'simple-stack' ) );
 		} else {
 			$args['new_domain'] = $new_domain;
 		}
@@ -310,7 +295,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// sanitize the fields to allow them to be used safely on the bash command line.
@@ -344,10 +329,10 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		// 1. What's the server post id?
 		$server_id = $this->get_server_id_by_app_id( $id );
 		// 2. What's the IP of the server?
-		$ipv4 = WPCD_SERVER()->get_ipv4_address( $server_id );
-		$ipv6 = WPCD_SERVER()->get_ipv6_address( $server_id );
+		$ipv4 = SSTK_SERVER()->get_ipv4_address( $server_id );
+		$ipv6 = SSTK_SERVER()->get_ipv6_address( $server_id );
 		// 3. Add the DNS
-		$dns_success = WPCD_DNS()->set_dns_for_domain( $new_domain, $ipv4, $ipv6 );
+		$dns_success = SSTK_DNS()->set_dns_for_domain( $new_domain, $ipv4, $ipv6 );
 
 		// Setup unique command name.
 		$command             = sprintf( '%s---%s---%d', $action, $domain, time() );
@@ -370,7 +355,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		// Stamp some data we'll need later (in the command_completed function) onto the app records.
@@ -379,7 +364,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -420,10 +405,10 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 
 		// Bail if certain things are empty...
 		if ( empty( $args['target_domain'] ) ) {
-			return new \WP_Error( __( 'The target domain must be provided', 'wpcd' ) );
+			return new \WP_Error( __( 'The target domain must be provided', 'simple-stack' ) );
 		} else {
 			$target_domain         = strtolower( sanitize_text_field( $args['target_domain'] ) );
-			$target_domain         = wpcd_clean_domain( $target_domain );
+			$target_domain         = sstk_clean_domain( $target_domain );
 			$args['target_domain'] = $target_domain;
 		}
 
@@ -433,7 +418,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		// Bail if error.
 		if ( is_wp_error( $instance ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		// Get the domain we're working on.
@@ -474,13 +459,13 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		// double-check just in case of errors.
 		if ( empty( $run_cmd ) || is_wp_error( $run_cmd ) ) {
 			/* Translators: %s is an internal action name. */
-			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Something went wrong - we are unable to construct a proper command for this action - %s', 'simple-stack' ), $action ) );
 		}
 
 		/**
 		 * Run the constructed command
 		 * Check out the write up about the different aysnc methods we use
-		 * here: https://wpclouddeploy.com/documentation/wpcloud-deploy-dev-notes/ssh-execution-models/
+		 * here: https://github.com/onedogsolutions/simple-stack/blob/main/docs/SIMPLESTACK.md#4-provisioning-scripts
 		 */
 		$return = $this->run_async_command_type_2( $id, $command, $run_cmd, $instance, $action );
 
@@ -501,7 +486,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		if ( ! empty( $args['new_domain'] ) ) {
 
 			$new_domain = strtolower( sanitize_text_field( $args['new_domain'] ) );
-			$new_domain = wpcd_clean_domain( $new_domain );
+			$new_domain = sstk_clean_domain( $new_domain );
 			$domain     = $new_domain;
 
 		}
@@ -521,7 +506,7 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		 * If we still need a domain name, get it from our default DNS provider.
 		 */
 		if ( empty( $domain ) ) {
-			$domain = WPCD_DNS()->get_full_temp_domain();
+			$domain = SSTK_DNS()->get_full_temp_domain();
 		}
 
 		return $domain;
@@ -555,28 +540,9 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		// If the number of sites allowed on the server have been exceeded we will not show the staging buttons.
 		// BUT, if a staging site already exists, we have to show the buttons so that the site can be pushed back and forth between staging and production.
 		if ( ! $this->is_staging_site( $id ) && empty( $this->get_companion_staging_site_domain( $id ) ) ) {
-			if ( $this->get_has_server_exceeded_sites_allowed( $id ) && ! wpcd_is_admin() ) {
+			if ( $this->get_has_server_exceeded_sites_allowed( $id ) && ! sstk_is_admin() ) {
 				return array_merge( $fields, $this->get_max_sites_exceeded_header_field( 'staging' ) );
 			}
-		}
-
-		/* What type of web server are we running? */
-		$webserver_type = $this->get_web_server_type( $id );
-
-		// Get HTTP2 status since we cannot clone a site with HTTP2 turned on.
-		$http2_status = $this->http2_status( $id );
-		if ( 'on' === $http2_status && 'nginx' === $webserver_type ) {
-			$desc = __( 'You cannot clone this site at this time because HTTP2 is enabled. Please disable it before attempting this operation.', 'wpcd' );
-
-			$fields[] = array(
-				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_duplicate_icon( __( '%s Staging', 'wpcd' ) ),
-				'tab'  => 'staging',
-				'type' => 'heading',
-				'desc' => $desc,
-			);
-
-			return $fields;
 		}
 
 		// Grab var to see if this is already a staging site.
@@ -585,10 +551,10 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 		if ( true === $is_staging ) {
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			// This is a staging site so only show options that allow it to be pushed back to live.
-			$desc = __( 'Push this site to live.', 'wpcd' );
+			$desc = __( 'Push this site to live.', 'simple-stack' );
 
 			// Variable that contains the domain for the live site.
 			$live_domain = $this->get_live_domain_for_staging_site( $id );
@@ -596,67 +562,67 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 			if ( ! empty( $live_domain ) ) {
 				$desc .= '<br />';
 				/* Translators: %s: The domain of the live site. */
-				$desc .= sprintf( __( 'The live domain associated with this staging site is: %s.', 'wpcd' ), '<b>' . $live_domain . '</b>' );
+				$desc .= sprintf( __( 'The live domain associated with this staging site is: %s.', 'simple-stack' ), '<b>' . $live_domain . '</b>' );
 			}
 
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_duplicate_icon( __( '%s Staging', 'wpcd' ) ),
+				'name' => sstk_apply_duplicate_icon( __( '%s Staging', 'simple-stack' ) ),
 				'tab'  => 'staging',
 				'type' => 'heading',
 				'desc' => $desc,
 			);
 
 			$fields[] = array(
-				'id'         => 'wpcd_app_staging_site',
+				'id'         => 'sstk_app_staging_site',
 				'name'       => '',
 				'tab'        => 'staging',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => wpcd_apply_duplicate_icon( __( '%s Push To Live', 'wpcd' ) ),
+				'std'        => sstk_apply_duplicate_icon( __( '%s Push To Live', 'simple-stack' ) ),
 				'desc'       => '',
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'copy-to-live',
+					'data-sstk-action'              => 'copy-to-live',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// fields that contribute data for this action.
-					// 'data-wpcd-fields'              => json_encode( array( '#wpcd_app_clone_site_domain_new_domain' ) ),
+					// 'data-sstk-fields'              => json_encode( array( '#sstk_app_clone_site_domain_new_domain' ) ),
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => __( 'Are you sure you would like to overwrite your live site?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => __( 'Are you sure you would like to overwrite your live site?', 'simple-stack' ),
 					// show log console?
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to push this site to staging...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to push this site to staging...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 		} else {
 
 			// Start new card.
-			$fields[] = wpcd_start_half_card( $this->get_tab_slug() );
+			$fields[] = sstk_start_half_card( $this->get_tab_slug() );
 
 			// We got here so ok to show fields related to cloning the site to staging.
-			$desc = __( 'This function allows you to make a copy of this site for development, testing and trouble-shooting.', 'wpcd' );
-			$desc = sprintf( '<details>%s %s</details>', wpcd_get_html5_detail_element_summary_text(), $desc );
+			$desc = __( 'This function allows you to make a copy of this site for development, testing and trouble-shooting.', 'simple-stack' );
+			$desc = sprintf( '<details>%s %s</details>', sstk_get_html5_detail_element_summary_text(), $desc );
 
 			// Variable that indicates if an existing staging site has already been created.
 			$existing_staging_site = $this->get_companion_staging_site_domain( $id );
 
 			if ( ! empty( $existing_staging_site ) ) {
 				/* Translators: %s: The domain of the companion staging site. */
-				$desc  = sprintf( __( 'A companion staging site already exists at: %s.', 'wpcd' ), '<b>' . $existing_staging_site . '</b>' );
+				$desc  = sprintf( __( 'A companion staging site already exists at: %s.', 'simple-stack' ), '<b>' . $existing_staging_site . '</b>' );
 				$desc .= '<br />';
-				$desc .= __( 'If you create a new staging site, the old one will be deleted.', 'wpcd' );
+				$desc .= __( 'If you create a new staging site, the old one will be deleted.', 'simple-stack' );
 			}
 
 			$fields[] = array(
 				/* Translators: %s is a fontawesome or similar icon. */
-				'name' => wpcd_apply_duplicate_icon( __( '%s Staging', 'wpcd' ) ),
+				'name' => sstk_apply_duplicate_icon( __( '%s Staging', 'simple-stack' ) ),
 				'tab'  => 'staging',
 				'type' => 'heading',
 				'desc' => $desc,
@@ -664,36 +630,36 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 
 			$staging_desc = '';
 			if ( 'yes' === $this->is_remote_db( $id ) ) {
-				$staging_desc .= '<b>' . __( 'Warning: This site appears to be using a remote database server.  The server on which this site resides should have a local database server since the database server will be switched to localhost for staging operations.', 'wpcd' ) . '</b>';
+				$staging_desc .= '<b>' . __( 'Warning: This site appears to be using a remote database server.  The server on which this site resides should have a local database server since the database server will be switched to localhost for staging operations.', 'simple-stack' ) . '</b>';
 			}
 			$fields[] = array(
-				'id'         => 'wpcd_app_staging_site',
+				'id'         => 'sstk_app_staging_site',
 				'name'       => '',
 				'tab'        => 'staging',
 				'type'       => 'button',
 				/* Translators: %s is a fontawesome or similar icon. */
-				'std'        => (bool) $existing_staging_site ? wpcd_apply_duplicate_icon( __( '%s Create a New Staging Site', 'wpcd' ) ) : wpcd_apply_duplicate_icon( __( '%s Create Staging Site', 'wpcd' ) ),
+				'std'        => (bool) $existing_staging_site ? sstk_apply_duplicate_icon( __( '%s Create a New Staging Site', 'simple-stack' ) ) : sstk_apply_duplicate_icon( __( '%s Create Staging Site', 'simple-stack' ) ),
 				'desc'       => $staging_desc,
 				'attributes' => array(
 					// the _action that will be called in ajax.
-					'data-wpcd-action'              => 'create-staging-site',
+					'data-sstk-action'              => 'create-staging-site',
 					// the id.
-					'data-wpcd-id'                  => $id,
+					'data-sstk-id'                  => $id,
 					// fields that contribute data for this action.
-					// 'data-wpcd-fields'              => json_encode( array( '#wpcd_app_clone_site_domain_new_domain' ) ),
+					// 'data-sstk-fields'              => json_encode( array( '#sstk_app_clone_site_domain_new_domain' ) ),
 					// make sure we give the user a confirmation prompt.
-					'data-wpcd-confirmation-prompt' => (bool) $existing_staging_site ? __( 'Are you sure you would like to overwrite your existing staging site?', 'wpcd' ) : __( 'Are you sure you would like to create a new staging site?', 'wpcd' ),
+					'data-sstk-confirmation-prompt' => (bool) $existing_staging_site ? __( 'Are you sure you would like to overwrite your existing staging site?', 'simple-stack' ) : __( 'Are you sure you would like to create a new staging site?', 'simple-stack' ),
 					// show log console?
 					'data-show-log-console'         => true,
 					// Initial console message.
-					'data-initial-console-message'  => __( 'Preparing to push this site to staging...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'wpcd' ),
+					'data-initial-console-message'  => __( 'Preparing to push this site to staging...<br /> Please DO NOT EXIT this screen until you see a popup message indicating that the operation has completed or has errored.<br />This terminal should refresh every 60-90 seconds with updated progress information from the server. <br /> After the operation is complete the entire log can be viewed in the COMMAND LOG screen.', 'simple-stack' ),
 				),
-				'class'      => 'wpcd_app_action',
+				'class'      => 'sstk_app_action',
 				'save_field' => false,
 			);
 
 			// Close up prior card.
-			$fields[] = wpcd_end_card( $this->get_tab_slug() );
+			$fields[] = sstk_end_card( $this->get_tab_slug() );
 
 		}
 
@@ -703,4 +669,4 @@ class WPCD_WORDPRESS_TABS_STAGING extends WPCD_WORDPRESS_TABS {
 
 }
 
-new WPCD_WORDPRESS_TABS_STAGING();
+new SSTK_WORDPRESS_TABS_STAGING();

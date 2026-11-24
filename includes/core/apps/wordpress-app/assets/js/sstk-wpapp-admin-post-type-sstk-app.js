@@ -1,3 +1,4 @@
+/* Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /*
  * This JS file is loaded for the WordPress APP wp-admin APPS listing screen screen.
  * It currently handles the following actions:
@@ -22,17 +23,17 @@
 
         // add a custom INSTALL WORDPRESS button
         if (params.user_can_manage_servers) {
-            $('.wp-heading-inline').append($('<a href="' + params.install_wpapp_url + '" class="wpcd-wp-install page-title-action" target="_blank">' + params.i10n.install_wpapp + '</a>'));
+            $('.wp-heading-inline').append($('<a href="' + params.install_wpapp_url + '" class="sstk-wp-install page-title-action" target="_blank">' + params.i10n.install_wpapp + '</a>'));
         }
 
         // Passwordless login (one-click login)
-        $('body').on('click', '.wpcd_action_passwordless_login', function(e) {
+        $('body').on('click', '.sstk_action_passwordless_login', function(e) {
 
             e.preventDefault();
 
-            // What app are we working with?  It's in the link attribute 'data-wpcd-id'.
-            var id = $(this).attr('data-wpcd-id');
-            var wpcd_domain = $(this).attr('data-wpcd-domain');
+            // What app are we working with?  It's in the link attribute 'data-sstk-id'.
+            var id = $(this).attr('data-sstk-id');
+            var sstk_domain = $(this).attr('data-sstk-domain');
 
             // Setup form data as necessary
             var formData = new FormData();
@@ -40,11 +41,11 @@
             formData.append('_action', params.passwordless_login_action);
             formData.append('nonce', params.nonce);
             formData.append('id', id);
-            formData.append('domain', wpcd_domain);
+            formData.append('domain', sstk_domain);
             formData.append('params', '');
 
             // Are we on the front it?  Need this flag to help determine how to "lock" the screen with the spinner.
-            var is_public = $('#wpcd_public_wrapper').length == 1;
+            var is_public = $('#sstk_public_wrapper').length == 1;
 
             // Used for the 'spinner'
             var $lock = is_public ? $('body') : $(this).parents('#wpbody-content');
@@ -77,11 +78,11 @@
         // End passwordless login.
 
         // Remove A WordPress Site.
-        $('body').on('click', '.wpcd_action_remove_site', function(e) {
+        $('body').on('click', '.sstk_action_remove_site', function(e) {
 
             e.preventDefault();
 
-            var id = $(this).attr('data-wpcd-id');
+            var id = $(this).attr('data-sstk-id');
 
             if (confirm(params.i10n.remove_site_prompt)) {
                 // Setup form data as necessary
@@ -93,7 +94,7 @@
                 formData.append('params', '');
                 
                 // Are we on the front it?  Need this flag to help determine how to "lock" the screen with the spinner.
-                var is_public = $('#wpcd_public_wrapper').length == 1;
+                var is_public = $('#sstk_public_wrapper').length == 1;
                 
                 // Used for the 'spinner'
                 var $lock = is_public ? $('body') : $(this).parents('#wpbody-content');
@@ -116,7 +117,7 @@
                             if (data.data.result.msg) {
                                 alert(data.data.result.msg);
                             }
-                            var redirect_url = is_public ? wpcd_wpapp_params.apps_list_page_url : params.redirect;
+                            var redirect_url = is_public ? sstk_wpapp_params.apps_list_page_url : params.redirect;
                             location.href = redirect_url;
                         }
                     },
@@ -133,11 +134,11 @@
         });
 
         // Confirm alert display when performing a bulk action on the site list screen.
-        // This code is mostly a duplicate of that in wpcd-wpapp-server-admin.js.
+        // This code is mostly a duplicate of that in sstk-wpapp-server-admin.js.
         // If it changes here it might need to be changed there as well.
         $('#doaction').click(function() {
             var selected_action = $("#bulk-action-selector-top option:selected").val();
-            var valid_actions = ['wpcd_sites_update_themes_and_plugins', 'wpcd_sites_update_allthemes', 'wpcd_sites_update_allplugins', 'wpcd_sites_update_wordpress', 'wpcd_sites_update_everything'];
+            var valid_actions = ['sstk_sites_update_themes_and_plugins', 'sstk_sites_update_allthemes', 'sstk_sites_update_allplugins', 'sstk_sites_update_wordpress', 'sstk_sites_update_everything'];
             if (valid_actions.indexOf(selected_action) >= 0) {
                 var confirm_res = confirm(params.bulk_actions_confirm);
                 if (!confirm_res) {

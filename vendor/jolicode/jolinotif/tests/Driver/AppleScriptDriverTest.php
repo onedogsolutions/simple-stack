@@ -1,0 +1,108 @@
+<?php
+
+/*
+ * This file is part of the JoliNotif project.
+ *
+ * (c) Loïck Piera <pyrech@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Joli\JoliNotif\tests\Driver;
+
+use Joli\JoliNotif\Driver\AppleScriptDriver;
+use Joli\JoliNotif\Driver\DriverInterface;
+use Joli\JoliNotif\Notification;
+use JoliCode\PhpOsHelper\OsHelper;
+use Psr\Log\NullLogger;
+
+class AppleScriptDriverTest extends AbstractDriverTestCase
+{
+    use AbstractCliBasedDriverTestTrait;
+
+    private const BINARY = 'osascript';
+
+    public function testIsSupported(): void
+    {
+        $driver = $this->getDriver();
+
+        if (OsHelper::isMacOS() && version_compare(OsHelper::getMacOSVersion(), '10.9.0', '>=')) {
+            $this->assertTrue($driver->isSupported());
+        } else {
+            $this->assertFalse($driver->isSupported());
+        }
+    }
+
+    public function testGetBinary(): void
+    {
+        $driver = $this->getDriver();
+
+        $this->assertSame(self::BINARY, $driver->getBinary());
+    }
+
+    public function testGetPriority(): void
+    {
+        $driver = $this->getDriver();
+
+        $this->assertSame(DriverInterface::PRIORITY_LOW, $driver->getPriority());
+    }
+
+    public function testItEscapesBackslashesAndQuotes(): void
+    {
+        $notification = (new Notification())
+            ->setBody('a\" & (do shell script "id") & "')
+        ;
+
+        $arguments = $this->getCommandLineArguments($this->getDriver(), $notification);
+
+        $this->assertSame('display notification "a\\\\\" & (do shell script \"id\") & \""', $arguments[1]);
+    }
+
+    protected function getDriver(): AppleScriptDriver
+    {
+        return new AppleScriptDriver(new NullLogger());
+    }
+
+    protected static function getExpectedCommandLineForNotification(): string
+    {
+        return <<<'CLI'
+            'osascript' '-e' 'display notification "I'\''m the notification body"'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithATitle(): string
+    {
+        return <<<'CLI'
+            'osascript' '-e' 'display notification "I'\''m the notification body" with title "I'\''m the notification title"'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithASubtitle(): string
+    {
+        return <<<'CLI'
+            'osascript' '-e' 'display notification "I'\''m the notification body" subtitle "I'\''m the notification subtitle"'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithASound(): string
+    {
+        return <<<'CLI'
+            'osascript' '-e' 'display notification "I'\''m the notification body" sound name "Frog"'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithAnIcon(): string
+    {
+        return <<<'CLI'
+            'osascript' '-e' 'display notification "I'\''m the notification body"'
+            CLI;
+    }
+
+    protected static function getExpectedCommandLineForNotificationWithAllOptions(): string
+    {
+        return <<<'CLI'
+            'osascript' '-e' 'display notification "I'\''m the notification body" with title "I'\''m the notification title" subtitle "I'\''m the notification subtitle" sound name "Frog"'
+            CLI;
+    }
+}

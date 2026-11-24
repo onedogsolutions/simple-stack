@@ -1,1 +1,1 @@
-Root of the SimpleStack WordPress plugin — a fork of WPCD that bootstraps the core engine, mounts the /simple-stack/v1 REST API, and wires the React admin dashboard, bundled Meta Box dependencies, static assets, and test suite.
+Root of the Simple Stack WordPress plugin — a fork of SSTK that bootstraps the core engine, mounts the /simple-stack/v1 REST API, and wires the React admin dashboard, bundled Meta Box dependencies, static assets, and test suite.

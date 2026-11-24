@@ -1,1 +1,1 @@
-New server/site operations are added by dropping a numbered `.txt` script into both `scripts/v1/` and `scripts/v2/` (keeping them in sync), then wiring the tab action or REST controller to invoke it via the shared script-handlers trait.
+New server or site operations are added to the fixed `scripts/v2/` tree: create the numbered raw script and command wrapper, document the action and variables in `raw/environment variables.txt`, then wire the tab action or REST controller through the shared script-handlers trait.

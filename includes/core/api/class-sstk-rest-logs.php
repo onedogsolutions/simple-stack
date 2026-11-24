@@ -1,8 +1,10 @@
 <?php
 /**
- * SimpleStack REST controller for command, SSH and error logs.
+ * Modified for Simple Stack by One Dog Solutions on 2026-11-23.
  *
- * @package wpcd
+ * Simple Stack REST controller for command, SSH and error logs.
+ *
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,13 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class SimpleStack_REST_Logs
+ * Class SSTK_REST_Logs
  *
  * Feeds the live log drawer and the activity feed. Both routes are read-only and
  * every payload is passed through the secret redactor, because command output is
  * the most likely place for a password to appear by accident.
  */
-class SimpleStack_REST_Logs extends SimpleStack_REST_Controller_Base {
+class SSTK_REST_Logs extends SSTK_REST_Controller_Base {
 
 	/**
 	 * Route segment owned by this controller.
@@ -31,9 +33,9 @@ class SimpleStack_REST_Logs extends SimpleStack_REST_Controller_Base {
 	 * @var array
 	 */
 	protected $log_types = array(
-		'command' => 'wpcd_command_log',
-		'ssh'     => 'wpcd_ssh_log',
-		'error'   => 'wpcd_error_log',
+		'command' => 'sstk_command_log',
+		'ssh'     => 'sstk_ssh_log',
+		'error'   => 'sstk_error_log',
 	);
 
 	/**
@@ -48,9 +50,9 @@ class SimpleStack_REST_Logs extends SimpleStack_REST_Controller_Base {
 			'server_logs',
 			array(
 				'id'    => $this->arg_id(),
-				'type'  => $this->arg_string( __( 'Which log stream to read.', 'wpcd' ), false, array( 'all', 'command', 'ssh', 'error' ), 'all' ),
-				'since' => $this->arg_string( __( 'Only return entries dated after this ISO8601 timestamp.', 'wpcd' ) ),
-				'limit' => $this->arg_int( __( 'Maximum number of entries to return.', 'wpcd' ), false, 1, 200, 50 ),
+				'type'  => $this->arg_string( __( 'Which log stream to read.', 'simple-stack' ), false, array( 'all', 'command', 'ssh', 'error' ), 'all' ),
+				'since' => $this->arg_string( __( 'Only return entries dated after this ISO8601 timestamp.', 'simple-stack' ) ),
+				'limit' => $this->arg_int( __( 'Maximum number of entries to return.', 'simple-stack' ), false, 1, 200, 50 ),
 			)
 		);
 
@@ -58,8 +60,8 @@ class SimpleStack_REST_Logs extends SimpleStack_REST_Controller_Base {
 			'activity',
 			'activity',
 			array(
-				'limit'     => $this->arg_int( __( 'Maximum number of entries to return.', 'wpcd' ), false, 1, 200, 50 ),
-				'server_id' => $this->arg_int( __( 'Restrict the feed to one server.', 'wpcd' ), false, 1 ),
+				'limit'     => $this->arg_int( __( 'Maximum number of entries to return.', 'simple-stack' ), false, 1, 200, 50 ),
+				'server_id' => $this->arg_int( __( 'Restrict the feed to one server.', 'simple-stack' ), false, 1 ),
 			)
 		);
 	}
@@ -78,8 +80,8 @@ class SimpleStack_REST_Logs extends SimpleStack_REST_Controller_Base {
 		$server_id = (int) $request->get_param( 'id' );
 		$server    = get_post( $server_id );
 
-		if ( ! $server || 'wpcd_app_server' !== $server->post_type ) {
-			return $this->error( 'simplestack_server_not_found', __( 'Server not found.', 'wpcd' ), 404 );
+		if ( ! $server || 'sstk_app_server' !== $server->post_type ) {
+			return $this->error( 'sstk_server_not_found', __( 'Server not found.', 'simple-stack' ), 404 );
 		}
 
 		$type  = (string) $request->get_param( 'type' );
@@ -198,16 +200,16 @@ class SimpleStack_REST_Logs extends SimpleStack_REST_Controller_Base {
 		);
 
 		switch ( $post->post_type ) {
-			case 'wpcd_command_log':
+			case 'sstk_command_log':
 				$entry['command_type'] = (string) get_post_meta( $post->ID, 'command_type', true );
 				$entry['reference']    = (string) get_post_meta( $post->ID, 'command_reference', true );
 				$entry['body']         = (string) get_post_meta( $post->ID, 'command_result', true );
 				break;
-			case 'wpcd_ssh_log':
+			case 'sstk_ssh_log':
 				$entry['reference'] = (string) get_post_meta( $post->ID, 'ssh_cmd', true );
 				$entry['body']      = (string) get_post_meta( $post->ID, 'ssh_cmd_result', true );
 				break;
-			case 'wpcd_error_log':
+			case 'sstk_error_log':
 				$entry['reference'] = (string) get_post_meta( $post->ID, 'error_type', true );
 				$entry['body']      = (string) get_post_meta( $post->ID, 'error_msg', true );
 				$entry['file']      = (string) get_post_meta( $post->ID, 'error_file', true );

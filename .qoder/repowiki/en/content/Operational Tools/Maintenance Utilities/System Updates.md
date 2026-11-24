@@ -24,9 +24,9 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s system update functionality for servers, focusing on automated operating system package updates, security patches, and dependency management. It covers the end-to-end update flow from the WordPress admin UI to server-side scripts, including pre-update checks, background scheduling via `at`, callback reporting, and integration with unattended-upgrades. It also documents configuration options exposed by the UI, how to customize behavior, handle failures, and monitor progress.
+This document explains Simple Stack’s system update functionality for servers, focusing on automated operating system package updates, security patches, and dependency management. It covers the end-to-end update flow from the WordPress admin UI to server-side scripts, including pre-update checks, background scheduling via `at`, callback reporting, and integration with unattended-upgrades. It also documents configuration options exposed by the UI, how to customize behavior, handle failures, and monitor progress.
 
-SimpleStack provisions Ubuntu 24.04 LTS and 26.04 LTS servers and manages them through a single web stack and admin UI. The update feature is implemented as a combination of PHP handlers in the WordPress plugin and Bash scripts executed over SSH on target servers.
+Simple Stack provisions Ubuntu 24.04 LTS and 26.04 LTS servers and manages them through a single web stack and admin UI. The update feature is implemented as a combination of PHP handlers in the WordPress plugin and Bash scripts executed over SSH on target servers.
 
 **Section sources**
 - [README.md:27-37](file://README.md#L27-L37)
@@ -374,6 +374,6 @@ Common issues and resolutions:
 - [01-prepare_server.txt (v2):412-445](file://includes/core/apps/wordpress-app/scripts/v2/raw/01-prepare_server.txt#L412-L445)
 
 ## Conclusion
-SimpleStack’s system update feature provides a robust, auditable workflow for applying OS-level updates and security patches across managed servers. It combines a clear UI, reliable PHP handlers, and resilient server-side scripts with background scheduling and callback reporting. By leveraging unattended-upgrades and careful pre-update checks, it balances automation with safety. Operators can schedule updates selectively, monitor progress via the UI, and troubleshoot common issues using the guidance provided.
+Simple Stack’s system update feature provides a robust, auditable workflow for applying OS-level updates and security patches across managed servers. It combines a clear UI, reliable PHP handlers, and resilient server-side scripts with background scheduling and callback reporting. By leveraging unattended-upgrades and careful pre-update checks, it balances automation with safety. Operators can schedule updates selectively, monitor progress via the UI, and troubleshoot common issues using the guidance provided.
 
 [No sources needed since this section summarizes without analyzing specific files]

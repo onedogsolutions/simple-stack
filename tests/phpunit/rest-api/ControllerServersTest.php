@@ -1,9 +1,10 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 
 class ControllerServersTest extends WP_UnitTestCase
 {
     protected WP_REST_Server $rest;
-    protected WPCD_REST_API_Controller_Base $controller;
+    protected SSTK_REST_API_Controller_Base $controller;
     protected string $resource_route;
     protected string $resource_id_route;
     protected string $resource_name_route;
@@ -15,7 +16,7 @@ class ControllerServersTest extends WP_UnitTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->controller = WPCD_WORDPRESS_APP()->get_rest_controller('servers');
+        $this->controller = SSTK_WORDPRESS_APP()->get_rest_controller('servers');
         $this->rest = rest_get_server();
         $this->resource_route = '/' . $this->controller->get_namespace();
         $this->resource_id_route = $this->resource_route . $this->controller::RESOURCE_ID_PATH;
@@ -28,11 +29,21 @@ class ControllerServersTest extends WP_UnitTestCase
     function test_it_registers_rest_routes()
     {
         $routes = $this->rest->get_routes();
-        $this->assertInstanceOf(WPCD_REST_API_Controller_Servers::class, $this->controller);
+        $this->assertInstanceOf(SSTK_REST_API_Controller_Servers::class, $this->controller);
         $this->assertArrayHasKey($this->resource_route, $routes);
         $this->assertCount(2, $routes[$this->resource_route]);
         $this->assertArrayHasKey($this->resource_id_route, $routes);
         $this->assertCount(2, $routes[$this->resource_id_route]);
+    }
+
+    /**
+     * Verifies the supported operating-system and PHP-version sets.
+     */
+    function test_it_limits_the_supported_stack()
+    {
+        $this->assertSame(['ubuntu2404lts', 'ubuntu2604lts'], array_keys(SSTK()->get_os_list()));
+        $this->assertSame('ubuntu2404lts', SSTK_WORDPRESS_APP()->get_default_os());
+        $this->assertSame(['8.3', '8.4', '8.5'], array_keys(SSTK_WORDPRESS_APP()->get_php_versions(1)));
     }
 
     /**
@@ -48,12 +59,12 @@ class ControllerServersTest extends WP_UnitTestCase
         $data = $this->rest->dispatch($request)->get_data();
         $this->assertEquals([
             [
-                'id' => $server_post_id_1, 'name' => 'server 1', 'author' => 1, 'os' => 'ubuntu1804lts',
+                'id' => $server_post_id_1, 'name' => 'server 1', 'author' => 1, 'os' => 'ubuntu2404lts',
                 'ipv4' => '', 'provider' => 'test', 'instance_id' => '12345', 'app_count' => 0,
                 'region' => '', 'available_for_commands' => true
             ],
             [
-                'id' => $server_post_id_2, 'name' => 'server 2', 'author' => 1, 'os' => 'ubuntu1804lts',
+                'id' => $server_post_id_2, 'name' => 'server 2', 'author' => 1, 'os' => 'ubuntu2404lts',
                 'ipv4' => '', 'provider' => 'test', 'instance_id' => '12345', 'app_count' => 0,
                 'region' => '', 'available_for_commands' => true
             ]
@@ -74,7 +85,7 @@ class ControllerServersTest extends WP_UnitTestCase
         $data = $this->rest->dispatch($request)->get_data();
         $this->assertEquals([
             [
-                'id' => $server_post_id_2, 'name' => 'server 2', 'author' => $user_id, 'os' => 'ubuntu1804lts',
+                'id' => $server_post_id_2, 'name' => 'server 2', 'author' => $user_id, 'os' => 'ubuntu2404lts',
                 'ipv4' => '', 'provider' => 'test', 'instance_id' => '12345', 'app_count' => 0,
                 'region' => '', 'available_for_commands' => true
             ]
@@ -89,7 +100,7 @@ class ControllerServersTest extends WP_UnitTestCase
         $this->create_test_provider();
         $list_request = new WP_REST_Request('GET', $this->resource_route);
         $servers = $this->rest->dispatch($list_request)->get_data();
-        $tasks = get_posts(['post_type' => 'wpcd_pending_log', 'post_status' => 'private']);
+        $tasks = get_posts(['post_type' => 'sstk_pending_log', 'post_status' => 'private']);
         $this->assertEmpty($servers);
         $this->assertEmpty($tasks);
         $request = new WP_REST_Request('POST', $this->resource_route);
@@ -101,9 +112,14 @@ class ControllerServersTest extends WP_UnitTestCase
         $request->set_param('region', 'us-east-1');
         $this->assertWPError($this->rest->dispatch($request)->as_error());
         $request->set_param('size', 'c5.xlarge');
+        $request->set_param('os', 'unsupported-os');
+        $error = $this->rest->dispatch($request)->as_error();
+        $this->assertWPError($error);
+        $this->assertSame('sstk_invalid_os', $error->get_error_code());
+        $request->set_param('os', '');
         $data = $this->rest->dispatch($request)->get_data();
-        $servers = get_posts(['post_type' => 'wpcd_app_server', 'post_status' => 'private', 'post_author' => 1]);
-        $tasks = get_posts(['post_type' => 'wpcd_pending_log', 'post_status' => 'private', 'post_author' => 1]);
+        $servers = get_posts(['post_type' => 'sstk_app_server', 'post_status' => 'private', 'post_author' => 1]);
+        $tasks = get_posts(['post_type' => 'sstk_pending_log', 'post_status' => 'private', 'post_author' => 1]);
         $this->assertCount(1, $tasks);
         $this->assertEquals(['server_id' => $servers[0]->ID, 'task_id' => $tasks[0]->ID], $data);
     }
@@ -119,7 +135,7 @@ class ControllerServersTest extends WP_UnitTestCase
         $request = new WP_REST_Request('GET', $this->resource_route . '/' . $server_post_id);
         $server = $this->rest->dispatch($request)->get_data();
         $this->assertEquals([
-            'id' => $server['id'], 'name' => 'server 1', 'author' => 1, 'os' => 'ubuntu1804lts',
+            'id' => $server['id'], 'name' => 'server 1', 'author' => 1, 'os' => 'ubuntu2404lts',
             'ipv4' => '', 'provider' => 'test', 'instance_id' => '12345', 'app_count' => 0,
             'region' => '', 'available_for_commands' => true
         ], $server);
@@ -152,10 +168,10 @@ class ControllerServersTest extends WP_UnitTestCase
      */
     protected function create_server($count, $user_id = 1, $provider_key = 'test')
     {
-        $server_post_id = WPCD_SERVER()->create_server_post(['name' => 'server ' . $count, 'user_id' => $user_id]);
-        update_post_meta($server_post_id, 'wpcd_server_initial_app_name', WPCD_WORDPRESS_APP()->get_app_name());
-        update_post_meta($server_post_id, 'wpcd_server_provider', $provider_key);
-        update_post_meta($server_post_id, 'wpcd_server_provider_instance_id', '12345');
+        $server_post_id = SSTK_SERVER()->create_server_post(['name' => 'server ' . $count, 'user_id' => $user_id]);
+        update_post_meta($server_post_id, 'sstk_server_initial_app_name', SSTK_WORDPRESS_APP()->get_app_name());
+        update_post_meta($server_post_id, 'sstk_server_provider', $provider_key);
+        update_post_meta($server_post_id, 'sstk_server_provider_instance_id', '12345');
         return $server_post_id;
     }
 
@@ -164,7 +180,7 @@ class ControllerServersTest extends WP_UnitTestCase
      */
     protected function create_test_provider($key = 'test')
     {
-        require_once dirname(dirname(__DIR__)) . '/data/class-wpcd-cloud-provider-test.php';
-        WPCD()->classes['wpcd_vpn_api_provider_' . $key] = new WPCD_Cloud_Provider_Test();
+        require_once dirname(dirname(__DIR__)) . '/data/class-sstk-cloud-provider-test.php';
+        SSTK()->classes['sstk_api_provider_' . $key] = new SSTK_Cloud_Provider_Test();
     }
 }

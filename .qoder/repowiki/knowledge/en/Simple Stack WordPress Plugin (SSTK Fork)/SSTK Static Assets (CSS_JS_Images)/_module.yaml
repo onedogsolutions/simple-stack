@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: static_assets
-title: WPCD Static Assets (CSS/JS/Images)
+title: SSTK Static Assets (CSS/JS/Images)
 scope:
     - assets/
 source_files: []

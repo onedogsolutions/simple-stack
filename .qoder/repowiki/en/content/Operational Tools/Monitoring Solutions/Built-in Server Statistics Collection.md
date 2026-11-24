@@ -2,12 +2,12 @@
 
 <cite>
 **Referenced Files in This Document**
-- [class-wpcd-server-statistics.php](file://includes/core/class-wpcd-server-statistics.php)
+- [class-sstk-server-statistics.php](file://includes/core/class-sstk-server-statistics.php)
 - [statistics.php (server tab)](file://includes/core/apps/wordpress-app/tabs-server/statistics.php)
-- [class-wpcd-posts-app-server.php](file://includes/core/class-wpcd-posts-app-server.php)
-- [wpcd-wpapp-server-chart.js](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js)
+- [class-sstk-posts-app-server.php](file://includes/core/class-sstk-posts-app-server.php)
+- [sstk-wpapp-server-chart.js](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js)
 - [functions-classes.php](file://includes/core/functions-classes.php)
-- [class-simplestack-rest-servers.php](file://includes/core/api/class-simplestack-rest-servers.php)
+- [class-sstk-rest-servers.php](file://includes/core/api/class-sstk-rest-servers.php)
 </cite>
 
 ## Table of Contents
@@ -22,7 +22,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains SimpleStack’s built-in server statistics collection system. It focuses on the WPCD_SERVER_STATISTICS class, how metrics are collected and stored, and how they are presented in the admin interface. It also covers usage via the REST API, data retention considerations, database optimization for statistics storage, performance impact, troubleshooting missing data, optimizing collection intervals, and scaling for large fleets.
+This document explains Simple Stack’s built-in server statistics collection system. It focuses on the SSTK_SERVER_STATISTICS class, how metrics are collected and stored, and how they are presented in the admin interface. It also covers usage via the REST API, data retention considerations, database optimization for statistics storage, performance impact, troubleshooting missing data, optimizing collection intervals, and scaling for large fleets.
 
 The current implementation collects:
 - Disk usage snapshots (df output)
@@ -34,26 +34,26 @@ These are gathered on demand from the server via SSH and stored as post meta on 
 
 ## Project Structure
 The statistics feature spans several layers:
-- Data formatting utilities: WPCD_SERVER_STATISTICS
-- Admin UI tab and actions: WPCD_WORDPRESS_TABS_SERVER_STATISTICS
-- Script enqueuing and chart data preparation: class-wpcd-posts-app-server.php
-- Frontend chart rendering: wpcd-wpapp-server-chart.js
+- Data formatting utilities: SSTK_SERVER_STATISTICS
+- Admin UI tab and actions: SSTK_WORDPRESS_TABS_SERVER_STATISTICS
+- Script enqueuing and chart data preparation: class-sstk-posts-app-server.php
+- Frontend chart rendering: sstk-wpapp-server-chart.js
 - Class bootstrap: functions-classes.php
-- REST bridge for running actions: class-simplestack-rest-servers.php
+- REST bridge for running actions: class-sstk-rest-servers.php
 
 ```mermaid
 graph TB
 subgraph "Admin UI"
-TAB["Server Statistics Tab<br/>WPCD_WORDPRESS_TABS_SERVER_STATISTICS"]
-CHART_JS["Chart JS<br/>wpcd-wpapp-server-chart.js"]
+TAB["Server Statistics Tab<br/>SSTK_WORDPRESS_TABS_SERVER_STATISTICS"]
+CHART_JS["Chart JS<br/>sstk-wpapp-server-chart.js"]
 end
 subgraph "PHP Core"
-CLASS_STATS["WPCD_SERVER_STATISTICS<br/>Formatting helpers"]
-POSTS_APP["class-wpcd-posts-app-server.php<br/>Enqueue + localize chart data"]
-REST["SimpleStack_REST_Servers<br/>run_action()"]
+CLASS_STATS["SSTK_SERVER_STATISTICS<br/>Formatting helpers"]
+POSTS_APP["class-sstk-posts-app-server.php<br/>Enqueue + localize chart data"]
+REST["SSTK_REST_Servers<br/>run_action()"]
 end
 subgraph "Storage"
-META["Post Meta<br/>wpcd_wpapp_* fields"]
+META["Post Meta<br/>sstk_wpapp_* fields"]
 end
 TAB --> REST
 REST --> TAB
@@ -65,35 +65,35 @@ TAB --> META
 
 **Diagram sources**
 - [statistics.php (server tab):102-125](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L102-L125)
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [wpcd-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L22-L62)
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [sstk-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L22-L62)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 
 **Section sources**
-- [class-wpcd-server-statistics.php:15-258](file://includes/core/class-wpcd-server-statistics.php#L15-L258)
+- [class-sstk-server-statistics.php:15-258](file://includes/core/class-sstk-server-statistics.php#L15-L258)
 - [statistics.php (server tab):15-432](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L15-L432)
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [wpcd-wpapp-server-chart.js:1-247](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L1-L247)
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [sstk-wpapp-server-chart.js:1-247](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L1-L247)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 
 ## Core Components
-- WPCD_SERVER_STATISTICS: Provides methods to format raw stats into chart-ready arrays. It reads post meta values and transforms them for visualization.
-- WPCD_WORDPRESS_TABS_SERVER_STATISTICS: Adds the “Statistics” tab to the server detail screen, renders sections for disk space, vnstat, vmstat, and top, and handles the “Refresh Server Statistics” action that runs commands on the remote server and stores results.
-- class-wpcd-posts-app-server.php: Enqueues Chart.js and the chart script, then localizes formatted data for disk, vnstat, and vmstat charts.
-- wpcd-wpapp-server-chart.js: Renders bar/pie/horizontal bar charts using the localized data.
-- SimpleStack_REST_Servers: Exposes run_action endpoint that dispatches to tab actions, enabling programmatic refresh of statistics.
+- SSTK_SERVER_STATISTICS: Provides methods to format raw stats into chart-ready arrays. It reads post meta values and transforms them for visualization.
+- SSTK_WORDPRESS_TABS_SERVER_STATISTICS: Adds the “Statistics” tab to the server detail screen, renders sections for disk space, vnstat, vmstat, and top, and handles the “Refresh Server Statistics” action that runs commands on the remote server and stores results.
+- class-sstk-posts-app-server.php: Enqueues Chart.js and the chart script, then localizes formatted data for disk, vnstat, and vmstat charts.
+- sstk-wpapp-server-chart.js: Renders bar/pie/horizontal bar charts using the localized data.
+- SSTK_REST_Servers: Exposes run_action endpoint that dispatches to tab actions, enabling programmatic refresh of statistics.
 
 Key responsibilities:
 - Collecting: The tab’s refresh action executes remote commands and writes results to post meta.
-- Formatting: WPCD_SERVER_STATISTICS converts raw text outputs into JSON-friendly structures for charts.
+- Formatting: SSTK_SERVER_STATISTICS converts raw text outputs into JSON-friendly structures for charts.
 - Rendering: The frontend script consumes localized data to draw charts.
 
 **Section sources**
-- [class-wpcd-server-statistics.php:15-258](file://includes/core/class-wpcd-server-statistics.php#L15-L258)
+- [class-sstk-server-statistics.php:15-258](file://includes/core/class-sstk-server-statistics.php#L15-L258)
 - [statistics.php (server tab):15-432](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L15-L432)
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [wpcd-wpapp-server-chart.js:1-247](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L1-L247)
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [sstk-wpapp-server-chart.js:1-247](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L1-L247)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 
 ## Architecture Overview
 The flow from user interaction to rendered charts:
@@ -101,16 +101,16 @@ The flow from user interaction to rendered charts:
 ```mermaid
 sequenceDiagram
 participant Admin as "Admin UI"
-participant Tab as "WPCD_WORDPRESS_TABS_SERVER_STATISTICS"
+participant Tab as "SSTK_WORDPRESS_TABS_SERVER_STATISTICS"
 participant SSH as "Remote Server"
 participant Store as "WP Post Meta"
-participant PHP as "class-wpcd-posts-app-server.php"
-participant Stats as "WPCD_SERVER_STATISTICS"
-participant FE as "wpcd-wpapp-server-chart.js"
+participant PHP as "class-sstk-posts-app-server.php"
+participant Stats as "SSTK_SERVER_STATISTICS"
+participant FE as "sstk-wpapp-server-chart.js"
 Admin->>Tab : Click "Refresh Server Statistics"
 Tab->>SSH : Execute vnstat / df / vmstat -s / top
 SSH-->>Tab : Command outputs
-Tab->>Store : Save wpcd_wpapp_* meta fields
+Tab->>Store : Save sstk_wpapp_* meta fields
 Admin->>PHP : Load server detail page
 PHP->>Stats : Format disk/vnstat/vmstat data
 Stats-->>PHP : Localized chart payloads
@@ -120,23 +120,23 @@ FE->>FE : Render charts
 
 **Diagram sources**
 - [statistics.php (server tab):383-427](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L383-L427)
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [class-wpcd-server-statistics.php:42-254](file://includes/core/class-wpcd-server-statistics.php#L42-L254)
-- [wpcd-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L22-L62)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [class-sstk-server-statistics.php:42-254](file://includes/core/class-sstk-server-statistics.php#L42-L254)
+- [sstk-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L22-L62)
 
 ## Detailed Component Analysis
 
-### WPCD_SERVER_STATISTICS class
+### SSTK_SERVER_STATISTICS class
 Responsibilities:
 - Read raw stats from post meta.
 - Parse and sanitize outputs.
 - Produce chart-ready arrays with labels and datasets.
 
 Methods:
-- wpcd_app_server_get_formatted_disk_statistics(post_id): Parses df-like output, aggregates snap mounts, returns labels and three series (1K-blocks, Used, Available).
-- wpcd_app_server_get_formatted_vnstat_data(post_id): Splits one-line vnstat output into day/month/all-time RX/TX pairs.
+- sstk_app_server_get_formatted_disk_statistics(post_id): Parses df-like output, aggregates snap mounts, returns labels and three series (1K-blocks, Used, Available).
+- sstk_app_server_get_formatted_vnstat_data(post_id): Splits one-line vnstat output into day/month/all-time RX/TX pairs.
 - convert_to_numeric_data(data): Converts human-readable sizes (KiB/MiB/GiB) to KiB numeric values.
-- wpcd_app_server_get_formatted_vmstat_data(post_id): Reads vmstat -s output lines and builds memory dataset labels/values.
+- sstk_app_server_get_formatted_vmstat_data(post_id): Reads vmstat -s output lines and builds memory dataset labels/values.
 
 Complexity notes:
 - Parsing is linear in number of lines and tokens per line.
@@ -148,20 +148,20 @@ Error handling:
 
 ```mermaid
 classDiagram
-class WPCD_SERVER_STATISTICS {
+class SSTK_SERVER_STATISTICS {
 +instance()
-+wpcd_app_server_get_formatted_disk_statistics(post_id) array
-+wpcd_app_server_get_formatted_vnstat_data(post_id) array
++sstk_app_server_get_formatted_disk_statistics(post_id) array
++sstk_app_server_get_formatted_vnstat_data(post_id) array
 +convert_to_numeric_data(data) float
-+wpcd_app_server_get_formatted_vmstat_data(post_id) array
++sstk_app_server_get_formatted_vmstat_data(post_id) array
 }
 ```
 
 **Diagram sources**
-- [class-wpcd-server-statistics.php:15-258](file://includes/core/class-wpcd-server-statistics.php#L15-L258)
+- [class-sstk-server-statistics.php:15-258](file://includes/core/class-sstk-server-statistics.php#L15-L258)
 
 **Section sources**
-- [class-wpcd-server-statistics.php:42-254](file://includes/core/class-wpcd-server-statistics.php#L42-L254)
+- [class-sstk-server-statistics.php:42-254](file://includes/core/class-sstk-server-statistics.php#L42-L254)
 
 ### Server Statistics Tab (UI and Actions)
 Responsibilities:
@@ -179,12 +179,12 @@ Key behaviors:
   - sudo vmstat -s
   - sudo top -n 1 -b > top-output.txt && cat top-output.txt && rm top-output.txt
 - Stores outputs in post meta keys:
-  - wpcd_wpapp_vnstat_data
-  - wpcd_wpapp_vnstat_one_line_data
-  - wpcd_wpapp_disk_statistics
-  - wpcd_wpapp_vmstat_data
-  - wpcd_wpapp_top_data
-  - wpcd_wpapp_server_stats_list_date
+  - sstk_wpapp_vnstat_data
+  - sstk_wpapp_vnstat_one_line_data
+  - sstk_wpapp_disk_statistics
+  - sstk_wpapp_vmstat_data
+  - sstk_wpapp_top_data
+  - sstk_wpapp_server_stats_list_date
 
 ```mermaid
 flowchart TD
@@ -204,11 +204,11 @@ UpdateDate --> Done(["Show success notice"])
 - [statistics.php (server tab):15-432](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L15-L432)
 
 ### Chart Data Preparation and Rendering
-- class-wpcd-posts-app-server.php:
+- class-sstk-posts-app-server.php:
   - Registers Chart.js and the chart script.
-  - Calls WPCD_SERVER_STATISTICS methods to build localized data for disk, vnstat, and vmstat.
+  - Calls SSTK_SERVER_STATISTICS methods to build localized data for disk, vnstat, and vmstat.
   - Uses wp_localize_script to pass data to the frontend.
-- wpcd-wpapp-server-chart.js:
+- sstk-wpapp-server-chart.js:
   - Initializes charts based on available data.
   - Renders:
     - Bar chart for disk usage
@@ -217,33 +217,33 @@ UpdateDate --> Done(["Show success notice"])
 
 ```mermaid
 sequenceDiagram
-participant PHP as "class-wpcd-posts-app-server.php"
-participant Stats as "WPCD_SERVER_STATISTICS"
-participant FE as "wpcd-wpapp-server-chart.js"
+participant PHP as "class-sstk-posts-app-server.php"
+participant Stats as "SSTK_SERVER_STATISTICS"
+participant FE as "sstk-wpapp-server-chart.js"
 PHP->>Stats : Get formatted disk/vnstat/vmstat data
 Stats-->>PHP : Arrays with labels and datasets
-PHP-->>FE : Localized object wpcd_server_stat_data
+PHP-->>FE : Localized object sstk_server_stat_data
 FE->>FE : Initialize and render charts
 ```
 
 **Diagram sources**
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [wpcd-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L22-L62)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [sstk-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L22-L62)
 
 **Section sources**
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [wpcd-wpapp-server-chart.js:1-247](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L1-L247)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [sstk-wpapp-server-chart.js:1-247](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L1-L247)
 
 ### REST API Integration
-- SimpleStack_REST_Servers::run_action(id, action, params) forwards to the tab action chain.
+- SSTK_REST_Servers::run_action(id, action, params) forwards to the tab action chain.
 - To programmatically refresh statistics, call POST /servers/{id}/action with action = "server-refresh-statistics".
 - The response includes server_id, action, and result.
 
 ```mermaid
 sequenceDiagram
 participant Client as "External Tool"
-participant REST as "SimpleStack_REST_Servers"
-participant Tab as "WPCD_WORDPRESS_TABS_SERVER_STATISTICS"
+participant REST as "SSTK_REST_Servers"
+participant Tab as "SSTK_WORDPRESS_TABS_SERVER_STATISTICS"
 Client->>REST : POST /servers/{id}/action {action : "server-refresh-statistics"}
 REST->>Tab : Dispatch tab action
 Tab-->>REST : Result (success/error)
@@ -251,14 +251,14 @@ REST-->>Client : {server_id, action, result}
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 - [statistics.php (server tab):102-125](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L102-L125)
 
 **Section sources**
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 
 ## Dependency Analysis
-- WPCD_SERVER_STATISTICS depends on WordPress post meta APIs to read raw stats.
+- SSTK_SERVER_STATISTICS depends on WordPress post meta APIs to read raw stats.
 - The server statistics tab depends on:
   - Server instance resolution
   - SSH execution helpers
@@ -268,26 +268,26 @@ REST-->>Client : {server_id, action, result}
 
 ```mermaid
 graph LR
-REST["SimpleStack_REST_Servers"] --> TAB["WPCD_WORDPRESS_TABS_SERVER_STATISTICS"]
+REST["SSTK_REST_Servers"] --> TAB["SSTK_WORDPRESS_TABS_SERVER_STATISTICS"]
 TAB --> META["Post Meta"]
-PHP["class-wpcd-posts-app-server.php"] --> STATS["WPCD_SERVER_STATISTICS"]
+PHP["class-sstk-posts-app-server.php"] --> STATS["SSTK_SERVER_STATISTICS"]
 PHP --> META
-FE["wpcd-wpapp-server-chart.js"] --> PHP
+FE["sstk-wpapp-server-chart.js"] --> PHP
 ```
 
 **Diagram sources**
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 - [statistics.php (server tab):383-427](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L383-L427)
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [class-wpcd-server-statistics.php:42-254](file://includes/core/class-wpcd-server-statistics.php#L42-L254)
-- [wpcd-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L22-L62)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [class-sstk-server-statistics.php:42-254](file://includes/core/class-sstk-server-statistics.php#L42-L254)
+- [sstk-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L22-L62)
 
 **Section sources**
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 - [statistics.php (server tab):102-125](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L102-L125)
-- [class-wpcd-posts-app-server.php:195-242](file://includes/core/class-wpcd-posts-app-server.php#L195-L242)
-- [class-wpcd-server-statistics.php:42-254](file://includes/core/class-wpcd-server-statistics.php#L42-L254)
-- [wpcd-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/wpcd-wpapp-server-chart.js#L22-L62)
+- [class-sstk-posts-app-server.php:195-242](file://includes/core/class-sstk-posts-app-server.php#L195-L242)
+- [class-sstk-server-statistics.php:42-254](file://includes/core/class-sstk-server-statistics.php#L42-L254)
+- [sstk-wpapp-server-chart.js:22-62](file://includes/core/apps/wordpress-app/assets/js/sstk-wpapp-server-chart.js#L22-L62)
 
 ## Performance Considerations
 - Collection frequency:
@@ -310,12 +310,12 @@ Common issues and resolutions:
 - Missing data in charts:
   - Ensure the “Refresh Server Statistics” action has been executed successfully.
   - Verify post meta keys exist:
-    - wpcd_wpapp_disk_statistics
-    - wpcd_wpapp_vnstat_data
-    - wpcd_wpapp_vnstat_one_line_data
-    - wpcd_wpapp_vmstat_data
-    - wpcd_wpapp_top_data
-    - wpcd_wpapp_server_stats_list_date
+    - sstk_wpapp_disk_statistics
+    - sstk_wpapp_vnstat_data
+    - sstk_wpapp_vnstat_one_line_data
+    - sstk_wpapp_vmstat_data
+    - sstk_wpapp_top_data
+    - sstk_wpapp_server_stats_list_date
 - SSH connectivity problems:
   - Confirm SSH credentials and network reachability to the target server.
   - Validate that required commands (vnstat, df, vmstat, top) are installed and executable with sudo.
@@ -332,9 +332,9 @@ Operational tips:
 **Section sources**
 - [statistics.php (server tab):102-125](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L102-L125)
 - [statistics.php (server tab):383-427](file://includes/core/apps/wordpress-app/tabs-server/statistics.php#L383-L427)
-- [class-simplestack-rest-servers.php:327-363](file://includes/core/api/class-simplestack-rest-servers.php#L327-L363)
+- [class-sstk-rest-servers.php:327-363](file://includes/core/api/class-sstk-rest-servers.php#L327-L363)
 
 ## Conclusion
-SimpleStack’s built-in server statistics system provides on-demand collection of disk usage, network traffic, memory details, and process snapshots. Data is persisted as post meta and visualized through client-side charts. The system integrates cleanly with the admin UI and exposes a REST action for automation. Since there is no built-in continuous collector in the analyzed code, administrators should schedule refreshes externally if periodic updates are required, while considering performance and storage implications.
+Simple Stack’s built-in server statistics system provides on-demand collection of disk usage, network traffic, memory details, and process snapshots. Data is persisted as post meta and visualized through client-side charts. The system integrates cleanly with the admin UI and exposes a REST action for automation. Since there is no built-in continuous collector in the analyzed code, administrators should schedule refreshes externally if periodic updates are required, while considering performance and storage implications.
 
 [No sources needed since this section summarizes without analyzing specific files]

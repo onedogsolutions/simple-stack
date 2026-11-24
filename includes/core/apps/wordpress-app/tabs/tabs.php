@@ -1,8 +1,9 @@
 <?php
+/** Modified for Simple Stack by One Dog Solutions on 2026-11-23. */
 /**
  * Tabs
  *
- * @package wpcd
+ * @package simple-stack
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,12 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 /* Parent class for all tabs in the admin screen for the WordPress App */
 
 /**
- * Class WPCD_WORDPRESS_TABS
+ * Class SSTK_WORDPRESS_TABS
  */
-class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
+class SSTK_WORDPRESS_TABS extends SSTK_WORDPRESS_APP {
 
 	/**
-	 * WPCD_WORDPRESS_TABS constructor.
+	 * SSTK_WORDPRESS_TABS constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
@@ -31,21 +32,21 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 	 * This uses a function called get_actions that is expected to be defined by the descendant class.
 	 * That function should return an array in a specific format - something like this:
 				['basic-auth-status'] = array(
-					'label' => __( 'Basic Authentication', 'wpcd' ),
+					'label' => __( 'Basic Authentication', 'simple-stack' ),
 					'raw_attributes' => array(
-						'on_label'  => __( 'Enabled', 'wpcd' ),
-						'off_label' => __( 'Disabled', 'wpcd' ),
+						'on_label'  => __( 'Enabled', 'simple-stack' ),
+						'off_label' => __( 'Disabled', 'simple-stack' ),
 						'std'       => $basic_auth_status === 'on',
-						'desc'      => __( 'Add or remove password protection on your site', 'wpcd' ),
+						'desc'      => __( 'Add or remove password protection on your site', 'simple-stack' ),
 						'confirmation_prompt' => $confirmation_prompt,
 						// fields that contribute data for this action
-						'data-wpcd-fields' => json_encode(array( '#wpcd_app_action_basic-auth-user', '#wpcd_app_action_basic-auth-pw' )),
+						'data-sstk-fields' => json_encode(array( '#sstk_app_action_basic-auth-user', '#sstk_app_action_basic-auth-pw' )),
 					),
 					'type'  => 'switch',
 				);
 	 *
 	 * Notice that the raw_attributes array contains most of the metabox.io
-	 * attributes along with some attributes for data-wpcd-* used in JS code.
+	 * attributes along with some attributes for data-sstk-* used in JS code.
 	 *
 	 * @param array  $fields list of existing fields.
 	 * @param int    $id post id of the current app.
@@ -64,27 +65,27 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 				$raw_attributes,
 				array(
 					'name'              => isset( $attributes['label'] ) ? $attributes['label'] : '',
-					'id'                => "wpcd_app_action_{$slug}",
+					'id'                => "sstk_app_action_{$slug}",
 					'tab'               => $tab,
 					'type'              => $attributes['type'],
 					'attributes'        => array(
 						// the _action that will be called in ajax.
-						'data-wpcd-action'              => $slug,
+						'data-sstk-action'              => $slug,
 						// the id, not of much use.
-						'data-wpcd-id'                  => wpcd_get_current_page_server_id(),
+						'data-sstk-id'                  => sstk_get_current_page_server_id(),
 						// fields that contribute data for this action. For example, if action is to set a password, this will contain the field ID references for the user id and password fields.
-						'data-wpcd-fields'              => isset( $raw_attributes['data-wpcd-fields'] ) ? $raw_attributes['data-wpcd-fields'] : '',
+						'data-sstk-fields'              => isset( $raw_attributes['data-sstk-fields'] ) ? $raw_attributes['data-sstk-fields'] : '',
 						// the key of the field (the key goes in the request). For example, if action is to set a password, this will contain the field NAME references for the user id and password fields.
-						'data-wpcd-name'                => isset( $raw_attributes['data-wpcd-name'] ) ? $raw_attributes['data-wpcd-name'] : "wpcd_app_action_{$slug}",
+						'data-sstk-name'                => isset( $raw_attributes['data-sstk-name'] ) ? $raw_attributes['data-sstk-name'] : "sstk_app_action_{$slug}",
 						// confirmation prompt.
-						'data-wpcd-confirmation-prompt' => isset( $raw_attributes['confirmation_prompt'] ) ? $raw_attributes['confirmation_prompt'] : '',                       // show log console?
+						'data-sstk-confirmation-prompt' => isset( $raw_attributes['confirmation_prompt'] ) ? $raw_attributes['confirmation_prompt'] : '',                       // show log console?
 						'data-show-log-console'         => isset( $raw_attributes['log_console'] ) ? $raw_attributes['log_console'] : '',
 						// Initial console message.
 						'data-initial-console-message'  => isset( $raw_attributes['console_message'] ) ? $raw_attributes['console_message'] : '',
 						// Spellcheck security issue.
 						'spellcheck'                    => isset( $raw_attributes['spellcheck'] ) ? $raw_attributes['spellcheck'] : 'true',
 					),
-					'class'             => isset( $raw_attributes['class'] ) ? 'wpcd_app_action ' . $raw_attributes['class'] : 'wpcd_app_action',
+					'class'             => isset( $raw_attributes['class'] ) ? 'sstk_app_action ' . $raw_attributes['class'] : 'sstk_app_action',
 					'save_field'        => false,
 					'column_row_before' => isset( $attributes['column_row_before'] ) ? $attributes['column_row_before'] : '',
 					'column_row_after'  => isset( $attributes['column_row_after'] ) ? $attributes['column_row_after'] : '',
@@ -99,7 +100,7 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 	 *
 	 * @param int    $id         The postID of the server cpt.
 	 * @param string $action     The action to be performed (this matches the string required in the bash scripts if bash scripts are used ).
-	 * @param string $command    The raw command to sent to the server - eg: 'sudo service nginx restart'.
+	 * @param string $command    The raw command to sent to the server - eg: 'sudo systemctl restart lshttpd'.
 	 * @param bool   $raw_output raw_output.
 	 *
 	 * @return boolean|WP_Error    success/failure
@@ -110,7 +111,7 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 		$instance = $this->get_server_instance_details( $id );
 
 		if ( is_wp_error( $instance ) ) {
-			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'wpcd' ), $action ) );
+			return new \WP_Error( sprintf( __( 'Unable to execute this request because we cannot get the instance details for action %s', 'simple-stack' ), $action ) );
 		}
 
 		$result = $this->execute_ssh( 'generic', $instance, array( 'commands' => $command ) );
@@ -125,7 +126,7 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 				return $result;
 			} else {
 				// send result for ajax.
-				return new \WP_Error( __( 'The requested server operation has completed.  Here is the raw output: ' . $result, 'wpcd' ) );
+				return new \WP_Error( __( 'The requested server operation has completed.  Here is the raw output: ' . $result, 'simple-stack' ) );
 			}
 		}
 
@@ -144,14 +145,14 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 		$actions = array();
 
 		// Start new card.
-		$actions[] = wpcd_start_full_card( $tab );
+		$actions[] = sstk_start_full_card( $tab );
 
-		$desc       = __( 'This site has been disabled. To view the options on this tab you must re-enable the site using the options under the MISC tab.', 'wpcd' );
-		$random_str = wpcd_random_str( 20, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
+		$desc       = __( 'This site has been disabled. To view the options on this tab you must re-enable the site using the options under the MISC tab.', 'simple-stack' );
+		$random_str = sstk_random_str( 20, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
 
 		if ( empty( $tab ) ) {
 			$actions[ 'site-is-disabled-status-header-' . $random_str ] = array(
-				'label'          => __( 'Site Is Disabled', 'wpcd' ),
+				'label'          => __( 'Site Is Disabled', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc'    => $desc,
@@ -160,7 +161,7 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 			);
 		} else {
 			$actions[ 'site-is-disabled-status-header-' . $random_str ] = array(
-				'name'    => __( 'Site Is Disabled', 'wpcd' ),
+				'name'    => __( 'Site Is Disabled', 'simple-stack' ),
 				'type'    => 'heading',
 				'tab'     => $tab,
 				'desc'    => $desc,
@@ -169,7 +170,7 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 		}
 
 		// Close up prior card.
-		$actions[] = wpcd_end_card( $tab );
+		$actions[] = sstk_end_card( $tab );
 
 		return $actions;
 
@@ -187,12 +188,12 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 
 		$actions = array();
 
-		$desc       = __( 'This site is on a server where the maximum number of allowed sites have been met or exceeded. Please contact your admin or customer support for assistance.', 'wpcd' );
-		$random_str = wpcd_random_str( 20, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
+		$desc       = __( 'This site is on a server where the maximum number of allowed sites have been met or exceeded. Please contact your admin or customer support for assistance.', 'simple-stack' );
+		$random_str = sstk_random_str( 20, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' );
 
 		if ( empty( $tab ) ) {
 			$actions[ 'function-not-available-status-header-' . $random_str ] = array(
-				'label'          => __( 'This Function is Not Available', 'wpcd' ),
+				'label'          => __( 'This Function is Not Available', 'simple-stack' ),
 				'type'           => 'heading',
 				'raw_attributes' => array(
 					'desc' => $desc,
@@ -200,7 +201,7 @@ class WPCD_WORDPRESS_TABS extends WPCD_WORDPRESS_APP {
 			);
 		} else {
 			$actions[ 'function-not-available-status-header-' . $random_str ] = array(
-				'name' => __( 'This Function is Not Available', 'wpcd' ),
+				'name' => __( 'This Function is Not Available', 'simple-stack' ),
 				'type' => 'heading',
 				'tab'  => $tab,
 				'desc' => $desc,
